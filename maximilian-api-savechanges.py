@@ -81,6 +81,7 @@ def save():
         else:
             log.write("Duplicate found. Redirecting... \n")
             log.flush()
+            db.close()
             return redirect('http://animationdoctorstudio.net/other-projects/maximilian?redirectsource=saveresponse&responsesaved=error-duplicate')
     except Exception as e:
         print("Error: " + str(e) + ". Check the log file for more details.")
