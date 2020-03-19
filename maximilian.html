@@ -100,22 +100,11 @@ else if (document.getElementById("response_text").value=="") {
     document.getElementById("error").innerHTML="The response text field is empty, and there may be other fields that are empty. Make sure to fill every field out before clicking 'Save Response'. ";
 }
 else{
-    var guild_idvalue = document.getElementById("guild_id").value;
-    var regex = new RegExp('/[^a-z ]\ *([.0-9])*\d/g');
-    alert(!regex.test(guild_idvalue));
-    if (!regex.test(guild_idvalue)) {
         document.getElementById("error").innerHTML = ""
         document.getElementById("guild_id").style.border = "3px solid black";
         document.getElementById("savingresponse").innerHTML="Saving response...";
         var url="http://animationdoctorstudio.net:5000/other-projects/maximilian/api/savechanges?guild_id=" + document.getElementById("guild_id").value + "&response_trigger=" + document.getElementById("response_trigger").value + "&response_text=" + document.getElementById("response_text").value;
         window.location.href=url;
-    }
-    else {
-        document.getElementById("error").innerHTML = "It looks like the server ID isn't valid. Make sure you entered everything in the correct fields, and check the server ID for typos. Remember, the server ID is not the server's name.";
-        document.getElementById("guild_id").style.transition = "0.0s";
-        document.getElementById("guild_id").style.webkitTransition = "0.0s";
-        document.getElementById("guild_id").style.border = "10px solid red";
-        document.getElementById("guild_id").focus;
     }
 }
 function getUrlVars() {
@@ -136,8 +125,13 @@ var sourceofredirect = getUrlParam('redirectsource','noredirect');
 var saveresponseState = getUrlParam('responsesaved', '' );
 if (sourceofredirect == "saveresponse") {
     if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
-    if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!"}
-}
+    if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
+    if (saveresponseState == "error-guildid-invalid"){        
+        document.getElementById("error").innerHTML = "It looks like the server ID isn't valid. Make sure you entered everything in the correct fields, and check the server ID for typos. Remember, the server ID is not the server's name.";
+        document.getElementById("guild_id").style.transition = "0.0s";
+        document.getElementById("guild_id").style.webkitTransition = "0.0s";
+        document.getElementById("guild_id").style.border = "10px solid red";
+        document.getElementById("guild_id").focus;}
 }
 </script>    
 </body>

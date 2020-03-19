@@ -69,8 +69,17 @@ def save():
         row = db.fetchone()
         print(row)
         if row == None:
-            log.write("No duplicates found. Inserting data into table... \n")
+            log.write("No duplicates found. Validating guild ID... \n")
             log.flush()
+            try:
+                test=int(guild_id)
+                print(test)
+            except Exception as e:
+                log.write("The guild ID isn't a number. Redirecting... \n")
+                log.flush()
+                print("The guild ID isn't a number. Redirecting...")
+                return redirect('http://animationdoctorstudio.net/other-projects/maximilian?redirectsource=saveresponse&responsesaved=error-guildid-invalid')
+                pass
             db.execute("INSERT INTO responses(guild_id, response_trigger, response_text) VALUES (%s, %s, %s);", (guild_id, response_trigger, response_text))
             log.write("Data inserted. Committing response... \n")
             log.flush()
