@@ -113,7 +113,8 @@ async def on_message(message):
             if row is None:
                 pass
             else:
-                log.write("Sent a custom response at " + str(datetime.datetime.now()) )
+                log.write("Sent a custom response at " + str(datetime.datetime.now()))
+                log.flush()
                 await message.channel.send(row['response_text'])
             db.close()
         except Exception as e:
@@ -213,7 +214,6 @@ async def on_message(message):
                             await message.channel.send(dad)
                             print(dad)
                             dad="hi " + dad + " i'm dad"
-
                     else:
                         immaxmilian = 'Hi ' + imvalue + ", I'm Maximilian!"
                         await message.channel.send(immaxmilian)
