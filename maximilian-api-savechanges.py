@@ -36,7 +36,7 @@ def save():
             log.write("Connecting to the database, this may take a bit. \n")
             log.flush()
             #after decrypting the password, connect to the database
-            dbfile=pymysql.connect(host='10.0.0.193',-
+            dbfile=pymysql.connect(host='10.0.0.193',
                                     user='tk421bsod',
                                     password=decrypted_data.decode(),
                                     db='maximilian',
@@ -80,6 +80,8 @@ def save():
                 print("The guild ID isn't a number. Redirecting...")
                 return redirect('http://animationdoctorstudio.net/other-projects/maximilian?redirectsource=saveresponse&responsesaved=error-guildid-invalid')
                 pass
+            log.write("The guild ID is valid. Inserting data into table... \n")
+            log.flush()
             db.execute("INSERT INTO responses(guild_id, response_trigger, response_text) VALUES (%s, %s, %s);", (guild_id, response_trigger, response_text))
             log.write("Data inserted. Committing response... \n")
             log.flush()
