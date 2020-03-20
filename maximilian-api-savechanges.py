@@ -77,6 +77,7 @@ def save():
             except Exception as e:
                 log.write("The guild ID isn't a number. Redirecting... \n")
                 log.flush()
+                db.close()
                 print("The guild ID isn't a number. Redirecting...")
                 return redirect('http://animationdoctorstudio.net/other-projects/maximilian?redirectsource=saveresponse&responsesaved=error-guildid-invalid')
                 pass
@@ -88,6 +89,7 @@ def save():
             dbfile.commit()
             log.write("Changes committed. Redirecting... \n")
             log.flush()
+            db.close()
             return redirect('http://animationdoctorstudio.net/other-projects/maximilian?redirectsource=saveresponse&responsesaved=successful')
         else:
             log.write("Duplicate found. Redirecting... \n")
