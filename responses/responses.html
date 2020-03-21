@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>clickCount=0</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximilian Web Interface (WIP)</title>
+    <style>
+        @font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local('Open Sans'), local('OpenSans'),
+       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.svg#OpenSans') format('svg'); /* Legacy iOS */
+}
+body{ 
+text-align: center;
+margin: auto auto auto auto;
+font-family: 'Open Sans', "Segoe UI", Tahoma, sans-serif;
+font-weight: 100;
+background-color: #2C2F33;
+}
+h1, h2, p, a, div{
+    color:white
+}
+button{
+    background-color: #7289DA;
+    color:white;
+    text-decoration: none;
+    padding-left: 5%;
+    padding-right:5%;
+    padding-top:1%;
+    padding-bottom:1%;
+    border: 5px;
+    border-radius: 10px;
+    transition:0.2s;
+}
+button:hover{
+    background-color: lightskyblue;
+}
+
+#guild_id, #response_trigger, #response_text {
+    text-align:center;
+    font-family: 'Open Sans', Tahoma, sans-serif;
+    font-weight: 300;
+    padding: 0.5% 2% 0.5% 2%;
+    width: 50%;
+    height: auto;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    border-radius:0px;
+    border: 3px;
+    outline:none;
+    background-color:#FFF;
+    overflow:visible;
+}
+#guild_id:focus, #response_trigger:focus, #response_text:focus{
+    border: 3px;
+    border-radius:8px;
+}
+#error{
+    color:rgb(255, 0, 0)
+}
+    </style>
+</head>
+<body>
+<h1>This is the web interface for Maximilian.</h1>
+<p>For now, you don't need to log in with your Discord account, and you can only create custom responses.</p>
+<p>Remember, this is a <b>WIP</b>, or <b>W</b>ork <b>I</b>n <b>P</b>rogress, and it may be broken. If you find bugs, please let the developer know by <a href="mailto:tk421bsod.enwiki@gmail.com">emailing</a> them.</p>
+<br>
+<br>
+<p id="error"></p>
+<br>
+<br>
+<input type="text" id="guild_id" placeholder="Enter the ID of the server you want to create the custom response for.">
+<br>
+<br>
+<input type="text" id="response_trigger" placeholder="Enter what will trigger the response.">
+<br>
+<br>
+<input type="text" id="response_text" placeholder="Enter the text that the bot should send.">
+<br>
+<br>
+<button id="saveresponse" onclick=saveResponse();>Save Response</button>
+<br>
+<p id="savingresponse"></p>
+<script>
+function saveResponse(){
+//when button is clicked, check if fields are empty, from the top down
+if (document.getElementById("guild_id").value=="") {
+    //if top field is empty, say that it's empty
+    document.getElementById("error").innerHTML="The guild ID field is empty, and there may be other fields that are empty. Make sure to fill every field out before clicking 'Save Response'. ";
+}
+else if (document.getElementById("response_trigger").value=="") {
+    //if top field isn't empty and the field below it is empty
+    document.getElementById("error").innerHTML="The response trigger field is empty, and there may be other fields that are empty. Make sure to fill every field out before clicking 'Save Response'. ";
+}
+else if (document.getElementById("response_text").value=="") {
+    //if no fields except for this are empty
+    document.getElementById("error").innerHTML="The response text field is empty, and there may be other fields that are empty. Make sure to fill every field out before clicking 'Save Response'. ";
+}
+else{
+        //if no fields are empty, don't display error message
+        document.getElementById("error").innerHTML = ""
+        //reset border
+        document.getElementById("guild_id").style.border = "3px solid black";
+        //show that response is being saved
+        document.getElementById("savingresponse").innerHTML="Saving response...";
+        //concatenate url using values of the three form fields above
+        var url="http://animationdoctorstudio.net:5000/other-projects/maximilian/api/savechanges?guild_id=" + document.getElementById("guild_id").value + "&response_trigger=" + document.getElementById("response_trigger").value + "&response_text=" + document.getElementById("response_text").value;
+        //redirect to that url
+        window.location.href=url;
+    }
+}
+function getUrlVars() {
+    var vars = {};
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+        vars[key] = value;
+    });
+    return vars;
+}
+function getUrlParam(parameter, defaultvalue){
+    var urlparameter = defaultvalue;
+    if(window.location.href.indexOf(parameter) > -1){
+        urlparameter = getUrlVars()[parameter];
+        }
+    return urlparameter;
+}
+//gets url parameters, second argument is default value
+var sourceofredirect = getUrlParam('redirectsource','noredirect');
+var saveresponseState = getUrlParam('responsesaved', '' );
+if (sourceofredirect == "saveresponse") {
+    //depending on the result, show a different message
+    if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
+    if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
+    //if the guild id's invalid ()
+    if (saveresponseState == "error-guildid-invalid"){        
+        document.getElementById("error").innerHTML = "It looks like the server ID isn't valid. Make sure you entered everything in the correct fields, and check the server ID for typos. Remember, the server ID is not the server's name.";
+        document.getElementById("guild_id").style.transition = "0.0s";
+        document.getElementById("guild_id").style.webkitTransition = "0.0s";
+        document.getElementById("guild_id").style.border = "10px solid red";
+        document.getElementById("guild_id").focus;}
+}
+</script>
+<br>
+<footer>Made with ♥️ by TK421bsod</footer>    
+</body>
+</html>
