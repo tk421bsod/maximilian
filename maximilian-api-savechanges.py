@@ -100,6 +100,8 @@ def save():
         print("Error: " + str(e) + ". Check the log file for more details.")
         log.write("Error: " + str(e) + ". \n")
         log.flush()
+        db.close()
+        return redirect('http://animationdoctorstudio.net/other-projects/maximilian/responses?redirectsource=saveresponse&responsesaved=error-unknown')
 
 
 
