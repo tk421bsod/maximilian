@@ -138,13 +138,15 @@ if (sourceofredirect == "saveresponse") {
     //depending on the result, show a different message
     if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
-    //if the guild id's invalid ()
+    //if the guild id is invalid
     if (saveresponseState == "error-guildid-invalid"){        
         document.getElementById("error").innerHTML = "It looks like the server ID isn't valid. Make sure you entered everything in the correct fields, and check the server ID for typos. Remember, the server ID is not the server's name.";
         document.getElementById("guild_id").style.transition = "0.0s";
         document.getElementById("guild_id").style.webkitTransition = "0.0s";
         document.getElementById("guild_id").style.border = "10px solid red";
         document.getElementById("guild_id").focus;}
+//if there's an unknown error
+    if (saveresponseState == "error-unknown"){document.getElementById("error").innerHTML="There was an error while saving the response you submitted, and it has been reported to the developer.";}
 }
 </script>
 <br>
