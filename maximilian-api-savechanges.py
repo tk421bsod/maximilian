@@ -101,8 +101,8 @@ def save():
         log.write("Error: " + str(e) + ". \n")
         log.flush()
         db.close()
-        return redirect('http://animationdoctorstudio.net/other-projects/maximilian/responses?redirectsource=saveresponse&responsesaved=error-unknown')
-
+        redirect('http://animationdoctorstudio.net/other-projects/maximilian/responses?redirectsource=saveresponse&responsesaved=error-unknown')
+        exit()
 
 
 if __name__ == '__main__':
