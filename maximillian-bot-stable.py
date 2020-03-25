@@ -191,33 +191,86 @@ async def on_message(message):
                 log.write("I posted a cat photo! \n")
             except Exception as e:
                 print(e)
+        if content.startswith("!disable dadjokes"):
+            try:
+                dbfile=pymysql.connect(host='10.0.0.193',
+                             user='tk421bsod',
+                             password=decrypted_data.decode(),
+                             db='maximilian',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+                db=dbfile.cursor()
+                print("Checking for duplicate entries...")
+                db.execute("select * from dadjokesdisabled where guild_id=%s;", (message.guild.id))
+                row = db.fetchone()
+                print (row)
+                if row == None:
+                    db.execute("insert into dadjokesdisabled(guild_id) values (%s);", (message.guild.id))
+                    dbfile.commit()
+                    await message.channel.send("Dad jokes have been disabled in this server.")
+                    db.close()
+                else:
+                    await message.channel.send("Dad jokes are already disabled in this server.")
+                    db.close()
+            except Exception as e:
+                print(e)
+        if content.startswith("!enable dadjokes"):
+            try:
+                dbfile=pymysql.connect(host='10.0.0.193',
+                             user='tk421bsod',
+                             password=decrypted_data.decode(),
+                             db='maximilian',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+                db=dbfile.cursor()
+                db.execute("select * from dadjokesdisabled where guild_id=%s", (message.guild.id))
+                row = db.fetchone()
+                if row != None:
+                    db.execute("delete from dadjokesdisabled where guild_id=%s;", (message.guild.id))
+                    dbfile.commit()
+                    await message.channel.send("Dad jokes have been enabled in this server.")
+                    db.close()
+                else:
+                    await message.channel.send("Dad jokes are already enabled in this server.")
+                    db.close()
+            except Exception as e:
+                if message.guild.id == 678789014869901342:
+                    await message.channel.send(str(e))
+                print(e)
         if "I'm" in content:
             try:
-                if message.author.id == int(503720029456695306):
-                    print("ignoring message by Dadbot")
-                elif message.author.id == int(675530484742094893):
-                    print("ignoring message by DocBot")
-                else:
-                    print (message.author.id)
-                    im = content.split(' ')
-                    imvalue = str(im[1])
-                    if imvalue == "Maximilian":
-                        await message.channel.send("You're not Maximilian, I'm Maximilian!")
-                    elif imvalue == "maximilian":
-                        await message.channel.send("You're not Maximilian, I'm Maximilian!")
-                    elif imvalue == "<@!620022782016618528>":
-                        await message.channel.send("You're not <@!620022782016618528>, I'm <@!620022782016618528>!")
-                    elif imvalue == "dad":
-                        q=1
-                        dad="hi dad i'm dad"
-                        while q !=0:
-                            await message.channel.send(dad)
-                            print(dad)
-                            dad="hi " + dad + " i'm dad"
+                dbfile=pymysql.connect(host='10.0.0.193',
+                             user='tk421bsod',
+                             password=decrypted_data.decode(),
+                             db='maximilian',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+                db=dbfile.cursor()
+                db.execute("select * from dadjokesdisabled where guild_id=%s", (message.guild.id))
+                row = db.fetchone()
+                if row == None:
+                    if message.author.id == int(503720029456695306):
+                        print("ignoring message by Dadbot")
+                    elif message.author.id == int(675530484742094893):
+                        print("ignoring message by DocBot")
                     else:
-                        immaxmilian = 'Hi ' + imvalue + ", I'm Maximilian!"
-                        await message.channel.send(immaxmilian)
+                        print (message.author.id)
+                        im = content.split(' ')
+                        imvalue = str(im[1])
+                        if imvalue == "Maximilian":
+                            await message.channel.send("You're not Maximilian, I'm Maximilian!")
+                        elif imvalue == "maximilian":
+                            await message.channel.send("You're not Maximilian, I'm Maximilian!")
+                        elif imvalue == "<@!620022782016618528>":
+                            await message.channel.send("You're not <@!620022782016618528>, I'm <@!620022782016618528>!")
+                        else:
+                            immaxmilian = 'Hi ' + imvalue + ", I'm Maximilian!"
+                            await message.channel.send(immaxmilian)
+                else:
+                    pass
             except Exception as e:
+                if message.guild.id == 678789014869901342:
+                    await message.channel.send(str(e))
                 print(e)
         '''
         for i in bannedwordslist:
@@ -251,6 +304,8 @@ async def on_raw_reaction_add(payload):
                 log.write("Sent an invite to " + str(payload.member.name) + "\n")
                 log.flush()
     except Exception as e:
+        if message.guild.id == 678789014869901342:
+            await message.channel.send(str(e))
         print(e)
 
 @client.event
