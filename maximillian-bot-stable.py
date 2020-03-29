@@ -260,6 +260,7 @@ async def on_message(message):
                 row = db.fetchone()
             db.execute('select * from covid19data order by date desc limit 1')
             row = db.fetchone()
+            dbfile.close()
             await message.channel.send("Total cases in the US: " + str(casenum) + " Total deaths in the US: " + str(deathnum) + " This information was last updated on " + str(row['date']) + ".")
         if "I'm" in content:
             try:
