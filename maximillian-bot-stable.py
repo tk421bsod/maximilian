@@ -237,8 +237,8 @@ async def on_message(message):
                 if message.guild.id == 678789014869901342:
                     await message.channel.send(str(e))
                 print(e)
-        if "!cv total" in content:
-            await message.channel.send("Processing, this may take a bit.")
+        if "!cv" in content:
+            arguments = content.split(" ")
             dbfile=pymysql.connect(host='10.0.0.193',
                             user='tk421bsod',
                             password=decrypted_data.decode(),
@@ -246,22 +246,32 @@ async def on_message(message):
                             charset='utf8mb4',
                             cursorclass=pymysql.cursors.DictCursor)
             db=dbfile.cursor()
-            db.execute("select * from covid19data;")
-            row = db.fetchone()
-            casenum = 0
-            deathnum = 0
-            while row != None:
-                casenum = casenum + int(row['cases'])
+            if arguments[1] == "total":
+                await message.channel.send("Processing, this may take a bit.")
+                db.execute('select * from covid19data order by date desc limit 1')
                 row = db.fetchone()
-            db.execute('select deaths from covid19data;')
-            row = db.fetchone()
-            while row != None:
-                deathnum = deathnum + int(row['deaths'])
+                date = str(row['date'])
+                db.execute("select cases from covid19data where date = %s;", (date, ))
                 row = db.fetchone()
-            db.execute('select * from covid19data order by date desc limit 1')
-            row = db.fetchone()
-            dbfile.close()
-            await message.channel.send("Total cases in the US: " + str(casenum) + " Total deaths in the US: " + str(deathnum) + " This information was last updated on " + str(row['date']) + ".")
+                casenum = 0
+                deathnum = 0
+                while row != None:
+                    casenum = casenum + int(row['cases'])
+                    row = db.fetchone()
+                db.execute('select deaths from covid19data where date = %s;', (date, ))
+                row = db.fetchone()
+                while row != None:
+                    deathnum = deathnum + int(row['deaths'])
+                    row = db.fetchone()
+                row = db.fetchone()
+                dbfile.close()
+
+                await message.channel.send("Total cases in the US: " + str(casenum) + " Total deaths in the US: " + str(deathnum) + " This information was last updated on " + str(date) + ".")
+            elif arguments[1] == "history":
+                db.execute("select date, cases, deaths from covid19data")
+                casenum1 = 0
+                casenum2 = 0
+                row = db.fetchone()
         if "I'm" in content:
             try:
                 dbfile=pymysql.connect(host='10.0.0.193',
