@@ -116,6 +116,12 @@ async def on_message(message):
                 log.write("Sent a custom response at " + str(datetime.datetime.now()))
                 log.flush()
                 await message.channel.send(row['response_text'])
+            db.execute("select * from prefixes where guild_id=%s", (message.guild.id, ))
+            prefixrow = db.fetchone()
+            if prefixrow != None:
+                prefix = str(prefixrow["prefix"])
+            elif prefixrow == None:
+                prefix = "!"
             db.close()
         except Exception as e:
             print(e)
@@ -163,8 +169,27 @@ async def on_message(message):
                         except Exception as e:
                             print(e)
             except Exception as e:
-                print(e)      
-
+                print(e)
+        if str(prefix) + "prefix" in content:
+            prefixargument = content.split(" ")[1]
+            dbfile=pymysql.connect(host='10.0.0.193',
+                             user='tk421bsod',
+                             password=decrypted_data.decode(),
+                             db='maximilian',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+            db=dbfile.cursor()
+            db.execute("select * from prefixes where guild_id=%s and prefix=%s", (message.guild.id, prefixargument))
+            row = db.fetchone()
+            if row == None:
+                await message.channel.send("Setting my prefix in this server to `" + str(prefixargument) + "`...")
+                db.execute("insert into prefixes(guild_id, prefix) values (%s, %s)", (message.guild.id, prefixargument))
+                dbfile.commit()
+                await message.channel.send("My prefix has been set to `" + str(prefixargument) + "` in this server. Use `" + str(prefixargument) + "` before any commands.")
+            elif row != None:
+                await message.channel.send("My prefix is already set to `" + str(prefixargument) + "` in this server.")
+        if str(prefix) + "help" in content:
+            await message.channel.send("Help: \n If you want to create a custom response, go to http://animationdoctorstudio.net/other-projects/maximilian/responses and fill out the form. \n Dad jokes: Dad jokes are enabled by default. To disable them, type `!disable dadjokes`. To enable them, type `!enable dadjokes`. \n ")
 
         if "<@!620022782016618528>" in content:
             try:
@@ -178,7 +203,7 @@ async def on_message(message):
                 log.flush()
             except Exception as e:
                 print(e)
-        if "$cats" in content:
+        if str(prefix) + "cats" in content:
             try:
                 embed.clear_fields()
                 catsurl = cats[random.randint(0, len(["https://cataas.com/cat", "https://cataas.com/cat/cute", "https://cataas.com/cat/gif"])-1)]
@@ -191,7 +216,7 @@ async def on_message(message):
                 log.write("I posted a cat photo! \n")
             except Exception as e:
                 print(e)
-        if content.startswith("!disable dadjokes"):
+        if content.startswith(str(prefix) + "disable dadjokes"):
             try:
                 dbfile=pymysql.connect(host='10.0.0.193',
                              user='tk421bsod',
@@ -214,7 +239,7 @@ async def on_message(message):
                     db.close()
             except Exception as e:
                 print(e)
-        if content.startswith("!enable dadjokes"):
+        if content.startswith(str(prefix) + "enable dadjokes"):
             try:
                 dbfile=pymysql.connect(host='10.0.0.193',
                              user='tk421bsod',
@@ -237,7 +262,7 @@ async def on_message(message):
                 if message.guild.id == 678789014869901342:
                     await message.channel.send(str(e))
                 print(e)
-        if "!cv" in content:
+        if str(prefix) + "cv" in content:
             arguments = content.split(" ")
             dbfile=pymysql.connect(host='10.0.0.193',
                             user='tk421bsod',
