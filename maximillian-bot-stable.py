@@ -183,8 +183,11 @@ async def on_message(message):
             row = db.fetchone()
             if row == None:
                 await message.channel.send("Setting my prefix in this server to `" + str(prefixargument) + "`...")
+                db.execute("delete from prefixes where guild_id=%s", (message.guild.id, ))
+                dbfile.commit()
                 db.execute("insert into prefixes(guild_id, prefix) values (%s, %s)", (message.guild.id, prefixargument))
                 dbfile.commit()
+                dbfile.close()
                 await message.channel.send("My prefix has been set to `" + str(prefixargument) + "` in this server. Use `" + str(prefixargument) + "` before any commands.")
             elif row != None:
                 await message.channel.send("My prefix is already set to `" + str(prefixargument) + "` in this server.")
