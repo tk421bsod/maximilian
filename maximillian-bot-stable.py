@@ -35,6 +35,7 @@ log = open("maximillian-bot-log.txt", "a")
 client = discord.Client()
 bot = discord.Client()
 '''
+commented out in case I want to use this later
 ## start ip commad
 def ip_command(message, client, args):
     try:
@@ -60,7 +61,42 @@ ch.add_command({
 })
 ## end ip command
 '''
-# bot is ready
+async def im_command(message)
+try:
+    dbfile=pymysql.connect(host='10.0.0.193',
+                    user='tk421bsod',
+                    password=decrypted_databasepassword.decode(),
+                    db='maximilian',
+                    charset='utf8mb4',
+                    cursorclass=pymysql.cursors.DictCursor)
+    db=dbfile.cursor()
+    db.execute("select * from dadjokesdisabled where guild_id=%s", (message.guild.id))
+    row = db.fetchone()
+    if row == None:
+        if message.author.id == int(503720029456695306):
+            print("ignoring message by Dadbot")
+        elif message.author.id == int(675530484742094893):
+            print("ignoring message by DocBot")
+        else:
+            print (message.author.id)
+            im = content.split('I\'m')
+            imvalue = str(im[1])
+            if imvalue == "Maximilian":
+                await message.channel.send("You're not Maximilian, I'm Maximilian!")
+            elif imvalue == "maximilian":
+                await message.channel.send("You're not Maximilian, I'm Maximilian!")
+            elif imvalue == "<@!620022782016618528>":
+                await message.channel.send("You're not <@!620022782016618528>, I'm <@!620022782016618528>!")
+            else:
+                immaxmilian = 'Hi ' + imvalue + ", I'm Maximilian!"
+                await message.channel.send(immaxmilian)
+    else:
+        pass
+except Exception as e:
+    if message.guild.id == 678789014869901342:
+        await message.channel.send(str(e))
+    print(e)
+# when bot is ready
 @client.event
 async def on_ready():
     try:
@@ -172,6 +208,8 @@ async def on_message(message):
                         except Exception as e:
                             print(e)
             except Exception as e:
+                if message.guild.id == 678789014869901342:
+                    await message.channel.send(str(e))
                 print(e)
         if str(prefix) + "prefix" in content:
             prefixargument = content.split(" ")[1]
@@ -197,30 +235,19 @@ async def on_message(message):
         if str(prefix) + "help" in content:
             await message.channel.send("Help: \n If you want to create a custom response, go to http://animationdoctorstudio.net/other-projects/maximilian/responses and fill out the form. \n Dad jokes: Dad jokes are enabled by default. To disable them, type `!disable dadjokes`. To enable them, type `!enable dadjokes`. \n ")
 
-        if "<@!620022782016618528>" in content:
-            try:
-                await message.channel.send("<@!" + str(message.author.id) + "> Jmm?")
-                mentioncounter = mentioncounter + 1
-                print(content)
-                print(mentioncounter)
-                log.writelines(str(mentioncounter))
-                print("Someone just mentioned me.")
-                log.write(" Someone just mentioned me. \n ")
-                log.flush()
-            except Exception as e:
-                print(e)
         if str(prefix) + "cats" in content:
             try:
                 embed.clear_fields()
-                catsurl = "https://cataas.com/cat"
-                print (catsurl)
                 embed = discord.Embed()
-                embed.set_image(url=catsurl)
+                embed.set_image(url="https://cataas.com/cat")
                 await message.channel.send(embed=embed)
 
                 log.write("I posted a cat photo! \n")
             except Exception as e:
+                if message.guild.id == 678789014869901342:
+                    await message.channel.send(str(e))
                 print(e)
+
         if content.startswith(str(prefix) + "disable dadjokes"):
             try:
                 dbfile=pymysql.connect(host='10.0.0.193',
@@ -243,6 +270,8 @@ async def on_message(message):
                     await message.channel.send("Dad jokes are already disabled in this server.")
                     db.close()
             except Exception as e:
+                if message.guild.id == 678789014869901342:
+                    await message.channel.send(str(e))
                 print(e)
         if content.startswith(str(prefix) + "enable dadjokes"):
             try:
@@ -269,6 +298,7 @@ async def on_message(message):
                 if message.guild.id == 678789014869901342:
                     await message.channel.send(str(e))
                 print(e)
+
         if str(prefix) + "cv" in content:
             arguments = content.split(" ")
             dbfile=pymysql.connect(host='10.0.0.193',
@@ -306,35 +336,7 @@ async def on_message(message):
                 row = db.fetchone()
         if "I'm" in content:
             try:
-                dbfile=pymysql.connect(host='10.0.0.193',
-                             user='tk421bsod',
-                             password=decrypted_databasepassword.decode(),
-                             db='maximilian',
-                             charset='utf8mb4',
-                             cursorclass=pymysql.cursors.DictCursor)
-                db=dbfile.cursor()
-                db.execute("select * from dadjokesdisabled where guild_id=%s", (message.guild.id))
-                row = db.fetchone()
-                if row == None:
-                    if message.author.id == int(503720029456695306):
-                        print("ignoring message by Dadbot")
-                    elif message.author.id == int(675530484742094893):
-                        print("ignoring message by DocBot")
-                    else:
-                        print (message.author.id)
-                        im = content.split(' ')
-                        imvalue = str(im[1])
-                        if imvalue == "Maximilian":
-                            await message.channel.send("You're not Maximilian, I'm Maximilian!")
-                        elif imvalue == "maximilian":
-                            await message.channel.send("You're not Maximilian, I'm Maximilian!")
-                        elif imvalue == "<@!620022782016618528>":
-                            await message.channel.send("You're not <@!620022782016618528>, I'm <@!620022782016618528>!")
-                        else:
-                            immaxmilian = 'Hi ' + imvalue + ", I'm Maximilian!"
-                            await message.channel.send(immaxmilian)
-                else:
-                    pass
+                im_command(message)
             except Exception as e:
                 if message.guild.id == 678789014869901342:
                     await message.channel.send(str(e))
