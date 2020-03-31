@@ -16,13 +16,17 @@ from cryptography.fernet import Fernet
 reecounter = 0
 jmmcounter = 0
 mentioncounter = 0
-global decrypted_data
+global decrypted_databasepassword
 with open("k.txt", "r") as kfile:
     key = kfile.readline()
 with open("dbp.txt", "r") as dbpfile:
     encrypted_data = dbpfile.readline()
     f = Fernet(key)
-    decrypted_data = f.decrypt(encrypted_data.encode('UTF-8'))
+    decrypted_databasepassword = f.decrypt(encrypted_data.encode('UTF-8'))
+with open("token.txt", "r") as tokenfile:
+    encrypted_token = tokenfile.readline()
+    f = Fernet(key)
+    decrypted_token = f.decrypt(encrypted_token.encode('UTF-8'))
 #bannedwordstxt = open("bannedwords.txt", "r")
 #bannedwordslist = bannedwordstxt.split(",")
 global log
@@ -30,7 +34,6 @@ log = open("maximillian-bot-log.txt", "a")
 # create discord client
 client = discord.Client()
 bot = discord.Client()
-token = 'NjIwMDIyNzgyMDE2NjE4NTI4.XXQwVA.NhpwNgamBA3DHvHoH8sRgt7_9oM'
 '''
 ## start ip commad
 def ip_command(message, client, args):
@@ -103,7 +106,7 @@ async def on_message(message):
         try:
             dbfile=pymysql.connect(host='10.0.0.193',
                              user='tk421bsod',
-                             password=decrypted_data.decode(),
+                             password=decrypted_databasepassword.decode(),
                              db='maximilian',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
@@ -174,7 +177,7 @@ async def on_message(message):
             prefixargument = content.split(" ")[1]
             dbfile=pymysql.connect(host='10.0.0.193',
                              user='tk421bsod',
-                             password=decrypted_data.decode(),
+                             password=decrypted_databasepassword.decode(),
                              db='maximilian',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
@@ -209,11 +212,10 @@ async def on_message(message):
         if str(prefix) + "cats" in content:
             try:
                 embed.clear_fields()
-                catsurl = cats[random.randint(0, len(["https://cataas.com/cat", "https://cataas.com/cat/cute", "https://cataas.com/cat/gif"])-1)]
-                print (str(url))
+                catsurl = "https://cataas.com/cat"
                 print (catsurl)
                 embed = discord.Embed()
-                embed.set_image(url=cats[url])
+                embed.set_image(url=catsurl)
                 await message.channel.send(embed=embed)
 
                 log.write("I posted a cat photo! \n")
@@ -223,7 +225,7 @@ async def on_message(message):
             try:
                 dbfile=pymysql.connect(host='10.0.0.193',
                              user='tk421bsod',
-                             password=decrypted_data.decode(),
+                             password=decrypted_databasepassword.decode(),
                              db='maximilian',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
@@ -246,7 +248,7 @@ async def on_message(message):
             try:
                 dbfile=pymysql.connect(host='10.0.0.193',
                              user='tk421bsod',
-                             password=decrypted_data.decode(),
+                             password=decrypted_databasepassword.decode(),
                              db='maximilian',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
@@ -256,6 +258,8 @@ async def on_message(message):
                 if row != None:
                     db.execute("delete from dadjokesdisabled where guild_id=%s;", (message.guild.id))
                     dbfile.commit()
+                    log.write("Dad jokes have been disabled in " + str(message.guild.name))
+                    log.flush()
                     await message.channel.send("Dad jokes have been enabled in this server.")
                     db.close()
                 else:
@@ -269,7 +273,7 @@ async def on_message(message):
             arguments = content.split(" ")
             dbfile=pymysql.connect(host='10.0.0.193',
                             user='tk421bsod',
-                            password=decrypted_data.decode(),
+                            password=decrypted_databasepassword.decode(),
                             db='covid19data',
                             charset='utf8mb4',
                             cursorclass=pymysql.cursors.DictCursor)
@@ -304,7 +308,7 @@ async def on_message(message):
             try:
                 dbfile=pymysql.connect(host='10.0.0.193',
                              user='tk421bsod',
-                             password=decrypted_data.decode(),
+                             password=decrypted_databasepassword.decode(),
                              db='maximilian',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
@@ -380,4 +384,4 @@ async def on_member_join(member, server):
     except Exception as e:
         print("Error while sending the welcome message:" + str(e))
 # start bot
-client.run(token)
+client.run(decrypted_token.decode())
