@@ -5,8 +5,7 @@ from discord import Reaction
 import requests
 import json
 import time
-import random 
-import pynput
+import random
 import os
 import psutil
 import re
