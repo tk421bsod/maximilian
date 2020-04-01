@@ -61,41 +61,41 @@ ch.add_command({
 })
 ## end ip command
 '''
-async def im_command(message)
-try:
-    dbfile=pymysql.connect(host='10.0.0.193',
-                    user='tk421bsod',
-                    password=decrypted_databasepassword.decode(),
-                    db='maximilian',
-                    charset='utf8mb4',
-                    cursorclass=pymysql.cursors.DictCursor)
-    db=dbfile.cursor()
-    db.execute("select * from dadjokesdisabled where guild_id=%s", (message.guild.id))
-    row = db.fetchone()
-    if row == None:
-        if message.author.id == int(503720029456695306):
-            print("ignoring message by Dadbot")
-        elif message.author.id == int(675530484742094893):
-            print("ignoring message by DocBot")
+async def im_command(message):
+    try:
+        dbfile=pymysql.connect(host='10.0.0.193',
+                        user='tk421bsod',
+                        password=decrypted_databasepassword.decode(),
+                        db='maximilian',
+                        charset='utf8mb4',
+                        cursorclass=pymysql.cursors.DictCursor)
+        db=dbfile.cursor()
+        db.execute("select * from dadjokesdisabled where guild_id=%s", (message.guild.id))
+        row = db.fetchone()
+        if row == None:
+            if message.author.id == int(503720029456695306):
+                print("ignoring message by Dadbot")
+            elif message.author.id == int(675530484742094893):
+                print("ignoring message by DocBot")
+            el                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 se:
+                print (message.author.id)
+                im = content.split('I\'m')
+                imvalue = str(im[1])
+                if imvalue == "Maximilian":
+                    await message.channel.send("You're not Maximilian, I'm Maximilian!")
+                elif imvalue == "maximilian":
+                    await message.channel.send("You're not Maximilian, I'm Maximilian!")
+                elif imvalue == "<@!620022782016618528>":
+                    await message.channel.send("You're not <@!620022782016618528>, I'm <@!620022782016618528>!")
+                else:
+                    immaxmilian = 'Hi ' + imvalue + ", I'm Maximilian!"
+                    await message.channel.send(immaxmilian)
         else:
-            print (message.author.id)
-            im = content.split('I\'m')
-            imvalue = str(im[1])
-            if imvalue == "Maximilian":
-                await message.channel.send("You're not Maximilian, I'm Maximilian!")
-            elif imvalue == "maximilian":
-                await message.channel.send("You're not Maximilian, I'm Maximilian!")
-            elif imvalue == "<@!620022782016618528>":
-                await message.channel.send("You're not <@!620022782016618528>, I'm <@!620022782016618528>!")
-            else:
-                immaxmilian = 'Hi ' + imvalue + ", I'm Maximilian!"
-                await message.channel.send(immaxmilian)
-    else:
-        pass
-except Exception as e:
-    if message.guild.id == 678789014869901342:
-        await message.channel.send(str(e))
-    print(e)
+            pass
+    except Exception as e:
+        if message.guild.id == 678789014869901342:
+            await message.channel.send(str(e))
+        print(e)
 # when bot is ready
 @client.event
 async def on_ready():
