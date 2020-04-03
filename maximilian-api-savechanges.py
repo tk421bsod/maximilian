@@ -1,4 +1,4 @@
-#flask, datetime, pymysql.cursors, and cryptography.fernet are needed for this, so import them
+#flask.Flask, flask.escape, flask.request, flask.redirect, datetime, pymysql.cursors, and cryptography.fernet.Fernet are needed for this, so import them
 from flask import Flask, escape, request, redirect
 import datetime
 import pymysql.cursors
@@ -75,10 +75,10 @@ def save():
                 test=int(guild_id)
                 print(test)
             except Exception as e:
-                log.write("The guild ID isn't a number. Redirecting... \n")
+                log.write("The guild ID isn't valid. Redirecting... \n")
                 log.flush()
                 db.close()
-                print("The guild ID isn't a number. Redirecting...")
+                print("The guild ID isn't valid. Redirecting...")
                 return redirect('http://animationdoctorstudio.net/other-projects/maximilian?redirectsource=saveresponse&responsesaved=error-guildid-invalid')
                 pass
             log.write("The guild ID is valid. Inserting data into table... \n")
