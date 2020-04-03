@@ -333,7 +333,7 @@ async def on_message(message):
                 casenum1 = 0
                 casenum2 = 0
                 row = db.fetchone()
-        if "I'm" in content:
+        if "I'm".lower() in content.lower():
             try:
                 im_command(message)
             except Exception as e:
