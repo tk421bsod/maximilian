@@ -1,23 +1,30 @@
- //common.js contains some common functions used throughout the web interface
+ //common.js: common functions used throughout the web interface put together in one file
 
 function save(path){
     let querystring = []
     var firstparturl="http://animationdoctorstudio.net:5000/other-projects/maximilian/api/" + path + "?"
-    //when button is clicked, check if fields are empty, from the top down
     var inputs, index;
+    //gets list of input elements
     inputs = document.getElementsByTagName('input');
+    //for each input element
     for (index = 0; index < inputs.length; ++index) {
+        //log the name of the element
         console.log(inputs[index].name)
         var idvalue=inputs[index]
+        //and check if that input field is empty
         if (idvalue.value=="") {
-            //if field is empty, say that it's empty
+            //if field is empty, display error message
             document.getElementById("error").innerHTML="The " + inputs[index].name + " field is empty, and there may be other fields that are empty. Make sure to fill every field out before clicking 'Save Changes'. ";
             return;
         }
+        //if that field isn't empty, concatenate a part of the query string
         querystring.push(inputs[index].name + "=" + inputs[index].value + "&" );
     }
+    //after that finishes, for each element in querystring
     for (const element of querystring) {
+        //add that element to firstparturl
         var url=firstparturl+element
+        //and set firstparturl to url, adding on to url with a new parameter for each input element
         var firstparturl=url
     }
 

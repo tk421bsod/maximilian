@@ -11,7 +11,7 @@ log.flush()
 
 app = Flask('maximilian-api-savechanges')
 
-@app.route('/other-projects/maximilian/api/savechanges', methods=['GET', 'POST'])
+@app.route('/other-projects/maximilian/api/', methods=['GET', 'POST'])
 def save():
     try:
         try:
@@ -57,6 +57,13 @@ def save():
         log.flush()
         log.write("Getting parameters from URL... \n")
         log.flush()
+        print (requests.args.items)
+        for each in requests.args.items:
+            print (each)
+        exit()
+        path = request.args.get('path', '')
+        #TODO: make this work for every form on the website by iterating over every item in requests.args and getting their values
+        #'path' is what form the request originated from
         guild_id = request.args.get('guild_id', '')
         print(guild_id)
         response_trigger = request.args.get('response_trigger', '')
