@@ -57,8 +57,8 @@ def save():
         log.flush()
         log.write("Getting parameters from URL... \n")
         log.flush()
-        print (requests.args.items)
-        for each in requests.args.items:
+        print (request.args.items)
+        for each in request.args.items:
             print (each)
         exit()
         path = request.args.get('path', '')
