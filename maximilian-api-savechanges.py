@@ -57,9 +57,8 @@ def save():
         log.flush()
         log.write("Getting parameters from URL... \n")
         log.flush()
-        print (request.args.items)
-        for each in request.args.items:
-            print (each)
+        for key, value in request.args.items:
+            print(key)
         exit()
         path = request.args.get('path', '')
         #TODO: make this work for every form on the website by iterating over every item in requests.args and getting their values
