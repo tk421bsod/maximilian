@@ -3,6 +3,7 @@ from flask import Flask, escape, request, redirect
 import datetime
 import pymysql.cursors
 from cryptography.fernet import Fernet
+import os
 #once imported, open the log file in append mode, as we don't want to overwrite the file every time this is ran
 log = open("maximilian-api-savechanges-log.txt", "a")
 #write the time the log file was opened and flush the buffer so changes appear immediately
@@ -59,7 +60,7 @@ def save():
         log.flush()
         for key, value in request.args.items:
             print(key)
-        exit()
+        os._exit()
         path = request.args.get('path', '')
         #TODO: make this work for every form on the website by iterating over every item in requests.args and getting their values
         #'path' is what form the request originated from
@@ -108,7 +109,7 @@ def save():
         log.flush()
         db.close()
         redirect('http://animationdoctorstudio.net/other-projects/maximilian/responses?redirectsource=saveresponse&responsesaved=error-unknown')
-        exit()
+        os._exit()
 
 
 if __name__ == '__main__':

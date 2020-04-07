@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="http://animationdoctorstudio.net/other-projects/maximilian/common.js"
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maximilian Web Interface (WIP)</title>
@@ -71,7 +72,7 @@ input:focus{
 <body>
 <h1>This is the web interface for Maximilian.</h1>
 <p>For now, you don't need to log in with your Discord account.</p>
-<p>Remember, this is a <b>WIP</b>, or <b>W</b>ork <b>I</b>n <b>P</b>rogress, and it may have bugs. If you find bugs, please let the developer know by <a href="mailto:tk421bsod.enwiki@gmail.com">emailing</a> them.</p>
+<p>This is a <b>WIP</b>, or <b>W</b>ork <b>I</b>n <b>P</b>rogress, and it may have bugs. If you find bugs, please let the developer know by <a href="mailto:tk421bsod.enwiki@gmail.com">emailing</a> them.</p>
 <br>
 <br>
 <p id="error"></p>
@@ -86,11 +87,11 @@ input:focus{
 <input type="text" id="message_id" placeholder="Enter the ID of the message you want users to react to.">
 <br>
 <br>
-<button id="savechanges" onclick=saveChange();>Save Changes</button>
+<button id="savechanges" onclick=save(path);>Save Changes</button>
 <br>
 <p id="savingchanges"></p>
 <script>
-
+var path = "roles"
 //gets url parameters, second argument is default value
 var sourceofredirect = getUrlParam('redirectsource','noredirect');
 var saveresponseState = getUrlParam('responsesaved', '' );
