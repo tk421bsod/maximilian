@@ -122,8 +122,6 @@ async def on_message(message):
     global bannedwordslist
     global bannedwordstxt
     content = message.content
-    author = str(message.author)
-    timestamp = str(message.created_at)
     data = ""
     system = ""
     systemlist = ""
@@ -131,7 +129,6 @@ async def on_message(message):
     args = []
     populatedsystems = []
     unpopulatedsystems = []
-    log.write(message.author.name + " sent a message at " + timestamp + " in " + message.guild.name + ". The message said: '" + str(content) + "'  \n ")
     print(content)
       # if the message is from the bot itself ignore it
     print("Memory usage in bytes: " + str(process.memory_info().rss)) 
@@ -223,11 +220,13 @@ async def on_message(message):
             row = db.fetchone()
             if row == None:
                 await message.channel.send("Setting my prefix in this server to `" + str(prefixargument) + "`...")
+                log.write("Setting my prefix in " + message.guild.name + " to" + str(prefixargument))
                 db.execute("delete from prefixes where guild_id=%s", (message.guild.id, ))
                 dbfile.commit()
                 db.execute("insert into prefixes(guild_id, prefix) values (%s, %s)", (message.guild.id, prefixargument))
                 dbfile.commit()
                 dbfile.close()
+                log.write("My prefix has been set to " + str(prefixargument) + " in " + message.guild.name + ".")
                 await message.channel.send("My prefix has been set to `" + str(prefixargument) + "` in this server. Use `" + str(prefixargument) + "` before any commands.")
             elif row != None:
                 await message.channel.send("My prefix is already set to `" + str(prefixargument) + "` in this server.")
