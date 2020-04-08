@@ -208,7 +208,8 @@ async def on_message(message):
                     await message.channel.send(str(e))
                 print(e)
         if str(prefix) + "prefix" in content:
-            prefixargument = content.split(" ")[1]
+            await message.channel.send("Maximilian is down for maintenance. \n To keep track of changes, join the Bot Test Zone (support server coming soon) at https://discord.gg/yHEJS2p. \n DM TK421bsod#7244 if you want an invite to the repository, to keep track of changes and help with development. \n *Don't be sad it's down, be excited for Maximilian v3!*")
+            '''prefixargument = content.split(" ")[1]
             dbfile=pymysql.connect(host='10.0.0.193',
                              user='tk421bsod',
                              password=decrypted_databasepassword.decode(),
@@ -230,11 +231,14 @@ async def on_message(message):
                 await message.channel.send("My prefix has been set to `" + str(prefixargument) + "` in this server. Use `" + str(prefixargument) + "` before any commands.")
             elif row != None:
                 await message.channel.send("My prefix is already set to `" + str(prefixargument) + "` in this server.")
+                '''
         if str(prefix) + "help" in content:
-            await message.channel.send("Help: \n If you want to create a custom response, go to http://animationdoctorstudio.net/other-projects/maximilian/responses and fill out the form. \n Dad jokes: Dad jokes are enabled by default. To disable them, type `!disable dadjokes`. To enable them, type `!enable dadjokes`. \n ")
+            await message.channel.send("Maximilian is down for maintenance. \n To keep track of changes, join the Bot Test Zone (support server coming soon) at https://discord.gg/yHEJS2p. \n DM TK421bsod#7244 if you want an invite to the repository, to keep track of changes and help with development. \n *Don't be sad it's down, be excited for Maximilian v3!*")
+            # await message.channel.send("Help: \n If you want to create a custom response, go to http://animationdoctorstudio.net/other-projects/maximilian/responses and fill out the form. \n Dad jokes: Dad jokes are enabled by default. To disable them, type `!disable dadjokes`. To enable them, type `!enable dadjokes`. \n ")
 
         if str(prefix) + "cats" in content:
-            try:
+            await message.channel.send("Maximilian is down for maintenance. \n To keep track of changes, join the Bot Test Zone (support server coming soon) at https://discord.gg/yHEJS2p. \n DM TK421bsod#7244 if you want an invite to the repository, to keep track of changes and help with development. \n *Don't be sad it's down, be excited for Maximilian v3!*")
+            '''try:
                 embed.clear_fields()
                 embed = discord.Embed()
                 embed.set_image(url="https://cataas.com/cat")
@@ -271,8 +275,10 @@ async def on_message(message):
                 if message.guild.id == 678789014869901342:
                     await message.channel.send(str(e))
                 print(e)
+                '''
         if content.startswith(str(prefix) + "enable dadjokes"):
-            try:
+            await message.channel.send("Maximilian is down for maintenance. \n To keep track of changes, join the Bot Test Zone (support server coming soon) at https://discord.gg/yHEJS2p. \n DM TK421bsod#7244 if you want an invite to the repository, to keep track of changes and help with development. \n *Don't be sad it's down, be excited for Maximilian v3!*")
+            '''try:
                 dbfile=pymysql.connect(host='10.0.0.193',
                              user='tk421bsod',
                              password=decrypted_databasepassword.decode(),
@@ -296,8 +302,10 @@ async def on_message(message):
                 if message.guild.id == 678789014869901342:
                     await message.channel.send(str(e))
                 print(e)
-
+'''
         if str(prefix) + "cv" in content:
+            await message.channel.send("Maximilian is down for maintenance. \n To keep track of changes, join the Bot Test Zone (support server coming soon) at https://discord.gg/yHEJS2p. \n DM TK421bsod#7244 if you want an invite to the repository, to keep track of changes and help with development. \n *Don't be sad it's down, be excited for Maximilian v3!*")
+            '''
             arguments = content.split(" ")
             dbfile=pymysql.connect(host='10.0.0.193',
                             user='tk421bsod',
@@ -340,7 +348,7 @@ async def on_message(message):
                     await message.channel.send(str(e))
                 print(e)
         '''
-        for i in bannedwordslist:
+        '''for i in bannedwordslist:
             if i in content:
                 try:
                     await message.delete()
@@ -357,7 +365,7 @@ async def on_message(message):
 @client.event
 @client.event
 async def on_raw_reaction_add(payload):
-    try:
+    '''try:
         if payload.guild_id == 631316422328451082:
             if payload.message_id == 682814407872348234:
                 role = discord.utils.get(payload.member.guild.roles, id=682818963193069663)
@@ -373,15 +381,7 @@ async def on_raw_reaction_add(payload):
     except Exception as e:
         if message.guild.id == 678789014869901342:
             await message.channel.send(str(e))
-        print(e)
+        print(e)'''
 
-@client.event
-async def on_member_join(member, server):
-    try:
-        #if str(guild.id) == "631316422328451082":
-        pass
-            #await channel.send(server, "Welcome to Carl's Loud Server! I'm <@!620022782016618528>, aka Maximillian, and one of the two AutoModerators on this server")
-    except Exception as e:
-        print("Error while sending the welcome message:" + str(e))
 # start bot
 client.run(decrypted_token.decode())
