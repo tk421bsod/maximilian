@@ -12,20 +12,11 @@ import re
 import pymysql
 import datetime
 from cryptography.fernet import Fernet
+from common import db
+from common import token
 reecounter = 0
 jmmcounter = 0
 mentioncounter = 0
-global decrypted_databasepassword
-with open("k.txt", "r") as kfile:
-    key = kfile.readline()
-with open("dbp.txt", "r") as dbpfile:
-    encrypted_data = dbpfile.readline()
-    f = Fernet(key)
-    decrypted_databasepassword = f.decrypt(encrypted_data.encode('UTF-8'))
-with open("token.txt", "r") as tokenfile:
-    encrypted_token = tokenfile.readline()
-    f = Fernet(key)
-    decrypted_token = f.decrypt(encrypted_token.encode('UTF-8'))
 #bannedwordstxt = open("bannedwords.txt", "r")
 #bannedwordslist = bannedwordstxt.split(",")
 global log
