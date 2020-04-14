@@ -4,10 +4,6 @@ import pymysql.cursors
 from cryptography.fernet import Fernet
 import os
 from common import db
-import requests
-
-dbinst = db()
-dbinst.connect("maximilian")
 #once imported, open the log file in append mode, as we don't want to overwrite the file every time this is ran
 log = open("maximilian-api-savechanges-log.txt", "a")
 #write the time the log file was opened and flush the buffer so changes appear immediately
@@ -22,11 +18,7 @@ def makegetrequest():
 @app.route('/other-projects/maximilian/api', methods=['GET', 'POST'])
 def save():
     try:
-        #this recieves requests originating from the save function in common.js
-        #data gets passed to this as parameters in a url, and this concatenates a dict containing the values and value names and passes all of the data to the insert function of common.py
-        print("Request recieved")
-        values = {}
-        #TODO: Use the 'logging' module for logging, as it simplifies this
+        db.connect()
         log.write("Request recieved at " + str(datetime.datetime.now()) + ". Processing request... \n")
         log.flush()
         log.write("Getting parameters from URL and concatenating dict from them... \n")
