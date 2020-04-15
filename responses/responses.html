@@ -71,8 +71,8 @@ button:hover{
 </head>
 <body>
 <h1>This is the web interface for Maximilian.</h1>
-<p>For now, you don't need to log in with your Discord account, and you can only create custom responses.</p>
-<p>Remember, this is a <b>WIP</b>, or <b>W</b>ork <b>I</b>n <b>P</b>rogress, and it may be broken. If you find bugs, please let the developer know by <a href="mailto:tk421bsod.enwiki@gmail.com">emailing</a> them.</p>
+<br>
+<p>Remember that this is a <b>WIP</b>, or <b>W</b>ork <b>I</b>n <b>P</b>rogress, and it may be broken. If you find bugs, please let the developer know by <a href="mailto:xtk421bsodx@gmail.com">emailing</a> them.</p>
 <br>
 <br>
 <p id="error"></p>
@@ -91,10 +91,13 @@ button:hover{
 <br>
 <p id="saving"></p>
 <script>
-var savechanges = "savechanges"
+var path = "responses"
+var database = "maximilian"
+var table = "responses"
+var debug = true
 //gets url parameters, second argument is default value
 var sourceofredirect = getUrlParam('redirectsource','noredirect');
-var saveresponseState = getUrlParam('responsesaved', '' );
+var saveresponseState = getUrlParam('changessaved', '' );
 if (sourceofredirect == "saveresponse") {
     //depending on the result, show a different message
     if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
