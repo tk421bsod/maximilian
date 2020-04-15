@@ -87,18 +87,19 @@ button:hover{
 <input type="text" id="response_text" name="response_text" placeholder="Enter the text that the bot should send.">
 <br>
 <br>
-<button id="saveresponse" onclick=save(savechanges);>Save Response</button>
+<button id="saveresponse" onclick=save(path,database,table,valuenodupe,debug);>Save Response</button>
 <br>
 <p id="saving"></p>
 <script>
-var path = "responses"
-var database = "maximilian"
-var table = "responses"
-var debug = true
+var path = "responses";
+var database = "maximilian";
+var table = "responses";
+var valuenodupe = "response_trigger";
+var debug = "True";
 //gets url parameters, second argument is default value
 var sourceofredirect = getUrlParam('redirectsource','noredirect');
-var saveresponseState = getUrlParam('changessaved', '' );
-if (sourceofredirect == "saveresponse") {
+var saveresponseState = getUrlParam('changessaved', '');
+if (sourceofredirect == "savechanges") {
     //depending on the result, show a different message
     if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
@@ -110,7 +111,7 @@ if (sourceofredirect == "saveresponse") {
         document.getElementById("guild_id").style.border = "10px solid red";
         document.getElementById("guild_id").focus;}
 //if there's an unknown error
-    if (saveresponseState == "error-unknown"){document.getElementById("error").innerHTML="There was an error while saving the response you submitted. it has been reported to the developer.";}
+    if (saveresponseState == "error-unknown"){document.getElementById("error").innerHTML="There was an error while saving the response you submitted. Please try again later.";}
 }
 </script>
 <br>
