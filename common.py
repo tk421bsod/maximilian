@@ -28,7 +28,7 @@ class db:
     
     def connect(self, database):
         #connect to db, this instance is also self.<name> because it needs to be accessible from elsewhere in the class
-        self.dbobj=pymysql.connect(host='10.0.0.193',
+        self.dbobj=pymysql.connect(host='10.0.0.51',
                     user="tk421bsod",
                     password=self.decrypted_databasepassword.decode(),
                     db=database,
@@ -40,22 +40,30 @@ class db:
         self.dbc=self.dbobj.cursor()
 
     def insert(self, database, table, valuesdict, valuenodupe, debug):
+        print("function called")
         #try to execute this code, if an exception occurs, stop execution of this function and execute code in the Except block at the bottom
         try:
+            print("connecting to db...")
             #connect to db
             self.connect(database)
+            print("connected to db")
             #for each key and value, join them together with a comma and space
             valuenames = ', '.join(list(valuesdict.keys()))
+            print("joined value names")
             valuestoinsert = ', '.join(list(valuesdict.values()))
+            print("joined values to insert")
             #use one %s for each key as a placeholder
             valueplaceholders = ', '.join(['%s' for i in range(len(list(valuesdict.keys())))])
+            print("put placeholders together")
             #then put it all together (append each item to a list, one at a time, except for placeholders)
             inserttokens = []
             inserttokens.append(table)
             inserttokens.append(valuenames)
             inserttokens.append(valuestoinsert)
+            print("put everything in inserttokens")
             #for every key, there's a value, so the same amount of placeholders should be used for both keys and values
             sql = "insert into %s (" + valueplaceholders + ") values (" + valueplaceholders + ")"
+            print("concatenated sql string")
             #if debug is enabled (set to true), print out some debugging information and exit
             if debug == True:
                 print("Value Names: " + str(valuenames))
@@ -64,7 +72,7 @@ class db:
                 print("Table: " + str(table))
                 print("SQL Query: " + str(sql))
                 print("Exiting...")
-                return
+                return "debuginfoprinted"
             #if debug is disabled (set to false)
             if debug == False:
                 #get the number of rows with duplicate values, valuenodupe is the value that distinguishes rows (like response_trigger for responses)
@@ -82,7 +90,7 @@ class db:
                     #then close the connection (since autocommit = True, changes don't need to be commited)
                     self.dbobj.close()
                     #and exit, showing that it succeeded
-                    return "successful"
+                    return "success"
         #if an exception occurs, assign that exception message to a variable
         except Exception as e: 
             #then print it and log the event to a file
