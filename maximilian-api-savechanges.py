@@ -35,7 +35,7 @@ def save():
                         values[key] = value
         log.write("Finished getting parameters. Inserting data, using common.py's insert function... \n")
         log.flush()
-        result = dbinst.insert("maximilian", table, values, valuenodupe, True)
+        result = dbinst.insert("maximilian", table, values, valuenodupe, False)
         print("called function")
         if result == "success":
             log.write("Successfully inserted data. Redirecting...")
