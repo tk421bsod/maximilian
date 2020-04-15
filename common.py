@@ -40,30 +40,22 @@ class db:
         self.dbc=self.dbobj.cursor()
 
     def insert(self, database, table, valuesdict, valuenodupe, debug):
-        print("function called")
         #try to execute this code, if an exception occurs, stop execution of this function and execute code in the Except block at the bottom
         try:
-            print("connecting to db...")
             #connect to db
             self.connect(database)
-            print("connected to db")
             #for each key and value, join them together with a comma and space
             valuenames = ', '.join(list(valuesdict.keys()))
-            print("joined value names")
             valuestoinsert = ', '.join(list(valuesdict.values()))
-            print("joined values to insert")
             #use one %s for each key as a placeholder
             valueplaceholders = ', '.join(['%s' for i in range(len(list(valuesdict.keys())))])
-            print("put placeholders together")
             #then put it all together (append each item to a list, one at a time, except for placeholders)
             inserttokens = []
             inserttokens.append(table)
             inserttokens.append(valuenames)
             inserttokens.append(valuestoinsert)
-            print("put everything in inserttokens")
             #for every key, there's a value, so the same amount of placeholders should be used for both keys and values
             sql = "insert into %s (" + valueplaceholders + ") values (" + valueplaceholders + ")"
-            print("concatenated sql string")
             #if debug is enabled (set to true), print out some debugging information and exit
             if debug == True:
                 print("Value Names: " + str(valuenames))
