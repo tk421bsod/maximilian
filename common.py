@@ -43,7 +43,10 @@ class db:
         #try to execute this code, if an exception occurs, stop execution of this function and execute code in the Except block at the bottom
         try:
             #connect to db
-            self.connect(database)
+            if debug == False:
+                self.connect(database)
+            else:
+                pass
             #for each key and value, join them together with a comma and space
             valuenames = ', '.join(list(valuesdict.keys()))
             valuestoinsert = ', '.join(list(valuesdict.values()))
