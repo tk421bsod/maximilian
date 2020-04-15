@@ -4,6 +4,10 @@ import datetime
 import pymysql.cursors
 from cryptography.fernet import Fernet
 import os
+from common import db
+
+dbinst = db()
+dbinst.connect("maximilian")
 #once imported, open the log file in append mode, as we don't want to overwrite the file every time this is ran
 log = open("maximilian-api-savechanges-log.txt", "a")
 #write the time the log file was opened and flush the buffer so changes appear immediately
@@ -15,101 +19,42 @@ app = Flask('maximilian-api-savechanges')
 @app.route('/other-projects/maximilian/api/', methods=['GET', 'POST'])
 def save():
     try:
-        try:
-            #decrypts database password using Fernet, resulting in better security at the cost of a couple tenths of a second
-            log.write("Decrypting database password... \n")
-            log.flush()
-            print("Decrypting database password...")
-            with open("k.txt", "r") as kfile:
-                #opens key file and assigns its contents to a variable
-                key = kfile.readline()
-            with open("dbp.txt", "r") as dbpfile:
-                #opens file containing encrypted password and assigns its contents to a variable
-                encrypted_data = dbpfile.readline()
-                #then creates an instance of Fernet with the key
-                f = Fernet(key)
-                #and decrypts the data with Fernet's decrypt function, making sure that the encrypted data has the proper encoding
-                decrypted_data = f.decrypt(encrypted_data.encode('UTF-8'))
-            log.write("Password decrypted. \n")
-            log.flush()
-            print("Password decrypted.")
-            print("Connecting to the database, this may take a bit.")
-            log.write("Connecting to the database, this may take a bit. \n")
-            log.flush()
-            #after decrypting the password, connect to the database
-            dbfile=pymysql.connect(host='10.0.0.193',
-                                    user='tk421bsod',
-                                    password=decrypted_data.decode(),
-                                    db='maximilian',
-                                    charset='utf8mb4',
-                                    cursorclass=pymysql.cursors.DictCursor)
-            #create the cursor object
-            db=dbfile.cursor()
-            #then write that the connection was successful, to both the log and the terminal
-            log.write("Successfully connected to the database at " + str(datetime.datetime.now()) + ". \n")
-            print("Successfully connected to the database at " + str(datetime.datetime.now()) + ".")
-            log.flush()
-        except Exception as e:
-            #if there's an error while executing any of this code
-            print("Error while connecting to the database: " + str(e) + " Check the log file for more details.")
-            log.write("Error while connecting to the database: " + str(e) + ". \n")
-            log.flush()
+        values = {}
         log.write("Request recieved at " + str(datetime.datetime.now()) + ". Processing request... \n")
         log.flush()
-        log.write("Getting parameters from URL... \n")
+        log.write("Getting parameters from URL and concatenating dict from them... \n")
         log.flush()
-        for key, value in request.args.items:
-            print(key)
-        os._exit()
+        print("getting parameters...")
+        valuenodupe = request.args.get('valuenodupe', '')
+        table = request.args.get('table', '')
         path = request.args.get('path', '')
-        #TODO: make this work for every form on the website by iterating over every item in requests.args and getting their values
-        #'path' is what form the request originated from
-        guild_id = request.args.get('guild_id', '')
-        print(guild_id)
-        response_trigger = request.args.get('response_trigger', '')
-        print(response_trigger)
-        response_text = request.args.get('response_text', '')
-        print(response_text)
-        log.write("Finished getting parameters. Checking for duplicate entries... \n")
+        for key, value in request.args.items():
+            if value != valuenodupe:
+                if value != table:
+                    if value != path:
+                        values[key] = value
+        log.write("Finished getting parameters. Inserting data, using common.py's insert function... \n")
         log.flush()
-        db.execute("select * from responses where guild_id=%s and response_trigger=%s;", (guild_id, response_trigger))
-        row = db.fetchone()
-        print(row)
-        if row == None:
-            log.write("No duplicates found. Validating guild ID... \n")
+        result = dbinst.insert("maximilian", table, values, valuenodupe, False)
+        print("called function")
+        if result == "success":
+            log.write("Successfully inserted data. Redirecting...")
             log.flush()
-            try:
-                test=int(guild_id)
-                print(test)
-            except Exception as e:
-                log.write("The guild ID isn't valid. Redirecting... \n")
-                log.flush()
-                db.close()
-                print("The guild ID isn't valid. Redirecting...")
-                return redirect('http://animationdoctorstudio.net/other-projects/maximilian?redirectsource=saveresponse&responsesaved=error-guildid-invalid')
-                pass
-            log.write("The guild ID is valid. Inserting data into table... \n")
-            log.flush()
-            db.execute("INSERT INTO responses(guild_id, response_trigger, response_text) VALUES (%s, %s, %s);", (guild_id, response_trigger, response_text))
-            log.write("Data inserted. Committing changes... \n")
-            log.flush()
-            dbfile.commit()
-            log.write("Changes committed. Redirecting... \n")
-            log.flush()
-            db.close()
-            return redirect('http://animationdoctorstudio.net/other-projects/maximilian?redirectsource=saveresponse&responsesaved=successful')
-        else:
-            log.write("Duplicate found. Redirecting... \n")
-            log.flush()
-            db.close()
-            return redirect('http://animationdoctorstudio.net/other-projects/maximilian?redirectsource=saveresponse&responsesaved=error-duplicate')
+            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=success' )
+        elif result == "debuginfoprinted":
+            print("Debug info was printed successfully.")
+            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path)
+        elif result == "error-duplicate":
+            log.write("Duplicate found. Redirecting...")
+            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-duplicate')
+        elif result == "error-unhandled":
+            log.write("An unhandled error occured while inserting data. Redirecting...")
+            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changesaved=error-unknown')
     except Exception as e:
         print("Error: " + str(e) + ". Check the log file for more details.")
         log.write("Error: " + str(e) + ". \n")
         log.flush()
-        db.close()
-        redirect('http://animationdoctorstudio.net/other-projects/maximilian/responses?redirectsource=saveresponse&responsesaved=error-unknown')
-        os._exit()
+        return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changesaved=error-unknown')
 
 
 if __name__ == '__main__':
