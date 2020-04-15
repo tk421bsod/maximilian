@@ -28,14 +28,24 @@ def save():
         valuenodupe = request.args.get('valuenodupe', '')
         table = request.args.get('table', '')
         path = request.args.get('path', '')
+        database = request.args.get('database', '')
+        debug = bool(request.args.get('debug', ''))
         for key, value in request.args.items():
             if value != valuenodupe:
                 if value != table:
                     if value != path:
-                        values[key] = value
+                        if value != str(debug):
+                            if value != database:
+                                values[key] = value
         log.write("Finished getting parameters. Inserting data, using common.py's insert function... \n")
         log.flush()
-        result = dbinst.insert("maximilian", table, values, valuenodupe, False)
+        if debug == True:
+            print(valuenodupe)
+            print(str(values))
+            print(table)
+            print(path)
+            print(debug)
+        result = dbinst.insert(database, table, values, valuenodupe, debug)
         print("called function")
         if result == "success":
             log.write("Successfully inserted data. Redirecting...")
@@ -49,7 +59,7 @@ def save():
             return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-duplicate')
         elif result == "error-unhandled":
             log.write("An unhandled error occured while inserting data. Redirecting...")
-            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changesaved=error-unknown')
+            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-unknown')
     except Exception as e:
         print("Error: " + str(e) + ". Check the log file for more details.")
         log.write("Error: " + str(e) + ". \n")
