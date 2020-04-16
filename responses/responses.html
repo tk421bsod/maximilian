@@ -76,6 +76,9 @@ button:hover{
 <br>
 <br>
 <p id="error"></p>
+<p id="technicalinfo" style="opacity:0;height:0;"></p>
+<button id="technicalinfobutton" style="opacity:0; padding:0.5% 2.5% 0.5% 2.5%;" onclick=showtechnicalinfo();></button>
+
 <br>
 <br>
 <input type="text" id="guild_id" name="guild_id" placeholder="Enter the ID of the server you want to create the custom response for.">
@@ -92,7 +95,7 @@ button:hover{
 <p id="saving"></p>
 <script>
 var path = "responses";
-var database = "maximilian";
+var database = "maximilian-test";
 var table = "responses";
 var valuenodupe = "response_trigger";
 var debug = "True";
@@ -101,7 +104,7 @@ var sourceofredirect = getUrlParam('redirectsource','noredirect');
 var saveresponseState = getUrlParam('changessaved', '');
 if (sourceofredirect == "savechanges") {
     //depending on the result, show a different message
-    if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
+    if (saveresponseState == "successful"){document.getElementById("saving").innerHTML="Your custom response was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
     //if the guild id is invalid
     if (saveresponseState == "error-guildid-invalid"){        
