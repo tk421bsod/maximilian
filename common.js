@@ -9,9 +9,8 @@ function save(path, database, table, valuenodupe, debug){
     inputs = document.getElementsByTagName('input');
     //for each input element
     for (index = 0; index < inputs.length; ++index) {
-        //log the name of the element
         var idvalue=inputs[index]
-        //and check if that input field is empty
+        //check if that input field is empty
         if (idvalue.value=="") {
             //if field is empty, display error message
             document.getElementById("error").innerHTML="The " + inputs[index].name + " field is empty, and there may be other fields that are empty. Make sure to fill every field out before clicking 'Save Changes'. ";
@@ -32,13 +31,22 @@ function save(path, database, table, valuenodupe, debug){
     var url = url + otherparams
     //if no fields are empty, don't display error message
     document.getElementById("error").innerHTML = "";
-    //show that response is being saved
+    //show that changes are being saved
     document.getElementById("saving").innerHTML="Saving...";
     //redirect to that url
     window.location.href = url;
-    }
-    catch (error) {
-        console.log(error);
+    } catch (error) {
+        document.getElementById("error").innerHTML = "There was an error while saving changes. Please try again later.";
+        document.getElementById("saving").innerHTML="";
+        console.error(error)
+        var technicalinfo = "Error: " + error.message + ". This error was client-side.";
+        buttonclicked = 0;
+        document.getElementById("technicalinfobutton").innerHTML = "Click to show technical info";
+        document.getElementById("technicalinfobutton").style.opacity = "1";
+        document.getElementById("technicalinfo").innerHTML = technicalinfo;
+        throw error
+        
+        return;
     }
 }
     function getUrlVars() {
@@ -48,10 +56,23 @@ function save(path, database, table, valuenodupe, debug){
         });
         return vars;
     }
-    function getUrlParam(parameter, defaultvalue){
-        var urlparameter = defaultvalue;
-        if(window.location.href.indexOf(parameter) > -1){
-            urlparameter = getUrlVars()[parameter];
-            }
+function getUrlParam(parameter, defaultvalue){
+    var urlparameter = defaultvalue;
+    if(window.location.href.indexOf(parameter) > -1){
+        urlparameter = getUrlVars()[parameter];
+        }
         return urlparameter;
     }
+function showtechnicalinfo(){
+    buttonclicked=buttonclicked+1;
+    if (Math.abs(buttonclicked % 2) == 1){
+        document.getElementById("technicalinfobutton").innerHTML="Click to hide technical info"
+        document.getElementById("technicalinfo").style.height="auto"
+        document.getElementById("technicalinfo").style.opacity="1"
+    }
+    else{
+        document.getElementById("technicalinfobutton").innerHTML="Click to show technical info"
+        document.getElementById("technicalinfo").style.height="0"
+        document.getElementById("technicalinfo").style.opacity="0"
+    }
+}
