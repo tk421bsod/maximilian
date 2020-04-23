@@ -55,7 +55,11 @@ class db:
             #use one %s for each key as a placeholder
             print("concatenating placeholders")
             valuenameplaceholders = ', '.join([f'{i}' for i in list(valuesdict.keys())])
-            valueplaceholders = ', '.join([f'{i}' for i in list(valuesdict.values())])
+            valueplaceholders = ', '.join(['%s' for i in list(valuesdict.values())])
+            values =  ', '.join([i for i in list(valuesdict.values())])
+            print(values)
+            valueslist = list(valuesdict.values())
+            print(str(valueslist))
             print("concatenating inserttokens")
             #then put it all together (append each item to a list, one at a time, except for placeholders)
             #for every key, there's a value, so the same amount of placeholders should be used for both keys and values
@@ -91,10 +95,13 @@ class db:
                     return "error-duplicate"
                 else:
                     print("no duplicates found")
-                    #if there aren't any duplicate values, insert data
                     print(sql)
-                    print(inserttokens)
-                    self.dbc.execute(sql)
+                    print("insert into passwords (" + valuenameplaceholders + ") values (" + valueslist + ")")
+                    print(sql)
+                    print(valueslist)
+                    print(str(valueslist))
+                    print(str(valueslist).replace("[", "").replace("]", ""))
+                    self.dbc.execute(sql, (valueslist))
                     print("data inserted")
                     #then close the connection (since autocommit = True, changes don't need to be commited)
                     self.dbobj.close()
