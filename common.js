@@ -1,6 +1,6 @@
  //common.js: common functions used throughout the web interface put together in one file
 
-function save(path, database, table, valuenodupe, debug){
+function save(path, database, table, valuenodupe, valueallnum, debug){
     try {
     let querystring = []
     var firstparturl="http://animationdoctorstudio.net:5000/other-projects/maximilian/api?"
@@ -27,7 +27,7 @@ function save(path, database, table, valuenodupe, debug){
         var firstparturl=url
     }
     //then add other parameters to the url, specified in arguments
-    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&debug=" + debug
+    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&debug=" + debug + "&valueallnum=" + valueallnum
     var url = url + otherparams
     //if no fields are empty, don't display error message
     document.getElementById("error").innerHTML = "";
@@ -39,7 +39,7 @@ function save(path, database, table, valuenodupe, debug){
         document.getElementById("error").innerHTML = "There was an error while saving changes. Please try again later.";
         document.getElementById("saving").innerHTML="";
         console.error(error)
-        var technicalinfo = "Error: " + error.message + ". This error was client-side.";
+        var technicalinfo = "Error: " + error.message + ". This error was client-side, and it occured in common.js.";
         buttonclicked = 0;
         document.getElementById("technicalinfobutton").innerHTML = "Click to show technical info";
         document.getElementById("technicalinfobutton").style.opacity = "1";
