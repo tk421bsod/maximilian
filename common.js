@@ -64,6 +64,7 @@ function getUrlParam(parameter, defaultvalue){
         return urlparameter;
     }
 function showtechnicalinfo(){
+    //probably not the best way to do this, could result in an integer overflow if the user clicks the button too much
     buttonclicked=buttonclicked+1;
     if (Math.abs(buttonclicked % 2) == 1){
         document.getElementById("technicalinfobutton").innerHTML="Click to hide technical info"
