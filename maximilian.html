@@ -7,14 +7,27 @@
     <link rel="stylesheet" href="common.css">
 </head>
 <body>
+<h1 id="error"></h1>
 <h1 style="font-size: 40pt; padding-bottom:10px;">Maximilian</h1>
 <h4 style="padding-bottom:20px;">A free and soon-to-be <!-- <a href="gitlab.com/TK421bsod/maximilian"> -->open source<!-- </a> --> Discord bot under development, written in Python.</h4>
 <!-- <button onclick=discordLogin(); id="discordlogin">Log In With Discord</button> -->
-<p style="padding-bottom:20px;">The bot is down right now, as I'm working on completely rewriting it. Thank you for your patience. You can follow the progress by joining the "Bot Test Zone" discord server <a href="https://discord.gg/cXy5Bbv">here</a>. (support server and public repository coming soon)</p>
+<p style="padding-bottom:20px;">The bot is down right now, as I'm working on completely rewriting it. Thank you for your patience. You can follow the progress by joining Maximilian's support server <a href="https://discord.gg/cXy5Bbv">here</a>. (public repository coming soon)</p>
 <!-- <p>You can change Maximilian's prefix <a href="http://animationdoctorstudio.net/other-projects/maximilian/prefixes">here</a>.</p>
 <p>If you're looking to create a custom response, you can do that <a href="http://animationdoctorstudio.net/other-projects/maximilian/responses"> here</a>.</p>
 -->
 <script>
+var styles = document.styleSheets;
+for (var i = 0; i < styles.length; i++) {
+    if (styles[i].href.match("common")) {
+        if (styles[i].cssRules != null && styles[i].cssRules.length == 0) {
+            document.getElementById("error").innerHTML = "If you're seeing this message, the styling for this page failed to load. You can still use this page, but it won't look very good. Please try refreshing the page. If that doesn't work, try clearing your cache. If you downloaded this file locally, try accessing the website. If it's down, then the styling couldn't be loaded because the server's down. In that case, please try again later."
+            break;
+        }
+        else {
+            document.getElementById("error").innerHTML = ""
+        }
+    }
+}
 </script>
 <footer style="font-size:x-small">Made with ♥️ by TK421bsod</footer>    
 </body>
