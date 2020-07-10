@@ -15,12 +15,12 @@ class db:
         #ran when an instance of this class is created
         #decrypts database password
         with open("k.txt", "r") as kfile:
-            key = kfile.readline()
+            self.key = kfile.readline()
         with open("dbp.txt", "r") as dbpfile:
             #get encrypted data from file
             encrypted_data = dbpfile.readline()
             #create an instance of Fernet
-            f = Fernet(key)
+            f = Fernet(self.key)
             #self refers to this class, so any variable defined outside functions becomes self.<name>, and can be accessed from anywhere in the class. 
             #in this case, we need the decrypted database password to be accessible from anywhere in the class, like the connect function below.
             #this uses Fernet to decrypt the password
@@ -40,6 +40,8 @@ class db:
         self.dbc=self.dbobj.cursor()
 
     def insert(self, database, table, valuesdict, valuenodupe, debug, valueallnum, valueallnumenabled):
+        #maximilian-api-savechanges.py passes data to this, where it concatenates lists of values to insert, value placeholders, and checks if data is valid and has no duplicates.
+        #this is one of the only functions that actually connects to a db
         #try to execute this code, if an exception occurs, stop execution of this function and execute code in the Except block at the bottom
         try:
             #connect to db
@@ -132,9 +134,11 @@ class db:
 class token:
     def decrypt(self):
         with open("token.txt", "r") as tokenfile:
+            with open("k.txt", "r") as kfile:
+                self.key = kfile.readline()
             #use fernet to decrypt token, returning token
             encrypted_token = tokenfile.readline()
-            f = Fernet(key)
+            f = Fernet(self.key)
             decrypted_token = f.decrypt(encrypted_token.encode('UTF-8'))
             return decrypted_token.decode()
 
