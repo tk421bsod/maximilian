@@ -53,7 +53,6 @@ class db:
             print("concatenating value names")
             valuenames = ', '.join(list(valuesdict.keys()))
             print("concatenating values to insert")
-            valuestoinsert = ', '.join(list(valuesdict.values()))
             #use one %s for each key as a placeholder
             print("concatenating placeholders")
             valuenameplaceholders = ', '.join([f'{i}' for i in list(valuesdict.keys())])
@@ -70,8 +69,8 @@ class db:
             #if debug is enabled (set to true), print out some debugging information and exit
             if debug == True:
                 print("Value Names: " + str(valuenames))
-                print("Placeholders: " + str(valueplaceholders))
-                print("Data to insert: " + str(inserttokens))
+                print("Placeholders: " + str(valuenameplaceholders))
+                print("Data to insert: " + str(values))
                 print("Table: " + str(table))
                 print("SQL Query: " + str(sql))
                 print("Exiting...")
