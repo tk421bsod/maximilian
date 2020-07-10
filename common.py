@@ -50,21 +50,15 @@ class db:
             else:
                 pass
             #for each key and value, join them together with a comma and space
-            print("concatenating value names")
             valuenames = ', '.join(list(valuesdict.keys()))
-            print("concatenating values to insert")
             #use one %s for each key as a placeholder
             print("concatenating placeholders")
             valuenameplaceholders = ', '.join([f'{i}' for i in list(valuesdict.keys())])
             valueplaceholders = ', '.join(['%s' for i in list(valuesdict.values())])
             values =  ', '.join([i for i in list(valuesdict.values())])
-            print(values)
             valueslist = list(valuesdict.values())
-            print(str(valueslist))
-            print("concatenating inserttokens")
             #then put it all together (append each item to a list, one at a time, except for placeholders)
             #for every key, there's a value, so the same amount of placeholders should be used for both keys and values
-            print("concatenating query")
             sql = f"insert into {table} (" + valuenameplaceholders + ") values (" + valueplaceholders + ")"
             #if debug is enabled (set to true), print out some debugging information and exit
             if debug == True:
@@ -76,34 +70,23 @@ class db:
                 print("Exiting...")
                 return "debuginfoprinted"
             #if debug is disabled (set to false)
-            print("checking if valueallnum is enabled")
             if debug == False:
                 if valueallnumenabled == True:
                     try:
                         checkallnum = int(valuesdict[valueallnum])
                     except Exception as e:
                         return "error-valuenotallnum"
-                print('checking for duplicates')
                 #get the number of rows with duplicate values, valuenodupe is the value that distinguishes rows (like response_trigger for responses)
                 self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
                 #set a variable to that result
                 row = self.dbc.fetchone()
                 #if the number of rows is greater than 0,
-                print("nearly finished checking for duplicates")
                 if row['count(*)'] > 0:
                     #there's a duplicate
                     #if there's a duplicate, exit and return an error message
                     return "error-duplicate"
                 else:
-                    print("no duplicates found")
-                    print(sql)
-                    print("insert into passwords (" + valuenameplaceholders + ") values (" + valueslist + ")")
-                    print(sql)
-                    print(valueslist)
-                    print(str(valueslist))
-                    print(str(valueslist).replace("[", "").replace("]", ""))
                     self.dbc.execute(sql, (valueslist))
-                    print("data inserted")
                     #then close the connection (since autocommit = True, changes don't need to be commited)
                     self.dbobj.close()
                     #and exit, showing that it succeeded
@@ -113,8 +96,8 @@ class db:
             #then print it and log the event to a file
             print("Error: " + e + ". Exiting...")
             with open("exceptiondump.txt", "a") as dumpfile:
-                dumpfile.write("\n An exception occurred while inserting data into the database at " + str(datetime.datetime.now()) + ".\n The exception was " + str(e) + ". Check the log file for more details.")
-            #and return an error message
+                dumpfile.write("\n An exception occurred while inserting data into the database at " + str(datetime.datetime.now()) + ".\n The exception was " + str(e) + ".")
+            #and return an error 
             return "error-unhandled"
     
     def retrieve(self, database, table, valuenametoretrieve, retrievedvalue, valuetoretrieve, debug):
