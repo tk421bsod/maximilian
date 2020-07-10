@@ -1,9 +1,3 @@
-'''
-A portion of Maximilian's API, used for saving changes
-'''
-
-
-
 #flask.Flask, flask.escape, flask.request, flask.redirect, datetime, pymysql.cursors, and cryptography.fernet.Fernet are needed for this, so import them
 #This is an older version of the API, so this might not work (also it needs to be refactored)
 from flask import Flask, escape, request, redirect
@@ -40,7 +34,9 @@ def save():
         table = request.args.get('table', '')
         path = request.args.get('path', '')
         database = request.args.get('database', '')
-        debug = bool(request.args.get('debug', ''))
+        debug = bool(request.args.get('debug', 'false'))
+        valueallnum = request.args.get('valueallnum', '')
+        valueallnumenabled = bool(request.args.get('valueallnumenabled', 'false'))
         print("appending values to dict of values")
         for key, value in request.args.items():
             if value != valuenodupe:
@@ -57,7 +53,7 @@ def save():
             print(table)
             print(path)
             print(debug)
-        result = dbinst.insert(database, table, values, valuenodupe, debug)
+        result = dbinst.insert(database, table, values, valuenodupe, debug, valueallnum, valueallnumenabled)
         print("called function")
         if result == "success":
             log.write("Successfully inserted data. Redirecting...")
