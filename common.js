@@ -1,6 +1,7 @@
  //common.js: common functions used throughout the web interface put together in one file
-
 function save(path, database, table, valuenodupe, valueallnum, debug){
+    //this function is ran client-side, and data gets passed to it through parameters
+    //basically this takes data, does some checks to validate it, displays an error message if it's not valid, then passes the data to maximilian-api-savechanges.py through a query string
     try {
     let querystring = []
     var firstparturl="http://animationdoctorstudio.net:5000/other-projects/maximilian/api?"
@@ -64,7 +65,6 @@ function getUrlParam(parameter, defaultvalue){
         return urlparameter;
     }
 function showtechnicalinfo(){
-    //probably not the best way to do this, could result in an integer overflow if the user clicks the button too much
     buttonclicked=buttonclicked+1;
     if (Math.abs(buttonclicked % 2) == 1){
         document.getElementById("technicalinfobutton").innerHTML="Click to hide technical info"
