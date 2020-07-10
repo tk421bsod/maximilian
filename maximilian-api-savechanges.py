@@ -1,4 +1,11 @@
+'''
+A portion of Maximilian's API, used for saving changes
+'''
+
+
+
 #flask.Flask, flask.escape, flask.request, flask.redirect, datetime, pymysql.cursors, and cryptography.fernet.Fernet are needed for this, so import them
+#This is an older version of the API, so this might not work (also it needs to be refactored)
 from flask import Flask, escape, request, redirect
 import datetime
 import pymysql.cursors
@@ -19,7 +26,11 @@ app = Flask('maximilian-api-savechanges')
 @app.route('/other-projects/maximilian/api/', methods=['GET', 'POST'])
 def save():
     try:
+        #this recieves requests originating from the save function in common.js
+        #data gets passed to this as parameters in a url, and this concatenates a dict containing the values and value names and passes all of the data to the insert function of common.py
+        print("Request recieved")
         values = {}
+        #TODO: Use the 'logging' module for logging, as it simplifies this
         log.write("Request recieved at " + str(datetime.datetime.now()) + ". Processing request... \n")
         log.flush()
         log.write("Getting parameters from URL and concatenating dict from them... \n")
@@ -30,6 +41,7 @@ def save():
         path = request.args.get('path', '')
         database = request.args.get('database', '')
         debug = bool(request.args.get('debug', ''))
+        print("appending values to dict of values")
         for key, value in request.args.items():
             if value != valuenodupe:
                 if value != table:
@@ -37,7 +49,7 @@ def save():
                         if value != str(debug):
                             if value != database:
                                 values[key] = value
-        log.write("Finished getting parameters. Inserting data, using common.py's insert function... \n")
+        log.write("Finished getting parameters. Inserting data... \n")
         log.flush()
         if debug == True:
             print(valuenodupe)
