@@ -4,12 +4,14 @@ from common import db
 from common import token
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 tokeninst = token()
 dbinst = db()
-client = discord.Client()
-bot = discord.ext.commands()
+bot = commands.Bot(command_prefix='!')
 decrypted_token = tokeninst.decrypt()
 
+@bot.command()
+async def test(ctx):
+    await ctx.send("Test")
 
-client.run(decrypted_token.decode())
+bot.run(decrypted_token)
