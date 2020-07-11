@@ -28,7 +28,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
         var firstparturl=url
     }
     //then add other parameters to the url, specified in arguments
-    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&debug=" + debug + "&valueallnum=" + valueallnum
+    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&debug=" + debug + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled
     var url = url + otherparams
     //if no fields are empty, don't display error message
     document.getElementById("error").innerHTML = "";
