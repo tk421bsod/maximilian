@@ -1,7 +1,7 @@
  //common.js: common functions used throughout the web interface put together in one file
-function save(path, database, table, valuenodupe, valueallnum, debug){
+function save(path, database, table, valuenodupe, valueallnum, valueallnumenabled, debug){
     //this function is ran client-side, and data gets passed to it through parameters
-    //basically this takes data, does some checks to validate it, displays an error message if it's not valid, then passes the data to maximilian-api-savechanges.py through a query string
+    //basically this takes data, does some checks to validate it, displays an error message if it's not valid, then passes the data to maximilian-api-savechanges.py through a GET request
     try {
     let querystring = []
     var firstparturl="http://animationdoctorstudio.net:5000/other-projects/maximilian/api?"
