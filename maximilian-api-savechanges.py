@@ -1,5 +1,3 @@
-#flask.Flask, flask.escape, flask.request, flask.redirect, datetime, pymysql.cursors, and cryptography.fernet.Fernet are needed for this, so import them
-#This is an older version of the API, so this might not work (also it needs to be refactored)
 from flask import Flask, escape, request, redirect
 import datetime
 import pymysql.cursors
@@ -67,12 +65,12 @@ def save():
             return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-duplicate')
         elif result == "error-unhandled":
             log.write("An unhandled error occured while inserting data. Redirecting...")
-            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-unknown')
+            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error='+dbinst.error+'&errorlocation=common-py-inserting-data')
     except Exception as e:
         print("Error: " + str(e) + ". Check the log file for more details.")
         log.write("Error: " + str(e) + ". \n")
         log.flush()
-        return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changesaved=error-unknown')
+        return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changesaved=error-other&error='+str(e)+'&errorlocation=savechanges-api')
 
 
 if __name__ == '__main__':
