@@ -14,7 +14,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
         //check if that input field is empty
         if (idvalue.value=="") {
             //if field is empty, display error message
-            document.getElementById("error").innerHTML="The " + inputs[index].name + " field is empty, and there may be other fields that are empty. Make sure to fill every field out before clicking 'Save Changes'. ";
+            document.getElementById("error").innerHTML="The " + inputs[index].name + " field is empty, and there may be other fields that are empty. Make sure to fill every field out. ";
             return;
         }
         //if that field isn't empty, concatenate a part of the query string
