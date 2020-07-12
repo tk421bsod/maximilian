@@ -72,11 +72,10 @@ class db:
                 return "debuginfoprinted"
             #if debug is disabled (set to false)
             if debug == False:
-                if valueallnumenabled == True:
-                    try:
-                        checkallnum = int(valuesdict[valueallnum])
-                    except Exception:
-                        return "error-valuenotallnum"
+                if isinstance(valuesdict[valueallnum], int):
+                    pass
+                else:
+                    return "error-valuenotallnum"
                 #get the number of rows with duplicate values, valuenodupe is the value that distinguishes rows (like response_trigger for responses)
                 self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
                 #set a variable to that result
