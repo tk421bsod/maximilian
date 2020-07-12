@@ -28,7 +28,7 @@
 <input type="text" id="response_text" name="response_text" placeholder="Enter the text that the bot should send.">
 <br>
 <br>
-<button id="saveresponse" onclick=save(path,database,table,valuenodupe,debug);>Save Response</button>
+<button id="saveresponse" onclick=save(path,database,table,valuenodupe,valueallnum,valueallnumenabled,debug);>Save Response</button>
 <br>
 <p id="saving"></p>
 <script>
@@ -37,8 +37,10 @@ var path = "responses";
 var database = "maximilian-test";
 var table = "responses";
 var valuenodupe = "response_trigger";
+var valueallnum = "guild_id"
+var valueallnumenabled = "True"
 var debug = "True";
-//gets url parameters, second argument is default value
+//get url parameters
 var sourceofredirect = getUrlParam('redirectsource','noredirect');
 var saveresponseState = getUrlParam('responsesaved', '' );
 var errormessage = getUrlParam('error', '')
