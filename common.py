@@ -12,6 +12,7 @@ class db:
     dbobj = ""
     dbc = ""
     def __init__(self):
+        self.error=""
         #ran when an instance of this class is created
         #decrypts database password
         with open("k.txt", "r") as kfile:
@@ -74,7 +75,7 @@ class db:
                 if valueallnumenabled == True:
                     try:
                         checkallnum = int(valuesdict[valueallnum])
-                    except Exception as e:
+                    except Exception:
                         return "error-valuenotallnum"
                 #get the number of rows with duplicate values, valuenodupe is the value that distinguishes rows (like response_trigger for responses)
                 self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
@@ -97,6 +98,7 @@ class db:
             print("Error: " + e + ". Exiting...")
             with open("exceptiondump.txt", "a") as dumpfile:
                 dumpfile.write("\n An exception occurred while inserting data into the database at " + str(datetime.datetime.now()) + ".\n The exception was " + str(e) + ".")
+            self.error=e
             #and return an error 
             return "error-unhandled"
     
