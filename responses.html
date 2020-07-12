@@ -32,11 +32,12 @@
 //gets url parameters, second argument is default value
 var sourceofredirect = getUrlParam('redirectsource','noredirect');
 var saveresponseState = getUrlParam('responsesaved', '' );
+var errormessage = getUrlParam('error', '')
 if (sourceofredirect == "saveresponse") {
     //depending on the result, show a different message
     if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
-    //if the guild id's invalid ()
+    //if the guild id is invalid
     if (saveresponseState == "error-guildid-invalid"){        
         document.getElementById("error").innerHTML = "It looks like the server ID isn't valid. Make sure you entered everything in the correct fields, and check the server ID for typos. Remember, the server ID is not the server's name.";
         document.getElementById("guild_id").style.transition = "0.0s";
@@ -45,7 +46,6 @@ if (sourceofredirect == "saveresponse") {
         document.getElementById("guild_id").focus;}
     //if there's a different error
     if (saveresponseState="error-other"){
-        var errormessage = getUrlParam('error', '')
         if(errormessage != ""){
             document.getElementById("error").innerHTML = "There was an error while saving changes. Please try again later.";
             document.getElementById("saving").innerHTML="";
