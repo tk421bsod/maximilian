@@ -32,6 +32,7 @@
 <br>
 <p id="saving"></p>
 <script>
+//initialize variables
 var path = "responses";
 var database = "maximilian-test";
 var table = "responses";
@@ -39,10 +40,11 @@ var valuenodupe = "response_trigger";
 var debug = "True";
 //gets url parameters, second argument is default value
 var sourceofredirect = getUrlParam('redirectsource','noredirect');
-var saveresponseState = getUrlParam('changessaved', '');
-if (sourceofredirect == "savechanges") {
+var saveresponseState = getUrlParam('responsesaved', '' );
+var errormessage = getUrlParam('error', '')
+if (sourceofredirect == "saveresponse") {
     //depending on the result, show a different message
-    if (saveresponseState == "successful"){document.getElementById("saving").innerHTML="Your custom response was saved successfully. Try testing it!";} 
+    if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
     //if the guild id is invalid
     if (saveresponseState == "error-guildid-invalid"){        
@@ -51,8 +53,19 @@ if (sourceofredirect == "savechanges") {
         document.getElementById("guild_id").style.webkitTransition = "0.0s";
         document.getElementById("guild_id").style.border = "10px solid red";
         document.getElementById("guild_id").focus;}
-//if there's an unknown error
-    if (saveresponseState == "error-unknown"){document.getElementById("error").innerHTML="There was an error while saving the response you submitted. Please try again later.";}
+    //if there's a different error
+    if (saveresponseState="error-other"){
+        if(errormessage != ""){
+            document.getElementById("error").innerHTML = "There was an error while saving changes. Please try again later.";
+            document.getElementById("saving").innerHTML="";
+            console.error(error)
+           
+            buttonclicked = 0;
+            document.getElementById("technicalinfobutton").innerHTML = "Click to show technical info";
+            document.getElementById("technicalinfobutton").style.opacity = "1";
+            document.getElementById("technicalinfo").innerHTML = "Error: " + error.message + ". This error was server-side, and it occured in " + getUrlParam('errorlocation', '') + '.';
+        }
+    }
 }
 </script>
 <br>
