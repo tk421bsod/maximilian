@@ -4,7 +4,9 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
     //basically this takes data, does some checks to validate it, displays an error message if it's not valid, then passes the data to maximilian-api-savechanges.py through a GET request
     try {
     let querystring = []
-    var firstparturl="http://animationdoctorstudio.net:5000/other-projects/maximilian/api?"
+    var currenturl=window.location.href.replace("http://*/*", "http://*");
+    console.log(currenturl);
+    var firstparturl=currenturl+"/other-projects/maximilian/api?";
     var inputs, index;
     //gets list of input elements
     inputs = document.getElementsByTagName('input');
