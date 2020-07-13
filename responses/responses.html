@@ -39,10 +39,10 @@ const table = "responses";
 const valuenodupe = "response_trigger";
 const valueallnum = "guild_id"
 const valueallnumenabled = "True"
-const debug = "True";
+const debug = "";
 //get url parameters
 var sourceofredirect = getUrlParam('redirectsource','noredirect');
-var saveresponseState = getUrlParam('responsesaved', '' );
+var saveresponseState = getUrlParam('changessaved', '' );
 var errormessage = getUrlParam('error', '')
 if (sourceofredirect == "saveresponse") {
     //depending on the result, show a different message
