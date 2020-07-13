@@ -72,7 +72,8 @@ def save():
             return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error='+dbinst.error+'&errorlocation=common-py-inserting-data')
         elif result == "valuenotallnum":
             return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error=value isn\'t all numbers&errorlocation=common-py-inserting-data')
-        return  "recieved data"
+        else:
+            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error=unknown error&errorlocation=common-py-inserting-data')
     except Exception as e:
         print("Error: " + str(e) + ". Check the log file for more details.")
         log.write("Error: " + str(e) + ". \n")
