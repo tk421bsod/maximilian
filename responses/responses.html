@@ -41,10 +41,11 @@ const valueallnum = "guild_id"
 const valueallnumenabled = "True"
 const debug = "";
 //get url parameters
-var sourceofredirect = getUrlParam('redirectsource','noredirect');
-var saveresponseState = getUrlParam('changessaved', '' );
-var errormessage = getUrlParam('error', '');
-if (sourceofredirect == "saveresponse") {
+try {
+    var sourceofredirect = getUrlParam('redirectsource','noredirect');
+    var saveresponseState = getUrlParam('changessaved', '' );
+    var errormessage = getUrlParam('error', '');
+    if (sourceofredirect == "saveresponse") {
     //depending on the result, show a different message
     if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
@@ -67,6 +68,9 @@ if (sourceofredirect == "saveresponse") {
             document.getElementById("technicalinfo").innerHTML = "Error: " + errormessage + ". This error was server-side, and it occured in " + getUrlParam('errorlocation', '') + '.';
         }
     }
+}
+} catch (error) {
+    console.error(error.message);
 }
 </script>
 <br>
