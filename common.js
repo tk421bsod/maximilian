@@ -31,7 +31,11 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
     }
     //then add other parameters to the url, specified in arguments
     var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled + "&currentdomain=" + window.location.href.replace("/other-projects/maximilian/"+path, "").replace("http://", "").substring(0, currenturl.length - 1)
-    if(debug!=""){
+    alert(debug)
+    if(debug==""){
+
+    }
+    else{
         otherparams=otherparams+"&debug="+debug
     }
     var url = url + otherparams
