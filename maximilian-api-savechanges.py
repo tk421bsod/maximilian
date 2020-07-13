@@ -42,7 +42,9 @@ def save():
                     if value != path:
                         if value != str(debug):
                             if value != database:
-                                values[key] = value
+                                if value != valueallnum:
+                                    if value != str(valueallnumenabled):
+                                        values[key] = value
         log.write("Finished getting parameters. Inserting data... \n")
         log.flush()
         if debug == True:
