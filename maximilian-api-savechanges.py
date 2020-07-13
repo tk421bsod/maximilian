@@ -57,7 +57,6 @@ def save():
             print(path)
             print(debug)
         result = dbinst.insert(database, table, values, valuenodupe, debug, valueallnum, valueallnumenabled)
-        print("called function")
         if result == "success":
             log.write("Successfully inserted data. Redirecting...")
             log.flush()

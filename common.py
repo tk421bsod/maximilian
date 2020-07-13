@@ -47,21 +47,18 @@ class db:
         try:
             #connect to db
             if debug == False:
-                print("connecting to db")
                 self.connect(database)
             else:
                 pass
             #for each key and value, join them together with a comma and space
             valuenames = ', '.join(list(valuesdict.keys()))
             #use one %s for each key as a placeholder
-            print("concatenating placeholders")
             valuenameplaceholders = ', '.join([f'{i}' for i in list(valuesdict.keys())])
             valueplaceholders = ', '.join(['%s' for i in list(valuesdict.values())])
             values =  ', '.join([i for i in list(valuesdict.values())])
             valueslist = list(valuesdict.values())
             #then put it all together (append each item to a list, one at a time, except for placeholders)
             #for every key, there's a value, so the same amount of placeholders should be used for both keys and values
-            print("concatenating sql query")
             sql = f"insert into {table} (" + valuenameplaceholders + ") values (" + valueplaceholders + ")"
             #if debug is enabled (set to true), print out some debugging information and exit
             if debug == True:
@@ -74,13 +71,11 @@ class db:
                 return "debuginfoprinted"
             #if debug is disabled (set to false)
             if debug == False:
-                print("checking if valueallnum is an int")
                 try:
                     checkallnum=int(valuesdict[valueallnum])
                 except Exception:
                     return "error-valuenotallnum"
                 #get the number of rows with duplicate values, valuenodupe is the value that distinguishes rows (like response_trigger for responses)
-                print("checking for duplicates")
                 self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
                 #set a variable to that result
                 row = self.dbc.fetchone()
