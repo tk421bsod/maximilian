@@ -38,7 +38,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
         otherparams=otherparams+"&debug="+debug
     }
     var url = url + otherparams
-    var url = url.replace('api/', 'api')
+    var url = url.replace('/api/', '/api')
     //if no fields are empty, don't display error message
     document.getElementById("error").innerHTML = "";
     //show that changes are being saved
