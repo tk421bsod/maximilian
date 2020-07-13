@@ -56,12 +56,11 @@ if (sourceofredirect == "saveresponse") {
         document.getElementById("guild_id").style.border = "10px solid red";
         document.getElementById("guild_id").focus;}
     //if there's a different error
-    if (saveresponseState="error-other"){
+    if (saveresponseState=="error-other"){
         if(errormessage != ""){
             document.getElementById("error").innerHTML = "There was an error while saving changes. Please try again later.";
             document.getElementById("saving").innerHTML="";
-            console.error(error)
-           
+            console.error(errormessage);
             buttonclicked = 0;
             document.getElementById("technicalinfobutton").innerHTML = "Click to show technical info";
             document.getElementById("technicalinfobutton").style.opacity = "1";
