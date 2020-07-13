@@ -35,6 +35,7 @@ def save():
         debug = bool(request.args.get('debug', 'false'))
         valueallnum = request.args.get('valueallnum', '')
         valueallnumenabled = bool(request.args.get('valueallnumenabled', 'false'))
+        currentdomain = request.args.get('currentdomain', 'animationdoctorstudio.net')
         print("appending values to dict of values")
         for key, value in request.args.items():
             if value != valuenodupe:
@@ -44,9 +45,11 @@ def save():
                             if value != database:
                                 if value != valueallnum:
                                     if value != str(valueallnumenabled):
-                                        values[key] = value
+                                        if value != currentdomain:
+                                            values[key] = value
         log.write("Finished getting parameters. Inserting data... \n")
         log.flush()
+        print(currentdomain)
         if debug == True:
             print(valuenodupe)
             print(str(values))
@@ -58,21 +61,21 @@ def save():
         if result == "success":
             log.write("Successfully inserted data. Redirecting...")
             log.flush()
-            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=success' )
+            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=success' )
         elif result == "debuginfoprinted":
             print("Debug info was printed successfully.")
-            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path)
+            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path)
         elif result == "error-duplicate":
             log.write("Duplicate found. Redirecting...")
-            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-duplicate')
+            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-duplicate')
         elif result == "error-unhandled":
             log.write("An unhandled error occured while inserting data. Redirecting...")
-            return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error='+dbinst.error+'&errorlocation=common-py-inserting-data')
+            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error='+dbinst.error+'&errorlocation=common-py-inserting-data')
     except Exception as e:
         print("Error: " + str(e) + ". Check the log file for more details.")
         log.write("Error: " + str(e) + ". \n")
         log.flush()
-        return redirect('http://animationdoctorstudio.net/other-projects/maximilian/' + path + '?redirectsource=savechanges&changesaved=error-other&error='+str(e)+'&errorlocation=savechanges-api')
+        return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changesaved=error-other&error='+str(e)+'&errorlocation=savechanges-api')
 
 
 if __name__ == '__main__':

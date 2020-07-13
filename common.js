@@ -30,7 +30,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
         var firstparturl=url
     }
     //then add other parameters to the url, specified in arguments
-    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&debug=" + debug + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled
+    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&debug=" + debug + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled + "&currentdomain=" + window.location.href.replace("/other-projects/maximilian/", "").replace("http://", "").substring(0, currenturl.length - 1)
     var url = url + otherparams
     //if no fields are empty, don't display error message
     document.getElementById("error").innerHTML = "";
