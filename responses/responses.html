@@ -43,7 +43,7 @@ const debug = "";
 //get url parameters
 var sourceofredirect = getUrlParam('redirectsource','noredirect');
 var saveresponseState = getUrlParam('changessaved', '' );
-var errormessage = getUrlParam('error', '')
+var errormessage = getUrlParam('error', '');
 if (sourceofredirect == "saveresponse") {
     //depending on the result, show a different message
     if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
@@ -64,7 +64,7 @@ if (sourceofredirect == "saveresponse") {
             buttonclicked = 0;
             document.getElementById("technicalinfobutton").innerHTML = "Click to show technical info";
             document.getElementById("technicalinfobutton").style.opacity = "1";
-            document.getElementById("technicalinfo").innerHTML = "Error: " + error.message + ". This error was server-side, and it occured in " + getUrlParam('errorlocation', '') + '.';
+            document.getElementById("technicalinfo").innerHTML = "Error: " + errormessage + ". This error was server-side, and it occured in " + getUrlParam('errorlocation', '') + '.';
         }
     }
 }
