@@ -15,7 +15,7 @@ log.flush()
 
 app = Flask('maximilian-api-savechanges')
 
-@app.route('/other-projects/maximilian/api/', methods=['GET', 'POST'])
+@app.route('/other-projects/maximilian/api', methods=['GET', 'POST'])
 def save():
     try:
         #this recieves requests originating from the save function in common.js

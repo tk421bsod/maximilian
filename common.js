@@ -38,9 +38,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
         var otherparams=otherparams+"&debug="+debug;
     }
     var url = url + otherparams;
-    alert(url);
     var url = url.replace('/api/', '/api');
-    alert(url);
     //if no fields are empty, don't display error message
     document.getElementById("error").innerHTML = "";
     //show that changes are being saved
