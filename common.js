@@ -6,7 +6,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
     let querystring = []
     var currenturl=window.location.href.replace("/other-projects/maximilian/"+path, "");
     console.log(currenturl);
-    var firstparturl=currenturl+":5000/other-projects/maximilian/api?";
+    var firstparturl=currenturl.substring(0, currenturl.length - 1)+":5000/other-projects/maximilian/api?";
     var inputs, index;
     //gets list of input elements
     inputs = document.getElementsByTagName('input');
