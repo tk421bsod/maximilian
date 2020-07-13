@@ -31,7 +31,6 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
     }
     //then add other parameters to the url, specified in arguments
     var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled + "&currentdomain=" + window.location.href.replace("/other-projects/maximilian/"+path, "").replace("http://", "").substring(0, currenturl.length - 1)
-    alert(debug)
     if(debug==""){
 
     }
@@ -39,6 +38,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
         otherparams=otherparams+"&debug="+debug
     }
     var url = url + otherparams
+    var url = url.replace('api/', 'api')
     //if no fields are empty, don't display error message
     document.getElementById("error").innerHTML = "";
     //show that changes are being saved
