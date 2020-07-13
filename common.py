@@ -47,6 +47,7 @@ class db:
         try:
             #connect to db
             if debug == False:
+                print("connecting to db")
                 self.connect(database)
             else:
                 pass
@@ -60,6 +61,7 @@ class db:
             valueslist = list(valuesdict.values())
             #then put it all together (append each item to a list, one at a time, except for placeholders)
             #for every key, there's a value, so the same amount of placeholders should be used for both keys and values
+            print("concatenating sql query")
             sql = f"insert into {table} (" + valuenameplaceholders + ") values (" + valueplaceholders + ")"
             #if debug is enabled (set to true), print out some debugging information and exit
             if debug == True:
@@ -72,20 +74,24 @@ class db:
                 return "debuginfoprinted"
             #if debug is disabled (set to false)
             if debug == False:
+                print("checking if valueallnum is an int")
                 if isinstance(valuesdict[valueallnum], int):
                     pass
                 else:
                     return "error-valuenotallnum"
                 #get the number of rows with duplicate values, valuenodupe is the value that distinguishes rows (like response_trigger for responses)
+                print("checking for duplicates")
                 self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
                 #set a variable to that result
                 row = self.dbc.fetchone()
                 #if the number of rows is greater than 0,
                 if row['count(*)'] > 0:
+                    print("duplicates found")
                     #there's a duplicate
                     #if there's a duplicate, exit and return an error message
                     return "error-duplicate"
                 else:
+                    print("no duplicates found")
                     self.dbc.execute(sql, (valueslist))
                     #then close the connection (since autocommit = True, changes don't need to be commited)
                     self.dbobj.close()
