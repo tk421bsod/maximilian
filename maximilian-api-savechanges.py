@@ -71,6 +71,7 @@ def save():
         elif result == "error-unhandled":
             log.write("An unhandled error occured while inserting data. Redirecting...")
             return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error='+dbinst.error+'&errorlocation=common-py-inserting-data')
+        return  "recieved data"
     except Exception as e:
         print("Error: " + str(e) + ". Check the log file for more details.")
         log.write("Error: " + str(e) + ". \n")
