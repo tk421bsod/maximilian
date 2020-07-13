@@ -75,9 +75,9 @@ class db:
             #if debug is disabled (set to false)
             if debug == False:
                 print("checking if valueallnum is an int")
-                if isinstance(valuesdict[valueallnum], int):
-                    pass
-                else:
+                try:
+                    checkallnum=int(valuesdict[valueallnum])
+                except Exception:
                     return "error-valuenotallnum"
                 #get the number of rows with duplicate values, valuenodupe is the value that distinguishes rows (like response_trigger for responses)
                 print("checking for duplicates")
@@ -91,7 +91,7 @@ class db:
                     #if there's a duplicate, exit and return an error message
                     return "error-duplicate"
                 else:
-                    print("no duplicates found")
+                    print("no duplicates")
                     self.dbc.execute(sql, (valueslist))
                     #then close the connection (since autocommit = True, changes don't need to be commited)
                     self.dbobj.close()
