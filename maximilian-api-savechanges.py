@@ -32,7 +32,7 @@ def save():
         table = request.args.get('table', '')
         path = request.args.get('path', '')
         database = request.args.get('database', '')
-        debug = bool(request.args.get('debug', ''))
+        debug = bool(request.args.get('debug', False))
         valueallnum = request.args.get('valueallnum', '')
         valueallnumenabled = bool(request.args.get('valueallnumenabled', 'false'))
         currentdomain = request.args.get('currentdomain', 'animationdoctorstudio.net')
