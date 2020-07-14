@@ -45,7 +45,7 @@ try {
     var sourceofredirect = getUrlParam('redirectsource','noredirect');
     var saveresponseState = getUrlParam('changessaved', '' );
     var errormessage = getUrlParam('error', '');
-    if (sourceofredirect == "saveresponse") {
+    if (sourceofredirect == "savechanges") {
     //depending on the result, show a different message
     if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
