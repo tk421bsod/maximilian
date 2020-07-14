@@ -37,7 +37,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
     else{
         var otherparams=otherparams+"&debug="+debug;
     }
-    var url = url + otherparams;
+    var url = 'http://' + url + otherparams;
     //if no fields are empty, don't display error message
     document.getElementById("error").innerHTML = "";
     //show that changes are being saved
