@@ -4,9 +4,9 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
     //basically this takes data, does some checks to validate it, displays an error message if it's not valid, then passes the data to maximilian-api-savechanges.py through a GET request
     try {
     let querystring = []
-    var currenturl=window.location.href.replace("/other-projects/maximilian/"+path, "");
+    var currenturl=window.location.hostname;
     console.log(currenturl);
-    var firstparturl=currenturl.substring(0, currenturl.length - 1)+":5000/other-projects/maximilian/api?";
+    var firstparturl=currenturl+":5000/other-projects/maximilian/api?";
     var inputs, index;
     //gets list of input elements
     inputs = document.getElementsByTagName('input');
@@ -30,7 +30,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
         var firstparturl=url
     }
     //then add other parameters to the url, specified in arguments
-    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled + "&currentdomain=" + window.location.href.replace("/other-projects/maximilian/"+path, "").replace("http://", "").substring(0, currenturl.length - 1);
+    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled + "&currentdomain=" + window.location.hostname;
     if(debug==""){
 
     }
@@ -38,7 +38,6 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
         var otherparams=otherparams+"&debug="+debug;
     }
     var url = url + otherparams;
-    var url = url.replace('/api/', '/api');
     //if no fields are empty, don't display error message
     document.getElementById("error").innerHTML = "";
     //show that changes are being saved
