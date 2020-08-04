@@ -29,7 +29,7 @@ class db:
     
     def connect(self, database):
         #connect to db, this instance is also self.<name> because it needs to be accessible from elsewhere in the class
-        self.dbobj=pymysql.connect(host='localhost',
+        self.dbobj=pymysql.connect(host='10.0.0.51',
                     user="tk421bsod",
                     password=self.decrypted_databasepassword.decode(),
                     db=database,
@@ -71,10 +71,11 @@ class db:
                 return "debuginfoprinted"
             #if debug is disabled (set to false)
             if debug == False:
-                try:
-                    checkallnum=int(valuesdict[valueallnum])
-                except Exception:
-                    return "error-valuenotallnum"
+                if valueallnumenabled:
+                    try:
+                        checkallnum=int(valuesdict[valueallnum])
+                    except Exception:
+                        return "error-valuenotallnum"
                 #get the number of rows with duplicate values, valuenodupe is the value that distinguishes rows (like response_trigger for responses)
                 self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
                 #set a variable to that result
