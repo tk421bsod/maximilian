@@ -56,6 +56,7 @@ def save():
             print(table)
             print(path)
             print(debug)
+        path = path.replace("/", "")
         result = dbinst.insert(database, table, values, valuenodupe, debug, valueallnum, valueallnumenabled)
         if result == "success":
             log.write("Successfully inserted data. Redirecting...")
