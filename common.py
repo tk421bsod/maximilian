@@ -115,7 +115,10 @@ class db:
         if debug == True:
             print(str(row))
             return row
-        return row[valuetoretrieve]
+        if row != None:
+            return row[valuetoretrieve]
+        else:
+            return row
 class token:
     def decrypt(self):
         with open("token.txt", "r") as tokenfile:
