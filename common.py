@@ -103,7 +103,7 @@ class db:
             #and return an error 
             return "error-unhandled"
     
-    def retrieve(self, database, table, valuenametoretrieve, retrievedvalue, valuetoretrieve, debug):
+    def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug):
         self.connect(database)
         print("Value to retrieve: " + str(valuetoretrieve))
         print("Table: " + str(table))
