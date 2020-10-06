@@ -31,10 +31,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
     }
     //then add other parameters to the url, specified in arguments
     var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled + "&currentdomain=" + window.location.hostname;
-    if(debug==""){
-
-    }
-    else{
+    if(debug!=""){
         var otherparams=otherparams+"&debug="+debug;
     }
     var url = 'http://' + url + otherparams;
@@ -45,16 +42,11 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
     //redirect to that url
     window.location.href = url;
     } catch (error) {
-        document.getElementById("error").innerHTML = "There was an error while saving changes. Please try again later.";
-        document.getElementById("saving").innerHTML="";
+        //if there's an error, print it in the console
         console.error(error)
-        var technicalinfo = "Error: " + error.message + ". This error was client-side, and it occured in common.js.";
-        buttonclicked = 0;
-        document.getElementById("technicalinfobutton").innerHTML = "Click to show technical info";
-        document.getElementById("technicalinfobutton").style.opacity = "1";
-        document.getElementById("technicalinfo").innerHTML = technicalinfo;
-        throw error
-        
+        //concatenate error message, then display the error
+        var message = "Error: " + error.message + ". This error was client-side, and it occured in common.js.";
+        displayError("save", message)
         return;
     }
 }
@@ -84,4 +76,17 @@ function showtechnicalinfo(){
         document.getElementById("technicalinfo").style.height="0"
         document.getElementById("technicalinfo").style.opacity="0"
     }
+}
+function displayError(origin, message){
+    const origins = {"saveresponse":"saving a response", "saveroles":"saving reaction roles", "postrequest":"accessing data", "save":"saving data"}
+    //maybe we should show a toast notification if there's an error
+    //display error message
+    document.getElementById("error").innerHTML = "There was an error while " + origins[origin] + ". Please try again later.";
+    if (origin == "savechanges" || origin == "saveroles" || origin == "save"){
+        document.getElementById("saving").innerHTML="";
+    }
+    //then show button that toggles more detailed info
+    document.getElementById("technicalinfobutton").innerHTML = "Click to show technical info";
+    document.getElementById("technicalinfobutton").style.opacity = "1";
+    document.getElementById("technicalinfo").innerHTML = message;
 }

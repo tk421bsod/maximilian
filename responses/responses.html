@@ -47,7 +47,7 @@ try {
     var errormessage = getUrlParam('error', '');
     if (sourceofredirect == "savechanges") {
     //depending on the result, show a different message
-    if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
+    if (saveresponseState == "successful"){document.getElementById("saving").innerHTML="Your custom response was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
     //if the guild id is invalid
     if (saveresponseState == "error-guildid-invalid"){        
@@ -59,18 +59,16 @@ try {
     //if there's a different error
     if (saveresponseState=="error-other"){
         if(errormessage != ""){
-            document.getElementById("error").innerHTML = "There was an error while saving changes. Please try again later.";
-            document.getElementById("saving").innerHTML="";
             console.error(errormessage);
-            buttonclicked = 0;
-            document.getElementById("technicalinfobutton").innerHTML = "Click to show technical info";
-            document.getElementById("technicalinfobutton").style.opacity = "1";
-            document.getElementById("technicalinfo").innerHTML = "Error: " + errormessage + ". This error was server-side, and it occured in " + getUrlParam('errorlocation', '') + '.';
+            message = errormessage + ". This error was server-side, and it occurred in " + getUrlParam('errorlocation', '') + '.';
+            displayError("saveresponse", message)
         }
     }
 }
 } catch (error) {
     console.error(error);
+    message = error.message + ". This error was client-side, and it occurred in responses.html."
+    displayError("saveresponse", message)
 }
 </script>
 <br>
