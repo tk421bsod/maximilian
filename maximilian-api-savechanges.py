@@ -38,15 +38,8 @@ def save():
         currentdomain = request.args.get('currentdomain', 'animationdoctorstudio.net')
         print("appending values to dict of values")
         for key, value in request.args.items():
-            if value != valuenodupe:
-                if value != table:
-                    if value != path:
-                        if value != debug:
-                            if value != database:
-                                if value != valueallnum:
-                                    if value != str(valueallnumenabled):
-                                        if value != currentdomain:
-                                            values[key] = value
+            if value != valuenodupe and value != table and value != path and value != debug and value != database and value != valueallnum and value != str(valueallnumenabled) and value != currentdomain:
+                values[key] = value
         log.write("Finished getting parameters. Inserting data... \n")
         log.flush()
         print(currentdomain)
@@ -79,7 +72,7 @@ def save():
         print("Error: " + str(e) + ". Check the log file for more details.")
         log.write("Error: " + str(e) + ". \n")
         log.flush()
-        return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changesaved=error-other&error='+str(e)+'&errorlocation=savechanges-api')
+        return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changesaved=error-other&error=\''+str(e)+'\'&errorlocation=savechanges-api')
 
 
 if __name__ == '__main__':
