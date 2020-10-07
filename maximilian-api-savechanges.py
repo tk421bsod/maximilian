@@ -51,23 +51,12 @@ def save():
             print(debug)
         path = path.replace("/", "")
         result = dbinst.insert(database, table, values, valuenodupe, debug, valueallnum, valueallnumenabled)
-        if result == "success":
-            log.write("Successfully inserted data. Redirecting...")
-            log.flush()
-            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=success' )
-        elif result == "debuginfoprinted":
-            print("Debug info was printed successfully.")
-            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path)
-        elif result == "error-duplicate":
-            log.write("Duplicate found. Redirecting...")
-            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-duplicate')
-        elif result == "error-unhandled":
-            log.write("An unhandled error occured while inserting data. Redirecting...")
-            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error='+dbinst.error+'&errorlocation=common-py-inserting-data')
-        elif result == "valuenotallnum":
-            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error=value isn\'t all numbers&errorlocation=common-py-inserting-data')
-        else:
-            return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + '?redirectsource=savechanges&changessaved=error-other&error=unknown error&errorlocation=common-py-inserting-data')
+        results = {"success":"?redirectsource=savechanges&changessaved=success", "debuginfoprinted":"", "error-duplicate":"?redirectsource=savechanges&changessaved=error-duplicate", "error-unhandled":"?redirectsource=savechanges&changessaved=error-other&error="+dbinst.error+"&errorlocation=common-py-inserting-data", "valuenotallnum":"?redirectsource=savechanges&changessaved=error-valuenotallnum"}
+        for key in results.keys():
+            if result == key:
+                return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + results[result])
+        return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + "'?redirectsource=savechanges&changessaved=error-other&error=unknown&errorlocation=common-py-inserting-data'")
+        
     except Exception as e:
         print("Error: " + str(e) + ". Check the log file for more details.")
         log.write("Error: " + str(e) + ". \n")
