@@ -6,13 +6,13 @@ common.css: styling used throughout the web interface in one file, reducing over
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.eot'); /* IE9 Compat Modes */
+  src: url('../../universal/fonts/opensans/open-sans-v16-latin-regular.eot'); /* IE9 Compat Modes */
   src: local('Open Sans'), local('OpenSans'),
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.woff') format('woff'), /* Modern Browsers */
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.svg#OpenSans') format('svg'); /* Legacy iOS */
+       url('../../universal/fonts/opensans/open-sans-v16-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../../universal/fonts/opensans/open-sans-v16-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../../universal/fonts/opensans/open-sans-v16-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('../../universal/fonts/opensans/open-sans-v16-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../../universal/fonts/opensans/open-sans-v16-latin-regular.svg#OpenSans') format('svg'); /* Legacy iOS */
 }
 body, h1, h2, p, a, div{ 
 text-align: center;
