@@ -51,17 +51,16 @@ class db:
             else:
                 pass
             #for each key and value, join them together with a comma and space
-            valuenames = ', '.join(list(valuesdict.keys()))
             #use one %s for each key as a placeholder
             valuenameplaceholders = ', '.join([f'{i}' for i in list(valuesdict.keys())])
             valueplaceholders = ', '.join(['%s' for i in list(valuesdict.values())])
-            values =  ', '.join([i for i in list(valuesdict.values())])
-            valueslist = list(valuesdict.values())
             #then put it all together (append each item to a list, one at a time, except for placeholders)
             #for every key, there's a value, so the same amount of placeholders should be used for both keys and values
             sql = f"insert into {table} (" + valuenameplaceholders + ") values (" + valueplaceholders + ")"
             #if debug is enabled (set to true), print out some debugging information and exit
             if debug == True:
+                valuenames = ', '.join(list(valuesdict.keys()))
+                values =  ', '.join([i for i in list(valuesdict.values())])
                 print("Value Names: " + str(valuenames))
                 print("Placeholders: " + str(valuenameplaceholders))
                 print("Data to insert: " + str(values))
@@ -105,14 +104,14 @@ class db:
     
     def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug):
         self.connect(database)
-        print("Value to retrieve: " + str(valuetoretrieve))
-        print("Table: " + str(table))
-        print("Value name: " + str(valuenametoretrieve))
-        print("Value = " + str(retrievedvalue))
-        print("SQL Query: select " + valuetoretrieve + " from " + table + " where " + valuenametoretrieve + "=" + retrievedvalue)
         self.dbc.execute("select {} from {} where {}=%s".format(valuetoretrieve, table, valuenametoretrieve), (retrievedvalue))
         row = self.dbc.fetchone()
         if debug == True:
+            print("Value to retrieve: " + str(valuetoretrieve))
+            print("Table: " + str(table))
+            print("Value name: " + str(valuenametoretrieve))
+            print("Value = " + str(retrievedvalue))
+            print("SQL Query: select " + valuetoretrieve + " from " + table + " where " + valuenametoretrieve + "=" + retrievedvalue)
             print(str(row))
             return row
         if row != None:
