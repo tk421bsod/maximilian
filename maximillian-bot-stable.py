@@ -28,16 +28,13 @@ async def on_ready():
     print(str(bot.prefixes))
     
 async def reset_prefixes():
+    print("resetting prefixes...")
     for guild in await bot.fetch_guilds().flatten():
-        print("getting prefixes")
         bot.guildlist.append(str(guild.id))
     for each in bot.guildlist:
-        print("iterating over guilds")
         if dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False) == "" or dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False) == None:
             bot.prefixes[each] = '!'
         else:
-            print("adding prefix to prefixes")
-            print(str(dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False)))
             bot.prefixes[each] = (dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False))
     print(str(bot.prefixes))
 
