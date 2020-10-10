@@ -122,12 +122,12 @@ class db:
 
     def delete(self, database, table, valuetodelete, valuenametodelete):
         self.connect(database)
-        self.dbc.execute("delete from {} where {} = {}", (table, valuenametodelete, valuetodelete))
+        self.dbc.execute("delete from {} where {} = {}".format(table, valuenametodelete, valuetodelete))
         if self.retrieve(database, table, valuetodelete, valuenametodelete, valuetodelete, False) == None or self.retrieve(database, table, valuetodelete, valuenametodelete, valuetodelete, False):
             return "successful"
         else:
             return "error"
-            
+
 class token:
     def decrypt(self):
         with open("token.txt", "r") as tokenfile:
