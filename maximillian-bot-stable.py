@@ -51,16 +51,51 @@ async def on_message(message):
 @bot.command()
 async def prefix(ctx, arg):
     await ctx.send("Ok. Changing prefix...")
-    if dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.message.guild.id), False) == "" or dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.message.guild.id), False) == None:
+    if dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) == "" or dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) == None:
         bot.prefixes[ctx.guild.id] = arg
-        print(str(dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.message.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)))
-        await ctx.send("My prefix in this server has been set to `" + str(arg) + "`.")
-    
+        result = dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
+        if result == "success":
+            await reset_prefixes()
+            await ctx.send("My prefix in this server has been set to `" + str(arg) + "`.")
+            return "changed prefix"
+        else:
+            await ctx.send("An error occured while setting the prefix. Please try again later.")
+            print(result)
+            return "error"
+    elif dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) == arg:
+        await reset_prefixes()
+        await ctx.send("My prefix in this server is already " + str(arg) + ".")
+        return "changed prefix"
+    elif dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) != "" and dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) != arg:
+        result = dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
+        if result == "success":
+            await reset_prefixes()
+            await ctx.send("My prefix in this server has been set to `" + str(arg) + "` .")
+            return "changed prefix"
+        elif result == "error-duplicate":
+            deletionresult = dbinst.delete("maximilian", "prefixes", str(ctx.guild.id), "guild_id")
+            if deletionresult == "successful":
+                result = dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
+                if result == "success":
+                    await reset_prefixes()
+                    await ctx.send("My prefix in this server has been set to `" + str(arg) + "` .")
+                else: 
+                    await ctx.send("An error occurred when setting the prefix. Please try again later.")
+                    print(result)
+                    return "error"
+            else:
+                await ctx.send("An error occurred when setting the prefix. Please try again later.")
+                print(deletionresult)
+                return "error"
+        else:
+            await ctx.send("An error occurred when setting the prefix. Please try again later.")
+            print(result)
+            return "error"
 
 @bot.command()
 async def test(ctx):
     print("called test command")
     await ctx.send("Test")
-    
+
 print("starting bot")
 bot.run(decrypted_token)
