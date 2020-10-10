@@ -54,6 +54,7 @@ class db:
             #use one %s for each key as a placeholder
             valuenameplaceholders = ', '.join([f'{i}' for i in list(valuesdict.keys())])
             valueplaceholders = ', '.join(['%s' for i in list(valuesdict.values())])
+            valueslist = list(valuesdict.values())
             #then put it all together (append each item to a list, one at a time, except for placeholders)
             #for every key, there's a value, so the same amount of placeholders should be used for both keys and values
             sql = f"insert into {table} (" + valuenameplaceholders + ") values (" + valueplaceholders + ")"
