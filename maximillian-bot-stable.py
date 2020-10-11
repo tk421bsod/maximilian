@@ -45,7 +45,7 @@ async def on_message(message):
         await bot.process_commands(message)
 
 async def exectime(start_time, ctx):
-    ctx.send("took " + str(time.time()-start_time) + " seconds to execute")
+    await ctx.send("took " + str(time.time()-start_time) + " seconds to execute")
 
 @bot.command()
 async def prefix(ctx, arg):
