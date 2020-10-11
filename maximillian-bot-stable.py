@@ -3,6 +3,7 @@ from discord.ext import commands
 from common import db
 from common import token
 import logging
+import time
 
 logging.basicConfig(level=logging.WARN)
 tokeninst = token()
@@ -43,11 +44,15 @@ async def on_message(message):
         print("command prefix is " + bot.command_prefix)
         await bot.process_commands(message)
 
+async def exectime(start_time, ctx):
+    ctx.send("took " + str(time.time()-start_time) + " seconds to execute")
+
 @bot.command()
 async def prefix(ctx, arg):
     if ctx.author.guild_permissions.administrator:
         print("changing prefix...")
         changingprefixmessage = await ctx.send("Ok. Changing prefix...")
+        start_time = time.time()
         await ctx.trigger_typing()
         prefixsetmessage = "My prefix in this server has been set to `" + str(arg) + "` ."
         duplicateprefixmessage = "My prefix in this server is already `" + str(arg) + "`."
@@ -59,15 +64,18 @@ async def prefix(ctx, arg):
                 print("set prefix")
                 await reset_prefixes()
                 await ctx.send(prefixsetmessage)
+                await exectime(start_time, ctx)
                 return "changed prefix"
             else:
                 print("error")
                 await ctx.send("An error occured while setting the prefix. Please try again later.")
+                await exectime(start_time, ctx)
                 print(result)
                 return "error"
         elif dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) == arg:
             print("tried to change to same prefix")
             await ctx.send(duplicateprefixmessage)
+            await exectime(start_time, ctx)
             return "changed prefix"
         elif dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) != "" and dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) != arg:
             print("db entry found")
@@ -76,6 +84,7 @@ async def prefix(ctx, arg):
                 print("set prefix")
                 await reset_prefixes()
                 await changingprefixmessage.edit(content=prefixsetmessage)
+                await exectime(start_time, ctx)
                 return "changed prefix"
             elif result == "error-duplicate":
                 print("there's already an entry for this guild")
@@ -86,22 +95,27 @@ async def prefix(ctx, arg):
                         print("set prefix")
                         await reset_prefixes()
                         await changingprefixmessage.edit(content=prefixsetmessage)
+                        await exectime(start_time, ctx)
                     else: 
                         print("error")
                         await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
                         print(result)
+                        await exectime(start_time, ctx)
                         return "error"
                 else:
                     print("error")
                     await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
                     print(deletionresult)
+                    await exectime(start_time, ctx)
                     return "error"
             else:
                 await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
                 print(result)
+                await exectime(start_time, ctx)
                 return "error"
     else:
         await ctx.send("You don't have the permissions required to run this command.")
+        await exectime(start_time, ctx)
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -112,6 +126,7 @@ async def on_command_error(ctx, error):
 async def test(ctx):
     print("called test command")
     await ctx.send("Test")
+    
 
 @bot.command()
 async def owner(ctx):
