@@ -7,13 +7,14 @@ import logging
 logging.basicConfig(level=logging.WARN)
 tokeninst = token()
 dbinst = db()
-bot = commands.Bot(command_prefix="!")
+bot = commands.Bot(command_prefix="!", owner_id=538193752913608704)
 decrypted_token = tokeninst.decrypt()
 bot.guildlist = []
 bot.prefixes = {}
 
 @bot.event
 async def on_ready():
+    
     print("getting prefixes...")
     for guild in await bot.fetch_guilds().flatten():
         bot.guildlist.append(str(guild.id))
@@ -112,6 +113,10 @@ async def on_command_error(ctx, error):
 async def test(ctx):
     print("called test command")
     await ctx.send("Test")
+
+@bot.command()
+async def owner(ctx):
+    ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
     
 
 print("starting bot")
