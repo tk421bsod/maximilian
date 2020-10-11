@@ -39,8 +39,12 @@ async def reset_prefixes():
 
 @bot.event
 async def on_message(message):
-    if message.author != bot.user:    
-        bot.command_prefix = bot.prefixes[str(message.guild.id)]
+    if message.author != bot.user:
+        try:    
+            bot.command_prefix = bot.prefixes[str(message.guild.id)]
+        except KeyError:
+            print("Couldn't get prefix for this guild, continuing with default prefix...")
+            await bot.process_commands(message)
         print("command prefix is " + bot.command_prefix)
         await bot.process_commands(message)
 
