@@ -116,7 +116,7 @@ async def test(ctx):
 
 @bot.command()
 async def owner(ctx):
-    ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
+    await ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
     
 
 print("starting bot")
