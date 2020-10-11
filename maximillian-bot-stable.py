@@ -43,8 +43,9 @@ async def on_message(message):
         try:    
             bot.command_prefix = bot.prefixes[str(message.guild.id)]
         except KeyError:
-            print("Couldn't get prefix for this guild, continuing with default prefix...")
-            await bot.process_commands(message)
+            print("Couldn't get prefixes, using default prefix instead")
+            bot.command_prefix = "!"
+            pass
         print("command prefix is " + bot.command_prefix)
         await bot.process_commands(message)
 
