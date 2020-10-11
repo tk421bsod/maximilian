@@ -67,7 +67,6 @@ async def prefix(ctx, arg):
                 return "error"
         elif dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) == arg:
             print("tried to change to same prefix")
-            await reset_prefixes()
             await ctx.send(duplicateprefixmessage)
             return "changed prefix"
         elif dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) != "" and dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) != arg:
