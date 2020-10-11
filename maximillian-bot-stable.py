@@ -120,7 +120,7 @@ async def prefix(ctx, arg):
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.send("There was an error. Please try again later.")
-    await ctx.send(str(error))
+    await ctx.send("`"+str(error)+"`")
 
 @bot.command()
 async def test(ctx):
