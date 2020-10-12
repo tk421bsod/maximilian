@@ -129,8 +129,8 @@ class db:
             return "error"
 
 class token:
-    def decrypt(self):
-        with open("token.txt", "r") as tokenfile:
+    def decrypt(self, filename):
+        with open(filename, "r") as tokenfile:
             with open("k.txt", "r") as kfile:
                 self.key = kfile.readline()
             #use fernet to decrypt token, returning token
