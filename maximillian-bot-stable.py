@@ -54,7 +54,8 @@ async def prefix(ctx, arg):
         await ctx.trigger_typing()
         prefixsetmessage = "My prefix in this server has been set to `" + str(arg) + "` ."
         duplicateprefixmessage = "My prefix in this server is already `" + str(arg) + "`."
-        if dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) == "" or dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) == None:
+        dbentry = dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
+        if dbentry == "" or dbentry == None:
             print("no db entry found")
             bot.prefixes[ctx.guild.id] = arg
             result = dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
@@ -70,12 +71,12 @@ async def prefix(ctx, arg):
                 await exectime(start_time, ctx)
                 print(result)
                 return "error"
-        elif dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) == arg:
+        elif dbentry == arg:
             print("tried to change to same prefix")
             await ctx.send(duplicateprefixmessage)
             await exectime(start_time, ctx)
             return "changed prefix"
-        elif dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) != "" and dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False) != arg:
+        elif dbentry != "" and dbentry != arg:
             print("db entry found")
             result = dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
             if result == "success":
