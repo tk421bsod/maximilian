@@ -15,8 +15,9 @@ bot.prefixes = {}
 
 async def reset_prefixes():
     print("resetting prefixes...")
-    for guild in await bot.fetch_guilds().flatten():
-        bot.guildlist.append(str(guild.id))
+    if not bot.guildlist:    
+        for guild in await bot.fetch_guilds().flatten():
+            bot.guildlist.append(str(guild.id))
     for each in bot.guildlist:
         prefixindb = dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False)
         if prefixindb == "" or prefixindb == None:
