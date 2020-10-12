@@ -113,7 +113,6 @@ async def prefix(ctx, arg):
                 return "error"
     else:
         await ctx.send("You don't have the permissions required to run this command.")
-        await exectime(start_time, ctx)
 
 @bot.event
 async def on_command_error(ctx, error):
