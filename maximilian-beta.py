@@ -11,7 +11,7 @@ dbinst = db()
 intents = discord.Intents.default()
 intents.guilds = True
 bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents)
-decrypted_token = tokeninst.decrypt()
+decrypted_token = tokeninst.decrypt("betatoken.txt")
 bot.guildlist = []
 bot.prefixes = {}
 
