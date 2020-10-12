@@ -8,7 +8,9 @@ import time
 logging.basicConfig(level=logging.WARN)
 tokeninst = token()
 dbinst = db()
-bot = commands.Bot(command_prefix="!", owner_id=538193752913608704)
+intents = discord.Intents.default()
+intents.guilds = True
+bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents)
 decrypted_token = tokeninst.decrypt()
 bot.guildlist = []
 bot.prefixes = {}
@@ -131,6 +133,7 @@ async def test(ctx):
 async def owner(ctx):
     await ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
     
+
 
 print("starting bot")
 bot.run(decrypted_token)
