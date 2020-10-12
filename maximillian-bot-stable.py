@@ -133,7 +133,11 @@ async def test(ctx):
 async def owner(ctx):
     await ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
     
-
+@bot.event
+async def on_guild_join(guild):
+    print("joined guild, adding guild id to list of guilds")
+    bot.guildlist.append(str(guild.id))
+    reset_prefixes()
 
 print("starting bot")
 bot.run(decrypted_token)
