@@ -13,30 +13,22 @@ decrypted_token = tokeninst.decrypt()
 bot.guildlist = []
 bot.prefixes = {}
 
-@bot.event
-async def on_ready():
-    
-    print("getting prefixes...")
-    for guild in await bot.fetch_guilds().flatten():
-        bot.guildlist.append(str(guild.id))
-    for each in bot.guildlist:
-        if dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False) == "" or dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False) == None:
-            bot.prefixes[each] = '!'
-        else:
-            bot.prefixes[each] = (dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False))
-    print(str(bot.prefixes))
-    
 async def reset_prefixes():
     print("resetting prefixes...")
     for guild in await bot.fetch_guilds().flatten():
         bot.guildlist.append(str(guild.id))
     for each in bot.guildlist:
-        if dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False) == "" or dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False) == None:
+        prefixindb = dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False)
+        if prefixindb == "" or prefixindb == None:
             bot.prefixes[each] = '!'
         else:
-            bot.prefixes[each] = (dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False))
+            bot.prefixes[each] = prefixindb
     print(str(bot.prefixes))
 
+@bot.event
+async def on_ready():
+    await reset_prefixes()
+    
 @bot.event
 async def on_message(message):
     if message.author != bot.user:
