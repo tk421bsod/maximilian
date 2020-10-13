@@ -28,7 +28,6 @@ async def get_responses():
             print(str(response))
             if response != None:
                 bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
-    print(str(bot.responses))
     
 
 async def reset_prefixes():
@@ -61,6 +60,12 @@ async def on_message(message):
             bot.command_prefix = "!"
             pass
         print("command prefix is " + bot.command_prefix)
+        for each in range(len(bot.responses)):
+            if int(bot.responses[each][0]) == int(message.guild.id):
+                if bot.responses[each][1] == message.content.replace(bot.command_prefix, ""):
+                    await message.channel.send(bot.responses[each][2])
+                    print("posted custom response")
+                    return
         await bot.process_commands(message)
 
 async def exectime(start_time, ctx):
