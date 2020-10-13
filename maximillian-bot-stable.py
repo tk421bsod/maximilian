@@ -31,6 +31,7 @@ async def reset_prefixes():
 @bot.event
 async def on_ready():
     await reset_prefixes()
+    await bot.change_presence(activity=discord.Game("with the API"))
     
 @bot.event
 async def on_message(message):
