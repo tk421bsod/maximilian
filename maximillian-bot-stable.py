@@ -42,6 +42,13 @@ async def on_message(message):
             print("Couldn't get prefixes, using default prefix instead")
             bot.command_prefix = "!"
             pass
+        response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(message.guild.id) + " and response_trigger like '" + str(message.content.replace(bot.command_prefix, "")) + "'", True)
+        print(str(response))
+        if response != None and response != "":
+            await message.channel.send(response["response_text"])
+            print("posted custom response")
+            return
+
         print("command prefix is " + bot.command_prefix)
         await bot.process_commands(message)
 
