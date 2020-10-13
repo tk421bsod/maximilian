@@ -27,7 +27,7 @@ async def get_responses():
             response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), True, False)
             print(str(response))
             if response != None:
-                bot.responses.append("[" + str(response['guild_id']) + ", '" + response['response_trigger'] + "', '" + response['response_text'] +"']")
+                bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
     print(str(bot.responses))
     
 
