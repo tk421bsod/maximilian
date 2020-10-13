@@ -14,6 +14,22 @@ bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=inte
 decrypted_token = tokeninst.decrypt("token.txt")
 bot.guildlist = []
 bot.prefixes = {}
+bot.responses = []
+
+async def get_responses():
+    print("getting responses...")
+    if not bot.guildlist:    
+        for guild in await bot.fetch_guilds().flatten():
+            bot.guildlist.append(str(guild.id))
+    for guild in bot.guildlist:
+        count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id=" + str(guild), True, False)
+        if count != None:
+            response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), True, False)
+            print(str(response))
+            if response != None:
+                bot.responses.append("[" + str(response['guild_id']) + ", '" + response['response_trigger'] + "', '" + response['response_text'] +"']")
+    print(str(bot.responses))
+    
 
 async def reset_prefixes():
     print("resetting prefixes...")
@@ -31,7 +47,9 @@ async def reset_prefixes():
 @bot.event
 async def on_ready():
     await reset_prefixes()
+    await get_responses()
     await bot.change_presence(activity=discord.Game("with the API"))
+    print("ready")
     
 @bot.event
 async def on_message(message):
@@ -42,13 +60,6 @@ async def on_message(message):
             print("Couldn't get prefixes, using default prefix instead")
             bot.command_prefix = "!"
             pass
-        response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(message.guild.id) + " and response_trigger like '" + str(message.content.replace(bot.command_prefix, "")) + "'", True)
-        print(str(response))
-        if response != None and response != "":
-            await message.channel.send(response["response_text"])
-            print("posted custom response")
-            return
-
         print("command prefix is " + bot.command_prefix)
         await bot.process_commands(message)
 
