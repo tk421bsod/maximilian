@@ -128,10 +128,13 @@ class db:
             return "successful"
         else:
             return "error"
-    def exec_query(self, database, querytoexecute, debug):
+    def exec_query(self, database, querytoexecute, debug, fetchallrows):
         self.connect(database)
         self.dbc.execute(str(querytoexecute))
-        row = self.dbc.fetchone()
+        if fetchallrows:
+            row = self.dbc.fetchall()
+        else:
+            row = self.dbc.fetchone()
         if debug == True:
             print(str(row))
         return row
