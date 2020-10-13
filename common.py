@@ -39,6 +39,7 @@ class db:
         #creates a cursor object, which then can be used to execute sql queries
         #again, this needs to be accessible from elsewhere in the class
         self.dbc=self.dbobj.cursor()
+        return self.dbc
 
     def insert(self, database, table, valuesdict, valuenodupe, debug, valueallnum, valueallnumenabled):
         #maximilian-api-savechanges.py passes data to this, where it concatenates lists of values to insert, value placeholders, and checks if data is valid and has no duplicates.
