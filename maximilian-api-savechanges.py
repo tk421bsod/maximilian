@@ -4,6 +4,7 @@ import pymysql.cursors
 from cryptography.fernet import Fernet
 import os
 from common import db
+import requests
 
 dbinst = db()
 dbinst.connect("maximilian")
@@ -54,6 +55,8 @@ def save():
         results = {"success":"?redirectsource=savechanges&changessaved=success", "debuginfoprinted":"", "error-duplicate":"?redirectsource=savechanges&changessaved=error-duplicate", "error-unhandled":"?redirectsource=savechanges&changessaved=error-other&error="+dbinst.error+"&errorlocation=common-py-inserting-data", "valuenotallnum":"?redirectsource=savechanges&changessaved=error-valuenotallnum"}
         for key in results.keys():
             if result == key:
+                if result == "success":
+                    requests.get("localhost:8080/?responses-saved=True")
                 return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + results[result])
         return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + "'?redirectsource=savechanges&changessaved=error-other&error=unknown&errorlocation=common-py-inserting-data'")
         
