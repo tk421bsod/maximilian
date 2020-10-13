@@ -10,7 +10,7 @@ tokeninst = token()
 dbinst = db()
 intents = discord.Intents.default()
 intents.guilds = True
-bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents)
+bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Game("with the API"))
 decrypted_token = tokeninst.decrypt("token.txt")
 bot.guildlist = []
 bot.prefixes = {}
@@ -47,7 +47,6 @@ async def reset_prefixes():
 async def on_ready():
     await reset_prefixes()
     await get_responses()
-    await bot.change_presence(activity=discord.Game("with the API"))
     print("ready")
     
 @bot.event
