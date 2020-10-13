@@ -128,6 +128,13 @@ class db:
             return "successful"
         else:
             return "error"
+    def exec_query(self, database, querytoexecute, debug):
+        self.connect(database)
+        self.dbc.execute(str(querytoexecute))
+        row = self.dbc.fetchone()
+        if debug == True:
+            print(str(row))
+        return row
 
 class token:
     def decrypt(self, filename):
