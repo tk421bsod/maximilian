@@ -11,6 +11,8 @@ tokeninst = token()
 dbinst = db()
 intents = discord.Intents.default()
 intents.guilds = True
+intents.members = True
+intents.presences = True
 bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Game("with the API"))
 decrypted_token = tokeninst.decrypt("token.txt")
 bot.guildlist = []
@@ -163,32 +165,34 @@ async def zalgo(ctx, *, arg):
 
 @bot.command()
 async def userinfo(ctx):
-    if ctx.message.author.status == "online":
-        statuscolor = (0,255,0)
-    
-    if ctx.message.author.status == "dnd":
-        statuscolor = (255,0,0)
-
-    if ctx.message.author.status == "idle":
-        statuscolor = (255,255,0)
-
-    if ctx.message.author.status == "offline":
-        statuscolor = (128,128,128)
-
-    colorvalues =
-    embed = discord.Embed(title="User info for " + str(ctx.message.author.name) + "#" + str(ctx.message.author.discriminator), color=discord.Color.from_rgb(statuscolor())
-    embed.add_field(name="Date joined:", value=ctx.author.joined_at, inline=False)
     rolestring = ""
-    for each in ctx.author.roles:
+    print(str(ctx.message.mentions))
+    if ctx.message.mentions != None and ctx.message.mentions != []:
+    	requested_user = ctx.message.mentions[0]
+    else:
+        requested_user = ctx.message.author
+    print(requested_user.status)
+    status = requested_user.status[0]
+    statusnames = {"online" : "Online", "dnd" : "Do Not Disturb", "idle" : "Idle", "offline" : "Invisible/Offline"}
+    statuscolors = {"online" : (0,255,0), "dnd" : (255,0,0), "idle" : (255,255,0), "offline" : (128,128,128)}
+
+    embed = discord.Embed(title="User info for " + str(requested_user.name) + "#" + str(requested_user.discriminator), color=discord.Color.from_rgb(statuscolors[status][0], statuscolors[status][1], statuscolors[status][2]))
+    embed.add_field(name="Date joined:", value=ctx.author.joined_at, inline=False)
+    print(rolestring)
+    for each in requested_user.roles:
         if each.name != "@everyone":
             rolestring = rolestring + "<@&" + str(each.id) + ">, "
         else:
             rolestring = rolestring + each.name + ", "
     rolestring = rolestring[:-2]
+    print(rolestring)
     embed.add_field(name="Roles:", value=rolestring, inline=False)
-    embed.add_field(name="Roles:", value=ctx.message.author.status, inline=False)
-    embed.set_footer(text="example text")
-    embed.set_thumbnail(url=ctx.message.author.avatar_url)
+    embed.add_field(name="Status:", value=statusnames[status], inline=False)
+    if requested_user.activity == None:
+    	embed.set_footer(text="No status details available")
+    else:
+        embed.set_footer(text="Status details: '" + requested_user.activity.name + "'")
+    embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
 
     
