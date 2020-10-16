@@ -4,6 +4,7 @@ from common import db
 from common import token
 import logging
 import time
+from zalgo_text import zalgo as zalgo_text_gen
 
 logging.basicConfig(level=logging.WARN)
 tokeninst = token()
@@ -155,6 +156,10 @@ async def test(ctx):
 @bot.command()
 async def owner(ctx):
     await ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
+
+@bot.command()
+async def zalgo(ctx, *, arg):
+    await ctx.send(zalgo_text_gen.zalgo().zalgofy(str(arg)))
     
 @bot.event
 async def on_guild_join(guild):
