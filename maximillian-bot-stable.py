@@ -4,7 +4,6 @@ from common import db
 from common import token
 import logging
 import time
-from aiohttp import web
 
 logging.basicConfig(level=logging.WARN)
 tokeninst = token()
@@ -29,7 +28,7 @@ async def get_responses():
             print(str(response))
             if response != None:
                 bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
-    
+
 
 async def reset_prefixes():
     print("resetting prefixes...")
@@ -163,14 +162,6 @@ async def on_guild_join(guild):
     bot.guildlist.append(str(guild.id))
     reset_prefixes()
 
-async def listen_for_responses(request):
-    param1 = request.rel_url.query['responses-saved']
-    if param1 == "True" or True:
-        get_responses()
 
 print("starting bot")
 bot.run(decrypted_token)
-if __name__ == '__main__':
-    app = web.Application()
-    app.router.add_route('GET', "/", listen_for_responses)
-    web.run_app(app,host='localhost', port=8080)
