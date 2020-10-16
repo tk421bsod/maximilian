@@ -177,7 +177,8 @@ async def userinfo(ctx):
     statuscolors = {"online" : (0,255,0), "dnd" : (255,0,0), "idle" : (255,255,0), "offline" : (128,128,128)}
 
     embed = discord.Embed(title="User info for " + str(requested_user.name) + "#" + str(requested_user.discriminator), color=discord.Color.from_rgb(statuscolors[status][0], statuscolors[status][1], statuscolors[status][2]))
-    embed.add_field(name="Date joined:", value=ctx.author.joined_at, inline=False)
+    embed.add_field(name="Date joined:", value=requested_user.joined_at, inline=False)
+    embed.add_field(name="Date created:", value=requested_user.created_at, inline=False)
     print(rolestring)
     for each in requested_user.roles:
         if each.name != "@everyone":
