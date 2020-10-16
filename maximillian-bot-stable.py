@@ -163,7 +163,20 @@ async def zalgo(ctx, *, arg):
 
 @bot.command()
 async def userinfo(ctx):
-    embed = discord.Embed(title="User info for " + str(ctx.message.author.name) + "#" + str(ctx.message.author.discriminator), color=discord.Color.from_rgb(114, 137, 218))
+    if ctx.message.author.status == "online":
+        statuscolor = (0,255,0)
+    
+    if ctx.message.author.status == "dnd":
+        statuscolor = (255,0,0)
+
+    if ctx.message.author.status == "idle":
+        statuscolor = (255,255,0)
+
+    if ctx.message.author.status == "offline":
+        statuscolor = (128,128,128)
+
+    colorvalues =
+    embed = discord.Embed(title="User info for " + str(ctx.message.author.name) + "#" + str(ctx.message.author.discriminator), color=discord.Color.from_rgb(statuscolor())
     embed.add_field(name="Date joined:", value=ctx.author.joined_at, inline=False)
     rolestring = ""
     for each in ctx.author.roles:
@@ -171,8 +184,9 @@ async def userinfo(ctx):
             rolestring = rolestring + "<@&" + str(each.id) + ">, "
         else:
             rolestring = rolestring + each.name + ", "
-    rolestring = rolestring[:-1]
+    rolestring = rolestring[:-2]
     embed.add_field(name="Roles:", value=rolestring, inline=False)
+    embed.add_field(name="Roles:", value=ctx.message.author.status, inline=False)
     embed.set_footer(text="example text")
     embed.set_thumbnail(url=ctx.message.author.avatar_url)
     await ctx.send(embed=embed)
