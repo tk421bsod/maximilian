@@ -198,7 +198,11 @@ async def userinfo(ctx):
     embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
 
-    
+@bot.command()
+async def fetch_responses(ctx):
+    await get_responses()
+    await ctx.send("Got a new list of responses!")
+
 @bot.event
 async def on_guild_join(guild):
     print("joined guild, adding guild id to list of guilds")
