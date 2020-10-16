@@ -164,12 +164,15 @@ async def zalgo(ctx, *, arg):
 @bot.command()
 async def userinfo(ctx):
     embed = discord.Embed(title="User info for " + str(ctx.message.author.name) + "#" + str(ctx.message.author.discriminator), color=discord.Color.from_rgb(114, 137, 218))
-    embed.add_field(name="Date joined:", value=ctx.author.joined_at, inline=True)
+    embed.add_field(name="Date joined:", value=ctx.author.joined_at, inline=False)
     rolestring = ""
     for each in ctx.author.roles:
         if each.name != "@everyone":
             rolestring = rolestring + "<@&" + str(each.id) + ">, "
-    embed.add_field(name="Roles:", value=rolestring, inline=True)
+        else:
+            rolestring = rolestring + each.name + ", "
+    rolestring = rolestring[:-1]
+    embed.add_field(name="Roles:", value=rolestring, inline=False)
     embed.set_footer(text="example text")
     embed.set_thumbnail(url=ctx.message.author.avatar_url)
     await ctx.send(embed=embed)
