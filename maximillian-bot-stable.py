@@ -191,7 +191,10 @@ async def userinfo(ctx):
     if requested_user.activity == None:
     	embed.set_footer(text="No status details available")
     else:
-        embed.set_footer(text="Status details: '" + requested_user.activity.name + "'")
+        if requested_user.id == bot.owner_id:
+            embed.set_footer(text="Status details: '" + requested_user.activity.name + "'" + "       This is my owner!")
+        else:
+            embed.set_footer(text="Status details: '" + requested_user.activity.name + "'")
     embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
 
