@@ -200,7 +200,7 @@ async def userinfo(ctx):
     if requested_user.activity == None:
     	statusinfo = "No status details available"
     else:
-        if requested_user.activity.type != None and requested_user.activity.type != "custom":
+        if requested_user.activity.type.name != None and requested_user.activity.type.name != "custom":
             activitytype = requested_user.activity.type.name.capitalize()
         else:
             activitytype = ""
