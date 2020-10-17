@@ -20,13 +20,14 @@ bot.prefixes = {}
 bot.responses = []
 
 async def get_responses():
+    print("getting responses...")
     if not bot.guildlist:    
         for guild in await bot.fetch_guilds().flatten():
             bot.guildlist.append(str(guild.id))
     for guild in bot.guildlist:
-        count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id=" + str(guild), True, False)
+        count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id=" + str(guild), False, False)
         if count != None:
-            response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), True, False)
+            response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), False, False)
             if response != None:
                 bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
@@ -42,7 +43,6 @@ async def reset_prefixes():
             bot.prefixes[each] = '!'
         else:
             bot.prefixes[each] = prefixindb
-    print(str(bot.prefixes))
 
 @bot.event
 async def on_ready():
@@ -74,7 +74,7 @@ async def on_message(message):
 async def exectime(start_time, ctx):
     await ctx.send("took " + str(round(time.time()-start_time, 2)) + " seconds to execute")
 
-@bot.command()
+@bot.command(help="Set Maximilian's prefix, only works if you're an admin")
 async def prefix(ctx, arg):
     #should probably make this shorter and eliminate a bunch of those if statements
     if ctx.author.guild_permissions.administrator:
@@ -150,7 +150,7 @@ async def on_command_error(ctx, error):
     await ctx.send("There was an error. Please try again later.")
     await ctx.send("`"+str(error)+"`")
 
-@bot.command()
+@bot.command(help="Test command.")
 async def test(ctx):
     print("called test command")
     await ctx.send("Test")
@@ -160,54 +160,75 @@ async def test(ctx):
 async def owner(ctx):
     await ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
 
-@bot.command()
+@bot.command(help="zalgo text")
 async def zalgo(ctx, *, arg):
     await ctx.send(zalgo_text_gen.zalgo().zalgofy(str(arg)))
 
-@bot.command()
+@bot.command(help="Get information about a certain user, including status, roles, profile picture, and permissions")
 async def userinfo(ctx):
     rolestring = ""
-    print(str(ctx.message.mentions))
+    permissionstring = ""
     if ctx.message.mentions != None and ctx.message.mentions != []:
     	requested_user = ctx.message.mentions[0]
     else:
         requested_user = ctx.message.author
-    print(requested_user.status)
     status = requested_user.status[0]
     statusnames = {"online" : "Online", "dnd" : "Do Not Disturb", "idle" : "Idle", "offline" : "Invisible/Offline"}
-    embed = discord.Embed(title="User info for " + str(requested_user.name) + "#" + str(requested_user.discriminator), color=requested_user.roles[len(requested_user.roles)-1].color)
+    if len(requested_user.roles) == 1:
+        rolecolor = discord.Color.blurple()
+    else:
+        rolecolor = requested_user.roles[len(requested_user.roles)-1].color
+    embed = discord.Embed(title="User info for " + str(requested_user.name) + "#" + str(requested_user.discriminator), color=rolecolor)
     embed.add_field(name="Date joined:", value=requested_user.joined_at, inline=False)
     embed.add_field(name="Date created:", value=requested_user.created_at, inline=False)
-    print(rolestring)
     for each in requested_user.roles:
         if each.name != "@everyone":
             rolestring = rolestring + "<@&" + str(each.id) + ">, "
         else:
             rolestring = rolestring + each.name + ", "
+    for each in requested_user.guild_permissions:
+        if each[1] == True:
+            permissionstring = permissionstring + each[0].replace("_", " ").capitalize() + ", "
     rolestring = rolestring[:-2]
-    print(rolestring)
+    permissionstring = permissionstring[:-2]
     embed.add_field(name="Roles:", value=rolestring, inline=False)
+    embed.add_field(name="Permissions:", value=permissionstring, inline=False)
     embed.add_field(name="Status:", value=statusnames[status], inline=False)
     if requested_user.activity == None:
     	embed.set_footer(text="No status details available")
     else:
-        if requested_user.id == bot.owner_id:
-            embed.set_footer(text="Status details: '" + requested_user.activity.name + "'" + "       This is my owner!")
+        if requested_user.activity.type != None:
+            activitytype = requested_user.activity.type.name.capitalize()
         else:
-            embed.set_footer(text="Status details: '" + requested_user.activity.name + "'")
+            activitytype = ""
+        if requested_user.id == bot.owner_id:
+            embed.set_footer(text="Status details: '" + activitytype + " " + requested_user.activity.name + "'    |    Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".    |    This is my owner's info!")
+        else:
+            embed.set_footer(text="Status details: '" + activitytype + " " + requested_user.activity.name + "'    |    Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".")
     embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
 
-@bot.command()
+@bot.command(help="Get a new list of custom responses after adding a new response")
 async def fetch_responses(ctx):
+    gettingresponsesmessage = await ctx.send("Getting a new list of responses...")
     await get_responses()
-    await ctx.send("Got a new list of responses!")
+    await gettingresponsesmessage.edit(content="Got a new list of responses!")
+
+@bot.command(help="List all prefixes")
+async def listprefixes(ctx):
+    prefixstring = ""
+    for key in bot.prefixes.keys():
+        print("iterating over keys")
+        if key == str(ctx.message.guild.id):
+            print("found prefix for this guild")
+            prefixstring = prefixstring + "`" + bot.prefixes[key] + "`"
+    await ctx.send("My prefixes in this server are " + prefixstring + " and <@!620022782016618528>")
 
 @bot.event
 async def on_guild_join(guild):
     print("joined guild, adding guild id to list of guilds")
     bot.guildlist.append(str(guild.id))
-    reset_prefixes()
+    await reset_prefixes()
 
 
 print("starting bot")
