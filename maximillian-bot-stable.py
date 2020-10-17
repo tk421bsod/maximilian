@@ -195,16 +195,17 @@ async def userinfo(ctx):
     embed.add_field(name="Permissions:", value=permissionstring, inline=False)
     embed.add_field(name="Status:", value=statusnames[status], inline=False)
     if requested_user.activity == None:
-    	embed.set_footer(text="No status details available")
+    	statusinfo = "No status details available"
     else:
         if requested_user.activity.type != None:
             activitytype = requested_user.activity.type.name.capitalize()
         else:
             activitytype = ""
-        if requested_user.id == bot.owner_id:
-            embed.set_footer(text="Status details: '" + activitytype + " " + requested_user.activity.name + "'    |    Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".    |    This is my owner's info!")
-        else:
-            embed.set_footer(text="Status details: '" + activitytype + " " + requested_user.activity.name + "'    |    Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".")
+        statusinfo = "Status details: '" + activitytype + " " + requested_user.activity.name + "'"
+    if requested_user.id == bot.owner_id:
+        embed.set_footer(text=statusinfo + "    |    Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".    |    This is my owner's info!")
+    else:
+        embed.set_footer(text=statusinfo + "    |    Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".")
     embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
 
