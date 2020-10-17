@@ -174,9 +174,7 @@ async def userinfo(ctx):
     print(requested_user.status)
     status = requested_user.status[0]
     statusnames = {"online" : "Online", "dnd" : "Do Not Disturb", "idle" : "Idle", "offline" : "Invisible/Offline"}
-    statuscolors = {"online" : (0,255,0), "dnd" : (255,0,0), "idle" : (255,255,0), "offline" : (128,128,128)}
-
-    embed = discord.Embed(title="User info for " + str(requested_user.name) + "#" + str(requested_user.discriminator), color=discord.Color.from_rgb(statuscolors[status][0], statuscolors[status][1], statuscolors[status][2]))
+    embed = discord.Embed(title="User info for " + str(requested_user.name) + "#" + str(requested_user.discriminator), color=requested_user.roles[len(requested_user.roles)-1].color)
     embed.add_field(name="Date joined:", value=requested_user.joined_at, inline=False)
     embed.add_field(name="Date created:", value=requested_user.created_at, inline=False)
     print(rolestring)
