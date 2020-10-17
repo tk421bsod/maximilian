@@ -56,19 +56,20 @@ async def on_message(message):
         if message.content.startswith('<@!620022782016618528> '):
             bot.command_prefix = '<@!620022782016618528> '
         else:
-            try:    
-                bot.command_prefix = bot.prefixes[str(message.guild.id)]
-            except KeyError:
-                print("Couldn't get prefixes, using default prefix instead")
-                bot.command_prefix = "!"
-                pass
-        print("command prefix is " + bot.command_prefix)
-        for each in range(len(bot.responses)):
-            if int(bot.responses[each][0]) == int(message.guild.id):
-                if bot.responses[each][1] == message.content.replace(bot.command_prefix, ""):
-                    await message.channel.send(bot.responses[each][2])
-                    print("posted custom response")
-                    return
+            if message.guild != None:
+                try:    
+                    bot.command_prefix = bot.prefixes[str(message.guild.id)]
+                except KeyError:
+                    print("Couldn't get prefixes, using default prefix instead")
+                    bot.command_prefix = "!"
+                    pass
+                print("command prefix is " + bot.command_prefix)
+                for each in range(len(bot.responses)):
+                    if int(bot.responses[each][0]) == int(message.guild.id):
+                        if bot.responses[each][1] == message.content.replace(bot.command_prefix, ""):
+                            await message.channel.send(bot.responses[each][2])
+                            print("posted custom response")
+                            return
         await bot.process_commands(message)
 
 async def exectime(start_time, ctx):
@@ -166,6 +167,8 @@ async def zalgo(ctx, *, arg):
 
 @bot.command(help="Get information about a certain user, including status, roles, profile picture, and permissions")
 async def userinfo(ctx):
+    start_time = time.time()
+    await ctx.trigger_typing()
     rolestring = ""
     permissionstring = ""
     if ctx.message.mentions != None and ctx.message.mentions != []:
@@ -208,6 +211,7 @@ async def userinfo(ctx):
         embed.set_footer(text=statusinfo + "    |    Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".")
     embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
+    await exectime(start_time, ctx)
 
 @bot.command(help="Get a new list of custom responses after adding a new response")
 async def fetch_responses(ctx):
