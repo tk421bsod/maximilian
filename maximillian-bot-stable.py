@@ -20,7 +20,6 @@ bot.prefixes = {}
 bot.responses = []
 
 async def get_responses():
-    print("getting responses...")
     if not bot.guildlist:    
         for guild in await bot.fetch_guilds().flatten():
             bot.guildlist.append(str(guild.id))
@@ -28,7 +27,6 @@ async def get_responses():
         count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id=" + str(guild), True, False)
         if count != None:
             response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), True, False)
-            print(str(response))
             if response != None:
                 bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
@@ -55,12 +53,15 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     if message.author != bot.user:
-        try:    
-            bot.command_prefix = bot.prefixes[str(message.guild.id)]
-        except KeyError:
-            print("Couldn't get prefixes, using default prefix instead")
-            bot.command_prefix = "!"
-            pass
+        if message.content.startswith('<@!620022782016618528> '):
+            bot.command_prefix = '<@!620022782016618528> '
+        else:
+            try:    
+                bot.command_prefix = bot.prefixes[str(message.guild.id)]
+            except KeyError:
+                print("Couldn't get prefixes, using default prefix instead")
+                bot.command_prefix = "!"
+                pass
         print("command prefix is " + bot.command_prefix)
         for each in range(len(bot.responses)):
             if int(bot.responses[each][0]) == int(message.guild.id):
