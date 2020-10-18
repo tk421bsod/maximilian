@@ -205,13 +205,13 @@ async def userinfo(ctx):
         else:
             activitytype = ""
         statusinfo = "Status details: '" + activitytype + " " + requested_user.activity.name + "'"
+    executiontime = "took " + str(round(time.time()-start_time, 2)) + " seconds to execute"
     if requested_user.id == bot.owner_id:
-        embed.set_footer(text=statusinfo + "    |    Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".    |    This is my owner's info!")
+        embed.set_footer(text=statusinfo + "  |  Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".  |  This is my owner's info!  |  " + executiontime)
     else:
-        embed.set_footer(text=statusinfo + "    |    Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".")
+        embed.set_footer(text=statusinfo + "  |  Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".  |  " + executiontime)
     embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
-    await exectime(start_time, ctx)
 
 @bot.command(help="Get a new list of custom responses after adding a new response")
 async def fetch_responses(ctx):
@@ -228,6 +228,17 @@ async def listprefixes(ctx):
             print("found prefix for this guild")
             prefixstring = prefixstring + "`" + bot.prefixes[key] + "`"
     await ctx.send("My prefixes in this server are " + prefixstring + " and <@!620022782016618528>")
+
+@bot.event
+async def on_raw_reaction_add(payload):
+    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), True) != None:
+        roleid = dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), True)
+        if roleid != None:
+            role = discord.utils.get(payload.member.guild.roles, id=int(roleid["role_id"]))
+            await payload.member.add_roles(role)
+            ctx = bot.get_channel(payload.channel_id)
+            await ctx.send("Assigned <@!" + str(payload.member.id) + "> the '" + role.name + "' role!")
+
 
 @bot.event
 async def on_guild_join(guild):
