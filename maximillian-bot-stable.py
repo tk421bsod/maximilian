@@ -177,6 +177,7 @@ async def userinfo(ctx):
         requested_user = ctx.message.author
     status = requested_user.status[0]
     statusnames = {"online" : "Online", "dnd" : "Do Not Disturb", "idle" : "Idle", "offline" : "Invisible/Offline"}
+    statusemojis = {"online" : "<:online:767294866488295475>", "dnd": "<:dnd:767510004135493662>", "idle" : "<:idle:767510329139396610>", "offline" : "<:invisible:767510747466170378>"}
     if len(requested_user.roles) == 1:
         rolecolor = discord.Color.blurple()
     else:
@@ -196,7 +197,7 @@ async def userinfo(ctx):
     permissionstring = permissionstring[:-2]
     embed.add_field(name="Roles:", value=rolestring, inline=False)
     embed.add_field(name="Permissions:", value=permissionstring, inline=False)
-    embed.add_field(name="Status:", value=statusnames[status], inline=False)
+    embed.add_field(name="Status:", value=statusemojis[status] + " " + statusnames[status], inline=False)
     if requested_user.activity == None:
     	statusinfo = "No status details available"
     else:
@@ -234,10 +235,10 @@ async def on_raw_reaction_add(payload):
     if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) != None:
         roleid = dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
         if roleid != None:
-            role = discord.utils.get(payload.member.guild.roles, id=int(roleid["role_id"]))
+            role = discord.utils.get(payload.member.guild.roles, id=int(roleid))
             await payload.member.add_roles(role)
             ctx = bot.get_channel(payload.channel_id)
-            await ctx.send("Assigned <@!" + str(payload.member.id) + "> the '" + role.name + "' role!")
+            await ctx.send("Assigned <@!" + str(payload.member.id) + "> the '" + role.name + "' role!", delete_after=5)
 
 
 @bot.event
@@ -246,6 +247,26 @@ async def on_guild_join(guild):
     bot.guildlist.append(str(guild.id))
     await reset_prefixes()
 
-
+@bot.command(help="Add, remove, or list reaction roles, only works if you have administrator privileges")
+async def reactionrole(ctx, action, roleid, messageid):
+    if ctx.author.guild_permissions.administrator or ctx.author.id == bot.owner_id:
+        if action == "add":
+            if dbinst.insert("maximilian", "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False) == "success":
+                await ctx.send("Added a reaction role.")
+            else: 
+                raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the role you just tried to add.")
+        if action == "delete":
+            if dbinst.delete("maximilian", "roles", str(roleid), "role_id") == "successful":
+                await ctx.send("Deleted a reaction role.")
+            else:
+                raise discord.exe.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using 'reactionrole list' to see if you have any reaction roles set up.")
+        if action == "list":
+            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id=" + str(ctx.guild.id), True, True)
+            reactionrolestring = ""
+            index = 0
+            if roles != "()":
+                for each in roles: 
+                    reactionrolestring = reactionrolestring + " message: " + str(each["message_id"]) + " role: " + str(each["role_id"]) + ", "         
+                await ctx.send("reaction roles: " + str(reactionrolestring[:-2]))
 print("starting bot")
 bot.run(decrypted_token)
