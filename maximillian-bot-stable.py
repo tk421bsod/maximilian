@@ -259,7 +259,7 @@ async def reactionrole(ctx, action, roleid, messageid):
             if dbinst.delete("maximilian", "roles", str(roleid), "role_id") == "successful":
                 await ctx.send("Deleted a reaction role.")
             else:
-                raise discord.exe.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using 'reactionrole list' to see if you have any reaction roles set up.")
+                raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using 'reactionrole list' to see if you have any reaction roles set up.")
         if action == "list":
             roles = dbinst.exec_query("maximilian", "select * from roles where guild_id=" + str(ctx.guild.id), True, True)
             reactionrolestring = ""
