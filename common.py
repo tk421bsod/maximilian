@@ -106,7 +106,7 @@ class db:
     
     def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug):
         self.connect(database)
-        self.dbc.execute("select {} from {} where {} like %s".format(valuetoretrieve, table, valuenametoretrieve), (retrievedvalue))
+        self.dbc.execute("select {} from {} where {} = %s".format(valuetoretrieve, table, valuenametoretrieve), (retrievedvalue))
         row = self.dbc.fetchone()
         if debug == True:
             print("Value to retrieve: " + str(valuetoretrieve))
