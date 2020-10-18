@@ -240,6 +240,18 @@ async def on_raw_reaction_add(payload):
             ctx = bot.get_channel(payload.channel_id)
             await ctx.send("Assigned <@!" + str(payload.member.id) + "> the '" + role.name + "' role!", delete_after=5)
 
+@bot.event
+async def on_raw_reaction_remove(payload):
+    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) != None:
+        guild = bot.get_guild(payload.guild_id)
+        member = guild.get_member(payload.user_id)
+        roleid = dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
+        if roleid != None:
+            role = discord.utils.get(guild.roles, id=int(roleid))
+            await member.remove_roles(role)
+            ctx = bot.get_channel(payload.channel_id)
+            await ctx.send("Removed the '" + role.name + "' role from <@!" + str(member.id) + ">!", delete_after=5)
+
 
 @bot.event
 async def on_guild_join(guild):
