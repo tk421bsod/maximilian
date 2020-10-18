@@ -231,8 +231,8 @@ async def listprefixes(ctx):
 
 @bot.event
 async def on_raw_reaction_add(payload):
-    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), True) != None:
-        roleid = dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), True)
+    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) != None:
+        roleid = dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
         if roleid != None:
             role = discord.utils.get(payload.member.guild.roles, id=int(roleid["role_id"]))
             await payload.member.add_roles(role)
