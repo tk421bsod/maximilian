@@ -252,6 +252,9 @@ async def on_raw_reaction_remove(payload):
             ctx = bot.get_channel(payload.channel_id)
             await ctx.send("Removed the '" + role.name + "' role from <@!" + str(member.id) + ">!", delete_after=5)
 
+@bot.command()
+async def ping(ctx):
+    await ctx.send("Pong! My latency is " + str(round(bot.latency*1000, 1)) + "ms.")
 
 @bot.event
 async def on_guild_join(guild):
@@ -271,14 +274,13 @@ async def reactionrole(ctx, action, roleid, messageid):
             if dbinst.delete("maximilian", "roles", str(roleid), "role_id") == "successful":
                 await ctx.send("Deleted a reaction role.")
             else:
-                raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using 'reactionrole list' to see if you have any reaction roles set up.")
+                raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using '"+ str(bot.command_prefix) +"reactionrole list all all' to see if you have any reaction roles set up.")
         if action == "list":
             roles = dbinst.exec_query("maximilian", "select * from roles where guild_id=" + str(ctx.guild.id), True, True)
             reactionrolestring = ""
-            index = 0
             if roles != "()":
                 for each in roles: 
-                    reactionrolestring = reactionrolestring + " message: " + str(each["message_id"]) + " role: " + str(each["role_id"]) + ", "         
+                    reactionrolestring = reactionrolestring + " message id: " + str(each["message_id"]) + " role id: " + str(each["role_id"]) + ", "         
                 await ctx.send("reaction roles: " + str(reactionrolestring[:-2]))
 print("starting bot")
 bot.run(decrypted_token)
