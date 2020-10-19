@@ -224,9 +224,7 @@ async def fetch_responses(ctx):
 async def listprefixes(ctx):
     prefixstring = ""
     for key in bot.prefixes.keys():
-        print("iterating over keys")
         if key == str(ctx.message.guild.id):
-            print("found prefix for this guild")
             prefixstring = prefixstring + "`" + bot.prefixes[key] + "`"
     await ctx.send("My prefixes in this server are " + prefixstring + " and <@!620022782016618528>")
 
@@ -276,7 +274,7 @@ async def reactionrole(ctx, action, roleid, messageid):
             else:
                 raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using '"+ str(bot.command_prefix) +"reactionrole list all all' to see if you have any reaction roles set up.")
         if action == "list":
-            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id=" + str(ctx.guild.id), True, True)
+            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id=" + str(ctx.guild.id), False, True)
             reactionrolestring = ""
             if roles != "()":
                 for each in roles: 
