@@ -123,6 +123,8 @@ class db:
 
     def delete(self, database, table, valuetodelete, valuenametodelete):
         self.connect(database)
+        if self.retrieve(database, table, valuetodelete, valuenametodelete, valuetodelete, False) == None:
+            return "value-non-existent"
         self.dbc.execute("delete from {} where {} = {}".format(table, valuenametodelete, valuetodelete))
         if self.retrieve(database, table, valuetodelete, valuenametodelete, valuetodelete, False) == None or self.retrieve(database, table, valuetodelete, valuenametodelete, valuetodelete, False):
             return "successful"
