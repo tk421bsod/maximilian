@@ -13,7 +13,7 @@ intents = discord.Intents.default()
 intents.guilds = True
 intents.members = True
 intents.presences = True
-bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Game("with the API"))
+bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
 decrypted_token = tokeninst.decrypt("token.txt")
 bot.guildlist = []
 bot.prefixes = {}
@@ -27,9 +27,15 @@ async def get_responses():
     for guild in bot.guildlist:
         count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id=" + str(guild), False, False)
         if count != None:
-            response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), False, False)
-            if response != None:
-                bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
+            if int(count['count(*)']) >= 2:
+                response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), False, True)
+                if response != None:
+                    for each in range(int(count['count(*)'])):
+                        bot.responses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
+            elif int(count['count(*)']) == 1:
+                response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), True, False)
+                if response != None:
+                    bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
 
 async def reset_prefixes():
@@ -64,12 +70,10 @@ async def on_message(message):
                     print("Couldn't get prefixes, using default prefix instead")
                     bot.command_prefix = "!"
                     pass
-                print("command prefix is " + bot.command_prefix)
                 for each in range(len(bot.responses)):
                     if int(bot.responses[each][0]) == int(message.guild.id):
                         if bot.responses[each][1] == message.content.replace(bot.command_prefix, ""):
                             await message.channel.send(bot.responses[each][2])
-                            print("posted custom response")
                             return
         await bot.process_commands(message)
 
@@ -284,7 +288,25 @@ async def reactionrole(ctx, action, roleid, messageid):
                 await ctx.send("reaction roles: " + str(reactionrolestring[:-2]))
     else:
         await ctx.send("You don't have permission to use this command.")
-        
+
+@bot.command(help="Add or delete custom responses. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the response trigger.")
+async def responses(ctx, action, response_trigger, *, response_text):
+    if ctx.author.guild_permissions.manage_guild or ctx.author.id == bot.owner_id:
+        if action == "add":
+            if dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(response_trigger), "response_text" : str(response_text)}, "response_trigger", False, "", False) == "success":
+                await get_responses()
+                await ctx.send("Added a custom response. Try it out!")
+            else: 
+                raise discord.ext.commands.CommandError(message="Failed to add a response, there might be a duplicate. Try deleting the response you just tried to add.")
+        if action == "delete":
+            if dbinst.delete("maximilian", "responses", str(response_trigger), "response_trigger") == "successful":
+                await get_responses()
+                await ctx.send("Deleted a custom response.")
+            else:
+                raise discord.ext.commands.CommandError(message="Failed to delete a custom response, are there any custom responses set up that use the response trigger '" + str(response_trigger) + "'?")
+    else:
+        await ctx.send("You don't have permission to use this command.")
+
 @commands.is_owner()
 @bot.command(hidden=True)
 async def listguildnames(ctx):
