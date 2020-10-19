@@ -48,6 +48,7 @@ async def reset_prefixes():
 async def on_ready():
     await reset_prefixes()
     await get_responses()
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
     print("ready")
     
 @bot.event
@@ -259,6 +260,7 @@ async def on_guild_join(guild):
     print("joined guild, adding guild id to list of guilds")
     bot.guildlist.append(str(guild.id))
     await reset_prefixes()
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
 
 @bot.command(help="Add, remove, or list reaction roles, only works if you have administrator privileges")
 async def reactionrole(ctx, action, roleid, messageid):
@@ -280,5 +282,16 @@ async def reactionrole(ctx, action, roleid, messageid):
                 for each in roles: 
                     reactionrolestring = reactionrolestring + " message id: " + str(each["message_id"]) + " role id: " + str(each["role_id"]) + ", "         
                 await ctx.send("reaction roles: " + str(reactionrolestring[:-2]))
+    else:
+        await ctx.send("You don't have permission to use this command.")
+        
+@commands.is_owner()
+@bot.command(hidden=True)
+async def listguildnames(ctx):
+    guildstring = ""
+    for each in bot.guilds:
+        guildstring = guildstring + each.name + ", "
+    await ctx.send(guildstring[:-2])
+
 print("starting bot")
 bot.run(decrypted_token)
