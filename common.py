@@ -2,6 +2,7 @@
 #increasing readability, and reducing file size.
 
 from cryptography.fernet import Fernet
+import pymysql
 import pymysql.cursors
 import datetime
 
@@ -90,14 +91,14 @@ class db:
                         return "error-duplicate"
                     else:
                         print("no duplicates")
-                        self.dbc.execute(sql, (valueslist))
+                        self.dbc.execute(pymysql.escape_string(sql), (valueslist))
                         #then close the connection (since autocommit = True, changes don't need to be commited)
                         self.dbobj.close()
                         #and exit, showing that it succeeded
                         return "success"
                 except KeyError:
                     print("no duplicates")
-                    self.dbc.execute(sql, (valueslist))
+                    self.dbc.execute(pymysql.excape_string(sql), (valueslist))
                     self.dbobj.close()
                     return "success"
         #if an exception occurs, assign that exception message to a variable
@@ -112,7 +113,7 @@ class db:
     
     def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug):
         self.connect(database)
-        self.dbc.execute("select {} from {} where {} = %s".format(valuetoretrieve, table, valuenametoretrieve), (retrievedvalue))
+        self.dbc.execute(pymysql.escape_string(("select {} from {} where {} = %s".format(valuetoretrieve, table, valuenametoretrieve), (retrievedvalue))))
         row = self.dbc.fetchone()
         if debug == True:
             print("Value to retrieve: " + str(valuetoretrieve))
@@ -132,9 +133,9 @@ class db:
         if self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False) == None:
             return "value-non-existent"
         if extraparamenabled:
-            self.dbc.execute("delete from {} where {} = '{}' and {} = {}".format(table, valuenametodelete, valuetodelete, extraparam, extraparamvalue))
+            self.dbc.execute(pymysql.escape_string("delete from {} where {} = '{}' and {} = {}".format(table, valuenametodelete, valuetodelete, extraparam, extraparamvalue)))
         else:
-            self.dbc.execute("delete from {} where {} = '{}'".format(table, valuenametodelete, valuetodelete))
+            self.dbc.execute(pymysql.escape_string("delete from {} where {} = '{}'".format(table, valuenametodelete, valuetodelete)))
         if self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False) == None or self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False):
             return "successful"
         else:
@@ -142,7 +143,7 @@ class db:
             
     def exec_query(self, database, querytoexecute, debug, fetchallrows):
         self.connect(database)
-        self.dbc.execute(str(querytoexecute))
+        self.dbc.execute(pymysql.escape_string(str(querytoexecute)))
         if fetchallrows:
             row = self.dbc.fetchall()
         else:
