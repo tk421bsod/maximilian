@@ -26,15 +26,15 @@ async def get_responses():
         for guild in await bot.fetch_guilds().flatten():
             bot.guildlist.append(str(guild.id))
     for guild in bot.guildlist:
-        count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id={}".format(str(guild.id)), False, False)
+        count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id={}".format(str(guild)), False, False)
         if count is not None:
             if int(count['count(*)']) >= 2:
-                response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild.id)), False, True)
+                response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), False, True)
                 if response is not None:
                     for each in range(int(count['count(*)'])):
                         bot.responses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
             elif int(count['count(*)']) == 1:
-                response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild.id)), True, False)
+                response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), True, False)
                 if response is not None:
                     bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
