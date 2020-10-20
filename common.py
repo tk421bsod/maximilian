@@ -78,21 +78,27 @@ class db:
                     except Exception:
                         return "error-valuenotallnum"
                 #get the number of rows with duplicate values, valuenodupe is the value that distinguishes rows (like response_trigger for responses)
-                self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
-                #set a variable to that result
-                row = self.dbc.fetchone()
-                #if the number of rows is greater than 0,
-                if row['count(*)'] > 0:
-                    print("duplicates found")
-                    #there's a duplicate
-                    #if there's a duplicate, exit and return an error message
-                    return "error-duplicate"
-                else:
+                try:
+                    self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
+                    #set a variable to that result
+                    row = self.dbc.fetchone()
+                    #if the number of rows is greater than 0,
+                    if row['count(*)'] > 0:
+                        print("duplicates found")
+                        #there's a duplicate
+                        #if there's a duplicate, exit and return an error message
+                        return "error-duplicate"
+                    else:
+                        print("no duplicates")
+                        self.dbc.execute(sql, (valueslist))
+                        #then close the connection (since autocommit = True, changes don't need to be commited)
+                        self.dbobj.close()
+                        #and exit, showing that it succeeded
+                        return "success"
+                except KeyError:
                     print("no duplicates")
                     self.dbc.execute(sql, (valueslist))
-                    #then close the connection (since autocommit = True, changes don't need to be commited)
                     self.dbobj.close()
-                    #and exit, showing that it succeeded
                     return "success"
         #if an exception occurs, assign that exception message to a variable
         except Exception as e: 
@@ -121,12 +127,15 @@ class db:
         else:
             return row
 
-    def delete(self, database, table, valuetodelete, valuenametodelete):
+    def delete(self, database, table, valuetodelete, valuenametodelete, extraparam, extraparamvalue, extraparamenabled):
         self.connect(database)
-        if self.retrieve(database, table, valuetodelete, valuenametodelete, valuetodelete, False) == None:
+        if self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False) == None:
             return "value-non-existent"
-        self.dbc.execute("delete from {} where {} = {}".format(table, valuenametodelete, valuetodelete))
-        if self.retrieve(database, table, valuetodelete, valuenametodelete, valuetodelete, False) == None or self.retrieve(database, table, valuetodelete, valuenametodelete, valuetodelete, False):
+        if extraparamenabled:
+            self.dbc.execute("delete from {} where {} = '{}' and {} = {}".format(table, valuenametodelete, valuetodelete, extraparam, extraparamvalue))
+        else:
+            self.dbc.execute("delete from {} where {} = '{}'".format(table, valuenametodelete, valuetodelete))
+        if self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False) == None or self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False):
             return "successful"
         else:
             return "error"
