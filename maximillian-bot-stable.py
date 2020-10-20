@@ -21,6 +21,7 @@ bot.responses = []
 
 async def get_responses():
     print("getting responses...")
+    bot.responses = []
     if not bot.guildlist:    
         for guild in await bot.fetch_guilds().flatten():
             bot.guildlist.append(str(guild.id))
@@ -123,7 +124,7 @@ async def prefix(ctx, arg):
                 return "changed prefix"
             elif result == "error-duplicate":
                 print("there's already an entry for this guild")
-                deletionresult = dbinst.delete("maximilian", "prefixes", str(ctx.guild.id), "guild_id")
+                deletionresult = dbinst.delete("maximilian", "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
                 if deletionresult == "successful":
                     result = dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
                     if result == "success":
@@ -275,7 +276,7 @@ async def reactionrole(ctx, action, roleid, messageid):
             else: 
                 raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the role you just tried to add.")
         if action == "delete":
-            if dbinst.delete("maximilian", "roles", str(roleid), "role_id") == "successful":
+            if dbinst.delete("maximilian", "roles", str(roleid), "role_id", "", "", False) == "successful":
                 await ctx.send("Deleted a reaction role.")
             else:
                 raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using '"+ str(bot.command_prefix) +"reactionrole list all all' to see if you have any reaction roles set up.")
@@ -292,14 +293,17 @@ async def reactionrole(ctx, action, roleid, messageid):
 @bot.command(help="Add or delete custom responses. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the response trigger.")
 async def responses(ctx, action, response_trigger, *, response_text):
     if ctx.author.guild_permissions.manage_guild or ctx.author.id == bot.owner_id:
+        await ctx.trigger_typing()
         if action == "add":
-            if dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(response_trigger), "response_text" : str(response_text)}, "response_trigger", False, "", False) == "success":
+            response_text.replace("*", "\*")
+            response_trigger.replace("*", "\*")
+            if dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(response_trigger), "response_text" : str(response_text)}, "", False, "", False) == "success":
                 await get_responses()
                 await ctx.send("Added a custom response. Try it out!")
             else: 
                 raise discord.ext.commands.CommandError(message="Failed to add a response, there might be a duplicate. Try deleting the response you just tried to add.")
         if action == "delete":
-            if dbinst.delete("maximilian", "responses", str(response_trigger), "response_trigger") == "successful":
+            if dbinst.delete("maximilian", "responses", str(response_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
                 await get_responses()
                 await ctx.send("Deleted a custom response.")
             else:
