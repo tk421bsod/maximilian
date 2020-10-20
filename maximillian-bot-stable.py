@@ -320,7 +320,6 @@ async def responses(ctx, action, response_trigger, *, response_text):
                     else:
                         responsetext = bot.responses[each][2]
                     responsestring = responsestring + " \n response trigger: `" + bot.responses[each][1] + "` response text: `" + responsetext + "`"
-                    await get_responses()
             await ctx.send(responsestring)
     else:
         await ctx.send("You don't have permission to use this command.")
