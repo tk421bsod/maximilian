@@ -26,16 +26,16 @@ async def get_responses():
         for guild in await bot.fetch_guilds().flatten():
             bot.guildlist.append(str(guild.id))
     for guild in bot.guildlist:
-        count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id=" + str(guild), False, False)
-        if count != None:
+        count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id={}".format(str(guild.id)), False, False)
+        if count is not None:
             if int(count['count(*)']) >= 2:
-                response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), False, True)
-                if response != None:
+                response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild.id)), False, True)
+                if response is not None:
                     for each in range(int(count['count(*)'])):
                         bot.responses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
             elif int(count['count(*)']) == 1:
-                response = dbinst.exec_query("maximilian", "select * from responses where guild_id=" + str(guild), True, False)
-                if response != None:
+                response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild.id)), True, False)
+                if response is not None:
                     bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
 
@@ -64,7 +64,7 @@ async def on_message(message):
         if message.content.startswith('<@!620022782016618528> '):
             bot.command_prefix = '<@!620022782016618528> '
         else:
-            if message.guild != None:
+            if message.guild is not None:
                 try:    
                     bot.command_prefix = bot.prefixes[str(message.guild.id)]
                 except KeyError:
@@ -177,7 +177,7 @@ async def userinfo(ctx):
     await ctx.trigger_typing()
     rolestring = ""
     permissionstring = ""
-    if ctx.message.mentions != None and ctx.message.mentions != []:
+    if ctx.message.mentions is not None and ctx.message.mentions != []:
     	requested_user = ctx.message.mentions[0]
     else:
         requested_user = ctx.message.author
@@ -207,7 +207,7 @@ async def userinfo(ctx):
     if requested_user.activity == None:
     	statusinfo = "No status details available"
     else:
-        if requested_user.activity.type.name != None and requested_user.activity.type.name != "custom":
+        if requested_user.activity.type.name is not None and requested_user.activity.type.name != "custom":
             activitytype = requested_user.activity.type.name.capitalize()
         else:
             activitytype = ""
@@ -236,9 +236,9 @@ async def listprefixes(ctx):
 
 @bot.event
 async def on_raw_reaction_add(payload):
-    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) != None:
+    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
         roleid = dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
-        if roleid != None:
+        if roleid is not None:
             role = discord.utils.get(payload.member.guild.roles, id=int(roleid))
             await payload.member.add_roles(role)
             ctx = bot.get_channel(payload.channel_id)
@@ -246,11 +246,11 @@ async def on_raw_reaction_add(payload):
 
 @bot.event
 async def on_raw_reaction_remove(payload):
-    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) != None:
+    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
         guild = bot.get_guild(payload.guild_id)
         member = guild.get_member(payload.user_id)
         roleid = dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
-        if roleid != None:
+        if roleid is not None:
             role = discord.utils.get(guild.roles, id=int(roleid))
             await member.remove_roles(role)
             ctx = bot.get_channel(payload.channel_id)
@@ -281,7 +281,7 @@ async def reactionrole(ctx, action, roleid, messageid):
             else:
                 raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using '"+ str(bot.command_prefix) +"reactionrole list all all' to see if you have any reaction roles set up.")
         if action == "list":
-            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id=" + str(ctx.guild.id), False, True)
+            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild_id), False, True)
             reactionrolestring = ""
             if roles != "()":
                 for each in roles: 
