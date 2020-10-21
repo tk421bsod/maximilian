@@ -283,7 +283,7 @@ async def reactionrole(ctx, action, roleid, messageid):
             else:
                 raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using '"+ str(bot.command_prefix) +"reactionrole list all all' to see if you have any reaction roles set up.")
         if action == "list":
-            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild_id), False, True)
+            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
             reactionrolestring = ""
             if roles != "()":
                 for each in roles: 
@@ -320,6 +320,8 @@ async def responses(ctx, action, response_trigger, *, response_text):
                     else:
                         responsetext = bot.responses[each][2]
                     responsestring = responsestring + " \n response trigger: `" + bot.responses[each][1] + "` response text: `" + responsetext + "`"
+            if responsestring == "":
+                responsestring = "I can't find any custom responses in this server."
             await ctx.send(responsestring)
     else:
         await ctx.send("You don't have permission to use this command.")
