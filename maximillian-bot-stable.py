@@ -159,12 +159,6 @@ async def on_command_error(ctx, error):
     await ctx.send("There was an error. Please try again later.")
     await ctx.send("`"+str(error)+"`")
 
-@bot.command(help="Test command.")
-async def test(ctx):
-    print("called test command")
-    await ctx.send("Test")
-    
-
 @bot.command()
 async def owner(ctx):
     await ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
@@ -173,7 +167,7 @@ async def owner(ctx):
 async def zalgo(ctx, *, arg):
     await ctx.send(zalgo_text_gen.zalgo().zalgofy(str(arg)))
 
-@bot.command(help="Get information about a certain user, including status, roles, profile picture, and permissions")
+@bot.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
 async def userinfo(ctx):
     start_time = time.time()
     await ctx.trigger_typing()
@@ -222,7 +216,7 @@ async def userinfo(ctx):
     embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
 
-@bot.command(help="Get a new list of custom responses after adding a new response")
+@bot.command(help="Get a new list of custom responses after adding a new response", aliases=['fetchresponses', 'getresponses'])
 async def fetch_responses(ctx):
     gettingresponsesmessage = await ctx.send("Getting a new list of responses...")
     await get_responses()
@@ -258,7 +252,7 @@ async def on_raw_reaction_remove(payload):
             ctx = bot.get_channel(payload.channel_id)
             await ctx.send("Removed the '" + role.name + "' role from <@!" + str(member.id) + ">!", delete_after=5)
 
-@bot.command()
+@bot.command(aliases="pong")
 async def ping(ctx):
     await ctx.send("Pong! My latency is " + str(round(bot.latency*1000, 1)) + "ms.")
 
@@ -269,7 +263,7 @@ async def on_guild_join(guild):
     await reset_prefixes()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
 
-@bot.command(help="Add, remove, or list reaction roles, only works if you have administrator privileges")
+@bot.command(help="Add, remove, or list reaction roles, only works if you have administrator privileges", aliases=['reactionroles'])
 async def reactionrole(ctx, action, roleid, messageid):
     if ctx.author.guild_permissions.administrator or ctx.author.id == bot.owner_id:
         if action == "add":
@@ -292,7 +286,7 @@ async def reactionrole(ctx, action, roleid, messageid):
     else:
         await ctx.send("You don't have permission to use this command.")
 
-@bot.command(help="Add, delete, or list custom responses. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the response trigger.")
+@bot.command(help="Add, delete, or list custom responses. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the response trigger.", aliases=['response'])
 async def responses(ctx, action, response_trigger, *, response_text):
     if ctx.author.guild_permissions.manage_guild or ctx.author.id == bot.owner_id:
         await ctx.trigger_typing()
