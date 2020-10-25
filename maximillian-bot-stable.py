@@ -159,9 +159,9 @@ async def on_command_error(ctx, error):
     await ctx.send("There was an error. Please try again later.")
     await ctx.send("`"+str(error)+"`")
 
-@bot.command()
-async def owner(ctx):
-    await ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
+@bot.command(aliases=["owner"])
+async def hi(ctx):
+    await ctx.send("Hello! I'm a robot. tk421#7244 made me!")
 
 @bot.command(help="zalgo text")
 async def zalgo(ctx, *, arg):
@@ -335,6 +335,14 @@ async def thiscatdoesntexist(ctx):
         async with cs.get('https://thiscatdoesnotexist.com') as r:
             buffer = io.BytesIO(await r.read())
             await ctx.send(file=discord.File(buffer, filename="cat.jpeg"))
+
+@bot.command(help="Get a bunch of info about the bot")
+async def about(ctx):
+    embed = discord.Embed(title="About", color=discord.Color.blurple())
+    embed.add_field(name="Useful links", value="Use `" + str(bot.command_prefix) + "help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268815456&scope=bot).", inline=False)
+    embed.add_field(name="Fun Commands", value="Commands that have no purpose. \n `zalgo` `cats` `ping`", inline=True)
+    embed.add_field(name="Other Commands", value="Commands that actually have a purpose. \n `about` `help` `userinfo` `reactionroles` `responses` `prefix` `listprefixes` `hi`", inline=True)
+    await ctx.send(embed=embed)
 
 print("starting bot")
 bot.run(decrypted_token)
