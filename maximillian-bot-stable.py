@@ -83,7 +83,7 @@ async def on_message(message):
 async def exectime(start_time, ctx):
     await ctx.send("took " + str(round(time.time()-start_time, 2)) + " seconds to execute")
 
-@bot.command(help="Set Maximilian's prefix, only works if you're an admin")
+@bot.command(help="Set Maximilian's prefix, only works if you're an admin", aliases=['prefixes'])
 async def prefix(ctx, arg):
     #should probably make this shorter and eliminate a bunch of those if statements
     if ctx.author.guild_permissions.administrator or ctx.author.id == bot.owner_id:
@@ -159,21 +159,15 @@ async def on_command_error(ctx, error):
     await ctx.send("There was an error. Please try again later.")
     await ctx.send("`"+str(error)+"`")
 
-@bot.command(help="Test command.")
-async def test(ctx):
-    print("called test command")
-    await ctx.send("Test")
-    
-
-@bot.command()
-async def owner(ctx):
-    await ctx.send("My owner is <@!" + str(bot.owner_id) + "> !")
+@bot.command(aliases=["owner"])
+async def hi(ctx):
+    await ctx.send("Hello! I'm a robot. tk421#7244 made me!")
 
 @bot.command(help="zalgo text")
 async def zalgo(ctx, *, arg):
     await ctx.send(zalgo_text_gen.zalgo().zalgofy(str(arg)))
 
-@bot.command(help="Get information about a certain user, including status, roles, profile picture, and permissions")
+@bot.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
 async def userinfo(ctx):
     start_time = time.time()
     await ctx.trigger_typing()
@@ -222,7 +216,7 @@ async def userinfo(ctx):
     embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
 
-@bot.command(help="Get a new list of custom responses after adding a new response")
+@bot.command(help="Get a new list of custom responses after adding a new response", aliases=['fetchresponses', 'getresponses'])
 async def fetch_responses(ctx):
     gettingresponsesmessage = await ctx.send("Getting a new list of responses...")
     await get_responses()
@@ -258,7 +252,7 @@ async def on_raw_reaction_remove(payload):
             ctx = bot.get_channel(payload.channel_id)
             await ctx.send("Removed the '" + role.name + "' role from <@!" + str(member.id) + ">!", delete_after=5)
 
-@bot.command()
+@bot.command(aliases=['pong'])
 async def ping(ctx):
     await ctx.send("Pong! My latency is " + str(round(bot.latency*1000, 1)) + "ms.")
 
@@ -269,7 +263,7 @@ async def on_guild_join(guild):
     await reset_prefixes()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
 
-@bot.command(help="Add, remove, or list reaction roles, only works if you have administrator privileges")
+@bot.command(help="Add, remove, or list reaction roles, only works if you have administrator privileges", aliases=['reactionroles'])
 async def reactionrole(ctx, action, roleid, messageid):
     if ctx.author.guild_permissions.administrator or ctx.author.id == bot.owner_id:
         if action == "add":
@@ -283,7 +277,7 @@ async def reactionrole(ctx, action, roleid, messageid):
             else:
                 raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using '"+ str(bot.command_prefix) +"reactionrole list all all' to see if you have any reaction roles set up.")
         if action == "list":
-            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild_id), False, True)
+            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
             reactionrolestring = ""
             if roles != "()":
                 for each in roles: 
@@ -292,7 +286,7 @@ async def reactionrole(ctx, action, roleid, messageid):
     else:
         await ctx.send("You don't have permission to use this command.")
 
-@bot.command(help="Add, delete, or list custom responses. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the response trigger.")
+@bot.command(help="Add, delete, or list custom responses. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the response trigger.", aliases=['response'])
 async def responses(ctx, action, response_trigger, *, response_text):
     if ctx.author.guild_permissions.manage_guild or ctx.author.id == bot.owner_id:
         await ctx.trigger_typing()
@@ -320,6 +314,8 @@ async def responses(ctx, action, response_trigger, *, response_text):
                     else:
                         responsetext = bot.responses[each][2]
                     responsestring = responsestring + " \n response trigger: `" + bot.responses[each][1] + "` response text: `" + responsetext + "`"
+            if responsestring == "":
+                responsestring = "I can't find any custom responses in this server."
             await ctx.send(responsestring)
     else:
         await ctx.send("You don't have permission to use this command.")
@@ -332,12 +328,21 @@ async def listguildnames(ctx):
         guildstring = guildstring + each.name + ", "
     await ctx.send(guildstring[:-2])
 
-@bot.command(help="Get an image of a cat. The image is generated by AI, therefore it's an image of a cat that doesn't exist")
+@bot.command(help="Get an image of a cat. The image is generated by AI, therefore it's an image of a cat that doesn't exist", aliases=["cats"])
 async def thiscatdoesntexist(ctx):
+    await ctx.trigger_typing()
     async with aiohttp.ClientSession() as cs:
         async with cs.get('https://thiscatdoesnotexist.com') as r:
             buffer = io.BytesIO(await r.read())
             await ctx.send(file=discord.File(buffer, filename="cat.jpeg"))
+
+@bot.command(help="Get a bunch of info about the bot")
+async def about(ctx):
+    embed = discord.Embed(title="About", color=discord.Color.blurple())
+    embed.add_field(name="Useful links", value="Use `" + str(bot.command_prefix) + "help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268815456&scope=bot).", inline=False)
+    embed.add_field(name="Fun Commands", value="Commands that have no purpose. \n `zalgo` `cats` `ping`", inline=True)
+    embed.add_field(name="Other Commands", value="Commands that actually have a purpose. \n `about` `help` `userinfo` `reactionroles` `responses` `prefix` `listprefixes` `hi`", inline=True)
+    await ctx.send(embed=embed)
 
 print("starting bot")
 bot.run(decrypted_token)
