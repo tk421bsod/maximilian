@@ -7,6 +7,7 @@ import time
 import aiohttp
 import io
 import os
+import calendar
 from zalgo_text import zalgo as zalgo_text_gen
 
 logging.basicConfig(level=logging.WARN)
@@ -189,8 +190,8 @@ async def userinfo(ctx):
     else:
         rolecolor = requested_user.roles[len(requested_user.roles)-1].color
     embed = discord.Embed(title="User info for " + str(requested_user.name) + "#" + str(requested_user.discriminator), color=rolecolor)
-    embed.add_field(name="Date joined:", value=str(requested_user.joined_at.month) + " " + str(requested_user.joined_at.day) + ", " + str(requested_user.joined_at.year), inline=False)
-    embed.add_field(name="Date created:", value=requested_user.created_at, inline=False)
+    embed.add_field(name="Date joined:", value=calendar.month_name[requested_user.joined_at.month] + " " + str(requested_user.joined_at.day) + ", " + str(requested_user.joined_at.year), inline=False)
+    embed.add_field(name="Date created:", value=calendar.month_name[requested_user.created_at.month] + " " + str(requested_user.created_at.day) + ", " + str(requested_user.created_at.year), inline=False)
     for each in requested_user.roles:
         if each.name != "@everyone":
             rolestring = rolestring + "<@&" + str(each.id) + ">, "
