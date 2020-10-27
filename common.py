@@ -104,8 +104,6 @@ class db:
         except Exception as e: 
             #then print it and log the event to a file
             print("Error: " + e + ". Exiting...")
-            with open("exceptiondump.txt", "a") as dumpfile:
-                dumpfile.write("\n An exception occurred while inserting data into the database at " + str(datetime.datetime.now()) + ".\n The exception was " + str(e) + ".")
             self.error=e
             #and return an error 
             return "error-unhandled"
