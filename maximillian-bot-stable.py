@@ -351,9 +351,12 @@ async def about(ctx):
 @bot.command(hidden=True)
 async def reload_utils(ctx):
     reloadmessage = await ctx.send("Reloading utilities...")
+    start_time = time.time()
+    await ctx.trigger_typing()
     commoninst=importlib.reload(common)
     bot.dbinst = commoninst.db()
-    reloadmessage.edit(content="Reloaded utilities!")
+    await reloadmessage.edit(content="Reloaded utilities!")
+    await exectime(start_time, ctx)
 
 
 print("starting bot")
