@@ -347,6 +347,7 @@ async def about(ctx):
     embed.add_field(name="Useful links", value="Use `" + str(bot.command_prefix) + "help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268815456&scope=bot).", inline=False)
     embed.add_field(name="Fun Commands", value="Commands that have no purpose. \n `zalgo` `cats` `ping`", inline=True)
     embed.add_field(name="Other Commands", value="Commands that actually have a purpose. \n `about` `help` `userinfo` `reactionroles` `responses` `prefix` `listprefixes` `hi`", inline=True)
+    embed.set_footer(text="maximilian-rewrite version 3.1")
     await ctx.send(embed=embed)
 
 @commands.is_owner()
