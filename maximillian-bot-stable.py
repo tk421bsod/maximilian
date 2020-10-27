@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands 
 from common import db
 from common import token
+import importlib
 import logging
 import time
 import aiohttp
@@ -351,7 +352,7 @@ async def about(ctx):
 @bot.command(hidden=True)
 async def reload_utils(ctx):
     reloadmessage = await ctx.send("Reloading utilities...")
-    db=reload(common.db)
+    db=importlib.reload(common.db)
     bot.dbinst = db()
     reloadmessage.edit(content="Reloaded utilities!")
 
