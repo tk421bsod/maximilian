@@ -145,8 +145,6 @@ class db:
             row = self.dbc.fetchall()
         else:
             row = self.dbc.fetchone()
-        if debug == True:
-            print(str(row))
         return row
 
 class token:
