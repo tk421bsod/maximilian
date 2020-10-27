@@ -24,21 +24,24 @@ bot.responses = []
 async def get_responses():
     print("getting responses...")
     bot.responses = []
+    #if guildlist doesn't exist for some reason, get it
     if not bot.guildlist:    
         for guild in await bot.fetch_guilds().flatten():
             bot.guildlist.append(str(guild.id))
+    #then for each guild in the list, check if the guild has any responses in the database
     for guild in bot.guildlist:
         count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id={}".format(str(guild)), False, False)
         if count is not None:
+            #if there are responses, check if there's more than one
             if int(count['count(*)']) >= 2:
+                #if so, get a list of responses and iterate over that, adding each one to the list
                 response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), False, True)
-                if response is not None:
-                    for each in range(int(count['count(*)'])):
-                        bot.responses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
+                for each in range(int(count['count(*)'])):
+                    bot.responses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
             elif int(count['count(*)']) == 1:
+                #otherwise get the one response and add it to the list
                 response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), True, False)
-                if response is not None:
-                    bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
+                bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
 
 async def reset_prefixes():
