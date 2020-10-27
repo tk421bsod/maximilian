@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands 
-from common import db
-from common import token
+import common
 import importlib
 import logging
 import time
@@ -10,13 +9,13 @@ import io
 from zalgo_text import zalgo as zalgo_text_gen
 
 logging.basicConfig(level=logging.WARN)
-tokeninst = token()
+tokeninst = common.token()
 intents = discord.Intents.default()
 intents.guilds = True
 intents.members = True
 intents.presences = True
 bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
-bot.dbinst = db()
+bot.dbinst = common.db()
 decrypted_token = tokeninst.decrypt("token.txt")
 bot.guildlist = []
 bot.prefixes = {}
@@ -352,8 +351,8 @@ async def about(ctx):
 @bot.command(hidden=True)
 async def reload_utils(ctx):
     reloadmessage = await ctx.send("Reloading utilities...")
-    db=importlib.reload(common.db)
-    bot.dbinst = db()
+    commoninst=importlib.reload(common)
+    bot.dbinst = commoninst.db()
     reloadmessage.edit(content="Reloaded utilities!")
 
 
