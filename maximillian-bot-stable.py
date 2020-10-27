@@ -6,6 +6,7 @@ import logging
 import time
 import aiohttp
 import io
+import os
 from zalgo_text import zalgo as zalgo_text_gen
 
 logging.basicConfig(level=logging.WARN)
@@ -352,6 +353,7 @@ async def about(ctx):
 async def reload_utils(ctx):
     reloadmessage = await ctx.send("Reloading utilities...")
     start_time = time.time()
+    os.system("git pull")
     await ctx.trigger_typing()
     commoninst=importlib.reload(common)
     bot.dbinst = commoninst.db()
