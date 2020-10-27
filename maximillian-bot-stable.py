@@ -10,12 +10,12 @@ from zalgo_text import zalgo as zalgo_text_gen
 
 logging.basicConfig(level=logging.WARN)
 tokeninst = token()
-dbinst = db()
 intents = discord.Intents.default()
 intents.guilds = True
 intents.members = True
 intents.presences = True
 bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
+bot.dbinst = db()
 decrypted_token = tokeninst.decrypt("token.txt")
 bot.guildlist = []
 bot.prefixes = {}
@@ -30,17 +30,17 @@ async def get_responses():
             bot.guildlist.append(str(guild.id))
     #then for each guild in the list, check if the guild has any responses in the database
     for guild in bot.guildlist:
-        count = dbinst.exec_query("maximilian", "select count(*) from responses where guild_id={}".format(str(guild)), False, False)
+        count = bot.dbinst.exec_query("maximilian", "select count(*) from responses where guild_id={}".format(str(guild)), False, False)
         if count is not None:
             #if there are responses, check if there's more than one
             if int(count['count(*)']) >= 2:
                 #if so, get a list of responses and iterate over that, adding each one to the list
-                response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), False, True)
+                response = bot.dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), False, True)
                 for each in range(int(count['count(*)'])):
                     bot.responses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
             elif int(count['count(*)']) == 1:
                 #otherwise get the one response and add it to the list
-                response = dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), True, False)
+                response = bot.dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), True, False)
                 bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
 
@@ -50,7 +50,7 @@ async def reset_prefixes():
         for guild in await bot.fetch_guilds().flatten():
             bot.guildlist.append(str(guild.id))
     for each in bot.guildlist:
-        prefixindb = dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False)
+        prefixindb = bot.dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False)
         if prefixindb == "" or prefixindb == None:
             bot.prefixes[each] = '!'
         else:
@@ -96,11 +96,11 @@ async def prefix(ctx, arg):
         await ctx.trigger_typing()
         prefixsetmessage = "My prefix in this server has been set to `" + str(arg) + "` ."
         duplicateprefixmessage = "My prefix in this server is already `" + str(arg) + "`."
-        dbentry = dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
+        dbentry = bot.dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
         if dbentry == "" or dbentry == None:
             print("no db entry found")
             bot.prefixes[ctx.guild.id] = arg
-            result = dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
+            result = bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
             if result == "success":
                 print("set prefix")
                 await reset_prefixes()
@@ -120,7 +120,7 @@ async def prefix(ctx, arg):
             return "changed prefix"
         elif dbentry != "" and dbentry != arg:
             print("db entry found")
-            result = dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
+            result = bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
             if result == "success":
                 print("set prefix")
                 await reset_prefixes()
@@ -129,9 +129,9 @@ async def prefix(ctx, arg):
                 return "changed prefix"
             elif result == "error-duplicate":
                 print("there's already an entry for this guild")
-                deletionresult = dbinst.delete("maximilian", "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
+                deletionresult = bot.dbinst.delete("maximilian", "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
                 if deletionresult == "successful":
-                    result = dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
+                    result = bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
                     if result == "success":
                         print("set prefix")
                         await reset_prefixes()
@@ -235,8 +235,8 @@ async def listprefixes(ctx):
 
 @bot.event
 async def on_raw_reaction_add(payload):
-    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
-        roleid = dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
+    if bot.dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
+        roleid = bot.dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
         if roleid is not None:
             role = discord.utils.get(payload.member.guild.roles, id=int(roleid))
             await payload.member.add_roles(role)
@@ -245,10 +245,10 @@ async def on_raw_reaction_add(payload):
 
 @bot.event
 async def on_raw_reaction_remove(payload):
-    if dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
+    if bot.dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
         guild = bot.get_guild(payload.guild_id)
         member = guild.get_member(payload.user_id)
-        roleid = dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
+        roleid = bot.dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
         if roleid is not None:
             role = discord.utils.get(guild.roles, id=int(roleid))
             await member.remove_roles(role)
@@ -270,17 +270,17 @@ async def on_guild_join(guild):
 async def reactionrole(ctx, action, roleid, messageid):
     if ctx.author.guild_permissions.administrator or ctx.author.id == bot.owner_id:
         if action == "add":
-            if dbinst.insert("maximilian", "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False) == "success":
+            if bot.dbinst.insert("maximilian", "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False) == "success":
                 await ctx.send("Added a reaction role.")
             else: 
                 raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the role you just tried to add.")
         if action == "delete":
-            if dbinst.delete("maximilian", "roles", str(roleid), "role_id", "", "", False) == "successful":
+            if bot.dbinst.delete("maximilian", "roles", str(roleid), "role_id", "", "", False) == "successful":
                 await ctx.send("Deleted a reaction role.")
             else:
                 raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using '"+ str(bot.command_prefix) +"reactionrole list all all' to see if you have any reaction roles set up.")
         if action == "list":
-            roles = dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
+            roles = bot.dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
             reactionrolestring = ""
             if roles != "()":
                 for each in roles: 
@@ -296,13 +296,13 @@ async def responses(ctx, action, response_trigger, *, response_text):
         if action.lower() == "add":
             response_text.replace("*", "\*")
             response_trigger.replace("*", "\*")
-            if dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(response_trigger), "response_text" : str(response_text)}, "response_trigger", False, "", False) == "success":
+            if bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(response_trigger), "response_text" : str(response_text)}, "response_trigger", False, "", False) == "success":
                 await get_responses()
                 await ctx.send("Added a custom response. Try it out!")
             else: 
                 raise discord.ext.commands.CommandError(message="Failed to add a response, there might be a duplicate. Try deleting the response you just tried to add.")
         if action.lower() == "delete":
-            if dbinst.delete("maximilian", "responses", str(response_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
+            if bot.dbinst.delete("maximilian", "responses", str(response_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
                 await get_responses()
                 await ctx.send("Deleted a custom response.")
             else:
@@ -346,6 +346,15 @@ async def about(ctx):
     embed.add_field(name="Fun Commands", value="Commands that have no purpose. \n `zalgo` `cats` `ping`", inline=True)
     embed.add_field(name="Other Commands", value="Commands that actually have a purpose. \n `about` `help` `userinfo` `reactionroles` `responses` `prefix` `listprefixes` `hi`", inline=True)
     await ctx.send(embed=embed)
+
+@commands.is_owner()
+@bot.command(hidden=True)
+async def reload_utils(ctx):
+    reloadmessage = await ctx.send("Reloading utilities...")
+    db=reload(common.db)
+    bot.dbinst = db()
+    reloadmessage.edit(content="Reloaded utilities!")
+
 
 print("starting bot")
 bot.run(decrypted_token)
