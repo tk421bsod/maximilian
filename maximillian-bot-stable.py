@@ -241,6 +241,10 @@ async def on_raw_reaction_add(payload):
         roleid = bot.dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
         if roleid is not None:
             role = discord.utils.get(payload.member.guild.roles, id=int(roleid))
+            if role in payload.member.roles:
+                ctx = bot.get_channel(payload.channel_id)
+                await ctx.send(" <@!" + str(payload.member.id) + ">, you already have the '" + role.name + "' role.", delete_after=5)
+                return
             await payload.member.add_roles(role)
             ctx = bot.get_channel(payload.channel_id)
             await ctx.send("Assigned <@!" + str(payload.member.id) + "> the '" + role.name + "' role!", delete_after=5)
