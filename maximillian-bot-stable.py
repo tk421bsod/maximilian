@@ -368,6 +368,3 @@ async def reload_utils(ctx):
 
 print("starting bot")
 bot.run(decrypted_token)
-
-await bot.wait_until_ready()
-await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
