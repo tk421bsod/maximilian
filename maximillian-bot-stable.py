@@ -361,8 +361,5 @@ async def reload_utils(ctx):
     await reloadmessage.edit(content="Reloaded utilities!")
     await exectime(start_time, ctx)
 
-@commands.has_permissions(perms=discord.Permissions.manage_guild)
-@bot.command(help="")
-
 print("starting bot")
 bot.run(decrypted_token)
