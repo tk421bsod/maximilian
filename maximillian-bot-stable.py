@@ -257,9 +257,10 @@ async def on_raw_reaction_remove(payload):
         roleid = bot.dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
         if roleid is not None:
             role = discord.utils.get(guild.roles, id=int(roleid))
-            await member.remove_roles(role)
-            ctx = bot.get_channel(payload.channel_id)
-            await ctx.send("Removed the '" + role.name + "' role from <@!" + str(member.id) + ">!", delete_after=5)
+            if role in member.roles:
+                await member.remove_roles(role)
+                ctx = bot.get_channel(payload.channel_id)
+                await ctx.send("Removed the '" + role.name + "' role from <@!" + str(member.id) + ">!", delete_after=5)
 
 @bot.command(aliases=['pong'])
 async def ping(ctx):
@@ -367,3 +368,6 @@ async def reload_utils(ctx):
 
 print("starting bot")
 bot.run(decrypted_token)
+
+await bot.wait_until_ready()
+await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
