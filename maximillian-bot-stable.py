@@ -262,7 +262,7 @@ async def on_raw_reaction_remove(payload):
                 await member.remove_roles(role)
                 await ctx.send(f"Removed the '{role.name}' role from <@!{str(member.id)}>!", delete_after=5)
                 return
-            await ctx.send(f"For some reason, you don't have the '{role.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again.")
+            await ctx.send(f"<@!{str(member.id)}> For some reason, you don't have the '{role.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again. If this keeps happening, notify tk421#7244.", delete_after=10)
         
 
 @bot.command(aliases=['pong'])
