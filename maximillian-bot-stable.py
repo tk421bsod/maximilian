@@ -261,6 +261,9 @@ async def on_raw_reaction_remove(payload):
                 await member.remove_roles(role)
                 ctx = bot.get_channel(payload.channel_id)
                 await ctx.send("Removed the '" + role.name + "' role from <@!" + str(member.id) + ">!", delete_after=5)
+                return
+            await ctx.send("For some reason, you don't have the '" + role.name + "' role, even though you reacted to this message. Try removing your reaction and adding your reaction again.")
+        
 
 @bot.command(aliases=['pong'])
 async def ping(ctx):
