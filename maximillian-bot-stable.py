@@ -93,11 +93,11 @@ async def prefix(ctx, arg):
     #should probably make this shorter and eliminate a bunch of those if statements
     if ctx.author.guild_permissions.administrator or ctx.author.id == bot.owner_id:
         print("changing prefix...")
-        changingprefixmessage = await ctx.send("Ok. Changing prefix to `" + arg +"`...")
+        changingprefixmessage = await ctx.send(f"Ok. Changing prefix to `{str(arg)}`...")
         start_time = time.time()
         await ctx.trigger_typing()
-        prefixsetmessage = "My prefix in this server has been set to `" + str(arg) + "` ."
-        duplicateprefixmessage = "My prefix in this server is already `" + str(arg) + "`."
+        prefixsetmessage = f"My prefix in this server has been set to `{str(arg)}` ."
+        duplicateprefixmessage = f"My prefix in this server is already `{str(arg)}`."
         dbentry = bot.dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
         if dbentry == "" or dbentry == None:
             print("no db entry found")
@@ -162,7 +162,7 @@ async def prefix(ctx, arg):
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.send("There was an error. Please try again later.")
-    await ctx.send("`"+str(error)+"`")
+    await ctx.send(f"`{error}`")
 
 @bot.command(aliases=["owner"])
 async def hi(ctx):
@@ -189,7 +189,7 @@ async def userinfo(ctx):
         rolecolor = discord.Color.blurple()
     else:
         rolecolor = requested_user.roles[len(requested_user.roles)-1].color
-    embed = discord.Embed(title="User info for " + str(requested_user.name) + "#" + str(requested_user.discriminator), color=rolecolor)
+    embed = discord.Embed(title=f"User info for {str(requested_user.name)}#{str(requested_user.discriminator)}", color=rolecolor)
     embed.add_field(name="Date joined:", value=calendar.month_name[requested_user.joined_at.month] + " " + str(requested_user.joined_at.day) + ", " + str(requested_user.joined_at.year), inline=False)
     embed.add_field(name="Date created:", value=calendar.month_name[requested_user.created_at.month] + " " + str(requested_user.created_at.day) + ", " + str(requested_user.created_at.year), inline=False)
     for each in requested_user.roles:
@@ -199,12 +199,12 @@ async def userinfo(ctx):
             rolestring = rolestring + each.name + ", "
     for each in requested_user.guild_permissions:
         if each[1] == True:
-            permissionstring = permissionstring + each[0].replace("_", " ").capitalize() + ", "
+            permissionstring = f"{permissionstring}{each[0].replace('_', ' ').capitalize()}, "
     rolestring = rolestring[:-2]
     permissionstring = permissionstring[:-2]
     embed.add_field(name="Roles:", value=rolestring, inline=False)
     embed.add_field(name="Permissions:", value=permissionstring, inline=False)
-    embed.add_field(name="Status:", value=statusemojis[status] + " " + statusnames[status], inline=False)
+    embed.add_field(name="Status:", value=f"{statusemojis[status]} {statusnames[status]}", inline=False)
     if requested_user.activity == None:
     	statusinfo = "No status details available"
     else:
@@ -212,12 +212,12 @@ async def userinfo(ctx):
             activitytype = requested_user.activity.type.name.capitalize()
         else:
             activitytype = ""
-        statusinfo = "Status details: '" + activitytype + " " + requested_user.activity.name + "'"
-    executiontime = "took " + str(round(time.time()-start_time, 2)) + " seconds to execute"
+        statusinfo = f"Status details: '{activitytype} {requested_user.activity.name}'"
+    executiontime = f"took {str(round(time.time()-start_time, 2))} seconds to execute"
     if requested_user.id == bot.owner_id:
-        embed.set_footer(text=statusinfo + "  |  Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".  |  This is my owner's info!  |  " + executiontime)
+        embed.set_footer(text=f"{statusinfo}  |  Requested by {ctx.author.name}#{ctx.author.discriminator}.  |  This is my owner's info!  |    {executiontime}")
     else:
-        embed.set_footer(text=statusinfo + "  |  Requested by " + ctx.author.name + "#" + ctx.author.discriminator + ".  |  " + executiontime)
+        embed.set_footer(text=f"{statusinfo}  |  Requested by {ctx.author.name}#{ctx.author.discriminator}.  |   {executiontime}")
     embed.set_thumbnail(url=requested_user.avatar_url)
     await ctx.send(embed=embed)
 
@@ -243,11 +243,11 @@ async def on_raw_reaction_add(payload):
             role = discord.utils.get(payload.member.guild.roles, id=int(roleid))
             if role in payload.member.roles:
                 ctx = bot.get_channel(payload.channel_id)
-                await ctx.send(" <@!" + str(payload.member.id) + ">, you already have the '" + role.name + "' role.", delete_after=5)
+                await ctx.send(f" <@!{str(payload.member.id)}>, you already have the '{role.name}' role.", delete_after=5)
                 return
             await payload.member.add_roles(role)
             ctx = bot.get_channel(payload.channel_id)
-            await ctx.send("Assigned <@!" + str(payload.member.id) + "> the '" + role.name + "' role!", delete_after=5)
+            await ctx.send(f"Assigned <@!{str(payload.member.id)}> the '{role.name}' role!", delete_after=5)
 
 @bot.event
 async def on_raw_reaction_remove(payload):
@@ -260,9 +260,9 @@ async def on_raw_reaction_remove(payload):
             if role in member.roles:
                 await member.remove_roles(role)
                 ctx = bot.get_channel(payload.channel_id)
-                await ctx.send("Removed the '" + role.name + "' role from <@!" + str(member.id) + ">!", delete_after=5)
+                await ctx.send(f"Removed the '{role.name}' role from <@!{str(member.id)}>!", delete_after=5)
                 return
-            await ctx.send("For some reason, you don't have the '" + role.name + "' role, even though you reacted to this message. Try removing your reaction and adding your reaction again.")
+            await ctx.send(f"For some reason, you don't have the '{role.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again.")
         
 
 @bot.command(aliases=['pong'])
