@@ -256,10 +256,10 @@ async def on_raw_reaction_remove(payload):
         member = guild.get_member(payload.user_id)
         roleid = bot.dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
         if roleid is not None:
+            ctx = bot.get_channel(payload.channel_id)
             role = discord.utils.get(guild.roles, id=int(roleid))
             if role in member.roles:
                 await member.remove_roles(role)
-                ctx = bot.get_channel(payload.channel_id)
                 await ctx.send(f"Removed the '{role.name}' role from <@!{str(member.id)}>!", delete_after=5)
                 return
             await ctx.send(f"For some reason, you don't have the '{role.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again.")
