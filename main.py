@@ -124,8 +124,8 @@ async def reload(ctx, *targetextensions):
         bot.miscinst = bot.get_cog('misc')
         bot.reactionrolesinst = bot.get_cog('reactionroles')
     except Exception as e:
-        embed = discord.Embed(title=f"Error while reloading extensions: {str(e)}")
-    embed = discord.Embed(title=f"\U0000274e Successfully reloaded {str(len(targetextensions))} extensions.", color=discord.Color.blurple())
-    await ctx.send(embed=embed)
+        embed = discord.Embed(title=f"\U0000274e Error while reloading extensions: {str(e)}")
+    embed = discord.Embed(title=f"\U00002705 Successfully reloaded {str(len(targetextensions))} extensions.", color=discord.Color.blurple())
+    await ctx.send(embed=embed) 
 
 bot.run(decrypted_token)
