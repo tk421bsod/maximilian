@@ -57,9 +57,9 @@ class userinfo(commands.Cog):
         await ctx.send(embed=embed)
 
 def setup(bot):
-    bot.add_cog(misc(bot))
+    bot.add_cog(userinfo(bot))
 
 def teardown(bot):
-    bot.remove_cog(misc(bot))
+    bot.remove_cog(userinfo(bot))
 
     
