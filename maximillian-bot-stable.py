@@ -23,6 +23,10 @@ bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
 
+async def startup():
+    await bot.wait_until_ready()
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
+
 async def get_responses():
     print("getting responses...")
     bot.responses = []
@@ -62,7 +66,7 @@ async def reset_prefixes():
 async def on_ready():
     await reset_prefixes()
     await get_responses()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
+    bot.loop.create_task(startup())
     print("ready")
     
 @bot.event
