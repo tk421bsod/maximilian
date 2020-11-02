@@ -28,7 +28,7 @@ bot.responsesinst = bot.get_cog('responses')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
 bot.reactionrolesinst = bot.get_cog('reactionroles')
-print('loaded extensions')
+print('loaded extensions, waiting for on-ready')
 
 async def startup():
     await bot.wait_until_ready()
