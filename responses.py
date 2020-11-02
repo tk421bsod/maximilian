@@ -36,7 +36,7 @@ class responses(commands.Cog):
                 response_trigger.replace("*", "\*")
                 if self.bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(response_trigger), "response_text" : str(response_text)}, "response_trigger", False, "", False) == "success":
                     await self.get_responses()
-                    await ctx.send("Added a custom response. Try it out!")
+                    await ctx.send("Added a custom response.")
                 else: 
                     raise discord.ext.commands.CommandError(message="Failed to add a response, there might be a duplicate. Try deleting the response you just tried to add.")
             if action.lower() == "delete":
