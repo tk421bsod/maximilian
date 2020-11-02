@@ -5,6 +5,7 @@ class responses(commands.Cog):
     '''Commands and functions related to the responses feature'''
     def __init__(self, bot):
         self.bot = bot
+        self.get_responses()
     
     async def get_responses(self):
         print("getting responses...")
