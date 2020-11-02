@@ -89,27 +89,6 @@ async def on_guild_join(guild):
     await bot.prefixesinst.reset_prefixes()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
 
-
-@commands.is_owner()
-@bot.command(hidden=True)
-async def reloadall(ctx):
-    reloadmessage = await ctx.send("Reloading extensions...")
-    await ctx.trigger_typing()
-    start_time = time.time()
-    os.system("git pull")
-    commoninst=importlib.reload(common)
-    bot.dbinst = commoninst.db()
-    bot.reload_extension('responses')
-    bot.reload_extension('prefixes')
-    bot.reload_extension('misc')
-    bot.reload_extension('reactionroles')
-    bot.responsesinst = bot.get_cog('responses')
-    bot.prefixesinst = bot.get_cog('prefixes')
-    bot.miscinst = bot.get_cog('misc')
-    bot.reactionrolesinst = bot.get_cog('reactionroles')
-    await reloadmessage.edit(content="Reloaded extensions!")
-    await bot.miscinst.exectime(start_time, ctx)
-
 @commands.is_owner()
 @bot.command(hidden=True)
 async def reload(ctx, *targetextensions):
@@ -127,7 +106,7 @@ async def reload(ctx, *targetextensions):
         embed = discord.Embed(title=f"\U00002705 Successfully reloaded {str(len(targetextensions))} extensions.", color=discord.Color.blurple())
     except Exception as e:
         embed = discord.Embed(title=f"\U0000274e Error while reloading extensions: {str(e)}.")
-        embed.add_field(name="What might have happened:", value="You might have mistyped the extension name; the extensions are `misc`, `reactionroles`, `prefixes`, and `responses`. If you created a new extension, make sure that it has a setup function, and you're calling `Bot.load_extension(name)` somewhere in main.py.")
+        embed.add_field(name="What might have happened:", value="You might have mistyped the extension name; the extensions are `misc`, `reactionroles`, `prefixes`, `responses`, and `userinfo`. If you created a new extension, make sure that it has a setup function, and you're calling `Bot.load_extension(name)` somewhere in main.py.")
     await ctx.send(embed=embed) 
 
 bot.run(decrypted_token)
