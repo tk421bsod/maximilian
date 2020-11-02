@@ -125,7 +125,8 @@ async def reload(ctx, *targetextensions):
         bot.reactionrolesinst = bot.get_cog('reactionroles')
         embed = discord.Embed(title=f"\U00002705 Successfully reloaded {str(len(targetextensions))} extensions.", color=discord.Color.blurple())
     except Exception as e:
-        embed = discord.Embed(title=f"\U0000274e Error while reloading extensions: {str(e)}")
+        embed = discord.Embed(title=f"\U0000274e Error while reloading extensions: {str(e)}.")
+        embed.add_field(name="What might have happened:", value="You might have mistyped the extension name; the extensions are `misc`, `reactionroles`, `prefixes`, and `responses`. If you created a new extension, make sure that it has a setup function, and you're calling `Bot.load_extension(name)` somewhere in main.py.")
     await ctx.send(embed=embed) 
 
 bot.run(decrypted_token)
