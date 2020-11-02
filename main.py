@@ -97,7 +97,7 @@ async def reload(ctx, *targetextensions):
         if len(targetextensions) == 1:
             extensionsreloaded = "Successfully reloaded 1 extension."
         elif len(targetextensions) == 0:
-            embed = discord.Embed(title=f"\U0000274e You need to specify at least 1 extension to reload.")
+            embed = discord.Embed(title="\U0000274e You need to specify at least 1 extension to reload.", color=discord.Color.blurple())
             await ctx.send(embed)
             return
         else:
