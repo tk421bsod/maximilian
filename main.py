@@ -111,6 +111,8 @@ async def reload(ctx, *targetextensions):
         bot.prefixesinst = bot.get_cog('prefixes')
         bot.miscinst = bot.get_cog('misc')
         bot.reactionrolesinst = bot.get_cog('reactionroles')
+        await bot.prefixesinst.reset_prefixes()
+        await bot.responsesinst.get_responses()
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
     except Exception as e:
         embed = discord.Embed(title=f"\U0000274e Error while reloading extensions: {str(e)}.")
