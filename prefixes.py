@@ -6,6 +6,7 @@ class prefixes(commands.Cog):
     '''Prefix-related commands'''
     def __init__(self, bot):
         self.bot = bot
+        self.reset_prefixes()
 
     async def reset_prefixes(self):
         print("resetting prefixes...")
