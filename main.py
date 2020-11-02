@@ -115,7 +115,7 @@ async def reload(ctx, *targetextensions):
     reloadmessage = await ctx.send("Fetching latest revision...")
     await ctx.trigger_typing()
     os.system("git pull")
-    reloadmessage.edit(content="Fetched latest revision! Reloading extensions...")
+    await reloadmessage.edit(content="Fetched latest revision! Reloading extensions...")
     try:
         for each in targetextensions:
             bot.reload_extension(each)
