@@ -92,21 +92,25 @@ async def on_guild_join(guild):
 @commands.is_owner()
 @bot.command(hidden=True)
 async def reload(ctx, *targetextensions):
-    reloadmessage = await ctx.send("Fetching latest revision...")
     await ctx.trigger_typing()
-    os.system("git pull")
-    await reloadmessage.edit(content="Fetched latest revision! Reloading extensions...")
     try:
+        if len(targetextensions) == 1:
+            extensionsreloaded = "Successfully reloaded 1 extension."
+        elif len(targetextensions) == 0:
+            embed = discord.Embed(title=f"\U0000274e You need to specify at least 1 extension to reload.")
+            await ctx.send(embed)
+            return
+        else:
+            extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
+        reloadmessage = await ctx.send("Fetching latest revision...")
+        os.system("git pull")
+        await reloadmessage.edit(content="Fetched latest revision! Reloading extensions...")
         for each in targetextensions:
             bot.reload_extension(each)
         bot.responsesinst = bot.get_cog('responses')
         bot.prefixesinst = bot.get_cog('prefixes')
         bot.miscinst = bot.get_cog('misc')
         bot.reactionrolesinst = bot.get_cog('reactionroles')
-        if len(targetextensions) == 1:
-            extensionsreloaded = "Successfully reloaded 1 extension."
-        else:
-            extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
     except Exception as e:
         embed = discord.Embed(title=f"\U0000274e Error while reloading extensions: {str(e)}.")
