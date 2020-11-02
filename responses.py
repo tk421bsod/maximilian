@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 
 class responses(commands.Cog):
+    '''Commands and functions related to the responses feature'''
     def __init__(self, bot):
         self.bot = bot
     

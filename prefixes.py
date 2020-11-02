@@ -3,6 +3,7 @@ import time
 from discord.ext import commands
 
 class prefixes(commands.Cog):
+    '''Prefix-related commands'''
     def __init__(self, bot):
         self.bot = bot
 
