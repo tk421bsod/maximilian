@@ -64,6 +64,7 @@ async def on_message(message):
 
 @bot.event
 async def on_command_error(ctx, error):
+    print("error")
     if isinstance(error, commands.BotMissingPermissions):
         embed = discord.Embed(name="\U0000274e I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
@@ -74,7 +75,7 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=embed)
         return
     if isinstance(error, commands.CommandNotFound):
-        embed = discord.Embed(name=f"\U0000274e I can't find that command. Use `{bot.command_prefix}help` to see a list of commands. ")
+        embed = discord.Embed(name=f"\U0000274e I can't find that command. Use `{bot.command_prefix}help` to see a list of commands.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
         return
     await ctx.send("There was an error. Please try again later.")
