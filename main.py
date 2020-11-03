@@ -65,7 +65,7 @@ async def on_message(message):
 @bot.event
 async def on_command_error(ctx, error):
     print("error")
-    if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden):
+    if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.Forbidden):
         embed = discord.Embed(title="\U0000274e I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
         return
