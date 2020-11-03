@@ -18,7 +18,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
                 if self.bot.dbinst.delete("maximilian", "roles", str(roleid), "role_id", "", "", False) == "successful":
                     await ctx.send("Deleted a reaction role.")
                 else:
-                    raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '{str(roleid)}'? Try using 'str(self.bot.command_prefix)' +"reactionroles list all all' to see if you have any reaction roles set up.")
+                    raise discord.ext.commands.CommandError(message=f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(roleid)}'? Try using 'str(self.bot.command_prefix)' +"reactionroles list all all' to see if you have any reaction roles set up.")
             if action == "list":
                 roles = self.bot.dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
                 reactionrolestring = ""
