@@ -30,7 +30,7 @@ bot.load_extension('userinfo')
 bot.responsesinst = bot.get_cog('responses')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
-bot.reactionrolesinst = bot.get_cog('reactionroles')
+bot.reactionrolesinst = bot.get_cog('reaction roles')
 print('loaded extensions, waiting for on-ready')
 
 class HelpCommand(commands.HelpCommand):
@@ -191,7 +191,7 @@ async def reload(ctx, *targetextensions):
         bot.responsesinst = bot.get_cog('responses')
         bot.prefixesinst = bot.get_cog('prefixes')
         bot.miscinst = bot.get_cog('misc')
-        bot.reactionrolesinst = bot.get_cog('reactionroles')
+        bot.reactionrolesinst = bot.get_cog('reaction roles')
         await bot.prefixesinst.reset_prefixes()
         await bot.responsesinst.get_responses()
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())

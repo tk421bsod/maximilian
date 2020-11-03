@@ -1,13 +1,13 @@
 import discord
 from discord.ext import commands
 
-class reactionroles(commands.Cog):
+class reactionroles(commands.Cog, name="reaction roles"):
     '''Reaction role commands'''
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(help="Add, remove, or list reaction roles, only works if you have administrator privileges", aliases=['reactionroles'])
-    async def reactionrole(self,ctx, action, roleid, messageid):
+    @commands.command(help="Add, remove, or list reaction roles, only works if you have administrator privileges", aliases=['reactionrole'])
+    async def reactionroles(self,ctx, action, roleid, messageid):
         if ctx.author.guild_permissions.administrator or ctx.author.id == self.bot.owner_id:
             if action == "add":
                 if self.bot.dbinst.insert("maximilian", "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False) == "success":
@@ -18,13 +18,13 @@ class reactionroles(commands.Cog):
                 if self.bot.dbinst.delete("maximilian", "roles", str(roleid), "role_id", "", "", False) == "successful":
                     await ctx.send("Deleted a reaction role.")
                 else:
-                    raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '" + str(roleid) + "'? Try using '"+ str(self.bot.command_prefix) +"reactionrole list all all' to see if you have any reaction roles set up.")
+                    raise discord.ext.commands.CommandError(message="Failed to delete a reaction role, are there any reaction roles set up for role id '{str(roleid)}'? Try using 'str(self.bot.command_prefix)' +"reactionroles list all all' to see if you have any reaction roles set up.")
             if action == "list":
                 roles = self.bot.dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
                 reactionrolestring = ""
                 if roles != "()":
                     for each in roles: 
-                        reactionrolestring = reactionrolestring + " message id: " + str(each["message_id"]) + " role id: " + str(each["role_id"]) + ", "         
+                        reactionrolestring = f"{reactionrolestring} message id:  {str(each['message_id'])}  role id:  {str(each['role_id'])}, "         
                     await ctx.send("reaction roles: " + str(reactionrolestring[:-2]))
         else:
             await ctx.send("You don't have permission to use this command.")
