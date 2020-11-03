@@ -23,7 +23,7 @@ class prefixes(commands.Cog):
     @commands.command(help="Set Maximilian's prefix, only works if you're an admin", aliases=['prefixes'])
     async def prefix(self, ctx, newprefix):
         #should probably make this shorter and eliminate a bunch of those if statements
-        if ctx.author.guild_permissions.administrator or ctx.author.id == self.bot.owner_id:
+        if ctx.author.guild_permissions.administrator:
             print("changing prefix...")
             changingprefixmessage = await ctx.send(f"Ok. Changing prefix to `{str(newprefix)}`...")
             start_time = time.time()
