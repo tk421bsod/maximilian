@@ -80,7 +80,7 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
         embed = discord.Embed(title=f"\U0000274e You don't have the permissions to run this command.", color=discord.Color.blurple())
-        embed.add_field(name="Why did this happen? What can I do?", value=f"Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info on that command, including the required permissions..")
+        embed.add_field(name="Why did this happen? What can I do?", value=f"Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info on that command, including the required permissions..", inline=False)
         await ctx.send(embed=embed)
         return
     if isinstance(error, commands.CommandNotFound):
