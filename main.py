@@ -66,6 +66,7 @@ async def on_message(message):
 @bot.event
 async def on_error(event, *args, **kwargs):
     print(str(sys.exc_info()[0]))
+    await on_command_error(None, sys.exc_info()[0])
 
 @bot.event
 async def on_command_error(ctx, error):
