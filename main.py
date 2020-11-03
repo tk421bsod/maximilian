@@ -185,7 +185,7 @@ async def reload(ctx, *targetextensions):
         repo = git.Repo('/var/www/html/animationdoctorstudio.net/other-projects/maximilian')
         o = repo.remotes.origin
         o.pull()
-        reloadmessage.edit(content="Got latest revision. Reloading extensions...")
+        await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
         for each in targetextensions:
             bot.reload_extension(each)
         bot.responsesinst = bot.get_cog('responses')
