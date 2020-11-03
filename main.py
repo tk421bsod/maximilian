@@ -38,7 +38,7 @@ class HelpCommand(commands.HelpCommand):
         return 'Use {0}{1} [command] for more info on a command.'.format(self.clean_prefix, self.invoked_with)
 
     def get_command_signature(self, command):
-        return '{0.qualified_name}|{0.aliases[0]} {0.signature}'.format(command)
+        return '{0.qualified_name}|{0.aliases} {0.signature}'.format(command)
 
     async def send_bot_help(self, mapping):
         embed = discord.Embed(title='Commands', colour=self.color)
