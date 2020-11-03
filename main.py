@@ -68,7 +68,7 @@ async def on_error(event, *args, **kwargs):
     print(str(sys.exc_info()[0]))
     print(str(args[0]))
     if isinstance(args[0], discord.RawReactionActionEvent):
-        await on_command_error(bot.get_channel(int(args[0].channel_id)), sys.exc_info()[0])
+        await on_command_error(bot.get_channel(int(args[0].channel_id)), getattr(sys.exc_info()[0], 'class', sys.exc_info()[0]))
 
 @bot.event
 async def on_command_error(ctx, error):
