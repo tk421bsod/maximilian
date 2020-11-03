@@ -74,7 +74,7 @@ async def on_error(event, *args, **kwargs):
 async def on_command_error(ctx, error):
     print("error")
     error = getattr(error, "original", error)
-    if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in error:
+    if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
         embed = discord.Embed(title="\U0000274e I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
         return
