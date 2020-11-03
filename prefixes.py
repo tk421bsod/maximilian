@@ -21,20 +21,20 @@ class prefixes(commands.Cog):
         print("reset prefixes")
 
     @commands.command(help="Set Maximilian's prefix, only works if you're an admin", aliases=['prefixes'])
-    async def prefix(self, ctx, arg):
+    async def prefix(self, ctx, newprefix):
         #should probably make this shorter and eliminate a bunch of those if statements
         if ctx.author.guild_permissions.administrator or ctx.author.id == self.bot.owner_id:
             print("changing prefix...")
-            changingprefixmessage = await ctx.send(f"Ok. Changing prefix to `{str(arg)}`...")
+            changingprefixmessage = await ctx.send(f"Ok. Changing prefix to `{str(newprefix)}`...")
             start_time = time.time()
             await ctx.trigger_typing()
-            prefixsetmessage = f"My prefix in this server has been set to `{str(arg)}` ."
-            duplicateprefixmessage = f"My prefix in this server is already `{str(arg)}`."
+            prefixsetmessage = f"My prefix in this server has been set to `{str(newprefix)}` ."
+            duplicateprefixmessage = f"My prefix in this server is already `{str(newprefix)}`."
             dbentry = self.bot.dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
             if dbentry == "" or dbentry == None:
                 print("no db entry found")
-                self.bot.prefixes[ctx.guild.id] = arg
-                result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
+                self.bot.prefixes[ctx.guild.id] = newprefix
+                result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False)
                 if result == "success":
                     print("set prefix")
                     await self.reset_prefixes()
@@ -47,14 +47,14 @@ class prefixes(commands.Cog):
                     await self.bot.miscinst.exectime(start_time, ctx)
                     print(result)
                     return "error"
-            elif dbentry == arg:
+            elif dbentry == newprefix:
                 print("tried to change to same prefix")
                 await ctx.send(duplicateprefixmessage)
                 await self.bot.miscinst.exectime(start_time, ctx)
                 return "changed prefix"
-            elif dbentry != "" and dbentry != arg:
+            elif dbentry != "" and dbentry != newprefix:
                 print("db entry found")
-                result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
+                result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False)
                 if result == "success":
                     print("set prefix")
                     await self.reset_prefixes()
@@ -65,7 +65,7 @@ class prefixes(commands.Cog):
                     print("there's already an entry for this guild")
                     deletionresult = self.bot.dbinst.delete("maximilian", "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
                     if deletionresult == "successful":
-                        result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(arg)}, "guild_id", False, "", False)
+                        result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False)
                         if result == "success":
                             print("set prefix")
                             await self.reset_prefixes()
