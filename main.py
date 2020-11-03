@@ -7,6 +7,7 @@ import time
 import calendar
 import os
 import sys
+import git 
 
 logging.basicConfig(level=logging.WARN)
 print("starting...")
@@ -180,9 +181,11 @@ async def reload(ctx, *targetextensions):
             return
         else:
             extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
-        #reloadmessage = await ctx.send("Fetching latest revision...")
-        #os.system("git pull")
-        reloadmessage = await ctx.send("Reloading extensions...")
+        reloadmessage = await ctx.send("Fetching latest revision...", delete_after="20")
+        repo = git.Repo('/var/www/html/animationdoctorstudio.net/other-projects/maximilian')
+        o = repo.remotes.origin
+        o.pull()
+        reloadmessage.edit(content="Got latest revision. Reloading extensions...")
         for each in targetextensions:
             bot.reload_extension(each)
         bot.responsesinst = bot.get_cog('responses')
