@@ -45,14 +45,6 @@ class misc(commands.Cog):
     async def lc(self, ctx):
         await ctx.send("I am made of 636 lines of Python, spread across 7 files. \n Files (sorted by number of lines): common.py (159), main.py (122), prefixes.py (98), responses.py (69), reactionroles.py (65), userinfo.py (63), misc.py (60) ")
 
-    @commands.is_owner()
-    @commands.command(hidden=True)
-    async def listguildnames(self, ctx):
-        guildstring = ""
-        for each in self.bot.guilds:
-            guildstring = guildstring + each.name + ", "
-        await ctx.send(guildstring[:-2])
-
 def setup(bot):
     bot.add_cog(misc(bot))
 
