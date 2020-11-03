@@ -43,7 +43,7 @@ class misc(commands.Cog):
 
     @commands.command(hidden=True)
     async def lc(self, ctx):
-        await ctx.send("I am made of 636 lines of Python, spread across 7 files. \n Files (sorted by number of lines): common.py (159), main.py (122), prefixes.py (98), responses.py (69), reactionroles.py (65), userinfo.py (63), main.py (60) ")
+        await ctx.send("I am made of 636 lines of Python, spread across 7 files. \n Files (sorted by number of lines): common.py (159), main.py (122), prefixes.py (98), responses.py (69), reactionroles.py (65), userinfo.py (63), misc.py (60) ")
 
     @commands.is_owner()
     @commands.command(hidden=True)
