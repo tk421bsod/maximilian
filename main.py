@@ -75,16 +75,16 @@ async def on_command_error(ctx, error):
     print("error")
     error = getattr(error, "original", error)
     if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
-        embed = discord.Embed(title="\U0000274e I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
+        embed = discord.Embed(title="\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
         return
     if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
-        embed = discord.Embed(title=f"\U0000274e You don't have the permissions to run this command.", color=discord.Color.blurple())
+        embed = discord.Embed(title="\U0000274c You don't have the permissions to run this command.", color=discord.Color.blurple())
         embed.add_field(name="Why did this happen? What can I do?", value=f"Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info on that command, including the required permissions..", inline=False)
         await ctx.send(embed=embed)
         return
     if isinstance(error, commands.CommandNotFound):
-        embed = discord.Embed(title=f"\U0000274e I can't find that command. Use `{bot.command_prefix}help` to see a list of commands.", color=discord.Color.blurple())
+        embed = discord.Embed(title=f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
         return
     await ctx.send("There was an error. Please try again later.")
@@ -138,7 +138,7 @@ async def reload(ctx, *targetextensions):
         await bot.responsesinst.get_responses()
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
     except Exception as e:
-        embed = discord.Embed(title=f"\U0000274e Error while reloading extensions: {str(e)}.")
+        embed = discord.Embed(title=f"\U0000274c Error while reloading extensions: {str(e)}.")
         embed.add_field(name="What might have happened:", value="You might have mistyped the extension name; the extensions are `misc`, `reactionroles`, `prefixes`, `responses`, and `userinfo`. If you created a new extension, make sure that it has a setup function, and you're calling `Bot.load_extension(name)` somewhere in main.py.")
     await ctx.send(embed=embed) 
 
