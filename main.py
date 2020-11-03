@@ -125,8 +125,8 @@ async def reload(ctx, *targetextensions):
             return
         else:
             extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
-        reloadmessage = await ctx.send("Fetching latest revision...")
-        os.system("git pull")
+        #reloadmessage = await ctx.send("Fetching latest revision...")
+        #os.system("git pull")
         await reloadmessage.edit(content="Fetched latest revision! Reloading extensions...")
         for each in targetextensions:
             bot.reload_extension(each)
