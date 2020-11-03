@@ -66,7 +66,7 @@ async def on_message(message):
 @bot.event
 async def on_error(event, *args, **kwargs):
     print(str(sys.exc_info()[0]))
-    await on_command_error(None, sys.exc_info()[0])
+    await on_command_error(bot.get_channel(int(*args[0].channel_id)), sys.exc_info()[0])
 
 @bot.event
 async def on_command_error(ctx, error):
