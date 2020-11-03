@@ -6,6 +6,7 @@ import logging
 import time
 import calendar
 import os
+import sys
 
 logging.basicConfig(level=logging.WARN)
 print("starting...")
@@ -61,6 +62,10 @@ async def on_message(message):
                             await message.channel.send(bot.responses[each][2])
                             return
         await bot.process_commands(message)
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    print(str(sys.exc_info))
 
 @bot.event
 async def on_command_error(ctx, error):
