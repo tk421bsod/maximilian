@@ -66,14 +66,15 @@ async def on_message(message):
 @bot.event
 async def on_error(event, *args, **kwargs):
     print(str(sys.exc_info()[0]))
-    print(str(*args))
-    await on_command_error(bot.get_channel(int(*args[0].channel_id)), sys.exc_info()[0])
+    print(str(*args[0]))
+    if isinstance(*args[0], discord.RawReactionActionEvent):
+        await on_command_error(bot.get_channel(int(*args[0].channel_id)), sys.exc_info()[0])
 
 @bot.event
 async def on_command_error(ctx, error):
     print("error")
     error = getattr(error, "original", error)
-    if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.Forbidden):
+    if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden):
         embed = discord.Embed(title="\U0000274e I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
         return
