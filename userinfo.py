@@ -28,7 +28,7 @@ class userinfo(commands.Cog):
         embed = discord.Embed(title=f"User info for {str(requested_user.name)}#{str(requested_user.discriminator)}", color=rolecolor)
         pt = timezone('America/Los_Angeles')
         embed.add_field(name="Date joined:", value=pt.localize(requested_user.joined_at).strftime("%B %d, %Y at %-I:%M %p PST"), inline=False)
-        embed.add_field(name="Date created:", value=pt.localize(requested_user.created_at).strftime("%B %d, %Y at %-I:%M %p PST"), inline=False)
+        embed.add_field(name="Date created:", value=pt.localize(requested_user.created_at).astimezone(pt).strftime("%B %d, %Y at %-I:%M %p PST"), inline=False)
         for each in requested_user.roles:
             if each.name != "@everyone":
                 rolestring = rolestring + "<@&" + str(each.id) + ">, "
