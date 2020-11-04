@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import time
-import datetime
+from pytz import timezone
 
 class userinfo(commands.Cog):
     '''Self explanatory. See userinfo\'s help entry for details'''
@@ -26,8 +26,8 @@ class userinfo(commands.Cog):
         else:
             rolecolor = requested_user.roles[len(requested_user.roles)-1].color
         embed = discord.Embed(title=f"User info for {str(requested_user.name)}#{str(requested_user.discriminator)}", color=rolecolor)
-        embed.add_field(name="Date joined:", value=requested_user.joined_at.astimezone('US/Pacific').strftime("%B %d, %Y at %-I:%M %p PST"), inline=False)
-        embed.add_field(name="Date created:", value=requested_user.created_at.astimezone('US/Pacific').strftime("%B %d, %Y at %-I:%M %p PST"), inline=False)
+        embed.add_field(name="Date joined:", value=requested_user.joined_at.astimezone(timezone('US/Pacific')).strftime("%B %d, %Y at %-I:%M %p PST"), inline=False)
+        embed.add_field(name="Date created:", value=requested_user.created_at.astimezone(timezone('US/Pacific')).strftime("%B %d, %Y at %-I:%M %p PST"), inline=False)
         for each in requested_user.roles:
             if each.name != "@everyone":
                 rolestring = rolestring + "<@&" + str(each.id) + ">, "
