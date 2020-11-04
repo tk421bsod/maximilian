@@ -65,6 +65,7 @@ class prefixes(commands.Cog):
                             print("set prefix")
                             await self.reset_prefixes()
                             await changingprefixmessage.edit(content=prefixsetmessage)
+                            return "success"
                         else: 
                             print("error")
                             await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
