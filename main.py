@@ -7,6 +7,7 @@ import time
 import calendar
 import os
 import sys
+import git 
 
 logging.basicConfig(level=logging.WARN)
 print("starting...")
@@ -29,8 +30,62 @@ bot.load_extension('userinfo')
 bot.responsesinst = bot.get_cog('responses')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
-bot.reactionrolesinst = bot.get_cog('reactionroles')
+bot.reactionrolesinst = bot.get_cog('reaction roles')
 print('loaded extensions, waiting for on-ready')
+
+class HelpCommand(commands.HelpCommand):
+    color = discord.Colour.blurple()
+    def get_ending_note(self):
+        return 'Use {0}{1} [command] for more info on a command.'.format(self.clean_prefix, self.invoked_with)
+
+    def get_command_signature(self, command):
+        return '{0.qualified_name}|{0.aliases} {0.signature}'.format(command)
+
+    async def send_bot_help(self, mapping):
+        embed = discord.Embed(title='Commands', colour=self.color)
+        description = self.context.bot.description
+        if description:
+            embed.description = description
+
+        for cog, commands in mapping.items():
+            if cog is not None:
+                name = cog.qualified_name
+                filtered = await self.filter_commands(commands, sort=True)
+                if filtered:
+                    value = '\u2002 '.join('`' + c.name + '`' for c in commands)
+                    if cog and cog.description:
+                        value = '{0}\n{1}'.format(cog.description, value)
+
+                    embed.add_field(name=name, value=value)
+
+        embed.set_footer(text=self.get_ending_note())
+        await self.get_destination().send(embed=embed)
+
+    async def send_cog_help(self, cog):
+        embed = discord.Embed(title='{0.qualified_name} Commands'.format(cog), colour=self.color)
+        if cog.description:
+            embed.description = cog.description
+
+        filtered = await self.filter_commands(cog.get_commands(), sort=True)
+        for command in filtered:
+            embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)
+
+        embed.set_footer(text=self.get_ending_note())
+        await self.get_destination().send(embed=embed)
+
+    async def send_group_help(self, group):
+        embed = discord.Embed(title=group.qualified_name, colour=self.color)
+        if group.help:
+            embed.description = group.help
+
+        if isinstance(group, commands.Group):
+            filtered = await self.filter_commands(group.commands, sort=True)
+            for command in filtered:
+                embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)
+
+        embed.set_footer(text=self.get_ending_note())
+        await self.get_destination().send(embed=embed)
+    send_command_help = send_group_help
 
 async def startup():
     await bot.wait_until_ready()
@@ -40,6 +95,7 @@ async def startup():
 async def on_ready():
     await bot.prefixesinst.reset_prefixes()
     await bot.responsesinst.get_responses()
+    bot.help_command = HelpCommand()
     bot.loop.create_task(startup())
     print("ready")
     
@@ -125,15 +181,17 @@ async def reload(ctx, *targetextensions):
             return
         else:
             extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
-        #reloadmessage = await ctx.send("Fetching latest revision...")
-        #os.system("git pull")
-        reloadmessage = await ctx.send("Reloading extensions...")
+        reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
+        repo = git.Repo('/var/www/html/animationdoctorstudio.net/other-projects/maximilian')
+        o = repo.remotes.origin
+        o.pull()
+        await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
         for each in targetextensions:
             bot.reload_extension(each)
         bot.responsesinst = bot.get_cog('responses')
         bot.prefixesinst = bot.get_cog('prefixes')
         bot.miscinst = bot.get_cog('misc')
-        bot.reactionrolesinst = bot.get_cog('reactionroles')
+        bot.reactionrolesinst = bot.get_cog('reaction roles')
         await bot.prefixesinst.reset_prefixes()
         await bot.responsesinst.get_responses()
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
