@@ -26,9 +26,6 @@ class misc(commands.Cog):
                 buffer = io.BytesIO(await r.read())
                 await ctx.send(file=discord.File(buffer, filename="cat.jpeg"))
 
-    async def exectime(self, start_time, ctx):
-        await ctx.send(f"took {str(round(time.time()-start_time, 2))} seconds to execute")
-
     @commands.command(aliases=['pong'])
     async def ping(self, ctx):
         await ctx.send(f"Pong! My latency is {str(round(self.bot.latency*1000, 1))} ms.")
@@ -40,10 +37,6 @@ class misc(commands.Cog):
         embed.add_field(name="Fun Commands", value="Commands that have no purpose. \n `zalgo` `cats` `ping`", inline=True)
         embed.add_field(name="Other Commands", value="Commands that actually have a purpose. \n `about` `help` `userinfo` `reactionroles` `responses` `prefix` `listprefixes` `hi`", inline=True)
         await ctx.send(embed=embed)
-
-    @commands.command(hidden=True)
-    async def lc(self, ctx):
-        await ctx.send("I am made of 636 lines of Python, spread across 7 files. \n Files (sorted by number of lines): common.py (159), main.py (122), prefixes.py (98), responses.py (69), reactionroles.py (65), userinfo.py (63), misc.py (60) ")
 
 def setup(bot):
     bot.add_cog(misc(bot))
