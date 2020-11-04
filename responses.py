@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 class responses(commands.Cog):
-    '''Commands and functions related to the responses feature'''
+    '''Custom responses'''
     def __init__(self, bot):
         self.bot = bot
     
@@ -28,7 +28,7 @@ class responses(commands.Cog):
                     response = self.bot.dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), True, False)
                     self.bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
-    @commands.command(help="Add, delete, or list custom responses. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the response trigger.", aliases=['responses'])
+    @commands.command(help=f"Add, delete, or list custom responses. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the response trigger. You can send a custom response by typing <prefix><response_trigger>.", aliases=['responses'])
     async def response(self, ctx, action, response_trigger, *, response_text):
         if ctx.author.guild_permissions.manage_guild or ctx.author.id == self.bot.owner_id:
             await ctx.trigger_typing()
