@@ -26,8 +26,7 @@ class prefixes(commands.Cog):
     #should probably make this shorter and eliminate a bunch of those if statements
         print("changing prefix...")
         changingprefixmessage = await ctx.send(f"Ok. Changing prefix to `{str(newprefix)}`...")
-        start_time = time.time()
-        async with ctx.trigger_typing():
+        async with ctx.typing():
             prefixsetmessage = f"My prefix in this server has been set to `{str(newprefix)}` ."
             duplicateprefixmessage = f"My prefix in this server is already `{str(newprefix)}`."
             dbentry = self.bot.dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
