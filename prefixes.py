@@ -39,18 +39,15 @@ class prefixes(commands.Cog):
                 print("set prefix")
                 await self.reset_prefixes()
                 await changingprefixmessage.edit(content=prefixsetmessage)
-                await self.bot.miscinst.exectime(start_time, ctx)
                 return "changed prefix"
             else:
                 print("error")
                 await ctx.send("An error occured while setting the prefix. Please try again later.")
-                await self.bot.miscinst.exectime(start_time, ctx)
                 print(result)
                 return "error"
         elif dbentry == newprefix:
             print("tried to change to same prefix")
             await ctx.send(duplicateprefixmessage)
-            await self.bot.miscinst.exectime(start_time, ctx)
             return "changed prefix"
         elif dbentry != "" and dbentry != newprefix:
             print("db entry found")
@@ -59,7 +56,6 @@ class prefixes(commands.Cog):
                 print("set prefix")
                 await self.reset_prefixes()
                 await changingprefixmessage.edit(content=prefixsetmessage)
-                await self.bot.miscinst.exectime(start_time, ctx)
                 return "changed prefix"
             elif result == "error-duplicate":
                 print("there's already an entry for this guild")
@@ -70,23 +66,19 @@ class prefixes(commands.Cog):
                         print("set prefix")
                         await self.reset_prefixes()
                         await changingprefixmessage.edit(content=prefixsetmessage)
-                        await self.bot.miscinst.exectime(start_time, ctx)
                     else: 
                         print("error")
                         await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
                         print(result)
-                        await self.bot.miscinst.exectime(start_time, ctx)
                         return "error"
                 else:
                     print("error")
                     await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
                     print(deletionresult)
-                    await self.bot.miscinst.exectime(start_time, ctx)
                     return "error"
             else:
                 await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
                 print(result)
-                await self.bot.miscinst.exectime(start_time, ctx)
                 return "error"
 
 def setup(bot):
