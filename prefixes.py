@@ -37,7 +37,7 @@ class prefixes(commands.Cog):
                 if result == "success":
                     print("set prefix")
                     await self.reset_prefixes()
-                    await changingprefixmessage.edit(content=prefixsetmessage)
+                    await ctx.send(prefixsetmessage)
                     return "changed prefix"
                 else:
                     print("error")
@@ -54,7 +54,7 @@ class prefixes(commands.Cog):
                 if result == "success":
                     print("set prefix")
                     await self.reset_prefixes()
-                    await changingprefixmessage.edit(content=prefixsetmessage)
+                    await ctx.send(prefixsetmessage)
                     return "changed prefix"
                 elif result == "error-duplicate":
                     print("there's already an entry for this guild")
@@ -64,20 +64,20 @@ class prefixes(commands.Cog):
                         if result == "success":
                             print("set prefix")
                             await self.reset_prefixes()
-                            await changingprefixmessage.edit(content=prefixsetmessage)
+                            await ctx.send(prefixsetmessage)
                             return "success"
                         else: 
                             print("error")
-                            await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
+                            await ctx.send("An error occurred when setting the prefix. Please try again later.")
                             print(result)
                             return "error"
                     else:
                         print("error")
-                        await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
+                        await ctx.send("An error occurred when setting the prefix. Please try again later.")
                         print(deletionresult)
                         return "error"
                 else:
-                    await changingprefixmessage.edit(content="An error occurred when setting the prefix. Please try again later.")
+                    await ctx.send("An error occurred when setting the prefix. Please try again later.")
                     print(result)
                     return "error"
 
