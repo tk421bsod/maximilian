@@ -114,7 +114,7 @@ async def on_message(message):
                     pass
                 for each in range(len(bot.responses)):
                     if int(bot.responses[each][0]) == int(message.guild.id):
-                        if bot.responses[each][1] == message.content.replace(bot.command_prefix, ""):
+                        if bot.command_prefix + bot.responses[each][1] == message.content:
                             await message.channel.send(bot.responses[each][2])
                             return
         await bot.process_commands(message)
