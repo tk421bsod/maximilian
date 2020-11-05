@@ -27,8 +27,8 @@ class responses(commands.Cog, name='Custom Commands'):
                     response = self.bot.dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), True, False)
                     self.bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
-    @commands.command(help=f"Add, delete, or list custom commands. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['responses'])
-    async def command(self, ctx, action, command_trigger, *, command_response):
+    @commands.command(help=f"Add, delete, or list custom commands. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['command'])
+    async def commands(self, ctx, action, command_trigger, *, command_response):
         if ctx.author.guild_permissions.manage_guild or ctx.author.id == self.bot.owner_id:
             await ctx.trigger_typing()
             if action.lower() == "add":
