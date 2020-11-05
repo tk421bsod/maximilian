@@ -10,7 +10,6 @@ class userinfo(commands.Cog):
     
     @commands.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
     async def userinfo(self, ctx):
-        start_time = time.time()
         await ctx.trigger_typing()
         rolestring = ""
         permissionstring = ""
