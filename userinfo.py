@@ -10,7 +10,6 @@ class userinfo(commands.Cog):
     
     @commands.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
     async def userinfo(self, ctx):
-        start_time = time.time()
         await ctx.trigger_typing()
         rolestring = ""
         permissionstring = ""
@@ -49,11 +48,10 @@ class userinfo(commands.Cog):
             else:
                 activitytype = ""
             statusinfo = f"Status details: '{activitytype} {requested_user.activity.name}'"
-        executiontime = f"took {str(round(time.time()-start_time, 2))} seconds to execute"
         if requested_user.id == self.bot.owner_id:
-            embed.set_footer(text=f"{statusinfo}  |  Requested by {ctx.author.name}#{ctx.author.discriminator}  |  This is my owner's info!  |    {executiontime}")
+            embed.set_footer(text=f"{statusinfo}  |  Requested by {ctx.author.name}#{ctx.author.discriminator}  |  This is my owner's info!")
         else:
-            embed.set_footer(text=f"{statusinfo}  |  Requested by {ctx.author.name}#{ctx.author.discriminator}  |   {executiontime}")
+            embed.set_footer(text=f"{statusinfo}  |  Requested by {ctx.author.name}#{ctx.author.discriminator} ")
         embed.set_thumbnail(url=requested_user.avatar_url)
         await ctx.send(embed=embed)
 

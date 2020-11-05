@@ -6,9 +6,9 @@ class reactionroles(commands.Cog, name="reaction roles"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(help="Add, remove, or list reaction roles, only works if you have administrator privileges", aliases=['reactionrole'])
+    @commands.command(help="Add, remove, or list reaction roles, only works if you have the manage roles permission", aliases=['reactionrole'])
     async def reactionroles(self,ctx, action, roleid, messageid):
-        if ctx.author.guild_permissions.administrator or ctx.author.id == self.bot.owner_id:
+        if ctx.author.guild_permissions.manage_roles:
             if action == "add":
                 if self.bot.dbinst.insert("maximilian", "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False) == "success":
                     await ctx.send("Added a reaction role.")
