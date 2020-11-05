@@ -1,8 +1,7 @@
 import discord 
 from discord.ext import commands
 
-class responses(commands.Cog):
-    '''Custom responses'''
+class responses(commands.Cog, name='Custom Commands'):
     def __init__(self, bot):
         self.bot = bot
     
@@ -28,24 +27,24 @@ class responses(commands.Cog):
                     response = self.bot.dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), True, False)
                     self.bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
-    @commands.command(help=f"Add, delete, or list custom responses. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the response trigger. You can send a custom response by typing <prefix><response_trigger>.", aliases=['responses'])
-    async def response(self, ctx, action, response_trigger, *, response_text):
+    @commands.command(help=f"Add, delete, or list custom commands. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['responses'])
+    async def command(self, ctx, action, command_trigger, *, command_response):
         if ctx.author.guild_permissions.manage_guild or ctx.author.id == self.bot.owner_id:
             await ctx.trigger_typing()
             if action.lower() == "add":
-                response_text.replace("*", "\*")
-                response_trigger.replace("*", "\*")
-                if self.bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(response_trigger), "response_text" : str(response_text)}, "response_trigger", False, "", False) == "success":
+                command_response.replace("*", "\*")
+                command_trigger.replace("*", "\*")
+                if self.bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False) == "success":
                     await self.get_responses()
-                    await ctx.send("Added a custom response.")
+                    await ctx.send("Added a custom command.")
                 else: 
-                    raise discord.ext.commands.CommandError(message="Failed to add a response, there might be a duplicate. Try deleting the response you just tried to add.")
+                    raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
             if action.lower() == "delete":
-                if self.bot.dbinst.delete("maximilian", "responses", str(response_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
+                if self.bot.dbinst.delete("maximilian", "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
                     await self.get_responses()
-                    await ctx.send("Deleted a custom response.")
+                    await ctx.send("Deleted a custom command.")
                 else:
-                    raise discord.ext.commands.CommandError(message="Failed to delete a custom response, are there any custom responses set up that use the response trigger '" + str(response_trigger) + "'?")
+                    raise discord.ext.commands.CommandError(message="Failed to delete a custom command, are there any custom commands set up that use the command trigger '" + str(command_trigger) + "'?")
             if action.lower() == "list":
                 responsestring = ""
                 await self.get_responses()
@@ -55,9 +54,9 @@ class responses(commands.Cog):
                             responsetext = self.bot.responses[each][2][:200] + "..."
                         else:
                             responsetext = self.bot.responses[each][2]
-                        responsestring = responsestring + " \n response trigger: `" + self.bot.responses[each][1] + "` response text: `" + responsetext + "`"
+                        responsestring = responsestring + " \n command trigger: `" + self.bot.responses[each][1] + "` response: `" + responsetext + "`"
                 if responsestring == "":
-                    responsestring = "I can't find any custom responses in this server."
+                    responsestring = "I can't find any custom commands in this server."
                 await ctx.send(responsestring)
         else:
             await ctx.send("You don't have permission to use this command.")
