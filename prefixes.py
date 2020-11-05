@@ -20,8 +20,8 @@ class prefixes(commands.Cog):
                 self.bot.prefixes[each] = prefixindb
         print("reset prefixes")
 
-    @commands.has_permissions(administrator=True)
-    @commands.command(help="Set Maximilian's prefix, only works if you're an admin", aliases=['prefixes'])
+    @commands.has_permissions(manage_guild=True)
+    @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission", aliases=['prefixes'])
     async def prefix(self, ctx, newprefix):
     #should probably make this shorter and eliminate a bunch of those if statements
         print("changing prefix...")
