@@ -27,7 +27,7 @@ bot.load_extension('prefixes')
 bot.load_extension('misc')
 bot.load_extension('reactionroles')
 bot.load_extension('userinfo')
-bot.responsesinst = bot.get_cog('responses')
+bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
 bot.reactionrolesinst = bot.get_cog('reaction roles')
@@ -114,7 +114,7 @@ async def on_message(message):
                     pass
                 for each in range(len(bot.responses)):
                     if int(bot.responses[each][0]) == int(message.guild.id):
-                        if bot.responses[each][1] == message.content.replace(bot.command_prefix, ""):
+                        if bot.command_prefix + bot.responses[each][1].lower() == message.content.lower():
                             await message.channel.send(bot.responses[each][2])
                             return
         await bot.process_commands(message)
@@ -188,7 +188,7 @@ async def reload(ctx, *targetextensions):
         await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
         for each in targetextensions:
             bot.reload_extension(each)
-        bot.responsesinst = bot.get_cog('responses')
+        bot.responsesinst = bot.get_cog('Custom Commands')
         bot.prefixesinst = bot.get_cog('prefixes')
         bot.miscinst = bot.get_cog('misc')
         bot.reactionrolesinst = bot.get_cog('reaction roles')
