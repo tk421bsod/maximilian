@@ -166,6 +166,8 @@ async def on_guild_join(guild):
     print("joined guild, adding guild id to list of guilds and resetting prefixes")
     bot.guildlist.append(str(guild.id))
     await bot.prefixesinst.reset_prefixes()
+    if guild.me.guild_permissions.change_nickname:
+        await guild.me.edit(nick="[!] Maximilian")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
 
 @commands.is_owner()
