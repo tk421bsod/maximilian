@@ -43,12 +43,8 @@ class misc(commands.Cog):
     async def updatenicknames(self, ctx):
         await ctx.send("Updating nicknames...")
         for each in self.bot.guilds:
-            print("iterating over guilds")
-            print(str(self.bot.prefixes))
             if each.me.guild_permissions.change_nickname:
-                print("I'm allowed to change my nickname")
-                await each.me.edit(nick=f"[{self.bot.prefixes[each.id]}] Maximilian")
-                print("changed nickname")
+                await each.me.edit(nick=f"[{self.bot.prefixes[str(each.id)]}] Maximilian")
         await ctx.send("Updated nicknames!")
 
 def setup(bot):
