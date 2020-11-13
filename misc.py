@@ -38,6 +38,15 @@ class misc(commands.Cog):
         embed.add_field(name="Other Commands", value="Commands that actually have a purpose. \n `about` `help` `userinfo` `reactionroles` `responses` `prefix` `listprefixes` `hi`", inline=True)
         await ctx.send(embed=embed)
 
+    @commands.is_owner()
+    @commands.command(hidden=True)
+    async def updatenicknames(self, ctx):
+        await ctx.send("Updating nicknames...")
+        for each in self.bot.guilds:
+            if each.me.guild_permissions.change_nickname:
+                await each.me.edit(nick=f"[{self.bot.prefixes[str(each.id)]}] Maximilian")
+        await ctx.send("Updated nicknames!")
+
 def setup(bot):
     bot.add_cog(misc(bot))
 
