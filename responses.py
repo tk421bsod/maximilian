@@ -38,7 +38,7 @@ class responses(commands.Cog, name='Custom Commands'):
                 if result == "success":
                     await self.get_responses()
                     await ctx.send("Added a custom command.")
-                else if result == "error_duplicate: 
+                elif result == "error_duplicate: 
                     raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
                 else:
                     raise discord.ext.commands.CommandError(original=result)
