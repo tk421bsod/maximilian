@@ -34,14 +34,11 @@ class responses(commands.Cog, name='Custom Commands'):
             if action.lower() == "add":
                 command_response.replace("*", "\*")
                 command_trigger.replace("*", "\*")
-                result = self.bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False)
-                if result == "success":
+                if self.bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False) == "success":
                     await self.get_responses()
                     await ctx.send("Added a custom command.")
-                else if result == "error_duplicate: 
+                else: 
                     raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
-                else:
-                    raise discord.ext.commands.CommandError(original=result)
             if action.lower() == "delete":
                 if self.bot.dbinst.delete("maximilian", "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
                     await self.get_responses()
