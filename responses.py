@@ -41,7 +41,7 @@ class responses(commands.Cog, name='Custom Commands'):
                 elif result == "error_duplicate": 
                     raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
                 else:
-                    await self.bot.on_command_error(ctx, result)
+                    raise discord.ext.commands.CommandError(original=result)
             if action.lower() == "delete":
                 if self.bot.dbinst.delete("maximilian", "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
                     await self.get_responses()
