@@ -190,7 +190,7 @@ async def on_guild_remove(guild):
     print("removed from guild, removing that guild from list of guilds and resetting prefixes")
     bot.guildlist.remove(str(guild.id))
     await bot.prefixesinst.reset_prefixes()
-    await 
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
 
 @commands.is_owner()
 @bot.command(hidden=True)
