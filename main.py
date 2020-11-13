@@ -1,3 +1,4 @@
+#import libraries
 import discord
 from discord.ext import commands 
 import common
@@ -9,24 +10,31 @@ import os
 import sys
 import git 
 
+#set up logging
 logging.basicConfig(level=logging.WARN)
 print("starting...")
+#create instance of 'Token' class, decrypt token
 tokeninst = common.token()
 decrypted_token = tokeninst.decrypt("token.txt")
+#set intents
 intents = discord.Intents.default()
 intents.guilds = True
 intents.members = True
 intents.presences = True
+#create Bot instance, setting default prefix, owner id, intents, and status
 bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
+#initialize variables that'll be needed later
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
 bot.dbinst = common.db()
+#load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
 bot.load_extension('misc')
 bot.load_extension('reactionroles')
 bot.load_extension('userinfo')
+#create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
@@ -119,6 +127,7 @@ async def on_message(message):
                             return
         await bot.process_commands(message)
 
+#catch errors that occur in events
 @bot.event
 async def on_error(event, *args, **kwargs):
     print(str(sys.exc_info()[0]))
@@ -126,17 +135,25 @@ async def on_error(event, *args, **kwargs):
     if isinstance(args[0], discord.RawReactionActionEvent):
         await on_command_error(bot.get_channel(int(args[0].channel_id)), getattr(sys.exc_info()[0], 'class', sys.exc_info()[0]))
 
+#catch errors that occur in commands
 @bot.event
 async def on_command_error(ctx, error):
     print("error")
+    #get the original error so isinstance works
     error = getattr(error, "original", error)
+    #check for database errors first, these should almost never happen
+    if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError):
+        print("database error, printing context and error type")
+	print(str(error))
+	print(str(ctx))
+        embed = discord.Embed(title="\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it.", color=discord.Color.blurple())
     if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
         embed = discord.Embed(title="\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
         return
     if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
         embed = discord.Embed(title="\U0000274c You don't have the permissions to run this command.", color=discord.Color.blurple())
-        embed.add_field(name="Why did this happen? What can I do?", value=f"Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info on that command, including the required permissions..", inline=False)
+        embed.add_field(name="Why did this happen? What can I do?", value=f"Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info on that command, including the required permissions.", inline=False)
         await ctx.send(embed=embed)
         return
     if isinstance(error, commands.CommandNotFound):
@@ -167,6 +184,13 @@ async def on_guild_join(guild):
     bot.guildlist.append(str(guild.id))
     await bot.prefixesinst.reset_prefixes()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
+
+@bot.event
+async def on_guild_remove(guild):
+    print("removed from guild, removing that guild from list of guilds and resetting prefixes")
+    bot.guildlist.remove(str(guild.id))
+    await bot.prefixesinst.reset_prefixes()
+    await 
 
 @commands.is_owner()
 @bot.command(hidden=True)
