@@ -144,10 +144,9 @@ async def on_command_error(ctx, error):
     #check for database errors first, these should almost never happen
     if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError):
         print("database error, printing context and error type")
-        print(str(error))
-        print(str(ctx))
+	print(str(error))
+	print(str(ctx))
         embed = discord.Embed(title="\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it.", color=discord.Color.blurple())
-        await ctx.send(embed=embed)
     if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
         embed = discord.Embed(title="\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
@@ -184,6 +183,8 @@ async def on_guild_join(guild):
     print("joined guild, adding guild id to list of guilds and resetting prefixes")
     bot.guildlist.append(str(guild.id))
     await bot.prefixesinst.reset_prefixes()
+    if guild.me.guild_permissions.change_nickname:
+        await guild.me.edit(nick="[!] Maximilian")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
 
 @bot.event
@@ -191,7 +192,7 @@ async def on_guild_remove(guild):
     print("removed from guild, removing that guild from list of guilds and resetting prefixes")
     bot.guildlist.remove(str(guild.id))
     await bot.prefixesinst.reset_prefixes()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
+    await 
 
 @commands.is_owner()
 @bot.command(hidden=True)
