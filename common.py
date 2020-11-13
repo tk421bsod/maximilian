@@ -106,7 +106,7 @@ class db:
             print("Error: " + e + ". Exiting...")
             self.error=e
             #and return an error 
-            raise pymysql.err.OperationalError
+            return e
     
     def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug):
         self.connect(database)
