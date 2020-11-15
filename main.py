@@ -9,6 +9,7 @@ import calendar
 import os
 import sys
 import git 
+import pymysql
 
 #set up logging
 logging.basicConfig(level=logging.WARN)
