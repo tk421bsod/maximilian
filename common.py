@@ -105,8 +105,7 @@ class db:
             #then print it and log the event to a file
             print("Error: " + e + ". Exiting...")
             self.error=e
-            #and return an error 
-            return "error-unhandled"
+            raise pymysql.err.OperationalError
     
     def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug):
         self.connect(database)
