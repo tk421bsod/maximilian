@@ -38,6 +38,8 @@ class prefixes(commands.Cog):
                     print("set prefix")
                     await self.reset_prefixes()
                     await ctx.send(prefixsetmessage)
+                    if ctx.guild.me.guild_permissions.change_nickname:
+                        await ctx.guild.me.edit(nick=f"[{newprefix}] Maximilian")
                     return "changed prefix"
                 else:
                     print("error")
@@ -65,6 +67,8 @@ class prefixes(commands.Cog):
                             print("set prefix")
                             await self.reset_prefixes()
                             await ctx.send(prefixsetmessage)
+                            if ctx.guild.me.guild_permissions.change_nickname:
+                                await ctx.guild.me.edit(nick=f"[{newprefix}] Maximilian")
                             return "success"
                         else: 
                             print("error")
