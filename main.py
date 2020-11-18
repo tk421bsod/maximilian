@@ -140,6 +140,7 @@ async def on_error(event, *args, **kwargs):
 @bot.event
 async def on_command_error(ctx, error):
     print("error")
+    print(ctx.message.content)
     #get the original error so isinstance works
     error = getattr(error, "original", error)
     #check for database errors first, these should almost never happen
