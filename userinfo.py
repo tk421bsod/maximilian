@@ -53,6 +53,7 @@ class userinfo(commands.Cog):
         else:
             embed.set_footer(text=f"{statusinfo}  |  Requested by {ctx.author.name}#{ctx.author.discriminator} ")
         embed.set_thumbnail(url=requested_user.avatar_url)
+        print("printed userinfo")
         await ctx.send(embed=embed)
 
 def setup(bot):
