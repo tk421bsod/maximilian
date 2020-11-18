@@ -45,7 +45,7 @@ class misc(commands.Cog):
 
     @commands.is_owner()
     @commands.command(hidden=True)
-    async def listguildnames():
+    async def listguildnames(self, ctx):
         guildstring = ""
         for each in self.bot.guilds:
             guildstring = guildstring + each.name + ", "
