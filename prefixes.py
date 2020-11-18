@@ -33,7 +33,7 @@ class prefixes(commands.Cog):
         if dbentry == "" or dbentry == None:
             print("no db entry found")
             self.bot.prefixes[ctx.guild.id] = newprefix
-            result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False)
+            result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
             if result == "success":
                 print("set prefix")
                 await self.reset_prefixes()
@@ -52,7 +52,7 @@ class prefixes(commands.Cog):
             return "changed prefix"
         elif dbentry != "" and dbentry != newprefix:
             print("db entry found")
-            result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False)
+            result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
             if result == "success":
                 print("set prefix")
                 await self.reset_prefixes()
@@ -64,7 +64,7 @@ class prefixes(commands.Cog):
                 print("there's already an entry for this guild")
                 deletionresult = self.bot.dbinst.delete("maximilian", "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
                 if deletionresult == "successful":
-                    result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False)
+                    result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
                     if result == "success":
                         print("set prefix")
                         await self.reset_prefixes()
