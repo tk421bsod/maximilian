@@ -10,7 +10,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
     async def reactionroles(self,ctx, action, roleid, messageid):
         if ctx.author.guild_permissions.manage_roles:
             if action == "add":
-                if self.bot.dbinst.insert("maximilian", "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False) == "success":
+                if self.bot.dbinst.insert("maximilian", "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False, "", False) == "success":
                     await ctx.send("Added a reaction role.")
                 else: 
                     raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the role you just tried to add.")
