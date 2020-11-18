@@ -112,7 +112,7 @@ class HelpCommand(commands.HelpCommand):
 
 @tasks.loop(seconds=30)
 async def reset_status():
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and "str(len(bot.users)) + " users!"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
 @reset_status.before_loop
 async def before_reset_status():
