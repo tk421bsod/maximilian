@@ -112,7 +112,7 @@ class HelpCommand(commands.HelpCommand):
 
 async def startup():
     await bot.wait_until_ready()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
 @bot.event
 async def on_ready():
@@ -208,14 +208,14 @@ async def on_guild_join(guild):
     print("joined guild, adding guild id to list of guilds and resetting prefixes")
     bot.guildlist.append(str(guild.id))
     await bot.prefixesinst.reset_prefixes()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
 @bot.event
 async def on_guild_remove(guild):
     print("removed from guild, removing that guild from list of guilds and resetting prefixes")
     bot.guildlist.remove(str(guild.id))
     await bot.prefixesinst.reset_prefixes()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
 @bot.event
 async def on_command_completion(ctx):
