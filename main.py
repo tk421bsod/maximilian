@@ -138,6 +138,7 @@ async def on_message(message):
 #catch errors that occur in commands
 @bot.event
 async def on_command_error(ctx, error):
+    statsd.increment('maximilianbot.errors', tags=["environment:prod"], sample_rate=1)
     print("error")
     print(ctx.message.content)
     #get the original error so isinstance works
@@ -212,9 +213,9 @@ async def on_guild_remove(guild):
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
 
 @bot.event
-async def on_command(ctx):
+async def on_command_completion(ctx):
     print("logging command usage in datadog")
-    statsd.increment('maximilianbot.commandsused', tags=["environment:prod"])
+    statsd.increment('maximilianbot.commandsused', tags=["environment:prod"], sample_rate=1)
 
 @commands.is_owner()
 @bot.command(hidden=True)
