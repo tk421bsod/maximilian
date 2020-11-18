@@ -34,7 +34,7 @@ class responses(commands.Cog, name='Custom Commands'):
             if action.lower() == "add":
                 command_response.replace("*", "\*")
                 command_trigger.replace("*", "\*")
-                if self.bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False) == "success":
+                if self.bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True) == "success":
                     await self.get_responses()
                     await ctx.send("Added a custom command.")
                 else: 
