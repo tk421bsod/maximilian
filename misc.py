@@ -43,6 +43,15 @@ class misc(commands.Cog):
         print("sent some info about me")
         await ctx.send(embed=embed)
 
+    @commands.is_owner()
+    @commands.command(hidden=True)
+    async def listguildnames():
+        guildstring = ""
+        for each in self.bot.guilds:
+            guildstring = guildstring + each.name + ", "
+        await ctx.send(guildstring[:-2])
+
+
 def setup(bot):
     bot.add_cog(misc(bot))
 
