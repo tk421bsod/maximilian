@@ -11,10 +11,12 @@ class reactionroles(commands.Cog, name="reaction roles"):
         if ctx.author.guild_permissions.manage_roles:
             if action == "add":
                 if self.bot.dbinst.insert("maximilian", "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False, "", False) == "success":
+                    print("added a reaction role")
                     await ctx.send("Added a reaction role.")
                 else: 
                     raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the role you just tried to add.")
             if action == "delete":
+                print("deleted a reaction role")
                 if self.bot.dbinst.delete("maximilian", "roles", str(roleid), "role_id", "", "", False) == "successful":
                     await ctx.send("Deleted a reaction role.")
                 else:
@@ -24,7 +26,8 @@ class reactionroles(commands.Cog, name="reaction roles"):
                 reactionrolestring = ""
                 if roles != "()":
                     for each in roles: 
-                        reactionrolestring = f"{reactionrolestring} message id:  {str(each['message_id'])}  role id:  {str(each['role_id'])}, "         
+                        reactionrolestring = f"{reactionrolestring} message id:  {str(each['message_id'])}  role id:  {str(each['role_id'])}, "        
+                    print("listed reaction roles")
                     await ctx.send("reaction roles: " + str(reactionrolestring[:-2]))
         else:
             await ctx.send("You don't have permission to use this command.")
@@ -41,6 +44,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
                     return
                 await payload.member.add_roles(role)
                 ctx = self.bot.get_channel(payload.channel_id)
+                print("added role to user")
                 await ctx.send(f"Assigned <@!{str(payload.member.id)}> the '{role.name}' role!", delete_after=5)
 
     @commands.Cog.listener()
@@ -54,6 +58,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
                 role = discord.utils.get(guild.roles, id=int(roleid))
                 if role in member.roles:
                     await member.remove_roles(role)
+                    print("removed role from user")
                     await ctx.send(f"Removed the '{role.name}' role from <@!{str(member.id)}>!", delete_after=5)
                     return
                 await ctx.send(f"<@!{str(member.id)}> For some reason, you don't have the '{role.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again. If this keeps happening, notify tk421#7244.", delete_after=15)
