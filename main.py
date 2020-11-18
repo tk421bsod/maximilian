@@ -60,7 +60,7 @@ class HelpCommand(commands.HelpCommand):
             if cog is not None:
                 name = cog.qualified_name
                 filtered = await self.filter_commands(commands, sort=True)
-                if filtered:
+                if filtered and commands.hidden != True:
                     value = '\u2002 '.join('`' + c.name + '`' for c in commands)
                     if cog and cog.description:
                         value = '{0}\n{1}'.format(cog.description, value)
