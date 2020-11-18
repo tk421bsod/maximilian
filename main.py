@@ -42,6 +42,7 @@ bot.othererrorcounter = 0
 bot.databaseerrorcounter = 0
 bot.missingpermissionscounter = 0
 bot.botmissingpermissionscounter = 0
+bot.commandnotfoundcounter = 0
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
