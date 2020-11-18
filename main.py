@@ -36,6 +36,12 @@ bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
 bot.dbinst = common.db()
+bot.commandcounter = 0
+bot.commanderrorcounter = 0
+bot.othererrorcounter = 0
+bot.databaseerrorcounter = 0
+bot.missingpermissionscounter = 0
+bot.botmissingpermissionscounter = 0
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
@@ -138,13 +144,16 @@ async def on_message(message):
 #catch errors that occur in commands
 @bot.event
 async def on_command_error(ctx, error):
-    statsd.increment('maximilianbot.errors', tags=["environment:prod"], sample_rate=1)
+    bot.commanderrorcounter += 1
+    statsd.set('maximilianbot.errortotal', bot.commanderrorcounter, tags=["environment:prod"])
     print("error")
     print(ctx.message.content)
     #get the original error so isinstance works
     error = getattr(error, "original", error)
     #check for database errors first, these should almost never happen
     if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError):
+        bot.databaseerrorcounter += 1
+        statsd.set('maximilianbot.databaseerrortotal', bot.databaseerrorcounter, tags=["environment:prod"])
         print("database error, printing context and error type")
         print(str(error))
         print(str(ctx))
@@ -154,6 +163,8 @@ async def on_command_error(ctx, error):
         else:
             await ctx.send("\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
     if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
+        bot.botmissingpermissionscounter += 1
+        statsd.set('maximilianbot.botmissingpermissionstotal', bot.missingpermissionscounter, tags=["environment:prod"])
         print("I'm missing permissions")
         embed = discord.Embed(title="\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
         if bot.has_guild_permissions('embed_links'):
@@ -162,6 +173,8 @@ async def on_command_error(ctx, error):
             await ctx.send("\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy. I'm also not allowed to send embeds, which will make some responses look worse, and will prevent userinfo from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
         return
     if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
+        bot.usermissingpermissionscounter += 1
+        statsd.set('maximilianbot.usermissingpermissionstotal', bot.usermissingpermissionscounter, tags=["environment:prod"])
         print("User doesn't have the correct permissions")
         embed = discord.Embed(title="\U0000274c You don't have the permissions to run this command.", color=discord.Color.blurple())
         embed.add_field(name="Why did this happen? What can I do?", value=f"Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info on that command, including the required permissions.", inline=False)
@@ -171,6 +184,8 @@ async def on_command_error(ctx, error):
             await ctx.send(f"You don't have the permissions to run this command. Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info about that command, including the required permissions. I'm also not allowed to send embeds, which will make some responses look worse, and will prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
         return
     if isinstance(error, commands.CommandNotFound):
+        bot.commandnotfoundcounter += 1
+        statsd.set('maximilianbot.commandnotfoundtotal', bot.commandnotfoundcounter, tags=["environment:prod"])
         print("Can't find a command")
         embed = discord.Embed(title=f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands.", color=discord.Color.blurple())
         if bot.has_guild_permissions('embed_links'):
@@ -178,6 +193,8 @@ async def on_command_error(ctx, error):
         else:
             await ctx.send(f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
         return
+    bot.othererrorcounter += 1
+    statsd.set('maximilianbot.othererrortotal', bot.othererrorcounter, tags=["environment:prod"])
     print("Other error")
     print(str(error))
     await ctx.send("There was an error. Please try again later.")
@@ -214,8 +231,9 @@ async def on_guild_remove(guild):
 
 @bot.event
 async def on_command_completion(ctx):
+    bot.commandcounter += 1
     print("logging command usage in datadog")
-    statsd.increment('maximilianbot.commandsused', tags=["environment:prod"], sample_rate=1)
+    statsd.set('maximilianbot.commands_used', bot.commandcounter, tags=["environment:prod"])
 
 @commands.is_owner()
 @bot.command(hidden=True)
