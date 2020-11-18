@@ -162,7 +162,7 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.CommandNotFound):
         print("Can't find a command")
-        embed = discord.Embed(title=f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands.", color=discord.Color.blurple())
+        embed = discord.Embed(title=f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands, or change my prefix using the `prefix` command if I'm conflicting with another bot.", color=discord.Color.blurple())
         await ctx.send(embed=embed)
         return
     print("Other error")
