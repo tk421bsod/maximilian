@@ -172,11 +172,8 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.CommandNotFound):
         print("Can't find a command")
-        embed = discord.Embed(title=f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands.", color=discord.Color.blurple())
-        if bot.has_guild_permissions('embed_links'):
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send(f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
+        embed = discord.Embed(title=f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands, or change my prefix using the `prefix` command if I'm conflicting with another bot.", color=discord.Color.blurple())
+        await ctx.send(embed=embed)
         return
     print("Other error")
     print(str(error))
