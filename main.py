@@ -10,10 +10,17 @@ import os
 import sys
 import git 
 import pymysql
+from datadog import initialize, statsd
 
 #set up logging
 logging.basicConfig(level=logging.WARN)
 print("starting...")
+#initialize datadog
+options = {
+    'statsd_host':'127.0.0.1',
+    'statsd_port':8125
+}
+initialize(**options)
 #create instance of 'Token' class, decrypt token
 tokeninst = common.token()
 decrypted_token = tokeninst.decrypt("token.txt")
@@ -203,6 +210,11 @@ async def on_guild_remove(guild):
     bot.guildlist.remove(str(guild.id))
     await bot.prefixesinst.reset_prefixes()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds!"))
+
+@bot.event
+async def on_command(ctx):
+    print("logging command usage in datadog")
+    statsd.increment('maximilianbot.commandsused', tags=["environment:prod"])
 
 @commands.is_owner()
 @bot.command(hidden=True)
