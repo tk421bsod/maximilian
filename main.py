@@ -29,6 +29,7 @@ decrypted_token = tokeninst.decrypt("token.txt")
 intents = discord.Intents.default()
 intents.guilds = True
 intents.members = True
+intents.presences = True
 #create Bot instance, setting default prefix, owner id, intents, and status
 bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
 #initialize variables that'll be needed later
