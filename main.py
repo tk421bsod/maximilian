@@ -159,6 +159,7 @@ async def on_command_error(ctx, error):
     statsd.set('maximilianbot.errortotal', bot.commanderrorcounter, tags=["environment:prod"])
     print("error")
     print(ctx.message.content)
+    print("sent in " + ctx.guild.name)
     #get the original error so isinstance works
     error = getattr(error, "original", error)
     #check for database errors first, these should almost never happen
@@ -249,6 +250,7 @@ async def on_guild_remove(guild):
 async def on_command_completion(ctx):
     print(ctx.command.name)
     print(ctx.message.content)
+    print("sent in " + ctx.guild.name)
     bot.commandcounter += 1
     print("logging command usage in datadog")
     statsd.set('maximilianbot.commands_used', bot.commandcounter, tags=["environment:prod"])
