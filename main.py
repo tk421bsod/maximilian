@@ -247,6 +247,8 @@ async def on_guild_remove(guild):
 
 @bot.event
 async def on_command_completion(ctx):
+    print(ctx.command.name)
+    print(ctx.message.content)
     bot.commandcounter += 1
     print("logging command usage in datadog")
     statsd.set('maximilianbot.commands_used', bot.commandcounter, tags=["environment:prod"])
