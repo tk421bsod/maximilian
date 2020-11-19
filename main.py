@@ -208,6 +208,7 @@ async def on_command_error(ctx, error):
         print("command is missing the required argument")
         embed = discord.Embed(title="\U0000274c You didn't provide the required argument `" + error.param.name + "`. See the help entry for `" + ctx.command.name + "` to see what arguments this command takes." )
         await ctx.send(embed=embed)
+        return
     bot.othererrorcounter += 1
     statsd.set('maximilianbot.othererrortotal', bot.othererrorcounter, tags=["environment:prod"])
     print("Other error")
