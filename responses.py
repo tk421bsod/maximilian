@@ -36,12 +36,14 @@ class responses(commands.Cog, name='Custom Commands'):
                 command_trigger.replace("*", "\*")
                 if self.bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True) == "success":
                     await self.get_responses()
+                    print("added response")
                     await ctx.send("Added a custom command.")
                 else: 
                     raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
             if action.lower() == "delete":
                 if self.bot.dbinst.delete("maximilian", "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
                     await self.get_responses()
+                    print("deleted response")
                     await ctx.send("Deleted a custom command.")
                 else:
                     raise discord.ext.commands.CommandError(message="Failed to delete a custom command, are there any custom commands set up that use the command trigger '" + str(command_trigger) + "'?")
@@ -57,6 +59,7 @@ class responses(commands.Cog, name='Custom Commands'):
                         responsestring = responsestring + " \n command trigger: `" + self.bot.responses[each][1] + "` response: `" + responsetext + "`"
                 if responsestring == "":
                     responsestring = "I can't find any custom commands in this server."
+                print("listed responses")
                 await ctx.send(responsestring)
         else:
             await ctx.send("You don't have permission to use this command.")
