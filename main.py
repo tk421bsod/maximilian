@@ -204,6 +204,10 @@ async def on_command_error(ctx, error):
         else:
             await ctx.send(f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands, or change my prefix using the `prefix` command if I'm conflicting with another bot. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
         return
+    if isinstance(error, commands.MissingRequiredArgument):
+        print("command is missing the required argument")
+        embed = discord.Embed(title="\U0000274c You didn't provide the required argument `" + error.param.name + "`. See the help entry for `" + ctx.command.name + "` to see what arguments this command takes." )
+        await ctx.send(embed=embed)
     bot.othererrorcounter += 1
     statsd.set('maximilianbot.othererrortotal', bot.othererrorcounter, tags=["environment:prod"])
     print("Other error")
