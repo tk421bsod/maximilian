@@ -63,7 +63,17 @@ class HelpCommand(commands.HelpCommand):
         return 'Use {0}{1} [command] for more info on a command.'.format(self.clean_prefix, self.invoked_with)
 
     def get_command_signature(self, command):
-        return '{0.qualified_name}|{0.aliases} {0.signature}'.format(command)
+        parent = command.full_parent_name
+        if len(command.aliases) > 0:
+            aliases = '|'.join(command.aliases)
+            fmt = '[%s|%s]' % (command.name, aliases)
+            if parent:
+                fmt = parent + ' ' + fmt
+            alias = fmt
+        else:
+            alias = command.name if not parent else parent + ' ' + command.name
+
+        return '%s%s %s' % (self.clean_prefix, alias, command.signature)
 
     async def send_bot_help(self, mapping):
         embed = discord.Embed(title='Commands', colour=self.color)
@@ -207,9 +217,13 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.MissingRequiredArgument):
         print("command is missing the required argument")
-        embed = discord.Embed(title="\U0000274c You didn't provide the required argument `" + error.param.name + "`. See the help entry for `" + ctx.command.name + "` to see what arguments this command takes." )
-        await ctx.send(embed=embed)
-        return
+        if ctx.guild.me.guild_permissions.embed_links:
+            embed = discord.Embed(title="\U0000274c You didn't provide the required argument `" + error.param.name + "`. See the help entry for `" + ctx.command.name + "` to see what arguments this command takes." )
+            await ctx.send(embed=embed)
+            return
+        else:
+            await ctx.send(f"\U0000274c You didn't provide the required argument `{error.param.name}`. See the help entry for `{ctx.command.name}` to see what arguments this command takes.")
+        
     bot.othererrorcounter += 1
     statsd.set('maximilianbot.othererrortotal', bot.othererrorcounter, tags=["environment:prod"])
     print("Other error")
