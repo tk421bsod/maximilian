@@ -13,7 +13,7 @@ class prefixes(commands.Cog):
             for guild in await self.bot.fetch_guilds().flatten():
                 self.bot.guildlist.append(str(guild.id))
         for each in self.bot.guildlist:
-            prefixindb = self.bot.dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(each), False)
+            prefixindb = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(each), False)
             if prefixindb == "" or prefixindb == None:
                 self.bot.prefixes[each] = '!'
             else:
@@ -29,11 +29,11 @@ class prefixes(commands.Cog):
         changingprefixmessage = await ctx.send(f"Ok. Changing prefix to `{str(newprefix)}`...")
         prefixsetmessage = f"My prefix in this server has been set to `{str(newprefix)}` ."
         duplicateprefixmessage = f"My prefix in this server is already `{str(newprefix)}`."
-        dbentry = self.bot.dbinst.retrieve("maximilian", "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
+        dbentry = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
         if dbentry == "" or dbentry == None:
             print("no db entry found")
             self.bot.prefixes[ctx.guild.id] = newprefix
-            result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
+            result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
             if result == "success":
                 print("set prefix")
                 await self.reset_prefixes()
@@ -52,7 +52,7 @@ class prefixes(commands.Cog):
             return "changed prefix"
         elif dbentry != "" and dbentry != newprefix:
             print("db entry found")
-            result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
+            result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
             if result == "success":
                 print("set prefix")
                 await self.reset_prefixes()
@@ -62,9 +62,9 @@ class prefixes(commands.Cog):
                 return "changed prefix"
             elif result == "error-duplicate":
                 print("there's already an entry for this guild")
-                deletionresult = self.bot.dbinst.delete("maximilian", "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
+                deletionresult = self.bot.dbinst.delete(self.bot.database, "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
                 if deletionresult == "successful":
-                    result = self.bot.dbinst.insert("maximilian", "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
+                    result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
                     if result == "success":
                         print("set prefix")
                         await self.reset_prefixes()
