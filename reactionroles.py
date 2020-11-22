@@ -10,19 +10,19 @@ class reactionroles(commands.Cog, name="reaction roles"):
     async def reactionroles(self,ctx, action, roleid, messageid):
         if ctx.author.guild_permissions.manage_roles:
             if action == "add":
-                if self.bot.dbinst.insert("maximilian", "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False, "", False) == "success":
+                if self.bot.dbinst.insert(self.bot.database, "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(roleid), "message_id" : str(messageid)}, "role_id", False, "", False, "", False) == "success":
                     print("added a reaction role")
                     await ctx.send("Added a reaction role.")
                 else: 
                     raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the role you just tried to add.")
             if action == "delete":
                 print("deleted a reaction role")
-                if self.bot.dbinst.delete("maximilian", "roles", str(roleid), "role_id", "", "", False) == "successful":
+                if self.bot.dbinst.delete(self.bot.database, "roles", str(roleid), "role_id", "", "", False) == "successful":
                     await ctx.send("Deleted a reaction role.")
                 else:
                     raise discord.ext.commands.CommandError(message=f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(roleid)}'? Try using '{str(self.bot.command_prefix)}'reactionroles list all all' to see if you have any reaction roles set up.")
             if action == "list":
-                roles = self.bot.dbinst.exec_query("maximilian", "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
+                roles = self.bot.dbinst.exec_query(self.bot.database, "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
                 reactionrolestring = ""
                 if roles != "()":
                     for each in roles: 
@@ -34,8 +34,8 @@ class reactionroles(commands.Cog, name="reaction roles"):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if self.bot.dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
-            roleid = self.bot.dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
+        if self.bot.dbinst.retrieve(self.bot.database, "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
+            roleid = self.bot.dbinst.retrieve(self.bot.database, "roles", "role_id", "message_id", str(payload.message_id), False)
             if roleid is not None:
                 role = discord.utils.get(payload.member.guild.roles, id=int(roleid))
                 if role in payload.member.roles:
@@ -49,10 +49,10 @@ class reactionroles(commands.Cog, name="reaction roles"):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if self.bot.dbinst.retrieve("maximilian", "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
+        if self.bot.dbinst.retrieve(self.bot.database, "roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
-            roleid = self.bot.dbinst.retrieve("maximilian", "roles", "role_id", "message_id", str(payload.message_id), False)
+            roleid = self.bot.dbinst.retrieve(self.bot.database, "roles", "role_id", "message_id", str(payload.message_id), False)
             if roleid is not None:
                 ctx = self.bot.get_channel(payload.channel_id)
                 role = discord.utils.get(guild.roles, id=int(roleid))

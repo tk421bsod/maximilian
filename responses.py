@@ -14,17 +14,17 @@ class responses(commands.Cog, name='Custom Commands'):
                 self.bot.guildlist.append(str(guild.id))
         #then for each guild in the list, check if the guild has any responses in the database
         for guild in self.bot.guildlist:
-            count = self.bot.dbinst.exec_query("maximilian", "select count(*) from responses where guild_id={}".format(str(guild)), False, False)
+            count = self.bot.dbinst.exec_query(self.bot.database, "select count(*) from responses where guild_id={}".format(str(guild)), False, False)
             if count is not None:
                 #if there are responses, check if there's more than one
                 if int(count['count(*)']) >= 2:
                     #if so, get a list of responses and iterate over that, adding each one to the list
-                    response = self.bot.dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), False, True)
+                    response = self.bot.dbinst.exec_query(self.bot.database, "select * from responses where guild_id={}".format(str(guild)), False, True)
                     for each in range(int(count['count(*)'])):
                         self.bot.responses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
                 elif int(count['count(*)']) == 1:
                     #otherwise get the one response and add it to the list
-                    response = self.bot.dbinst.exec_query("maximilian", "select * from responses where guild_id={}".format(str(guild)), True, False)
+                    response = self.bot.dbinst.exec_query(self.bot.database, "select * from responses where guild_id={}".format(str(guild)), True, False)
                     self.bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
 
     @commands.command(help=f"Add, delete, or list custom commands. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['command'])
@@ -34,14 +34,14 @@ class responses(commands.Cog, name='Custom Commands'):
             if action.lower() == "add":
                 command_response.replace("*", "\*")
                 command_trigger.replace("*", "\*")
-                if self.bot.dbinst.insert("maximilian", "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True) == "success":
+                if self.bot.dbinst.insert(self.bot.database, "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True) == "success":
                     await self.get_responses()
                     print("added response")
                     await ctx.send("Added a custom command.")
                 else: 
                     raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
             if action.lower() == "delete":
-                if self.bot.dbinst.delete("maximilian", "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
+                if self.bot.dbinst.delete(self.bot.database, "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
                     await self.get_responses()
                     print("deleted response")
                     await ctx.send("Deleted a custom command.")
