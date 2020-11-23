@@ -12,9 +12,6 @@ log.flush()
 
 app = Flask('maximilian-api-savechanges')
 
-def makegetrequest():
-    requests.get("localhost:8080?responses-saved=True")
-
 @app.route('/other-projects/maximilian/api', methods=['GET', 'POST'])
 def save():
     try:
@@ -46,12 +43,13 @@ def save():
             print(path)
             print(debug)
         path = path.replace("/", "")
-        result = dbinst.insert(database, table, values, valuenodupe, debug, valueallnum, valueallnumenabled)
+        if "responses" in path:
+            result = dbinst.insert(database, table, values, valuenodupe, debug, valueallnum, valueallnumenabled, "guild_id", True)
+        else:
+            result = dbinst.insert(database, table, values, valuenodupe, debug, valueallnum, valueallnumenabled, "", False)
         results = {"success":"?redirectsource=savechanges&changessaved=success", "debuginfoprinted":"", "error-duplicate":"?redirectsource=savechanges&changessaved=error-duplicate", "error-unhandled":"?redirectsource=savechanges&changessaved=error-other&error="+dbinst.error+"&errorlocation=common-py-inserting-data", "valuenotallnum":"?redirectsource=savechanges&changessaved=error-valuenotallnum"}
         for key in results.keys():
             if result == key:
-                if result == "success":
-                    makegetrequest()
                 return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + results[result])
         return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + "'?redirectsource=savechanges&changessaved=error-other&error=unknown&errorlocation=common-py-inserting-data'")
         
