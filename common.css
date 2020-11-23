@@ -93,7 +93,7 @@ input:focus{
     overflow: hidden;
     }
     li {display: block;}
-    a {
+    a.link {
         font-family: 'Open Sans', "Segoe UI", Tahoma, sans-serif;
         font-weight: 400;
         font-size: 100%;
