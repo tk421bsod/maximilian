@@ -56,7 +56,7 @@ def save():
         for key in results.keys():
             if result == key:
                 return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + results[result])
-        return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + "'?redirectsource=savechanges&changessaved=error-other&error=unknown&errorlocation=common-py-inserting-data'")
+        return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + "?redirectsource=savechanges&changessaved=error-other&error="+ result +"&errorlocation=common-py-inserting-data")
         
     except Exception as e:
         print("Error: " + str(e) + ". Check the log file for more details.")
