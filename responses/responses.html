@@ -8,7 +8,17 @@
     <link rel="stylesheet" href="../common.css">
 </head>
 <body>
-<h1>This is the web interface for Maximilian.</h1>
+    <nav class=navbar>
+        <ul>
+            <li><a style="float:left" href=".">Home</a></li>
+            <li><a style="float:right" href="https://discord.gg/Ugpx8R8">Support Server</a></li>
+            <li><a style="float:right" href="./help">Help</a></li>
+            <li><a style="float:right" href="./prefixes">Prefix</a></li>
+            <li><a style="float:right" href="./roles">Reaction Roles</a></li>
+            <li><a style="float:right" href="./responses" id="active">Custom Commands</a></li>
+        </ul>
+    </nav>
+<h1 style="padding-top:20px">Custom Commands</h1>
 <br>
 <p>This is a very early beta, so don't expect it to work perfectly. DM me on Discord at tk421#7244, or send an email to <a href="mailto:xtk421bsodx@gmail.com">xtk421bsodx@gmail.com</a> if you have any feedback, feature request, bug reports, or questions.</p>
 <br>
@@ -47,7 +57,7 @@ try {
     var errormessage = getUrlParam('error', '');
     if (sourceofredirect == "savechanges") {
     //depending on the result, show a different message
-    if (saveresponseState == "successful"){document.getElementById("saving").innerHTML="Your custom response was saved successfully. Try testing it!";} 
+    if (saveresponseState == "success"){document.getElementById("saving").innerHTML="Your custom command was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
     //if the guild id is invalid
     if (saveresponseState == "error-guildid-invalid"){        
