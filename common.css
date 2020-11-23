@@ -14,11 +14,24 @@ common.css: styling used throughout the web interface in one file, reducing over
        url('../../universal/fonts/opensans/open-sans-v16-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
        url('../../universal/fonts/opensans/open-sans-v16-latin-regular.svg#OpenSans') format('svg'); /* Legacy iOS */
 }
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('../fonts/opensans/open-sans-v16-latin-300.eot'); /* IE9 Compat Modes */
+    src: local('Open Sans Light'), local('OpenSans-Light'),
+         url('../../universal/fonts/opensans/open-sans-v16-latin-300.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+         url('../../universal/fonts/opensans/open-sans-v16-latin-300.woff2') format('woff2'), /* Super Modern Browsers */
+         url('../../universal/fonts/opensans/open-sans-v16-latin-300.woff') format('woff'), /* Modern Browsers */
+         url('../../universal/fonts/opensans/open-sans-v16-latin-300.ttf') format('truetype'), /* Safari, Android, iOS */
+         url('../../universal/fonts/opensans/open-sans-v16-latin-300.svg#OpenSans') format('svg'); /* Legacy iOS */
+  }
 body, h1, h2, p, div{ 
 text-align: center;
 margin: auto auto auto auto;
 font-family: 'Open Sans' , "Segoe UI", Tahoma, sans-serif;
-font-weight: 300;
+font-weight: 400;
 text-shadow: 0 0 1px rgba(0,0,0,0.3);
 background-color: #2C2F33;
 color:white;
@@ -45,7 +58,7 @@ button:hover{
 input{
     text-align:center;
     font-family: 'Open Sans', "Segoe UI", Tahoma, sans-serif;
-    font-weight: 300;
+    font-weight: 400;
     padding: 0.5% 2% 0.5% 2%;
     width: 50%;
     height: auto;
@@ -116,16 +129,13 @@ input:focus{
     li a{
         font-family: 'Open Sans' , "Segoe UI", Tahoma, sans-serif;
         font-weight:300;
-            display: block;
-            color: white;
-            text-align: center;
-        /*
-        padding: top right bottom left
-        */
-            padding: 25px 45px 25px 40px;
-            text-decoration: none;
-            background-color: #2C2F33;
-            transition: background-color;
-            transition-duration: 0.5s;
-            overflow:hidden;
+        display: block;
+        color: white;
+        text-align: center;
+        padding: 25px 45px 25px 40px;
+        text-decoration: none;
+        background-color: #2C2F33;
+        transition: background-color;
+        transition-duration: 0.5s;
+        overflow:hidden;
         }
