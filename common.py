@@ -29,7 +29,7 @@ class db:
     
     def connect(self, database):
         #connect to db, this instance is also self.<name> because it needs to be accessible from elsewhere in the class
-        self.dbobj=pymysql.connect(host='10.0.0.51',
+        self.dbobj=pymysql.connect(host='localhost',
                     user="maximilianbot",
                     password=self.decrypted_databasepassword.decode(),
                     db=database,
