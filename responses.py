@@ -26,6 +26,7 @@ class responses(commands.Cog, name='Custom Commands'):
                     #otherwise get the one response and add it to the list
                     response = self.bot.dbinst.exec_query(self.bot.database, "select * from responses where guild_id={}".format(str(guild)), True, False)
                     self.bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
+        return
 
     @commands.command(help=f"Add, delete, or list custom commands. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['command'])
     async def commands(self, ctx, action, command_trigger, *, command_response):

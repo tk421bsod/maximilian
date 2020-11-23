@@ -8,6 +8,9 @@ import logging
 import time
 import calendar
 import os
+from flask import Flask, escape, request, redirect
+import datetime
+import pymysql.cursors
 import sys
 import git 
 import pymysql
@@ -30,7 +33,7 @@ bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
 bot.dbinst = common.db()
-bot.database = "maximilian_test"
+bot.database = "maximilian"
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
@@ -135,6 +138,7 @@ async def on_message(message):
         if message.content.startswith('<@!620022782016618528> '):
             bot.command_prefix = '<@!620022782016618528> '
         else:
+            await bot.responsesinst.get_responses()
             if message.guild is not None:
                 try:    
                     bot.command_prefix = bot.prefixes[str(message.guild.id)]
