@@ -4,7 +4,7 @@ common.css: styling used throughout the web interface in one file, reducing over
 @font-face {
   font-family: 'Open Sans';
   font-style: normal;
-  font-weight: 300;
+  font-weight: 400;
   font-display: swap;
   src: url('../../universal/fonts/opensans/open-sans-v16-latin-regular.eot'); /* IE9 Compat Modes */
   src: local('Open Sans'), local('OpenSans'),
