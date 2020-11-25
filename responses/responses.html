@@ -10,9 +10,9 @@
 <body>
     <nav class=navbar>
         <ul>
-            <li><a style="float:left" href="../" target="_blank">Home</a></li>
+            <li><a style="float:left" href="../" >Home</a></li>
             <li><a style="float:right" href="https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268814336&scope=bot" target="_blank">Invite</a></li>
-            <li><a style="float:right" href="https://discord.gg/Ugpx8R8">Support Server</a></li>
+            <li><a style="float:right" href="https://discord.gg/Ugpx8R8" target="_blank">Support Server</a></li>
             <li><a style="float:right" href="../help">Help</a></li>
             <li><a style="float:right" href="../prefixes">Prefix</a></li>
             <li><a style="float:right" href="../roles">Reaction Roles</a></li>
@@ -62,7 +62,7 @@ try {
     if (saveresponseState == "success"){document.getElementById("saving").innerHTML="Your custom command was saved successfully. Try testing it!";} 
     if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
     //if the guild id is invalid
-    if (saveresponseState == "error-guildid-invalid"){        
+    if (saveresponseState == "error-valuenotallnum"){        
         document.getElementById("error").innerHTML = "It looks like the server ID isn't valid. Make sure you entered everything in the correct fields, and check the server ID for typos. Remember, the server ID is not the server's name.";
         document.getElementById("guild_id").style.transition = "0.0s";
         document.getElementById("guild_id").style.webkitTransition = "0.0s";
