@@ -10,12 +10,13 @@
 <body>
     <nav class=navbar>
         <ul>
-            <li><a style="float:left" href=".">Home</a></li>
+            <li><a style="float:left" href="../" target="_blank">Home</a></li>
+            <li><a style="float:right" href="https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268814336&scope=bot" target="_blank">Invite</a></li>
             <li><a style="float:right" href="https://discord.gg/Ugpx8R8">Support Server</a></li>
-            <li><a style="float:right" href="./help">Help</a></li>
-            <li><a style="float:right" href="./prefixes">Prefix</a></li>
-            <li><a style="float:right" href="./roles">Reaction Roles</a></li>
-            <li><a style="float:right" href="./responses" id="active">Custom Commands</a></li>
+            <li><a style="float:right" href="../help">Help</a></li>
+            <li><a style="float:right" href="../prefixes">Prefix</a></li>
+            <li><a style="float:right" href="../roles">Reaction Roles</a></li>
+            <li><a style="float:right" href="." id="active">Custom Commands</a></li>
         </ul>
     </nav>
 <h1 style="padding-top:20px">Custom Commands</h1>
@@ -23,13 +24,14 @@
 <p>This is a very early beta, so don't expect it to work perfectly. DM me on Discord at tk421#7244, or send an email to <a href="mailto:xtk421bsodx@gmail.com" class="link">xtk421bsodx@gmail.com</a> if you have any feedback, feature requests, bug reports, or questions.</p>
 <br>
 <br>
+<p>To get a server's ID, enable developer mode, following the instructions <a href="">here</a>, then right click on a server and click "Copy ID".</p>
 <p id="error" style="padding-top:2%;padding-bottom:2%"></p>
 <p id="technicalinfo" style="opacity:0;height:0;padding:0 0 0 0; margin:0 0 0 0;"></p>
 <button id="technicalinfobutton" style="opacity:0; padding:1% 2.5% 1% 2.5%;" onclick=showtechnicalinfo();></button>
 
 <br>
 <br>
-<input type="text" id="guild_id" name="guild_id" placeholder="Enter the ID of the server you want to create the custom response for.">
+<input type="text" id="guild_id" name="guild_id" placeholder="Enter the ID of the server you want to create the custom command for.">
 <br>
 <br>
 <input type="text" id="response_trigger" name="response_trigger" placeholder="Enter what will trigger the response.">
