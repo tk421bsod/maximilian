@@ -33,7 +33,7 @@ margin: auto auto auto auto;
 font-family: 'Open Sans' , "Segoe UI", Tahoma, sans-serif;
 font-weight: 400;
 text-shadow: 0 0 1px rgba(0,0,0,0.3);
-background-color: #2C2F33;
+background-color: #36393f;
 color:white;
 }
 a{
@@ -80,7 +80,7 @@ input:focus{
 .navbar{
     display:block;
     color: #FFF;
-    background-color: #2C2F33;
+    background-color: #36393f;
     font-family: 'Open Sans', "Segoe UI", Tahoma, sans-serif;
     font-weight: 300;
     font-size: 100%;
@@ -104,7 +104,7 @@ input:focus{
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: #2C2F33;
+      background-color: #36393f;
     
     }
     ol {
@@ -131,7 +131,7 @@ input:focus{
         text-align: center;
         padding: 25px 45px 25px 40px;
         text-decoration: none;
-        background-color: #2C2F33;
+        background-color: #36393f;
         transition: background-color;
         transition-duration: 0.5s;
         overflow:hidden;
