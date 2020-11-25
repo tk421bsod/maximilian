@@ -79,7 +79,7 @@ function showtechnicalinfo(){
 }
 function displayError(origin, message){
     buttonclicked=0
-    const origins = {"saveresponse":"saving a response", "saveroles":"saving reaction roles", "postrequest":"accessing data", "save":"saving data"}
+    const origins = {"saveresponse":"saving a command", "saveroles":"saving reaction roles", "postrequest":"accessing data", "save":"saving data"}
     //maybe we should show a toast notification if there's an error
     //display error message
     document.getElementById("error").innerHTML = "There was an error while " + origins[origin] + ". Please try again later.";
