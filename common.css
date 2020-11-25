@@ -53,7 +53,7 @@ button{
     transition:0.2s;
 }
 button:hover{
-    background-color: lightskyblue;
+    background-color: rgb(135, 156, 250);
 }
 input{
     text-align:center;
@@ -116,7 +116,7 @@ input:focus{
     }
     #active {
     color: white;
-    background-color: rgb(112, 200, 255);
+    background-color:  rgb(135, 156, 250);
     font-size: 100%;
     }
     li a:hover{
