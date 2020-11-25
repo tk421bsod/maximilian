@@ -136,3 +136,6 @@ input:focus{
         transition-duration: 0.5s;
         overflow:hidden;
         }
+    a:visited{
+        color:white;
+    }
