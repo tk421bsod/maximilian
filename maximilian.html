@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maximilian Web Interface (WIP)</title>
     <link rel="stylesheet" href="common.css">
+    <script src="../../other-projects/common/anime.min.js"></script>
 </head>
 <body>
 <h1 id="error"></h1>
-<nav class=navbar>
+<nav class=navbar id=navbar>
     <ul>
         <li><a style="float:left" id="active" href=".">Home</a></li>
         <li><a style="float:right" href="https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268814336&scope=bot" target="_blank">Invite</a></li>
@@ -19,13 +20,37 @@
         <li><a style="float:right" href="./responses">Custom Commands</a></li>
     </ul>
 </nav>
-<h1 style="font-size: 50pt; padding-bottom:20px; padding-top:30px">Maximilian</h1>
-<h1 style="padding-bottom:10%; font-size:16pt;">A Discord bot with some cool features that does some cool stuff. (currently under development)</h1>
-<h1 style="padding-bottom:20px; font-weight:400; font-size:30pt"><b>Features</b></h1>
-<div>
-<img src="./img/prefix.png" style="float:left;margin-left:5%"> <h2 style="margin-left:-5%;padding-bottom:10px">Customizable Prefix</h2>
-<p>You can customize Maximilian's prefix to prevent it from conflicting with other bots.</p>
+<h1 style="font-size: 50pt; padding-bottom:20px; padding-top:30px" id="header">Maximilian</h1>
+<h1 style="padding-bottom:10%; font-size:16pt;" id="header-desc">A Discord bot with some cool features that does some cool stuff. (currently under development)</h1>
+<div class="feature-list">
+<h1 style="padding-bottom:20px; font-weight:400; font-size:30pt" id="featurelist-header"><b>Features</b></h1>
+<img src="./img/prefix.png" style="float:left;margin-left:5%" id="prefiximg" class="featureimg"> <h2 style="margin-left:-5%;padding-bottom:10px" class="feature-header" id="prefix-header">Customizable Prefix</h2>
+<p class="prefix-desc">You can customize Maximilian's prefix to prevent it from conflicting with other bots.</p>
 </div>
-<footer style="padding-top:40px;font-size:small;font-weight:300;">Made with ♥️ by tk421</footer>    
+<footer style="padding-top:40px;font-size:small;font-weight:300;" class="footer">Made with ♥️ by tk421</footer>  
+<script>
+    anime({
+        targets: ' #header',
+        translateY: "-5",
+        opacity: [0,1],
+        duration: '2000',
+        delay: '200',
+        easing: 'easeOutQuint'
+    });
+    anime({
+        targets: '#navbar, #header-desc',
+        opacity: [0,1],
+        duration: '1000',
+        delay: '1000',
+        easing: 'easeOutQuint'
+    });
+    anime({
+        targets: '.feature-list, .footer',
+        opacity: [0,1],
+        duration: '1000',
+        delay: '1500',
+        easing: 'easeOutQuint'
+    });
+</script>  
 </body>
 </html>
