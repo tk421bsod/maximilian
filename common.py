@@ -29,7 +29,7 @@ class db:
     
     def connect(self, database):
         #connect to db, this instance is also self.<name> because it needs to be accessible from elsewhere in the class
-        self.dbobj=pymysql.connect(host='localhost',
+        self.dbobj=pymysql.connect(host='10.0.0.51',
                     user="maximilianbot",
                     password=self.decrypted_databasepassword.decode(),
                     db=database,
@@ -106,8 +106,8 @@ class db:
         #if an exception occurs, assign that exception message to a variable
         except Exception as e: 
             #then print it and log the event to a file
-            print("Error: " + e + ". Exiting...")
             self.error=e
+            print(e)
             return e
     
     def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug):
