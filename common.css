@@ -25,7 +25,10 @@
          url('../../universal/fonts/opensans/open-sans-v16-latin-300.svg#OpenSans') format('svg'); /* Legacy iOS */
   }
 
-
+img{
+    width:auto;
+    height:auto;
+}
 body, h1, h2, div, p, footer{ 
 text-align: center;
 margin: auto auto auto auto;
