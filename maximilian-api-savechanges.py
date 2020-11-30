@@ -47,7 +47,7 @@ def save():
             result = dbinst.insert(database, table, values, valuenodupe, debug, valueallnum, valueallnumenabled, "guild_id", True)
         else:
             result = dbinst.insert(database, table, values, valuenodupe, debug, valueallnum, valueallnumenabled, "", False)
-        results = {"success":"?redirectsource=savechanges&changessaved=success", "debuginfoprinted":"", "error-duplicate":"?redirectsource=savechanges&error=", "error-unhandled":"?redirectsource=savechanges&changessaved=error-other&error="+dbinst.error+"&errorlocation=common-py-inserting-data", "error-valuenotallnum":"?redirectsource=savechanges&changessaved=error-valuenotallnum"}
+        results = {"success":"?redirectsource=savechanges&changessaved=success", "debuginfoprinted":"", "error-duplicate":"?redirectsource=savechanges&changessaved=error-duplicate", "error-unhandled":"?redirectsource=savechanges&changessaved=error-other&error="+dbinst.error+"&errorlocation=common-py-inserting-data", "error-valuenotallnum":"?redirectsource=savechanges&changessaved=error-valuenotallnum"}
         for key in results.keys():
             if result == key:
                 return redirect('http://' + currentdomain + '/other-projects/maximilian/' + path + results[result])
