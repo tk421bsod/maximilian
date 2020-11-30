@@ -4,70 +4,8 @@
     <script src="http://animationdoctorstudio.net/other-projects/maximilian/common.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maximilian Web Interface (WIP)</title>
-    <style>
-        @font-face {
-  font-family: 'Open Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.eot'); /* IE9 Compat Modes */
-  src: local('Open Sans'), local('OpenSans'),
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.woff') format('woff'), /* Modern Browsers */
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('http://animationdoctorstudio.net/universal/fonts/opensans/open-sans-v16-latin-regular.svg#OpenSans') format('svg'); /* Legacy iOS */
-}
-body{ 
-text-align: center;
-margin: auto auto auto auto;
-font-family: 'Open Sans', "Segoe UI", Tahoma, sans-serif;
-font-weight: 100;
-background-color: #2C2F33;
-}
-h1, h2, p, a, div{
-    color:white
-}
-button{
-    background-color: #7289DA;
-    color:white;
-    text-decoration: none;
-    padding-left: 5%;
-    padding-right:5%;
-    padding-top:1%;
-    padding-bottom:1%;
-    border: 5px;
-    border-radius: 10px;
-    transition:0.2s;
-}
-button:hover{
-    background-color: lightskyblue;
-}
-
-#guild_id, #response_trigger, #response_text {
-    text-align:center;
-    font-family: 'Open Sans', Tahoma, sans-serif;
-    font-weight: 300;
-    padding: 0.5% 2% 0.5% 2%;
-    width: 50%;
-    height: auto;
-    -webkit-transition: 0.5s;
-    transition: 0.5s;
-    border-radius:0px;
-    border: 3px;
-    outline:none;
-    background-color:#FFF;
-    overflow:visible;
-}
-input:focus{
-    border: 3px;
-    border-radius:8px;
-}
-#error{
-    color:rgb(255, 0, 0)
-}
-    </style>
+    <title>Maximilian Web Interface (beta)</title>
+    <link rel="stylesheet" href="../common.css">
 </head>
 <body>
 <h1>This is the web interface for Maximilian.</h1>
@@ -94,11 +32,11 @@ input:focus{
 var path = "roles"
 //gets url parameters, second argument is default value
 var sourceofredirect = getUrlParam('redirectsource','noredirect');
-var saveresponseState = getUrlParam('responsesaved', '' );
-if (sourceofredirect == "saveresponse") {
+var savereactionroleState = getUrlParam('error', '' );
+if (sourceofredirect == "savereactionroles") {
     //depending on the result, show a different message
-    if (saveresponseState == "successful"){document.getElementById("savingresponse").innerHTML="Your custom response was saved successfully. Try testing it!";} 
-    if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
+    if (savereactionroleState == ""){document.getElementById("savingresponse").innerHTML="Your reaction role was saved successfully. Try testing it!";} 
+    if (savereactionroleState == "error-duplicate"){document.getElementById("error").innerHTML="Your reaction role already exists. Try making a new one!";}
     //if the guild id is invalid
     if (saveresponseState == "error-guildid-invalid"){        
         document.getElementById("error").innerHTML = "It looks like the server ID isn't valid. Make sure you entered everything in the correct fields, and check the server ID for typos. Remember, the server ID is not the server's name.";

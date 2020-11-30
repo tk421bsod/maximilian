@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maximilian Web Interface (WIP)</title>
+    <title>Maximilian Web Interface (beta)</title>
     <link rel="stylesheet" href="common.css">
     <script src="../../other-projects/common/anime.min.js"></script>
 </head>
 <body>
-<h1 id="error"></h1>
-<nav class=navbar id=navbar>
+<div class="content-wrapper">
+<nav class="navbar" id="navbar">
     <ul>
         <li><a style="float:left" id="active" href=".">Home</a></li>
         <li><a style="float:right" href="https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268814336&scope=bot" target="_blank">Invite</a></li>
@@ -24,10 +24,10 @@
 <h1 style="padding-bottom:10%; font-size:16pt;" id="header-desc">A Discord bot with some cool features that does some cool stuff. (currently under development)</h1>
 <div class="feature-list">
 <h1 style="padding-bottom:20px; font-weight:400; font-size:30pt" id="featurelist-header"><b>Features</b></h1>
-<img src="./img/prefix.png" style="float:left;margin-left:5%" id="prefiximg" class="featureimg"> <h2 style="margin-left:-5%;padding-bottom:10px" class="feature-header" id="prefix-header">Customizable Prefix</h2>
+<img src="./img/prefix.png" style="float:left;margin-left:5%" id="prefiximg" class="featureimg" alt="Image showing someone changing Maximilian's prefix"a> <h2 style="margin-left:-5%;padding-bottom:1%" class="feature-header" id="prefix-header">Customizable Prefix</h2>
 <p class="prefix-desc">You can customize Maximilian's prefix to prevent it from conflicting with other bots.</p>
 </div>
-<footer style="padding-top:40px;font-size:small;font-weight:300;" class="footer">Made with ♥️ by tk421</footer>  
+<footer class="footer">Made with ♥️ by tk421</footer>
 <script>
     anime({
         targets: ' #header',
@@ -38,9 +38,17 @@
         easing: 'easeOutQuint'
     });
     anime({
-        targets: '#navbar, #header-desc',
+        targets: '#navbar',
         opacity: [0,1],
         duration: '1000',
+        delay: '1500',
+        easing: 'easeOutQuint'
+    });
+    anime({
+        targets: '#header-desc',
+        opacity: [0,1],
+        translateY: "5",
+        duration: '2000',
         delay: '1000',
         easing: 'easeOutQuint'
     });
