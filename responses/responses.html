@@ -21,7 +21,7 @@
     </nav>
 <h1 style="padding-top:20px">Custom Commands</h1>
 <br>
-<p>This is a very early beta, so don't expect it to work perfectly. DM me on Discord at tk421#7244, or send an email to <a href="mailto:xtk421bsodx@gmail.com" class="link">xtk421bsodx@gmail.com</a> if you have any feedback, feature requests, bug reports, or questions.</p>
+<p>This is a very early beta, so some stuff might not work perfectly. DM tk421#7244 on Discord if you experience any issues.</p>
 <br>
 <br>
 <p>To get a server's ID, enable developer mode, following the instructions <a href="">here</a>, then right click on a server and click "Copy ID".</p>
@@ -54,29 +54,7 @@ const valueallnumenabled = "True"
 const debug = "";
 //get url parameters
 try {
-    var sourceofredirect = getUrlParam('redirectsource','noredirect');
-    var saveresponseState = getUrlParam('changessaved', '' );
-    var errormessage = getUrlParam('error', '');
-    if (sourceofredirect == "savechanges") {
-    //depending on the result, show a different message
-    if (saveresponseState == "success"){document.getElementById("saving").innerHTML="Your custom command was saved successfully. Try testing it!";} 
-    if (saveresponseState == "error-duplicate"){document.getElementById("error").innerHTML="Your custom response already exists. Try making a new one!";}
-    //if the guild id is invalid
-    if (saveresponseState == "error-valuenotallnum"){        
-        document.getElementById("error").innerHTML = "It looks like the server ID isn't valid. Make sure you entered everything in the correct fields, and check the server ID for typos. Remember, the server ID is not the server's name.";
-        document.getElementById("guild_id").style.transition = "0.0s";
-        document.getElementById("guild_id").style.webkitTransition = "0.0s";
-        document.getElementById("guild_id").style.border = "10px solid red";
-        document.getElementById("guild_id").focus;}
-    //if there's a different error
-    if (saveresponseState=="error-other"){
-        if(errormessage != ""){
-            console.error(errormessage);
-            message = errormessage + ". This error was server-side, and it occurred in " + getUrlParam('errorlocation', '') + '.';
-            displayError("saveresponse", message)
-        }
-    }
-}
+handlePossibleErrors("responses")
 } catch (error) {
     console.error(error);
     message = error.message + ". This error was client-side, and it occurred in responses.html."
