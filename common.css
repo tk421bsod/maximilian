@@ -1,6 +1,3 @@
-/*
-common.css: styling used throughout the web interface in one file, reducing overall file sizes
-*/
 @font-face {
   font-family: 'Open Sans';
   font-style: normal;
@@ -27,7 +24,9 @@ common.css: styling used throughout the web interface in one file, reducing over
          url('../../universal/fonts/opensans/open-sans-v16-latin-300.ttf') format('truetype'), /* Safari, Android, iOS */
          url('../../universal/fonts/opensans/open-sans-v16-latin-300.svg#OpenSans') format('svg'); /* Legacy iOS */
   }
-body, h1, h2, p, div{ 
+
+
+body, h1, h2, div, p, footer{ 
 text-align: center;
 margin: auto auto auto auto;
 font-family: 'Open Sans' , "Segoe UI", Tahoma, sans-serif;
@@ -35,6 +34,7 @@ font-weight: 400;
 text-shadow: 0 0 1px rgba(0,0,0,0.3);
 background-color: #36393f;
 color:white;
+padding-bottom:1%;
 }
 a{
     font-family: 'Open Sans', "Segoe UI", Tahoma, sans-serif;
@@ -138,4 +138,13 @@ input:focus{
         }
     a:visited{
         color:white;
-    }
+}
+
+.footer{
+    padding-top:5%;
+    font-size:small;
+    font-weight:300;
+    position:absolute;
+    bottom:0;
+    width:100%;
+}
