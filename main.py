@@ -135,6 +135,7 @@ async def on_message(message):
         if message.content.startswith('<@!620022782016618528> '):
             bot.command_prefix = '<@!620022782016618528> '
         else:
+            await bot.responsesinst.get_responses()
             if message.guild is not None:
                 try:    
                     bot.command_prefix = bot.prefixes[str(message.guild.id)]
@@ -290,7 +291,11 @@ async def reload(ctx, *targetextensions):
         await bot.responsesinst.get_responses()
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
     except Exception as e:
-        embed = discord.Embed(title=f"\U0000274c Error while reloading extensions: {str(e)}.")
+        if len(e) >= 200:
+            embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.)
+            embed.add_field(name="Error:", value=str(e))
+        else:
+            embed = discord.Embed(title=f"\U0000274c Error while reloading extensions: {str(e)}.")
         embed.add_field(name="What might have happened:", value="You might have mistyped the extension name; the extensions are `misc`, `reactionroles`, `prefixes`, `responses`, and `userinfo`. If you created a new extension, make sure that it has a setup function, and you're calling `Bot.load_extension(name)` somewhere in main.py.")
     await ctx.send(embed=embed) 
 
