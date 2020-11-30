@@ -102,10 +102,8 @@ function handlePossibleErrors(origin){
     var sourceOfRedirect = getUrlParam('redirectsource','noredirect');
     var saveState = getUrlParam('changessaved', '');
     var errorMessage = getUrlParam('error', '');
-    alert("got parameters, redirectsource=" + sourceOfRedirect + ", savestate=" + saveState + ", errormessage=" + errorMessage);
     const saveResponseErrors = {"success":"Your custom command was saved successfully. Try testing it!", "error-duplicate":"Your custom command already exists. Try making a new one!", "error-valuenotallnum":"It looks like the server ID isn't valid. Make sure that you entered everything in the correct fields. Remember, the server ID is not the server's name."};
     if (sourceOfRedirect == "savechanges" && origin == "responses" && isKeyInObject(saveResponseErrors, saveState)){
-        alert("origin is responses and savestate is in dict");
         if (saveState.includes("error")){
             document.getElementById("error").innerHTML = saveResponseErrors[saveState];
         }
