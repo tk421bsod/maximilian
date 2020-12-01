@@ -108,7 +108,7 @@ class HelpCommand(commands.HelpCommand):
         await self.get_destination().send(embed=embed)
     send_command_help = send_group_help
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=60)
 async def reset_status():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
@@ -240,6 +240,27 @@ async def on_command_completion(ctx):
     print(ctx.command.name)
     print(ctx.message.content)
     print("sent in " + ctx.guild.name)
+
+@commands.is_owner()
+@bot.command(hidden=True)
+async def change_status(ctx, type, newstatus):
+    reset_status.stop()
+    await ctx.send("Changing status...")
+    if type.lower() == "streaming":
+        await bot.change_presence(activity=discord.Streaming(name=" my development!", url=newstatus))
+    elif type.lower() == "listening":
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=newstatus))
+    elif type.lower() == "watching":
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=newstatus))
+    elif type.lower() == "default":
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
+        reset_status.start()
+    else:
+        await ctx.send("That's an invalid status type!")
+        return
+    await ctx.send("Changed status!")
+
+
 
 @commands.is_owner()
 @bot.command(hidden=True)
