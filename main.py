@@ -292,7 +292,7 @@ async def reload(ctx, *targetextensions):
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
     except Exception as e:
         if len(e) >= 200:
-            embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.)
+            embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
             embed.add_field(name="Error:", value=str(e))
         else:
             embed = discord.Embed(title=f"\U0000274c Error while reloading extensions: {str(e)}.")
