@@ -20,7 +20,7 @@ function save(path, database, table, valuenodupe, valueallnum, valueallnumenable
         var url=firstparturl+element
         var firstparturl=url
     }
-    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled + "&currentdomain=" + window.location.hostname;
+    var otherparams = "path=" + path + "&database=" + database + "&table=" + table + "&valuenodupe=" + valuenodupe + "&valueallnum=" + valueallnum + "&valueallnumenabled=" + valueallnumenabled + "&currentdomain=" + window.location.hostname + ":" + window.location.port;
     if(debug!=""){
         var otherparams=otherparams+"&debug="+debug;
     }
