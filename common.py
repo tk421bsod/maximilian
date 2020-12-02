@@ -1,3 +1,5 @@
+
+from cryptography.fernet import Fernet
 import pymysql.cursors
 import datetime
 
@@ -7,13 +9,17 @@ class db:
     dbc = ""
     def __init__(self):
         self.error=""
+        with open("k.txt", "r") as kfile:
+            self.key = kfile.readline()
         with open("dbp.txt", "r") as dbpfile:
-            self.dbp = dbpfile.readline()
+            encrypted_data = dbpfile.readline()
+            f = Fernet(self.key)
+            self.decrypted_databasepassword = f.decrypt(encrypted_data.encode('UTF-8'))
     
     def connect(self, database):
         self.dbobj=pymysql.connect(host='10.0.0.51',
                     user="maximilianbot",
-                    password=self.dbp,
+                    password=self.decrypted_databasepassword.decode(),
                     db=database,
                     charset='utf8mb4',
                     cursorclass=pymysql.cursors.DictCursor,
@@ -111,8 +117,12 @@ class db:
         return row
 
 class token:
-    def get(self, filename):
+    def decrypt(self, filename):
         with open(filename, "r") as tokenfile:
-            token = tokenfile.readline()
-            return token
+            with open("k.txt", "r") as kfile:
+                self.key = kfile.readline()
+            encrypted_token = tokenfile.readline()
+            f = Fernet(self.key)
+            decrypted_token = f.decrypt(encrypted_token.encode('UTF-8'))
+            return decrypted_token.decode()
 
