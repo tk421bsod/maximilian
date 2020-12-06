@@ -52,7 +52,6 @@ function getUrlParam(parameter, defaultvalue){
     }
 
 function displayError(origin, message){
-    var buttonclicked=0;
     const origins = {"saveresponse":"saving a command", "saveroles":"saving reaction roles", "postrequest":"accessing data", "save":"saving data"};
     //maybe we should show a toast notification if there's an error
     //display error message
@@ -67,7 +66,11 @@ function displayError(origin, message){
 }
 
 function showTechnicalInfo(){
+    try{
     buttonclicked=buttonclicked+1;
+    } catch (ReferenceError){
+    var buttonclicked = 0;
+    }
     if (Math.abs(buttonclicked % 2) == 1){
         document.getElementById("technicalinfobutton").innerHTML="Click to hide technical info";
         document.getElementById("technicalinfo").style.height="auto";
