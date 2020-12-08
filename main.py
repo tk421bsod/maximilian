@@ -135,7 +135,6 @@ async def on_message(message):
         if message.content.startswith('<@!620022782016618528> '):
             bot.command_prefix = '<@!620022782016618528> '
         else:
-            await bot.responsesinst.get_responses()
             if message.guild is not None:
                 try:    
                     bot.command_prefix = bot.prefixes[str(message.guild.id)]
@@ -159,7 +158,7 @@ async def on_command_error(ctx, error):
     #get the original error so isinstance works
     error = getattr(error, "original", error)
     #check for database errors first, these should almost never happen
-    if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError):
+    if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
         print("database error, printing context and error type")
         print(str(error))
         print(str(ctx))
@@ -200,7 +199,7 @@ async def on_command_error(ctx, error):
             await ctx.send(embed=embed)
             return
         else:
-            await ctx.send(f"\U0000274c You didn't provide the required argument `{error.param.name}`. See the help entry for `{ctx.command.name}` to see what arguments this command takes.")
+            await ctx.send(f"\U0000274c You didn't provide the required argument `{error.param.name}`. See the help entry for `{ctx.command.name}` to see what arguments this command takes. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
             return
     print("Other error")
     print(str(error))
