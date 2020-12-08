@@ -272,7 +272,10 @@ async def privacy(ctx):
 @commands.has_permissions(administrator=True)
 @bot.command()
 async def deleteall(ctx):
-    deletionmessage = await ctx.send("You've requested that I delete all the information I have stored about this server. \nIf you proceed, all of the reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`. \n**THIS CANNOT BE UNDONE.** \nReact with \U00002705 to proceed, or react with \U0000274c to stop the deletion process.")
+    embed = discord.Embed(title="Delete all data?", description=f"You've requested that I delete all the information I have stored about this server. (see `{bot.command_prefix}privacy` for details on the data I collect)")
+    embed.add_field(name="Effects", value="If you proceed, all of the reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`.\n**THIS CANNOT BE UNDONE.**", inline=False)
+    embed.add_field(name="Your options", value="React with \U00002705 to proceed, or react with \U0000274c to stop the deletion process.")
+    deletionmessage = await ctx.send(embed=embed)
     await deletionmessage.add_reaction("\U00002705")
     await deletionmessage.add_reaction("\U0000274c")
     try:
@@ -290,7 +293,7 @@ async def deleteall(ctx):
             embed = discord.Embed(title="\U00002705 All data for this server has been cleared!", color=discord.Color.blurple())
             await ctx.send(embed=embed)
         if str(reaction[0].emoji) == '\U0000274c':
-            await ctx.send("Ok. I won't proceed with deletion.")
+            await ctx.send("Ok. I won't delete anything.")
     except asyncio.TimeoutError:
         await ctx.send('Deletion request timed out.')
 
