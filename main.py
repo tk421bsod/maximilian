@@ -274,7 +274,7 @@ async def reload(ctx, *targetextensions):
         else:
             extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
         reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
-        repo = git.Repo('/var/www/html/animationdoctorstudio.net/other-projects/maximilian')
+        repo = git.Repo('C:Users/xtk42/Documents/maximilian')
         o = repo.remotes.origin
         o.pull()
         await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
