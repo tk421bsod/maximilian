@@ -8,11 +8,9 @@ import logging
 import time
 import calendar
 import os
-from flask import Flask, escape, request, redirect
-import datetime
-import pymysql.cursors
 import sys
 import git 
+import asyncio
 import pymysql
 
 #set up logging
@@ -33,7 +31,7 @@ bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
 bot.dbinst = common.db()
-bot.database = "maximilian"
+bot.database = "maximilian_test"
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
@@ -111,7 +109,7 @@ class HelpCommand(commands.HelpCommand):
         await self.get_destination().send(embed=embed)
     send_command_help = send_group_help
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=60)
 async def reset_status():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
@@ -138,7 +136,6 @@ async def on_message(message):
         if message.content.startswith('<@!620022782016618528> '):
             bot.command_prefix = '<@!620022782016618528> '
         else:
-            await bot.responsesinst.get_responses()
             if message.guild is not None:
                 try:    
                     bot.command_prefix = bot.prefixes[str(message.guild.id)]
@@ -162,7 +159,7 @@ async def on_command_error(ctx, error):
     #get the original error so isinstance works
     error = getattr(error, "original", error)
     #check for database errors first, these should almost never happen
-    if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError):
+    if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
         print("database error, printing context and error type")
         print(str(error))
         print(str(ctx))
@@ -203,7 +200,7 @@ async def on_command_error(ctx, error):
             await ctx.send(embed=embed)
             return
         else:
-            await ctx.send(f"\U0000274c You didn't provide the required argument `{error.param.name}`. See the help entry for `{ctx.command.name}` to see what arguments this command takes.")
+            await ctx.send(f"\U0000274c You didn't provide the required argument `{error.param.name}`. See the help entry for `{ctx.command.name}` to see what arguments this command takes. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
             return
     print("Other error")
     print(str(error))
@@ -247,6 +244,58 @@ async def on_command_completion(ctx):
 
 @commands.is_owner()
 @bot.command(hidden=True)
+async def change_status(ctx, type, newstatus):
+    reset_status.stop()
+    await ctx.send("Changing status...")
+    if type.lower() == "streaming":
+        await bot.change_presence(activity=discord.Streaming(name=" my development!", url=newstatus))
+    elif type.lower() == "listening":
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=newstatus))
+    elif type.lower() == "watching":
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=newstatus))
+    elif type.lower() == "default":
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
+        reset_status.start()
+    else:
+        await ctx.send("That's an invalid status type!")
+        return
+    await ctx.send("Changed status!")
+
+@bot.command(hidden=True)
+async def privacy(ctx):
+    embed = discord.Embed(title="Maximilian Privacy Policy", color=discord.Color.blurple())
+    embed.add_field(name="Why Maximilian collects data", value="Maximilian collects certain information that is necessary for its functions (types of data collected are described below)", inline=False)
+    embed.add_field(name="Data that Maximilian collects", value="**-Server IDs**\nMaximilian collects server IDs when you create a custom command or add a reaction role to distinguish between different servers.\n\n**-Role IDs**\nMaximilian collects role IDs whenever you add a reaction role so it can assign the correct role to users.\n\n**-User Info**\nTo provide the userinfo command, Maximilian accesses, but doesn't store, certain data about users like their roles, permissions, status, and account age.", inline=False)
+    embed.add_field(name="I want to delete my data, how do I request that?", value=f"You can delete all the data in your server by using `{bot.command_prefix}deleteall`. This will irreversibly delete all of the reaction roles and custom commands you have set up and reset the prefix to the default of `!`. Only people with the Administrator permission can use this.", inline=False)
+    await ctx.send(embed=embed)
+
+@commands.has_permissions(administrator=True)
+@bot.command()
+async def deleteall(ctx):
+    deletionmessage = await ctx.send("You've requested that I delete all the information I have stored about this server. \nIf you proceed, all of the reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`. \n**THIS CANNOT BE UNDONE.** \nReact with \U00002705 to proceed, or react with \U0000274c to stop the deletion process.")
+    await deletionmessage.add_reaction("\U00002705")
+    await deletionmessage.add_reaction("\U0000274c")
+    try:
+        await asyncio.sleep(1)
+        reaction = await bot.wait_for('reaction_add', timeout=120.0)
+        if str(reaction[0].emoji) == '\U00002705':
+            await ctx.send("Deleting data for this server...")
+            await ctx.trigger_typing()
+            bot.dbinst.delete(bot.database, "roles", str(ctx.guild.id), "guild_id", "", "", False)
+            bot.dbinst.delete(bot.database, "responses", str(ctx.guild.id), "guild_id", "", "", False)
+            bot.dbinst.delete(bot.database, "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
+            await ctx.guild.me.edit(nick=f"[!] Maximilian")
+            await bot.responsesinst.get_responses()
+            await bot.prefixesinst.reset_prefixes()
+            embed = discord.Embed(title="\U00002705 All data for this server has been cleared!", color=discord.Color.blurple())
+            await ctx.send(embed=embed)
+        if str(reaction[0].emoji) == '\U0000274c':
+            await ctx.send("Ok. I won't proceed with deletion.")
+    except asyncio.TimeoutError:
+        await ctx.send('Deletion request timed out.')
+
+@commands.is_owner()
+@bot.command(hidden=True)
 async def reload(ctx, *targetextensions):
     await ctx.trigger_typing()
     try:
@@ -273,7 +322,11 @@ async def reload(ctx, *targetextensions):
         await bot.responsesinst.get_responses()
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
     except Exception as e:
-        embed = discord.Embed(title=f"\U0000274c Error while reloading extensions: {str(e)}.")
+        if len(e) >= 200:
+            embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
+            embed.add_field(name="Error:", value=str(e))
+        else:
+            embed = discord.Embed(title=f"\U0000274c Error while reloading extensions: {str(e)}.")
         embed.add_field(name="What might have happened:", value="You might have mistyped the extension name; the extensions are `misc`, `reactionroles`, `prefixes`, `responses`, and `userinfo`. If you created a new extension, make sure that it has a setup function, and you're calling `Bot.load_extension(name)` somewhere in main.py.")
     await ctx.send(embed=embed) 
 
