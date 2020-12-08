@@ -61,6 +61,7 @@ class misc(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.has_permissions(administrator=True)
+    @commands.bot_has_permissions(add_reactions=True)
     @commands.command(help="**Permanently** delete all data that Maximilian's stored about your server. (requires the Administrator permission)")
     async def deleteall(self, ctx):
         embed = discord.Embed(title="Delete all data?", description=f"You've requested that I delete all the information I have stored about this server. (see `{self.bot.command_prefix}privacy` for details on the data I collect)", color=discord.Color.blurple())
