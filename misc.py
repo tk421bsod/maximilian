@@ -3,6 +3,7 @@ from discord.ext import commands
 import time
 import aiohttp
 import io
+import asyncio
 from zalgo_text import zalgo as zalgo_text_gen
 
 class misc(commands.Cog):
@@ -51,6 +52,41 @@ class misc(commands.Cog):
             guildstring = guildstring + each.name + ", "
         await ctx.send(guildstring[:-2])
 
+    @commands.command(help="View information about what data Maximilian accesses and stores.")
+    async def privacy(self, ctx):
+        embed = discord.Embed(title="Maximilian Privacy Policy", color=discord.Color.blurple())
+        embed.add_field(name="Why Maximilian collects data", value="Maximilian collects certain information that is necessary for its functions (types of data collected are described below)", inline=False)
+        embed.add_field(name="Data that Maximilian collects", value="**-Server IDs**\nMaximilian collects server IDs when you create a custom command or add a reaction role to distinguish between different servers.\n\n**-Role IDs**\nMaximilian collects role IDs whenever you add a reaction role so it can assign the correct role to users.\n\n**-User Info**\nTo provide the userinfo command, Maximilian accesses, but doesn't store, certain data about users like their roles, permissions, status, and account age.", inline=False)
+        embed.add_field(name="I want to delete my data, how do I request that?", value=f"You can delete all the data in your server by using `{self.bot.command_prefix}deleteall`. This will irreversibly delete all of the reaction roles and custom commands you have set up and reset the prefix to the default of `!`. Only people with the Administrator permission can use this.", inline=False)
+        await ctx.send(embed=embed)
+
+    @commands.has_permissions(administrator=True)
+    @commands.command(help="**Permanently** delete all data that Maximilian's stored about your server. (requires the Administrator permission)")
+    async def deleteall(self, ctx):
+        embed = discord.Embed(title="Delete all data?", description=f"You've requested that I delete all the information I have stored about this server. (see `{self.bot.command_prefix}privacy` for details on the data I collect)", color=discord.Color.blurple())
+        embed.add_field(name="Effects", value="If you proceed, all of the reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`.\n**THIS CANNOT BE UNDONE.**", inline=False)
+        embed.add_field(name="Your options", value="React with \U00002705 to proceed, or react with \U0000274c to stop the deletion process.", inline=False)
+        deletionmessage = await ctx.send(embed=embed)
+        await deletionmessage.add_reaction("\U00002705")
+        await deletionmessage.add_reaction("\U0000274c")
+        try:
+            await asyncio.sleep(1)
+            reaction = await self.bot.wait_for('reaction_add', timeout=120.0)
+            if str(reaction[0].emoji) == '\U00002705':
+                await ctx.send("Deleting data for this server...")
+                await ctx.trigger_typing()
+                self.bot.dbinst.delete(self.bot.database, "roles", str(ctx.guild.id), "guild_id", "", "", False)
+                self.bot.dbinst.delete(self.bot.database, "responses", str(ctx.guild.id), "guild_id", "", "", False)
+                self.bot.dbinst.delete(self.bot.database, "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
+                await ctx.guild.me.edit(nick=f"[!] Maximilian")
+                await self.bot.responsesinst.get_responses()
+                await self.bot.prefixesinst.reset_prefixes()
+                embed = discord.Embed(title="\U00002705 All data for this server has been cleared!", color=discord.Color.blurple())
+                await ctx.send(embed=embed)
+            if str(reaction[0].emoji) == '\U0000274c':
+                await ctx.send("Ok. I won't delete anything.")
+        except asyncio.TimeoutError:
+            await ctx.send('Deletion request timed out.')
 
 def setup(bot):
     bot.add_cog(misc(bot))
