@@ -29,7 +29,6 @@ class prefixes(commands.Cog):
         await ctx.send(f"Ok. Changing prefix to `{str(newprefix)}`...")
         prefixsetmessage = f"My prefix in this server has been set to `{str(newprefix)}` ."
         duplicateprefixmessage = f"My prefix in this server is already `{str(newprefix)}`."
-        nickname = ctx.guild.me.nick.replace(f"[{self.bot.command_prefix}] ", "")
         dbentry = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
         if dbentry == "" or dbentry == None:
             print("no db entry found")
@@ -40,6 +39,7 @@ class prefixes(commands.Cog):
                 await self.reset_prefixes()
                 await ctx.send(prefixsetmessage)
                 if ctx.guild.me.guild_permissions.change_nickname:
+                    nickname = ctx.guild.me.nick.replace(f"[{self.bot.command_prefix}] ", "")
                     await ctx.guild.me.edit(nick=f"[{newprefix}] {nickname}")
                 return "changed prefix"
             else:
@@ -59,6 +59,7 @@ class prefixes(commands.Cog):
                 await self.reset_prefixes()
                 await ctx.send(prefixsetmessage)
                 if ctx.guild.me.guild_permissions.change_nickname:
+                    nickname = ctx.guild.me.nick.replace(f"[{self.bot.command_prefix}] ", "")
                     await ctx.guild.me.edit(nick=f"[{newprefix}] {nickname}")
                 return "changed prefix"
             elif result == "error-duplicate":
@@ -71,6 +72,7 @@ class prefixes(commands.Cog):
                         await self.reset_prefixes()
                         await ctx.send(prefixsetmessage)
                         if ctx.guild.me.guild_permissions.change_nickname:
+                            nickname = ctx.guild.me.nick.replace(f"[{self.bot.command_prefix}] ", "")
                             await ctx.guild.me.edit(nick=f"[{newprefix}] {nickname}")
                         return "success"
                     else: 
