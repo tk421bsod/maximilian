@@ -37,6 +37,7 @@ bot.load_extension('prefixes')
 bot.load_extension('misc')
 bot.load_extension('reactionroles')
 bot.load_extension('userinfo')
+bot.load_extension('jishaku')
 #create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
@@ -162,8 +163,8 @@ async def on_command_error(ctx, error):
         print("database error, printing context and error type")
         print(str(error))
         print(str(ctx))
-        embed = discord.Embed(title="\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it.", color=discord.Color.blurple())
-        if bot.has_guild_permissions('embed_links'):
+        embed = discord.Embed(title="Fatal Error",description="\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it.", color=discord.Color.blurple())
+        if ctx.guild.me.guild_permissions.embed_links:
             await ctx.send(embed=embed)
         else:
             await ctx.send("\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
@@ -288,7 +289,8 @@ async def reload(ctx, *targetextensions):
         await bot.responsesinst.get_responses()
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
     except Exception as e:
-        if len(e) >= 200:
+        print(e)
+        if len(list(e)) >= 200:
             embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
             embed.add_field(name="Error:", value=str(e))
         else:

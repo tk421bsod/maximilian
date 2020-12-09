@@ -28,7 +28,7 @@ class responses(commands.Cog, name='Custom Commands'):
                     self.bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
         return
 
-    @commands.command(help=f"Add, delete, or list custom commands. You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['command'])
+    @commands.command(help=f"Add, delete, or list custom commands. This takes 3 arguments, `action` (the action you want to perform, must be either `add` or `delete`), `command_trigger` (the text that will trigger the command), and `command_response` (what you want Maximilian to send when you enter Maximilian's prefix followed by the command trigger). \n You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['command'])
     async def commands(self, ctx, action, command_trigger, *, command_response):
         if ctx.author.guild_permissions.manage_guild or ctx.author.id == self.bot.owner_id:
             await ctx.trigger_typing()
