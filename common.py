@@ -28,54 +28,49 @@ class db:
         return self.dbc
 
     def insert(self, database, table, valuesdict, valuenodupe, debug, valueallnum, valueallnumenabled, extraparam, extraparamenabled):
-        try:
-            if debug == False:
-                self.connect(database)
-            else:
-                pass
-            valuenameplaceholders = ', '.join([f'{i}' for i in list(valuesdict.keys())])
-            valueplaceholders = ', '.join(['%s' for i in list(valuesdict.values())])
-            valueslist = list(valuesdict.values())
-            sql = f"insert into {table} (" + valuenameplaceholders + ") values (" + valueplaceholders + ")"
-            if debug == True:
-                valuenames = ', '.join(list(valuesdict.keys()))
-                values =  ', '.join([i for i in list(valuesdict.values())])
-                print("Value Names: " + str(valuenames))
-                print("Placeholders: " + str(valuenameplaceholders))
-                print("Data to insert: " + str(values))
-                print("Table: " + str(table))
-                print("SQL Query: " + str(sql))
-                print("Exiting...")
-                return "debuginfoprinted"
-            if debug == False:
-                if valueallnumenabled:
-                    try:
-                        checkallnum=int(valuesdict[valueallnum])
-                    except Exception:
-                        return "error-valuenotallnum"
+        if debug == False:
+            self.connect(database)
+        else:
+            pass
+        valuenameplaceholders = ', '.join([f'{i}' for i in list(valuesdict.keys())])
+        valueplaceholders = ', '.join(['%s' for i in list(valuesdict.values())])
+        valueslist = list(valuesdict.values())
+        sql = f"insert into {table} (" + valuenameplaceholders + ") values (" + valueplaceholders + ")"
+        if debug == True:
+            valuenames = ', '.join(list(valuesdict.keys()))
+            values =  ', '.join([i for i in list(valuesdict.values())])
+            print("Value Names: " + str(valuenames))
+            print("Placeholders: " + str(valuenameplaceholders))
+            print("Data to insert: " + str(values))
+            print("Table: " + str(table))
+            print("SQL Query: " + str(sql))
+            print("Exiting...")
+            return "debuginfoprinted"
+        if debug == False:
+            if valueallnumenabled:
                 try:
-                    if extraparamenabled:
-                        self.dbc.execute("select count(*) from {} where {}=%s and {}=%s".format(table, valuenodupe, extraparam), (valuesdict[valuenodupe], valuesdict[extraparam]))
-                    else:
-                        self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
-                    row = self.dbc.fetchone()
-                    if row['count(*)'] > 0:
-                        print("duplicates found")
-                        return "error-duplicate"
-                    else:
-                        print("no duplicates")
-                        self.dbc.execute(sql, (valueslist))
-                        self.dbobj.close()
-                        return "success"
-                except KeyError:
+                    checkallnum=int(valuesdict[valueallnum])
+                except Exception:
+                    return "error-valuenotallnum"
+            try:
+                if extraparamenabled:
+                    self.dbc.execute("select count(*) from {} where {}=%s and {}=%s".format(table, valuenodupe, extraparam), (valuesdict[valuenodupe], valuesdict[extraparam]))
+                else:
+                    self.dbc.execute("select count(*) from {} where {}=%s".format(table, valuenodupe), (valuesdict[valuenodupe]))
+                row = self.dbc.fetchone()
+                if row['count(*)'] > 0:
+                    print("duplicates found")
+                    return "error-duplicate"
+                else:
                     print("no duplicates")
                     self.dbc.execute(sql, (valueslist))
                     self.dbobj.close()
                     return "success"
-        except Exception as e: 
-            self.error=e
-            print(e)
-            return e
+            except KeyError:
+                print("no duplicates")
+                self.dbc.execute(sql, (valueslist))
+                self.dbobj.close()
+                return "success"
     
     def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug):
         self.connect(database)

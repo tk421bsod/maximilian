@@ -2,21 +2,21 @@ import discord
 from discord.ext import commands
 import time
 from pytz import timezone
+import typing
 
 class userinfo(commands.Cog):
     '''Self explanatory. See userinfo\'s help entry for details'''
     def __init__(self, bot):
-        self.bot = bot  
-    
+        self.bot = bot
+        self.bot.requested_user = None
+
     @commands.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
-    async def userinfo(self, ctx):
+    async def userinfo(self, ctx, requested_user : typing.Optional[discord.Member]=None):
+        if requested_user is None:
+            requested_user = self.bot.requested_user
         await ctx.trigger_typing()
         rolestring = ""
         permissionstring = ""
-        if ctx.message.mentions is not None and ctx.message.mentions != []:
-            requested_user = ctx.message.mentions[0]
-        else:
-            requested_user = ctx.message.author
         status = requested_user.status[0]
         statusnames = {"online" : "Online", "dnd" : "Do Not Disturb", "idle" : "Idle", "offline" : "Invisible/Offline"}
         statusemojis = {"online" : "<:online:767294866488295475>", "dnd": "<:dnd:767510004135493662>", "idle" : "<:idle:767510329139396610>", "offline" : "<:invisible:767510747466170378>"}
@@ -24,7 +24,7 @@ class userinfo(commands.Cog):
             rolecolor = discord.Color.blurple()
         else:
             rolecolor = requested_user.roles[len(requested_user.roles)-1].color
-        embed = discord.Embed(title=f"User info for {str(requested_user.name)}#{str(requested_user.discriminator)}", color=rolecolor)
+        embed = discord.Embed(title=f"User info for {str(requested_user)}", color=rolecolor)
         embed.add_field(name="Date joined:", value=requested_user.joined_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
         embed.add_field(name="Date created:", value=requested_user.created_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
         for each in requested_user.roles:
@@ -49,12 +49,16 @@ class userinfo(commands.Cog):
                 activitytype = ""
             statusinfo = f"Status details: '{activitytype} {requested_user.activity.name}'"
         if requested_user.id == self.bot.owner_id:
-            embed.set_footer(text=f"{statusinfo}  |  Requested by {ctx.author.name}#{ctx.author.discriminator}  |  This is my owner's info!")
+            embed.set_footer(text=f"{statusinfo}  |  Requested by {str(ctx.author)}  |  This is my owner's info!")
         else:
-            embed.set_footer(text=f"{statusinfo}  |  Requested by {ctx.author.name}#{ctx.author.discriminator} ")
+            embed.set_footer(text=f"{statusinfo}  |  Requested by {str(ctx.author)}")
         embed.set_thumbnail(url=requested_user.avatar_url)
         print("printed userinfo")
         await ctx.send(embed=embed)
+    
+    @userinfo.before_invoke
+    async def before_userinfo(self, ctx):
+        self.bot.requested_user = ctx.author
 
 def setup(bot):
     bot.add_cog(userinfo(bot))
