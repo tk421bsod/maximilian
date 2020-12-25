@@ -45,7 +45,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
                 roleid = self.bot.dbinst.retrieve(self.bot.database, "roles", "role_id", "emoji", str(payload.emoji), False)
             else:
                 #otherwise, get the role id associated with the message
-                roleid = self.bot.dbinst.retrieve(self.bot.database, "roles", "role_id", "message_id", str(payload.message.id), False)
+                roleid = self.bot.dbinst.retrieve(self.bot.database, "roles", "role_id", "message_id", str(payload.message_id), False)
             #if the role is associated with the message/emoji, get the emoji and check if it matches the emoji the user reacted with (this might be redundant) 
             if roleid is not None:
                 emoji = self.bot.dbinst.retrieve(self.bot.database, "roles", "emoji", "role_id", str(roleid), False)
