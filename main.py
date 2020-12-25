@@ -123,6 +123,7 @@ async def startup():
 
 @bot.event
 async def on_ready():
+    print("recieved on_ready, finishing startup...")
     await bot.prefixesinst.reset_prefixes()
     await bot.responsesinst.get_responses()
     bot.help_command = HelpCommand()
@@ -275,7 +276,7 @@ async def reload(ctx, *targetextensions):
         else:
             extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
         reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
-        repo = git.Repo('C:Users/xtk42/Documents/maximilian')
+        repo = git.Repo(os.getcwd())
         o = repo.remotes.origin
         o.pull()
         await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
@@ -290,7 +291,7 @@ async def reload(ctx, *targetextensions):
         embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
     except Exception as e:
         print(e)
-        if len(list(e)) >= 200:
+        if len(list(str(e))) >= 200:
             embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
             embed.add_field(name="Error:", value=str(e))
         else:
