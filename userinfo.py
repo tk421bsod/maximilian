@@ -58,6 +58,7 @@ class userinfo(commands.Cog):
     
     @userinfo.before_invoke
     async def before_userinfo(self, ctx):
+        #a bit 'hacky', but I'm not sure how else I would implement this
         self.bot.requested_user = ctx.author
 
 def setup(bot):
