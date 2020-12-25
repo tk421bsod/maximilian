@@ -72,7 +72,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
             if self.bot.dbinst.retrieve(self.bot.database, "roles", "role_id", "emoji", str(payload.emoji), False) is not None:
                 roleid = self.bot.dbinst.retrieve(self.bot.database, "roles", "role_id", "emoji", str(payload.emoji), False)
             else:
-                roleid = self.bot.dbinst.retrieve(self.bot.database, "roles", "role_id", "message_id", str(payload.message.id), False)
+                roleid = self.bot.dbinst.retrieve(self.bot.database, "roles", "role_id", "message_id", str(payload.message_id), False)
             if roleid is not None:
                 emoji = self.bot.dbinst.retrieve(self.bot.database, "roles", "emoji", "role_id", str(roleid), False)
                 ctx = self.bot.get_channel(payload.channel_id)
