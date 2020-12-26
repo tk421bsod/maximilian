@@ -25,7 +25,7 @@ intents.guilds = True
 intents.members = True
 intents.presences = True
 #create Bot instance, setting default prefix, owner id, intents, and status
-bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
+bot = commands.Bot(command_prefix=commands.when_mentioned_or("!"), owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
 #initialize variables that'll be needed later
 bot.guildlist = []
 bot.prefixes = {}
@@ -134,21 +134,18 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     if message.author != bot.user:
-        if message.content.startswith('<@!620022782016618528> '):
-            bot.command_prefix = '<@!620022782016618528> '
-        else:
-            if message.guild is not None:
-                try:    
-                    bot.command_prefix = bot.prefixes[str(message.guild.id)]
-                except KeyError:
-                    print("Couldn't get prefixes (am I starting up or resetting prefixes?), using default prefix instead")
-                    bot.command_prefix = "!"
-                    pass
-                for each in range(len(bot.responses)):
-                    if int(bot.responses[each][0]) == int(message.guild.id):
-                        if bot.command_prefix + bot.responses[each][1].lower() == message.content.lower():
-                            await message.channel.send(bot.responses[each][2])
-                            return
+        if message.guild is not None:
+            try:    
+                bot.command_prefix = commands.when_mentioned_or(bot.prefixes[str(message.guild.id)])
+            except KeyError:
+                print("Couldn't get prefixes (am I starting up or resetting prefixes?), using default prefix instead")
+                bot.command_prefix = commands.when_mentioned_or("!")
+                pass
+            for each in range(len(bot.responses)):
+                if int(bot.responses[each][0]) == int(message.guild.id):
+                    if bot.command_prefix + bot.responses[each][1].lower() == message.content.lower():
+                        await message.channel.send(bot.responses[each][2])
+                        return
         await bot.process_commands(message)
 
 #catch errors that occur in commands
@@ -156,7 +153,11 @@ async def on_message(message):
 async def on_command_error(ctx, error):
     print("error")
     print(ctx.message.content)
-    print("sent in " + ctx.guild.name)
+    #prefix should be a string, not a function, so get it from the dict of prefixes (use default prefix if that fails)
+    try:
+        bot.command_prefix = bot.prefixes[str(ctx.guild.id)]
+    except KeyError:
+        bot.command_prefix = "!"
     #get the original error so isinstance works
     error = getattr(error, "original", error)
     #check for database errors first, these should almost never happen
