@@ -133,6 +133,7 @@ async def on_ready():
     
 @bot.event
 async def on_message(message):
+    ctx = await bot.get_context(message)
     if message.author != bot.user:
         if message.guild is not None:
             try:    
@@ -143,7 +144,7 @@ async def on_message(message):
                 pass
             for each in range(len(bot.responses)):
                 if int(bot.responses[each][0]) == int(message.guild.id):
-                    if bot.clean_prefix + bot.responses[each][1].lower() == message.content.lower():
+                    if ctx.prefix + bot.responses[each][1].lower() == message.content.lower():
                         await message.channel.send(bot.responses[each][2])
                         return
         await bot.process_commands(message)
