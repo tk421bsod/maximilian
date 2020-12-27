@@ -133,6 +133,7 @@ async def on_ready():
     
 @bot.event
 async def on_message(message):
+    ctx = await bot.get_context(message)
     if message.author != bot.user:
         if message.guild is not None:
             try:    
@@ -143,7 +144,7 @@ async def on_message(message):
                 pass
             for each in range(len(bot.responses)):
                 if int(bot.responses[each][0]) == int(message.guild.id):
-                    if bot.clean_prefix + bot.responses[each][1].lower() == message.content.lower():
+                    if ctx.prefix + bot.responses[each][1].lower() == message.content.lower():
                         await message.channel.send(bot.responses[each][2])
                         return
         await bot.process_commands(message)
@@ -183,7 +184,7 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
         print("User doesn't have the correct permissions")
         embed = discord.Embed(title="\U0000274c You don't have the permissions to run this command.", color=discord.Color.blurple())
-        embed.add_field(name="Why did this happen? What can I do?", value=f"Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info on that command, including the required permissions.", inline=False)
+        embed.add_field(name="Why did this happen? What can I do?", value=f"Some commands require certain permissions; try using `{ctx.prefix}help <commandname>` to get more info on that command, including the required permissions.", inline=False)
         if ctx.guild.me.guild_permissions.embed_links:
             await ctx.send(embed=embed)
         else:
@@ -195,7 +196,7 @@ async def on_command_error(ctx, error):
         if ctx.guild.me.guild_permissions.embed_links:
             await ctx.send(embed=embed)
         else:
-            await ctx.send(f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands, or change my prefix using the `prefix` command if I'm conflicting with another bot. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
+            await ctx.send(f"\U0000274c I can't find that command. Use `{ctx.prefix}help` to see a list of commands, or change my prefix using the `prefix` command if I'm conflicting with another bot. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
         return
     if isinstance(error, commands.MissingRequiredArgument):
         print("command is missing the required argument")
