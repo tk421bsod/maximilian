@@ -51,8 +51,11 @@ class responses(commands.Cog, name='Custom Commands'):
         if action.lower() == "add" and command_trigger != None and command_response != None:
             command_response.replace("*", r"\*")
             command_trigger.replace("*", r"\*")
-            if command_trigger == [each.name for each in self.bot.commands]:
-                await ctx.send("You can't create a custom command with the same name as one of my commands.")
+            for each in self.bot.commands:
+                print(each.name)
+                if command_trigger.lower() == each.name.lower():
+                    await ctx.send("You can't create a custom command with the same name as one of my commands.")
+                    return
             if self.bot.dbinst.insert(self.bot.database, "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True) == "success":
                 await self.get_responses()
                 print("added response")
