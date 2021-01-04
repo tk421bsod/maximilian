@@ -25,7 +25,7 @@ class responses(commands.Cog, name='Custom Commands'):
                         self.bot.responses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
                 elif int(count['count(*)']) == 1:
                     #otherwise get the one response and add it to the list
-                    response = self.bot.dbinst.exec_query(self.bot.database, "select * from responses where guild_id={}".format(str(guild)), True, False)
+                    response = self.bot.dbinst.exec_query(self.bot.database, "select * from responses where guild_id={}".format(str(guild)), False, False)
                     self.bot.responses.append([str(response['guild_id']), response['response_trigger'], response['response_text']])
         return
 
