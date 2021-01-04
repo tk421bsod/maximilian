@@ -14,7 +14,8 @@ import pymysql
 
 #set up logging
 logging.basicConfig(level=logging.WARN)
-print("starting...")
+logger = logging.getLogger('discord')
+logger.info("starting...")
 #create instance of 'Token' class, decrypt token
 tokeninst = common.token()
 decrypted_token = tokeninst.decrypt("token.txt")
@@ -31,6 +32,11 @@ bot.prefixes = {}
 bot.responses = []
 bot.dbinst = common.db()
 bot.database = "maximilian"
+#try to connect to database, if it fails warn
+try:
+    bot.dbinst.connect(bot.database)
+except pymysql.err.OperationalError:
+    logger.critical("Couldn't connect to database, most features won't work.")
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
@@ -43,7 +49,7 @@ bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
 bot.reactionrolesinst = bot.get_cog('reaction roles')
-print('loaded extensions, waiting for on-ready')
+logger.info('loaded extensions, waiting for on-ready')
 
 class HelpCommand(commands.HelpCommand):
     color = discord.Colour.blurple()
@@ -79,7 +85,8 @@ class HelpCommand(commands.HelpCommand):
                         value = '{0}\n{1}'.format(cog.description, value)
 
                     embed.add_field(name=name, value=value)
-
+        responseslist = self.context.bot.dbinst.exec_query(self.context.bot.database, "select * from responses where guild_id = ".format(self.context.guild.id), False, True)
+        embed.add_field(name="Custom Commands List", value="".join(["`{0[1]}` ".format(i) for i in responseslist)
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
 
