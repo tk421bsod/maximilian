@@ -147,14 +147,19 @@ async def on_message(message):
             try:    
                 bot.command_prefix = commands.when_mentioned_or(bot.prefixes[str(message.guild.id)])
             except KeyError:
-                print("Couldn't get prefixes (am I starting up or resetting prefixes?), using default prefix instead")
+                print("Couldn't get prefixes for this guild, (am I starting up or resetting prefixes?), using default prefix instead")
                 bot.command_prefix = commands.when_mentioned_or("!")
                 pass
             for each in range(len(bot.responses)):
                 if int(bot.responses[each][0]) == int(message.guild.id):
-                    if ctx.prefix + bot.responses[each][1].lower() == message.content.lower():
-                        await message.channel.send(bot.responses[each][2])
-                        return
+                    try:
+                        if ctx.prefix + bot.responses[each][1].lower() == message.content.lower():
+                            await message.channel.send(bot.responses[each][2])
+                            return
+                    except TypeError:
+                        if bot.prefixes[str(message.guild.id)] + bot.responses[each][1].lower() == message.content.lower():
+                            await message.channel.send(bot.responses[each][2])
+                            return
         await bot.process_commands(message)
 
 #catch errors that occur in commands
