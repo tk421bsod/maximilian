@@ -86,7 +86,7 @@ class HelpCommand(commands.HelpCommand):
 
                     embed.add_field(name=name, value=value)
         responseslist = self.context.bot.dbinst.exec_query(self.context.bot.database, "select * from responses where guild_id = ".format(self.context.guild.id), False, True)
-        embed.add_field(name="Custom Commands List", value="".join(["`{0[1]}` ".format(i) for i in responseslist)
+        embed.add_field(name="Custom Commands List", value="".join(["`{0[1]}` ".format(i) for i in responseslist])
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
 
