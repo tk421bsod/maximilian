@@ -59,7 +59,11 @@ class misc(commands.Cog):
         embed = discord.Embed(title="Maximilian Privacy Policy", color=discord.Color.blurple())
         embed.add_field(name="Why Maximilian collects data", value="Maximilian accesses/stores certain information that is necessary for certain functions (types of data collected are described below)", inline=False)
         embed.add_field(name="Data that Maximilian collects", value="**-Server IDs**\nMaximilian stores server IDs when you create a custom command, add a reaction role, or change its prefix to distinguish between different servers.\n\n**-Role IDs**\nMaximilian stores role IDs whenever you add a reaction role so it can assign the correct role to users.\n\n**-User Info**\nTo show information about users, Maximilian accesses, but doesn't store, certain data about users like their roles, permissions, status, and account age.", inline=False)
-        embed.add_field(name="I want to delete my server's data, how do I request that?", value=f"You can delete all the data in your server by using `{ctx.prefix : {ctx.prefix if ctx.prefix is not None else self.bot.command_prefix}}deleteall`. This will irreversibly delete all of the reaction roles and custom commands you have set up and reset the prefix to the default of `!`. Only people with the Administrator permission can use this.", inline=False)
+        if ctx.prefix is not None:
+            currentprefix = self.bot.command_prefix
+        else:
+            currentprefix = ctx.prefix
+        embed.add_field(name="I want to delete my server's data, how do I request that?", value=f"You can delete all the data in your server by using{currentprefix}deleteall`. This will irreversibly delete all of the reaction roles and custom commands you have set up and reset the prefix to the default of `!`. Only people with the Administrator permission can use this.", inline=False)
         await ctx.send(embed=embed)
 
     @commands.has_permissions(administrator=True)
@@ -67,7 +71,11 @@ class misc(commands.Cog):
     @commands.command(help="**Permanently** delete all data that Maximilian's stored about your server. (requires the Administrator permission)")
     async def deleteall(self, ctx):
         if not self.bot.waiting_for_reaction:
-            embed = discord.Embed(title="Delete all data?", description=f"You've requested that I delete all the information I have stored about this server. (see `{ctx.prefix : {ctx.prefix if ctx.prefix is not None else self.bot.command_prefix}}privacy` for details on the data I collect)", color=discord.Color.blurple())
+        if ctx.prefix is not None:
+            currentprefix = self.bot.command_prefix
+        else:
+            currentprefix = ctx.prefix
+            embed = discord.Embed(title="Delete all data?", description=f"You've requested that I delete all the information I have stored about this server. (see `{currentprefix}privacy` for details on the data I collect)", color=discord.Color.blurple())
             embed.add_field(name="Effects", value="If you proceed, all of the reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`.\n**THIS CANNOT BE UNDONE.**", inline=False)
             embed.add_field(name="Your options", value="React with \U00002705 to proceed, or react with \U0000274c to stop the deletion process.", inline=False)
             deletionmessage = await ctx.send(embed=embed)
