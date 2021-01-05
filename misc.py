@@ -71,10 +71,10 @@ class misc(commands.Cog):
     @commands.command(help="**Permanently** delete all data that Maximilian's stored about your server. (requires the Administrator permission)")
     async def deleteall(self, ctx):
         if not self.bot.waiting_for_reaction:
-        if ctx.prefix is not None:
-            currentprefix = self.bot.command_prefix
-        else:
-            currentprefix = ctx.prefix
+            if ctx.prefix is not None:
+                currentprefix = self.bot.command_prefix
+            else:
+                currentprefix = ctx.prefix
             embed = discord.Embed(title="Delete all data?", description=f"You've requested that I delete all the information I have stored about this server. (see `{currentprefix}privacy` for details on the data I collect)", color=discord.Color.blurple())
             embed.add_field(name="Effects", value="If you proceed, all of the reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`.\n**THIS CANNOT BE UNDONE.**", inline=False)
             embed.add_field(name="Your options", value="React with \U00002705 to proceed, or react with \U0000274c to stop the deletion process.", inline=False)
