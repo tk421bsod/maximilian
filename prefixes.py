@@ -24,6 +24,7 @@ class prefixes(commands.Cog):
     @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission", aliases=['prefixes'])
     async def prefix(self, ctx, newprefix):
     #should probably make this shorter and eliminate a bunch of those if statements
+        oldprefix = self.bot.command_prefix
         print("changing prefix...")
         await ctx.trigger_typing()
         await ctx.send(f"Ok. Changing prefix to `{str(newprefix)}`...")
@@ -59,7 +60,7 @@ class prefixes(commands.Cog):
                 await self.reset_prefixes()
                 await ctx.send(prefixsetmessage)
                 if ctx.guild.me.guild_permissions.change_nickname:
-                    nickname = ctx.guild.me.nick.replace(f"[{self.bot.command_prefix}] ", "")
+                    nickname = ctx.guild.me.nick.replace(f"[{oldprefix}] ", "")
                     await ctx.guild.me.edit(nick=f"[{newprefix}] {nickname}")
                 return "changed prefix"
             elif result == "error-duplicate":
