@@ -13,7 +13,7 @@ import git
 import asyncio
 import pymysql
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARN)
 print("starting...")
 #create instance of 'Token' class, decrypt token
 tokeninst = common.token()
@@ -35,7 +35,8 @@ bot.database = "maximilian_test"
 #try to connect to database, if it fails warn
 try:
     bot.dbinst.connect(bot.database)
-except pymysql.err.OperationalError:
+except Exception as e:
+    print(e)
     bot.logger.critical("Couldn't connect to database, most features won't work.")
 #load extensions
 bot.load_extension('responses')
