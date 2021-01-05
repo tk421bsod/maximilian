@@ -8,7 +8,7 @@ class responses(commands.Cog, name='Custom Commands'):
     
     async def get_responses(self):
         print("getting responses...")
-        self.bot.responses = []
+        tempresponses = []
         #if guildlist doesn't exist for some reason, get it
         if not self.bot.guildlist:    
             for guild in await self.bot.fetch_guilds().flatten():
@@ -17,12 +17,13 @@ class responses(commands.Cog, name='Custom Commands'):
         for guild in self.bot.guildlist:
             count = self.bot.dbinst.exec_query(self.bot.database, "select count(*) from responses where guild_id={}".format(str(guild)), False, False)
             if count is not None:
-                #if there are responses, check if there's more than one
+                #if there are responses, check if there's one or more
                 if int(count['count(*)']) >= 1:
                     #if so, get a list of responses and iterate over that, adding each one to the list
                     response = self.bot.dbinst.exec_query(self.bot.database, "select * from responses where guild_id={}".format(str(guild)), False, True)
                     for each in range(int(count['count(*)'])):
-                        self.bot.responses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
+                        tempresponses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
+        self.bot.responses = tempresponses
         return
 
     @commands.has_guild_permissions(manage_guild=True)
