@@ -13,9 +13,8 @@ import git
 import asyncio
 import pymysql
 
-logging.basicConfig(level=logging.WARN)
-logger = logging.getLogger('discord')
-logger.info("starting...")
+logging.basicConfig(level=logging.INFO)
+print("starting...")
 #create instance of 'Token' class, decrypt token
 tokeninst = common.token()
 decrypted_token = tokeninst.decrypt("betatoken.txt")
@@ -27,6 +26,7 @@ intents.presences = True
 #create Bot instance, setting default prefix, owner id, intents, and status
 bot = commands.Bot(commands.when_mentioned_or("!"), owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
 #initialize variables that'll be needed later
+bot.logger = logging.getLogger('maximilian')
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
@@ -36,7 +36,7 @@ bot.database = "maximilian_test"
 try:
     bot.dbinst.connect(bot.database)
 except pymysql.err.OperationalError:
-    logger.critical("Couldn't connect to database, most features won't work.")
+    bot.logger.critical("Couldn't connect to database, most features won't work.")
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
@@ -49,7 +49,7 @@ bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
 bot.reactionrolesinst = bot.get_cog('reaction roles')
-logger.info('loaded extensions, waiting for on-ready')
+bot.logger.info('loaded extensions, waiting for on-ready')
 
 class HelpCommand(commands.HelpCommand):
     color = discord.Colour.blurple()
@@ -86,8 +86,11 @@ class HelpCommand(commands.HelpCommand):
 
                     embed.add_field(name=name, value=value)
         responseslist = self.context.bot.dbinst.exec_query(self.context.bot.database, "select * from responses where guild_id = {}".format(self.context.guild.id), False, True)
+        responsestring = "A list of custom commands for this server. These don't have help entries. \n"
         if responseslist is not None:
-            embed.add_field(name="Custom Commands List", value="".join(["`{0['response_trigger']}` ".format(i) for i in responseslist]))
+            for i in responseslist:
+                responsestring += f"`{i['response_trigger']}` "
+            embed.add_field(name="Custom Commands List", value=responsestring)
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
 
