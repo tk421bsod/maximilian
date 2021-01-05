@@ -82,9 +82,12 @@ class misc(commands.Cog):
             await deletionmessage.add_reaction("\U00002705")
             await deletionmessage.add_reaction("\U0000274c")
             try:
+                #this is to prevent the bot's reactions from triggering wait_for
                 await asyncio.sleep(1)
+                #this while loop is to prevent reactions from other users from ending the deletion request, it's also for preventing multiple deletion requests
                 while True:
                     self.bot.waiting_for_reaction = True
+                    #maybe I should create a check?
                     reaction = await self.bot.wait_for('reaction_add', timeout=120.0)
                     async for each in reaction[0].users():
                         if ctx.message.author == each:
@@ -111,7 +114,7 @@ class misc(commands.Cog):
             await ctx.send("It looks like you already have an active deletion request.")
 
     @commands.command(hidden=True)
-    async def emojitest(self, ctx, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
+    async def emojiinfo(self, ctx, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
         print(str(emoji))
         if isinstance(emoji, discord.PartialEmoji):
             await ctx.send(f"`<{emoji.name}:{emoji.id}>`")
