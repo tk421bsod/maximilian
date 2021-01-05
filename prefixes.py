@@ -83,6 +83,7 @@ class prefixes(commands.Cog):
                             nickname = oldnickname.replace(f"[{oldprefix}] ", "")
                             await ctx.guild.me.edit(nick=f"[{newprefix}] {nickname}")
                         print(f"Old nickname: {oldnickname}")
+                        print(f"old nickname replaced: {oldnickname.replace(f'[{oldprefix}] ', '')}")
                         print(oldprefix)
                         print("set prefix")
                         await self.reset_prefixes()
