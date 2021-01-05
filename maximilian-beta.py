@@ -263,10 +263,15 @@ async def on_guild_remove(guild):
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
 @bot.event
+async def on_command(ctx):
+    bot.start_time = time.time()
+
+@bot.event
 async def on_command_completion(ctx):
     print(ctx.command.name)
     print(ctx.message.content)
     print("sent in " + ctx.guild.name)
+    await ctx.send(f"took {time.time()-bot.start_time} seconds to execute")
 
 @commands.is_owner()
 @bot.command(hidden=True)
