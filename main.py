@@ -10,10 +10,10 @@ import git
 import pymysql
 import sys
 
+print("starting...")
 #set up logging
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger('discord')
-logger.info("starting...")
 #create instance of 'Token' class, decrypt token
 tokeninst = common.token()
 token = tokeninst.get("token.txt")
