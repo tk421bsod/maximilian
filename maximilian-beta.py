@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.WARN)
 print("starting...")
 #create instance of 'Token' class, decrypt token
 tokeninst = common.token()
-decrypted_token = tokeninst.decrypt("betatoken.txt")
+token = tokeninst.get("betatoken.txt")
 #set intents
 intents = discord.Intents.default()
 intents.guilds = True
@@ -326,4 +326,4 @@ async def reload(ctx, *targetextensions):
         embed.add_field(name="What might have happened:", value="You might have mistyped the extension name; the extensions are `misc`, `reactionroles`, `prefixes`, `responses`, and `userinfo`. If you created a new extension, make sure that it has a setup function, and you're calling `Bot.load_extension(name)` somewhere in main.py.")
     await ctx.send(embed=embed) 
 
-bot.run(decrypted_token)
+bot.run(token)
