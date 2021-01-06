@@ -42,7 +42,7 @@ else:
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
-bot.dbinst = common.db()
+bot.dbinst = common.db(bot)
 bot.database = "maximilian"
 #try to connect to database, if it fails warn
 try:
