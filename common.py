@@ -4,13 +4,13 @@ import datetime
 class db:
     dbobj = ""
     dbc = ""
-    def __init__(self):
+    def __init__(self, bot):
         self.error=""
         with open("dbp.txt", "r") as dbpfile:
             self.databasepassword = dbpfile.readline()
-    
+        self.ip = bot.dbip
     def connect(self, database):
-        self.dbobj=pymysql.connect(host='10.0.0.51',
+        self.dbobj=pymysql.connect(host=self.ip,
                     user="maximilianbot",
                     password=self.databasepassword,
                     db=database,
@@ -21,7 +21,7 @@ class db:
         return self.dbc
 
     def insert(self, database, table, valuesdict, valuenodupe, debug, valueallnum, valueallnumenabled, extraparam, extraparamenabled):
-        #this might be vulnerable to sql injection, it depends on whether pymysql escapes stuff passed to execute as a positional argument after the query. i've heard it does, but i'm still a 
+        #this might be vulnerable to sql injection, it depends on whether pymysql escapes stuff passed to execute as a positional argument after the query. i've heard it does, but i'm still skeptical.
         #valuesdict's values are the only things that are passed by the user
         if debug == False:
             self.connect(database)
