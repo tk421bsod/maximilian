@@ -1,12 +1,16 @@
 from aiohttp import web
 import datetime
+import pymysql
 import pymysql.cursors
-from cryptography.fernet import Fernet
 import os
 from common import db
 
 dbinst = db()
-dbinst.connect("maximilian")    
+try:
+    dbinst.connect("maximilian")
+except pymyql.err.OperationalError:
+    print("Couldn't connect to database. Check the database configuration.")
+    quit()
 
 routes = web.RouteTableDef()
 
