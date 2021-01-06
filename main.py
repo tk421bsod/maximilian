@@ -5,10 +5,7 @@ from discord.ext import tasks
 import common
 import importlib
 import logging
-import time
-import calendar
 import os
-import sys
 import git 
 import pymysql
 
