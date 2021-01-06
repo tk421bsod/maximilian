@@ -8,6 +8,7 @@ import logging
 import os
 import git 
 import pymysql
+import sys
 
 #set up logging
 logging.basicConfig(level=logging.WARN)
@@ -23,6 +24,20 @@ intents.members = True
 intents.presences = True
 #create Bot instance, setting default prefix, owner id, intents, and status
 bot = commands.Bot(commands.when_mentioned_or("!"), owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
+#before setting up db instance, look at arguments and check if ip was specified
+if len(sys.argv) > 0:
+    if sys.argv[0] = "--ip":
+        try:
+            bot.dbip = sys.argv[1]
+        except ValueError:
+            bot.logger.warning("If you use the --ip argument, which you did, you need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost.")
+            bot.dbip = "localhost"
+    else:
+        print("Unrecognized argument. If you're trying to pass arguments to python, put them before the filename.")
+        bot.dbip = "localhost"
+else:
+    bot.logger.warning("No database IP provided. Falling back to localhost.")
+    bot.dbip = "localhost"
 #initialize variables that'll be needed later
 bot.guildlist = []
 bot.prefixes = {}
@@ -31,9 +46,9 @@ bot.dbinst = common.db()
 bot.database = "maximilian"
 #try to connect to database, if it fails warn
 try:
-    bot.dbinst.connect(bot.database)
+    bot.dbinst.connect(bot.database, bot.dbip)
 except pymysql.err.OperationalError:
-    logger.critical("Couldn't connect to database, most features won't work.")
+    logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
