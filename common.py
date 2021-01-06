@@ -1,25 +1,18 @@
-
-from cryptography.fernet import Fernet
 import pymysql.cursors
 import datetime
 
 class db:
-    decrypted_databasepassword = ""
     dbobj = ""
     dbc = ""
     def __init__(self):
         self.error=""
-        with open("k.txt", "r") as kfile:
-            self.key = kfile.readline()
         with open("dbp.txt", "r") as dbpfile:
-            encrypted_data = dbpfile.readline()
-            f = Fernet(self.key)
-            self.decrypted_databasepassword = f.decrypt(encrypted_data.encode('UTF-8'))
+            self.databasepassword = dbpfile.readline()
     
     def connect(self, database):
         self.dbobj=pymysql.connect(host='10.0.0.51',
                     user="maximilianbot",
-                    password=self.decrypted_databasepassword.decode(),
+                    password=self.databasepassword,
                     db=database,
                     charset='utf8mb4',
                     cursorclass=pymysql.cursors.DictCursor,
@@ -28,6 +21,8 @@ class db:
         return self.dbc
 
     def insert(self, database, table, valuesdict, valuenodupe, debug, valueallnum, valueallnumenabled, extraparam, extraparamenabled):
+        #this might be vulnerable to sql injection, it depends on whether pymysql escapes stuff passed to execute as a positional argument after the query. i've heard it does, but i'm still a 
+        #valuesdict's values are the only things that are passed by the user
         if debug == False:
             self.connect(database)
         else:
@@ -81,6 +76,7 @@ class db:
             print("Table: " + str(table))
             print("Value name: " + str(valuenametoretrieve))
             print("Value = " + str(retrievedvalue))
+            #note that this isn't an actual query that's being executed; it's used to show what the query would look like if it actually were executed (if it were, it would be a pretty serious vulnerability)
             print("SQL Query: select " + valuetoretrieve + " from " + table + " where " + valuenametoretrieve + "=" + retrievedvalue)
             print(str(row))
             return row
@@ -112,12 +108,7 @@ class db:
         return row
 
 class token:
-    def decrypt(self, filename):
+    def get(self, filename):
         with open(filename, "r") as tokenfile:
-            with open("k.txt", "r") as kfile:
-                self.key = kfile.readline()
-            encrypted_token = tokenfile.readline()
-            f = Fernet(self.key)
-            decrypted_token = f.decrypt(encrypted_token.encode('UTF-8'))
-            return decrypted_token.decode()
+            return tokenfile.readline()
 
