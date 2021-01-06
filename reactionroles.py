@@ -7,22 +7,26 @@ class reactionroles(commands.Cog, name="reaction roles"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(help="Add, remove, or list reaction roles, only works if you have the 'Manage Roles' permission. This command takes 4 arguments (1 optional), action (the action to perform, either `add`, `delete`, or `list`), role (a role, you can either mention it or provide the id), messageid (the id of the message you want people to react to), and emoji (the emoji you want people to react with, it must be in a server Maximilian is in or a default emoji)", aliases=['reactionrole'])
+    @commands.command(help="Add, remove, or list reaction roles, only works if you have the 'Manage Roles' permission. This command takes 4 arguments (1 optional), action (the action to perform, either `add`, `delete`, or `list`), role (a role, you can either mention it or provide the id), messageid (the id of the message you want people to react to), and emoji (the emoji you want people to react with, it must be in a server Maximilian is in or a default emoji, this can be blank if you want people to react with any emoji)", aliases=['reactionrole'])
     @commands.has_guild_permissions(manage_roles=True)
     async def reactionroles(self, ctx, action, role : typing.Optional[discord.Role]=None, messageid : typing.Optional[int]=None, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
+        try:
+            commandprefix = self.bot.prefixes[str(ctx.guild.id)]
+        except KeyError:
+            commandprefix = "!"
         if role != None and messageid != None:
             if action == "add":
                 if self.bot.dbinst.insert(self.bot.database, "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(role.id), "message_id" : str(messageid), "emoji" : str(emoji)}, "role_id", False, "", False, "", False) == "success":
                     print("added a reaction role")
                     await ctx.send("Added a reaction role.")
                 else: 
-                    raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the role you just tried to add.")
+                    raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the reaction role you just tried to add.")
             if action == "delete":
                 print("deleted a reaction role")
                 if self.bot.dbinst.delete(self.bot.database, "roles", str(role.id), "role_id", "", "", False) == "successful":
                     await ctx.send("Deleted a reaction role.")
                 else:
-                    raise discord.ext.commands.CommandError(message=f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(role.id)}'? Try using '{str(self.bot.command_prefix)}'reactionroles list all all' to see if you have any reaction roles set up.")
+                    raise discord.ext.commands.CommandError(message=f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(role.id)}'? Try using '{commandprefix}'reactionroles list' to see if you have any reaction roles set up.")
         elif action == "list":
             roles = self.bot.dbinst.exec_query(self.bot.database, "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
             reactionrolestring = ""
@@ -32,7 +36,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
                 print("listed reaction roles")
                 await ctx.send("reaction roles: " + str(reactionrolestring[:-2]))
         elif role == None or messageid == None:
-            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.command_prefix}help reactionroles` for more details.")
+            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{commandprefix}help reactionroles` for more details.")
             return
 
     @commands.Cog.listener()
