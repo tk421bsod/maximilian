@@ -163,7 +163,7 @@ async def on_message(message):
             try:    
                 bot.command_prefix = commands.when_mentioned_or(bot.prefixes[str(message.guild.id)])
             except KeyError:
-                print("Couldn't get prefixes for this guild, (am I starting up or resetting prefixes?), using default prefix instead")
+                bot.logger.warning("Couldn't get prefixes for this guild, (am I starting up or resetting prefixes?), falling back to default prefix (!)")
                 bot.command_prefix = commands.when_mentioned_or("!")
                 pass
             for each in range(len(bot.responses)):
@@ -172,6 +172,7 @@ async def on_message(message):
                         if ctx.prefix + bot.responses[each][1].lower() == message.content.lower():
                             await message.channel.send(bot.responses[each][2])
                             return
+                    #if ctx.prefix is None, we get a TypeError, so catch it and do the same check, with the prefix in the prefix list instead (the two different kinds of prefixes are necessary to make mentions work with custom commands)
                     except TypeError:
                         if bot.prefixes[str(message.guild.id)] + bot.responses[each][1].lower() == message.content.lower():
                             await message.channel.send(bot.responses[each][2])
@@ -253,6 +254,13 @@ async def listprefixes(ctx):
             prefixstring = prefixstring + "`" + bot.prefixes[key] + "`"
     await ctx.send("My prefixes in this server are " + prefixstring + " and <@!620022782016618528>")
 
+@bot.before_invoke
+async def before_anything(ctx):
+    #before any commands are executed, make sure to set commandprefix
+    try:
+        bot.commandprefix = bot.prefixes[str(ctx.guild.id)]
+    except KeyError:
+        bot.commandprefix = "!"
 
 @bot.event
 async def on_guild_join(guild):
