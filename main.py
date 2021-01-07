@@ -35,6 +35,9 @@ if len(sys.argv) > 1:
     else:
         bot.logger.warning("Unrecognized argument. If you're trying to pass arguments to python, put them before the filename. Falling back to localhost.")
         bot.dbip = "localhost"
+    if "--enablejsk" in sys.argv:
+        bot.load_extension("jishaku")
+        print("Loaded Jishaku.")
 else:
     bot.logger.warning("No database IP provided. Falling back to localhost.")
     bot.dbip = "localhost"
