@@ -21,10 +21,15 @@ class userinfo(commands.Cog):
         if len(requested_user.roles) == 1:
             rolecolor = discord.Color.blurple()
         else:
-            rolecolor = requested_user.roles[len(requested_user.roles)-1].color
+            rolecolor = requested_user.top_role.color
         embed = discord.Embed(title=f"User info for {str(requested_user)}", color=rolecolor)
-        embed.add_field(name="Date joined:", value=requested_user.joined_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
-        embed.add_field(name="Date created:", value=requested_user.created_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
+        try:
+            embed.add_field(name="Date joined:", value=requested_user.joined_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
+            embed.add_field(name="Date created:", value=requested_user.created_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
+        except Exception:
+            self.bot.logger.warning("Timestamp formatting failed. (Is Maximilian running on Windows?) ")
+            embed.add_field(name="Date joined:", value=requested_user.joined_at.strftime("%B %d, %Y at %I:%M %p UTC"), inline=False)
+            embed.add_field(name="Date created:", value=requested_user.created_at.strftime("%B %d, %Y at %I:%M %p UTC"), inline=False)
         #should probably use .join instead of this
         for each in requested_user.roles:
             if each.name != "@everyone":
