@@ -26,7 +26,7 @@ intents.presences = True
 bot = commands.Bot(commands.when_mentioned_or("!"), owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
 #before setting up db instance, look at arguments and check if ip was specified
 if len(sys.argv) > 0:
-    if sys.argv[0] = "--ip":
+    if sys.argv[0] == "--ip":
         try:
             bot.dbip = sys.argv[1]
         except ValueError:
@@ -46,7 +46,7 @@ bot.dbinst = common.db(bot)
 bot.database = "maximilian"
 #try to connect to database, if it fails warn
 try:
-    bot.dbinst.connect(bot.database, bot.dbip)
+    bot.dbinst.connect(bot.database)
 except pymysql.err.OperationalError:
     logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
 #load extensions
