@@ -25,7 +25,7 @@ bot = commands.Bot(commands.when_mentioned_or("!"), owner_id=538193752913608704,
 logging.basicConfig(level=logging.WARN)
 bot.logger = logging.getLogger('maximilian')
 #before setting up db instance, look at arguments and check if ip was specified
-if len(sys.argv) > 0:
+if len(sys.argv) > 1:
     if sys.argv[1] == "--ip":
         try:
             bot.dbip = sys.argv[2]
