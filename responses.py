@@ -61,7 +61,7 @@ class responses(commands.Cog, name='Custom Commands'):
                 raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
             return
         elif command_trigger == None or command_response == None:
-            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.command_prefix}help commands` for more details.")
+            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.commandprefix}help commands` for more details.")
         if action.lower() == "delete" and command_trigger != None and command_response != None:
             if self.bot.dbinst.delete(self.bot.database, "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
                 await self.get_responses()
@@ -71,7 +71,7 @@ class responses(commands.Cog, name='Custom Commands'):
                 raise discord.ext.commands.CommandError(message="Failed to delete a custom command, are there any custom commands set up that use the command trigger '" + str(command_trigger) + "'?")
             return
         elif command_trigger == None or command_response == None:
-            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.command_prefix}help commands` for more details.")
+            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.commandprefix}help commands` for more details.")
     
 def setup(bot):
     bot.add_cog(responses(bot))

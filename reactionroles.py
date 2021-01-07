@@ -22,7 +22,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
                 if self.bot.dbinst.delete(self.bot.database, "roles", str(role.id), "role_id", "", "", False) == "successful":
                     await ctx.send("Deleted a reaction role.")
                 else:
-                    raise discord.ext.commands.CommandError(message=f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(role.id)}'? Try using '{str(self.bot.command_prefix)}'reactionroles list all all' to see if you have any reaction roles set up.")
+                    raise discord.ext.commands.CommandError(message=f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(role.id)}'? Try using '{str(self.bot.commandprefix)}'reactionroles list all all' to see if you have any reaction roles set up.")
         elif action == "list":
             roles = self.bot.dbinst.exec_query(self.bot.database, "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
             reactionrolestring = ""
@@ -32,7 +32,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
                 print("listed reaction roles")
                 await ctx.send("reaction roles: " + str(reactionrolestring[:-2]))
         elif role == None or messageid == None:
-            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.command_prefix}help reactionroles` for more details.")
+            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.commandprefix}help reactionroles` for more details.")
             return
 
     @commands.Cog.listener()
