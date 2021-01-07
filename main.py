@@ -132,6 +132,7 @@ async def startup():
     await bot.wait_until_ready()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
+
 @bot.event
 async def on_ready():
     print("recieved on_ready, finishing startup...")
@@ -144,6 +145,7 @@ async def on_ready():
     
 @bot.event
 async def on_message(message):
+    bot.commandprefix = bot.prefixes[str(message.guild.id)]
     ctx = await bot.get_context(message)
     if message.author != bot.user:
         if message.guild is not None:
@@ -255,11 +257,6 @@ async def on_guild_remove(guild):
     await bot.prefixesinst.reset_prefixes()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
-@bot.event
-async def on_command_completion(ctx):
-    print(ctx.command.name)
-    print(ctx.message.content)
-    print("sent in " + ctx.guild.name)
 
 @commands.is_owner()
 @bot.command(hidden=True)
