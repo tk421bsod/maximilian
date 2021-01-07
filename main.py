@@ -11,9 +11,6 @@ import pymysql
 import sys
 
 print("starting...")
-#set up logging
-logging.basicConfig(level=logging.WARN)
-logger = logging.getLogger('maximilian')
 #create instance of 'Token' class, decrypt token
 tokeninst = common.token()
 token = tokeninst.get("token.txt")
@@ -24,6 +21,9 @@ intents.members = True
 intents.presences = True
 #create Bot instance, setting default prefix, owner id, intents, and status
 bot = commands.Bot(commands.when_mentioned_or("!"), owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
+#set up logging
+logging.basicConfig(level=logging.WARN)
+bot.logger = logging.getLogger('maximilian')
 #before setting up db instance, look at arguments and check if ip was specified
 if len(sys.argv) > 0:
     if sys.argv[0] == "--ip":
@@ -48,7 +48,7 @@ bot.database = "maximilian"
 try:
     bot.dbinst.connect(bot.database)
 except pymysql.err.OperationalError:
-    logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
+    bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
@@ -60,7 +60,7 @@ bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
 bot.reactionrolesinst = bot.get_cog('reaction roles')
-logger.info('loaded extensions, waiting for on-ready')
+bot.logger.info('loaded extensions, waiting for on-ready')
 
 class HelpCommand(commands.HelpCommand):
     color = discord.Colour.blurple()
