@@ -5,20 +5,18 @@ from discord.ext import tasks
 import common
 import importlib
 import logging
-import time
-import calendar
 import os
-import sys
 import git 
 import pymysql
+import sys
 
+print("starting...")
 #set up logging
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger('discord')
-logger.info("starting...")
 #create instance of 'Token' class, decrypt token
 tokeninst = common.token()
-decrypted_token = tokeninst.decrypt("token.txt")
+token = tokeninst.get("token.txt")
 #set intents
 intents = discord.Intents.default()
 intents.guilds = True
@@ -26,24 +24,37 @@ intents.members = True
 intents.presences = True
 #create Bot instance, setting default prefix, owner id, intents, and status
 bot = commands.Bot(commands.when_mentioned_or("!"), owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
+#before setting up db instance, look at arguments and check if ip was specified
+if len(sys.argv) > 0:
+    if sys.argv[0] = "--ip":
+        try:
+            bot.dbip = sys.argv[1]
+        except ValueError:
+            bot.logger.warning("If you use the --ip argument, which you did, you need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost.")
+            bot.dbip = "localhost"
+    else:
+        print("Unrecognized argument. If you're trying to pass arguments to python, put them before the filename.")
+        bot.dbip = "localhost"
+else:
+    bot.logger.warning("No database IP provided. Falling back to localhost.")
+    bot.dbip = "localhost"
 #initialize variables that'll be needed later
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
-bot.dbinst = common.db()
+bot.dbinst = common.db(bot)
 bot.database = "maximilian"
 #try to connect to database, if it fails warn
 try:
-    bot.dbinst.connect(bot.database)
+    bot.dbinst.connect(bot.database, bot.dbip)
 except pymysql.err.OperationalError:
-    logger.critical("Couldn't connect to database, most features won't work.")
+    logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
 bot.load_extension('misc')
 bot.load_extension('reactionroles')
 bot.load_extension('userinfo')
-bot.load_extension('jishaku')
 #create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
@@ -314,4 +325,4 @@ async def reload(ctx, *targetextensions):
         embed.add_field(name="What might have happened:", value="You might have mistyped the extension name; the extensions are `misc`, `reactionroles`, `prefixes`, `responses`, and `userinfo`. If you created a new extension, make sure that it has a setup function, and you're calling `Bot.load_extension(name)` somewhere in main.py.")
     await ctx.send(embed=embed) 
 
-bot.run(decrypted_token)
+bot.run(token)

@@ -7,7 +7,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(help="Add, remove, or list reaction roles, only works if you have the 'Manage Roles' permission. This command takes 4 arguments (1 optional), action (the action to perform, either `add`, `delete`, or `list`), role (a role, you can either mention it or provide the id), messageid (the id of the message you want people to react to), and emoji (the emoji you want people to react with, it must be in a server Maximilian is in or a default emoji)", aliases=['reactionrole'])
+    @commands.command(help="Add, remove, or list reaction roles, only works if you have the 'Manage Roles' permission. This command takes 4 arguments (1 optional), action (the action to perform, either `add`, `delete`, or `list`), role (a role, you can either mention it or provide the id), messageid (the id of the message you want people to react to), and emoji (the emoji you want people to react with, it must be in a server Maximilian is in or a default emoji, this can be blank if you want people to react with any emoji)", aliases=['reactionrole'])
     @commands.has_guild_permissions(manage_roles=True)
     async def reactionroles(self, ctx, action, role : typing.Optional[discord.Role]=None, messageid : typing.Optional[int]=None, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
         if role != None and messageid != None:
@@ -16,7 +16,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
                     print("added a reaction role")
                     await ctx.send("Added a reaction role.")
                 else: 
-                    raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the role you just tried to add.")
+                    raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the reaction role you just tried to add.")
             if action == "delete":
                 print("deleted a reaction role")
                 if self.bot.dbinst.delete(self.bot.database, "roles", str(role.id), "role_id", "", "", False) == "successful":

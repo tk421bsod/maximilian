@@ -1,7 +1,5 @@
 import discord
 from discord.ext import commands
-import time
-from pytz import timezone
 import typing
 
 class userinfo(commands.Cog):
