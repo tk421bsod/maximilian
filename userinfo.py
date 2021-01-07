@@ -3,7 +3,7 @@ from discord.ext import commands
 import typing
 
 class userinfo(commands.Cog):
-    '''Self explanatory. See userinfo\'s help entry for details'''
+    '''Get information about a certain user.'''
     def __init__(self, bot):
         self.bot = bot
         self.bot.requested_user = None
@@ -25,6 +25,7 @@ class userinfo(commands.Cog):
         embed = discord.Embed(title=f"User info for {str(requested_user)}", color=rolecolor)
         embed.add_field(name="Date joined:", value=requested_user.joined_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
         embed.add_field(name="Date created:", value=requested_user.created_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
+        #should probably use .join instead of this
         for each in requested_user.roles:
             if each.name != "@everyone":
                 rolestring = rolestring + "<@&" + str(each.id) + ">, "
