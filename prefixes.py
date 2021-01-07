@@ -8,9 +8,10 @@ class prefixes(commands.Cog):
         self.bot = bot
 
     async def reset_prefixes(self):
+        await self.bot.wait_until_ready()
         print("resetting prefixes...")
         if not self.bot.guildlist:    
-            for guild in await self.bot.fetch_guilds().flatten():
+            for guild in self.bot.guilds:
                 self.bot.guildlist.append(str(guild.id))
         for each in self.bot.guildlist:
             prefixindb = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(each), False)
@@ -82,10 +83,6 @@ class prefixes(commands.Cog):
                         if ctx.guild.me.guild_permissions.change_nickname:
                             nickname = oldnickname.replace(f"[{oldprefix}] ", "")
                             await ctx.guild.me.edit(nick=f"[{newprefix}] {nickname}")
-                        print(f"Old nickname: {oldnickname}")
-                        print(f"old nickname replaced: {oldnickname.replace(f'[{oldprefix}] ', '')}")
-                        print(oldprefix)
-                        print("set prefix")
                         await self.reset_prefixes()
                         await ctx.send(prefixsetmessage)
                         return "success"

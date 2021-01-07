@@ -7,11 +7,12 @@ class responses(commands.Cog, name='Custom Commands'):
         self.bot = bot
     
     async def get_responses(self):
+        await self.bot.wait_until_ready()
         print("getting responses...")
         tempresponses = []
         #if guildlist doesn't exist for some reason, get it
         if not self.bot.guildlist:    
-            for guild in await self.bot.fetch_guilds().flatten():
+            for guild in self.bot.guilds:
                 self.bot.guildlist.append(str(guild.id))
         #then for each guild in the list, check if the guild has any responses in the database
         for guild in self.bot.guildlist:
