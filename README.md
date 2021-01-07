@@ -8,7 +8,7 @@ With this bot, you can create reaction roles (used for assigning permissions to 
 
 # Self Hosting
 
-I discourage hosting this bot yourself, but you can if you want to. (I'd recommend using Linux, instead of Windows, to host Maximilian as well.)
+I discourage hosting this bot yourself, but you can if you want to. (I'd recommend using Linux instead of Windows to host Maximilian, as you may run into problems when trying to install dependencies or use the userinfo command on Windows.)
 ### Step 1: Download required files and install dependencies 
 First, clone or download the source. I recommend cloning the source, as you can recieve regular updates by running `git pull`. The only files required are main.py (runs bot, handles errors), common.py (methods for interacting with the database), reactionroles.py (handles reaction roles), responses.py (handles custom commands), userinfo.py (handles user info), misc.py (miscellaneous commands), and prefixes.py (handles server specific prefixes).
 Next, make sure you have Python 3.5 - 3.8 installed, then install Maximilian's dependencies through pip, using `pip install discord.py pymysql gitpython zalgo_text`.
