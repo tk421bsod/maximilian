@@ -29,6 +29,10 @@ class responses(commands.Cog, name='Custom Commands'):
     @commands.has_guild_permissions(manage_guild=True)
     @commands.command(help=f"Add, delete, or list custom commands. This takes 3 arguments, `action` (the action you want to perform, must be either `add`, `delete`, or `list`), `command_trigger` (the text that will trigger the command), and `command_response` (what you want Maximilian to send when you enter Maximilian's prefix followed by the command trigger). \n You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['command'])
     async def commands(self, ctx, action, command_trigger : typing.Optional[str]=None, *, command_response : typing.Optional[str]=None):
+        try:
+            commandprefix = self.bot.prefixes[str(ctx.guild.id)]
+        except KeyError:
+            commandprefix = "!"
         await ctx.trigger_typing()
         if action.lower() == "list":
             responsestring = ""
@@ -61,7 +65,7 @@ class responses(commands.Cog, name='Custom Commands'):
                 raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
             return
         elif command_trigger == None or command_response == None:
-            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.command_prefix}help commands` for more details.")
+            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.commandprefix}help commands` for more details.")
         if action.lower() == "delete" and command_trigger != None and command_response != None:
             if self.bot.dbinst.delete(self.bot.database, "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
                 await self.get_responses()
@@ -71,7 +75,7 @@ class responses(commands.Cog, name='Custom Commands'):
                 raise discord.ext.commands.CommandError(message="Failed to delete a custom command, are there any custom commands set up that use the command trigger '" + str(command_trigger) + "'?")
             return
         elif command_trigger == None or command_response == None:
-            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.command_prefix}help commands` for more details.")
+            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{self.bot.commandprefix}help commands` for more details.")
     
 def setup(bot):
     bot.add_cog(responses(bot))
