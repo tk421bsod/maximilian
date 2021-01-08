@@ -134,7 +134,7 @@ class misc(commands.Cog):
             remindertime = remindertimelist[0][1]
             remindertext = reminder.replace(remindertimelist[0][0], "")
             currenttime = datetime.datetime.now()
-            remindertimeseconds = datetime.timedelta(remindertime - currenttime).total_seconds()
+            remindertimeseconds = (remindertime - currenttime).seconds
             self.bot.dbinst.exec_query(self.bot.database, f"insert into reminders(user_id, reminder_time, reminder_text) values ({ctx.author.id}, '{remindertime}', '{remindertext}')", False, None)
             await ctx.send("Your reminder has been added!")
             await handle_reminder(ctx, remindertimeseconds, remindertime, remindertext)
