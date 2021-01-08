@@ -4,7 +4,9 @@ import time
 import aiohttp
 import io
 import asyncio
+import datetime
 from zalgo_text import zalgo as zalgo_text_gen
+from dateparser.search import search_dates
 import typing
 
 class misc(commands.Cog):
@@ -112,6 +114,31 @@ class misc(commands.Cog):
             await ctx.send(f"`<{emoji.name}:{emoji.id}>`")
             return
         await ctx.send(f"`{emoji}`")
+    
+    async def handle_reminder(self, ctx, remindertimeseconds, remindertime, remindertext):
+        await asyncio.sleep(remindertimeseconds)
+        currenttime = datetime.datetime.now()
+        await ctx.send(f"{ctx.author.mention} {datetime.timedelta(currenttime - remindertime)} ago: '{remindertext}'")
+
+    @commands.command(hidden=True)
+    async def remind(self, ctx, action, *, reminder):
+        if action == "add":
+            await ctx.send("Setting your reminder...")
+            remindertimelist = search_dates(reminder)
+            if len(remindertimelist) > 1:
+                await ctx.send("You can't include more than 1 time in your reminder.")
+                return
+            elif remindertimelist == None:
+                await ctx.send("You need to specify a time that you want to be reminded at.")
+                return
+            remindertime = remindertimelist[0][1]
+            remindertext = reminder.replace(remindertimelist[0][0], "")
+            currenttime = datetime.datetime.now()
+            remindertimeseconds = datetime.timedelta(remindertime - currenttime).total_seconds()
+            self.bot.dbinst.exec_query(self.bot.database, f"insert into reminders(user_id, reminder_time, reminder_text) values ({ctx.author.id}, '{remindertime}', '{remindertext}')", False, None)
+            await ctx.send("Your reminder has been added!")
+            await handle_reminder(ctx, remindertimeseconds, remindertime, remindertext)
+        
 
 
 def setup(bot):
