@@ -26,9 +26,9 @@ logging.basicConfig(level=logging.WARN)
 bot.logger = logging.getLogger('maximilian')
 #before setting up db instance, look at arguments and check if ip was specified
 if len(sys.argv) > 1:
-    if sys.argv[1] == "--ip":
+    if "--ip" in sys.argv:
         try:
-            bot.dbip = sys.argv[2]
+            bot.dbip = sys.argv[sys.argv.index("--ip")+1]
         except ValueError:
             bot.logger.warning("If you use the --ip argument, which you did, you need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost.")
             bot.dbip = "localhost"
