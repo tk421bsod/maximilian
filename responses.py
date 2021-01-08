@@ -55,7 +55,7 @@ class responses(commands.Cog, name='Custom Commands'):
             command_trigger.replace("*", r"\*")
             for each in self.bot.commands:
                 print(each.name)
-                if command_trigger.lower() == each.name.lower():
+                if command_trigger.lower() == each.name.lower() or command_trigger.lower() == "jishaku" or command_trigger.lower() == "jsk":
                     await ctx.send("You can't create a custom command with the same name as one of my commands.")
                     return
             if self.bot.dbinst.insert(self.bot.database, "responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True) == "success":
