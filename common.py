@@ -103,6 +103,8 @@ class db:
         self.dbc.execute(str(querytoexecute))
         if fetchallrows:
             row = self.dbc.fetchall()
+        elif fetchallrows == None:
+            return None
         else:
             row = self.dbc.fetchone()
         return row
