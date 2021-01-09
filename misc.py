@@ -122,8 +122,9 @@ class misc(commands.Cog):
         while True:
             try:
                 await asyncio.sleep(remindertimeseconds)
+                print(remindertimeseconds)
                 #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
-                await ctx.send(f"{ctx.author.mention} {humanize.naturaldelta(remindertimeseconds)} ago: '{remindertext}'")
+                await ctx.send(f"{ctx.author.mention} {humanize.precisedelta(remindertimeseconds)} ago: '{remindertext}'")
                 break
             except KeyboardInterrupt:
                 self.bot.logger.warning("One or more reminders is running. Stopping the bot now will cause a loss of data. Do you want to stop it? (Y/N)")
@@ -136,7 +137,7 @@ class misc(commands.Cog):
                     print("Continuing...")
                     continue
 
-    @commands.command(hidden=True)
+    @commands.command(hidden=True, aliases=["reminder", "reminders"])
     async def remind(self, ctx, action, *, reminder):
         if action == "add":
             await ctx.send("Setting your reminder...")
