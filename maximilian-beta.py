@@ -54,7 +54,6 @@ try:
     print("Connected to database successfully.")
 except pymysql.err.OperationalError:
     bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
-print("Connected to database successfully.")
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
