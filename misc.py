@@ -162,7 +162,7 @@ class misc(commands.Cog):
             remindertimeseconds = (remindertime - currenttime).total_seconds()
             #self.bot.dbinst.exec_query(self.bot.database, f"insert into reminders(user_id, reminder_time) values ({ctx.author.id}, '{remindertimeseconds}', False, None)
             await ctx.send("Your reminder has been added!")
-            await self.handle_reminder(ctx, remindertimeseconds, remindertext)
+            await self.handle_reminder(ctx, round(remindertimeseconds), remindertext)
         
 
 
