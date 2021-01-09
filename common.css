@@ -144,10 +144,11 @@ input:focus{
 }
 
 .footer{
-    padding-top:5%;
+    margin-top: 5%;
     font-size:small;
     font-weight:300;
-    position:absolute;
+    position:bottom;
     bottom:0;
     width:100%;
+    background-color: transparent;
 }
