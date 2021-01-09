@@ -48,10 +48,12 @@ bot.responses = []
 bot.dbinst = common.db(bot)
 bot.database = "maximilian_test"
 #try to connect to database, if it fails warn
+print(f"Attempting to connect to database '{bot.database}' on '{bot.dbip}'...")
 try:
     bot.dbinst.connect(bot.database)
 except pymysql.err.OperationalError:
     bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
+print("Connected to database successfully.")
 #load extensions
 bot.load_extension('responses')
 bot.load_extension('prefixes')
