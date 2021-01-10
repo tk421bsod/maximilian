@@ -4,12 +4,8 @@ import time
 import aiohttp
 import io
 import asyncio
-import datetime
 from zalgo_text import zalgo as zalgo_text_gen
-from dateparser.search import search_dates
 import typing
-import humanize
-from aioconsole import ainput
 
 class misc(commands.Cog):
     '''Some commands that don\'t really fit into other categories'''
