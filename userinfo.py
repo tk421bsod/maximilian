@@ -41,6 +41,8 @@ class userinfo(commands.Cog):
                 permissionstring = f"{permissionstring}{each[0].replace('_', ' ').capitalize()}, "
         rolestring = rolestring[:-2]
         permissionstring = permissionstring[:-2]
+        if "Administrator" in permissionstring:
+            permissionstring = "Administrator"
         embed.add_field(name="Roles:", value=rolestring, inline=False)
         embed.add_field(name="Permissions:", value=permissionstring, inline=False)
         embed.add_field(name="Status:", value=f"{statusemojis[status]} {statusnames[status]}", inline=False)
