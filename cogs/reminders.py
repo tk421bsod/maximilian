@@ -36,11 +36,11 @@ class reminders(commands.Cog):
             parsablereminder = reminder.strip(",")
             #search for dates in the string provided, if found get a datetime object that represents that date
             remindertimelist = search_dates(parsablereminder)
-            if len(remindertimelist) > 1:
-                await ctx.send("You can't include more than 1 time in your reminder.")
-                return
-            elif remindertimelist == None:
+            if remindertimelist == None:
                 await ctx.send("You need to specify a time that you want to be reminded at.")
+                return
+            elif len(remindertimelist) > 1:
+                await ctx.send("You can't include more than 1 time in your reminder.")
                 return
             elif remindertimelist[0][1] < datetime.datetime.now():
                 await ctx.send("You can't specify a date in the past.")
