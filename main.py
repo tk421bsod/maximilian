@@ -60,11 +60,13 @@ bot.load_extension('cogs.prefixes')
 bot.load_extension('cogs.misc')
 bot.load_extension('cogs.reactionroles')
 bot.load_extension('cogs.userinfo')
+bot.load_extension('cogs.reminders')
 #create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
 bot.reactionrolesinst = bot.get_cog('reaction roles')
+bot.remindersinst = bot.get_cog('reminders')
 bot.logger.info('loaded extensions, waiting for on-ready')
 
 class HelpCommand(commands.HelpCommand):
