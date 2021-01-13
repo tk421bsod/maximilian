@@ -55,12 +55,12 @@ try:
 except pymysql.err.OperationalError:
     bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
 #load extensions
-bot.load_extension('responses')
-bot.load_extension('prefixes')
-bot.load_extension('misc')
-bot.load_extension('reactionroles')
-bot.load_extension('userinfo')
-bot.load_extension('reminders')
+bot.load_extension('cogs.responses')
+bot.load_extension('cogs.prefixes')
+bot.load_extension('cogs.misc')
+bot.load_extension('cogs.reactionroles')
+bot.load_extension('cogs.userinfo')
+bot.load_extension('cogs.reminders')
 #create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
