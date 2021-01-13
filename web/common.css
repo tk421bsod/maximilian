@@ -26,8 +26,8 @@
   }
 
 img{
-    width:auto;
-    height:auto;
+    max-width:25%;
+    max-height: 10%;
 }
 body, h1, h2, div, p, footer{ 
 text-align: center;
@@ -79,6 +79,17 @@ input:focus{
 }
 #error{
     color:rgb(255, 0, 0)
+}
+.feature-wrapper{
+    display:flex;
+    justify-content: center;
+    flex-direction: row;
+    flex-wrap:wrap;
+    flex-grow:0.5;
+    align-self: baseline;
+    align-items:baseline;
+    margin-left:5%;
+    margin-right:5%;
 }
 .navbar{
     display:block;
