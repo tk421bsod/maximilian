@@ -16,7 +16,7 @@ class reminders(commands.Cog):
             try:
                 await asyncio.sleep(remindertimeseconds)
                 #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
-                await ctx.send(f"{ctx.author.mention} {humanize.naturaldelta(remindertimeseconds)} ago: '{remindertext}'")
+                await ctx.send(f"{ctx.author.mention} {humanize.precisedelta(remindertimeseconds)} ago: '{remindertext}'")
                 break
             except KeyboardInterrupt:
                 self.bot.logger.warning("One or more reminders is running. Stopping the bot now will cause a loss of data. Do you want to stop it? (Y/N)")
@@ -54,7 +54,30 @@ class reminders(commands.Cog):
             remindertimeseconds = (remindertime - currenttime).total_seconds()
             #self.bot.dbinst.exec_query(self.bot.database, f"insert into reminders(user_id, reminder_time) values ({ctx.author.id}, '{remindertimeseconds}', False, None)
             await ctx.send("Your reminder has been added!")
-            await self.handle_reminder(ctx, remindertimeseconds, remindertext)
+            #we need to round remindertimeseconds as humanize hates decimals (not rounding this sometimes causes the precisedeltas to be one off, like 14 minutes instead of 15 minutes)
+            await self.handle_reminder(ctx, round(remindertimeseconds), remindertext)
+    
+    @commands.command(hidden=True, aliases=["to-do", "TODO"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
+    async def todo(self, ctx, action="list", *, entry=None):
+        if entry is None or action == "list":
+            entrystring = ""
+            for count, value in enumerate(self.bot.dbinst.exec_query(self.bot.database, "select entry from todo where user_id={}".format(ctx.author.id), False, True)):
+                entrystring += f"{count+1}. `{value['entry']}`\n"
+            if entrystring.strip() != "":
+                embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=discord.Color.blurple())
+                await ctx.send(embed=embed)
+                return
+            await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
+            return
+        if action == "add":
+            if self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry}, None, False, None, False, None, False) == "success":
+                await ctx.send("Todo entry added successfully.")
+        if action == "delete":
+            if self.bot.dbinst.delete(self.bot.database, "todo", entry, "entry", "user_id", ctx.author.id, True) == "successful":
+                await ctx.send("Todo entry deleted successfully.")
+
+            
+
 
 def setup(bot):
     bot.add_cog(reminders(bot))
