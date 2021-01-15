@@ -90,9 +90,9 @@ class db:
         if self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False) == None:
             return "value-non-existent"
         if extraparamenabled:
-            self.dbc.execute("delete from {} where {} = '{}' and {} = {}".format(table, valuenametodelete, valuetodelete, extraparam, extraparamvalue))
+            self.dbc.execute("delete from {} where {} = %s and {} = %s".format(table, valuenametodelete, extraparam), (valuetodelete, extraparamvalue))
         else:
-            self.dbc.execute("delete from {} where {} = '{}'".format(table, valuenametodelete, valuetodelete))
+            self.dbc.execute("delete from {} where {} = %s".format(table, valuenametodelete), valuetodelete)
         if self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False) == None or self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False):
             return "successful"
         else:
