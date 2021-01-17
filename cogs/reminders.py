@@ -4,6 +4,7 @@ import humanize
 from aioconsole import ainput
 from discord.ext import commands
 import discord
+import asyncio
 
 class reminders(commands.Cog):
     '''Reminders to do stuff.'''
