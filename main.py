@@ -32,16 +32,16 @@ if len(sys.argv) > 1:
         except ValueError:
             bot.logger.warning("If you use the --ip argument, which you did, you need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost.")
             bot.dbip = "localhost"
+    elif "--enablejsk" in sys.argv:
+        bot.load_extension("jishaku")
+        print("Loaded Jishaku.")
     else:
         bot.logger.warning("Unrecognized argument. If you're trying to pass arguments to python, put them before the filename. Falling back to localhost.")
         bot.dbip = "localhost"
-    if "--enablejsk" in sys.argv:
-        bot.load_extension("jishaku")
-        print("Loaded Jishaku.")
 else:
-    bot.logger.warning("No database IP provided. Falling back to localhost.")
+    bot.logger.warning("No arguments provided. Falling back to database on localhost, with Jishaku disabled.")
     bot.dbip = "localhost"
-#initialize variables that'll be needed later
+#init important stuff that's used pretty much everywhere
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
