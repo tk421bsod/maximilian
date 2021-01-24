@@ -9,6 +9,7 @@ import os
 import git 
 import pymysql
 import sys
+import traceback
 
 print("starting...")
 #create instance of 'Token' class, get token
@@ -60,7 +61,9 @@ bot.load_extension('cogs.prefixes')
 bot.load_extension('cogs.misc')
 bot.load_extension('cogs.reactionroles')
 bot.load_extension('cogs.userinfo')
+bot.load_extension('cogs.dadocserver')
 bot.load_extension('cogs.reminders')
+bot.load_extension('cogs.music')
 #create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
@@ -191,6 +194,7 @@ async def on_message(message):
 async def on_command_error(ctx, error):
     print("error")
     print(ctx.message.content)
+    traceback.print_exc()
     #prefix should be a string, not a function, so get it from the dict of prefixes (use default prefix if that fails)
     try:
         bot.command_prefix = bot.prefixes[str(ctx.guild.id)]
