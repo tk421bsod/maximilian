@@ -15,11 +15,6 @@ class music(commands.Cog):
         self.song_queue = {}
         self.channels_playing_audio = []
 
-    @commands.command(hidden=True)
-    async def selfmute(self, ctx, time=None):
-        '''Mute someone for a certain amount of time.'''
-        if time is None:
-            await ctx.send("It looks like you didn't specify a length of time you want to be muted for.")
 
     def process_queue(self, error):
         #this is a callback that is executed after song ends
@@ -114,8 +109,9 @@ class music(commands.Cog):
     async def skip(self, ctx):
         raise NotImplementedError
 
-    @commands.command(hidden=True, aliases=["p"])
+    @commands.command(aliases=["p"])
     async def play(self, ctx, *, url=None):
+        '''Play something from youtube. You need to provide a valid Youtube URL or a search term for this to work.'''
         if url == None:
             await ctx.send("You need to specify a url or something to search for.")
             return
@@ -177,8 +173,9 @@ class music(commands.Cog):
         #then play the audio
         ctx.voice_client.play(source, after=self.process_queue)
 
-    @commands.command(hidden=True, aliases=["l"])
+    @commands.command(aliases=["l"])
     async def leave(self, ctx):
+        '''Leaves the current voice channel.'''
         try:
             await ctx.voice_client.move_to(None)
             self.ctx = ctx
