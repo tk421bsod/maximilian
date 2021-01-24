@@ -59,7 +59,7 @@ class misc(commands.Cog):
         embed = discord.Embed(title="Maximilian Privacy Policy", color=discord.Color.blurple())
         embed.add_field(name="Why Maximilian collects data", value="Maximilian accesses/stores certain information that is necessary for certain functions (types of data collected are described below)", inline=False)
         embed.add_field(name="Data that Maximilian collects", value="**-Server IDs**\nMaximilian stores server IDs when you create a custom command, add a reaction role, or change its prefix to distinguish between different servers.\n\n**-Role IDs**\nMaximilian stores role IDs whenever you add a reaction role so it can assign the correct role to users.\n\n**-User Info**\nTo show information about users, Maximilian accesses, but doesn't store, certain data about users like their roles, permissions, status, and account age.", inline=False)
-        embed.add_field(name="I want to delete my server's data, how do I request that?", value=f"You can delete all the data in your server by using{self.bot.commandprefix}deleteall`. This will irreversibly delete all of the reaction roles and custom commands you have set up and reset the prefix to the default of `!`. Only people with the Administrator permission can use this.", inline=False)
+        embed.add_field(name="I want to delete my server's data, how do I request that?", value=f"You can delete all the data in your server by using `{self.bot.commandprefix}deleteall`. This will irreversibly delete all of the reaction roles and custom commands you have set up and reset the prefix to the default of `!`. Only people with the Administrator permission can use this.", inline=False)
         await ctx.send(embed=embed)
 
     @commands.has_permissions(administrator=True)
