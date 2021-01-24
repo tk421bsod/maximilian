@@ -61,6 +61,7 @@ bot.load_extension('cogs.misc')
 bot.load_extension('cogs.reactionroles')
 bot.load_extension('cogs.userinfo')
 bot.load_extension('cogs.reminders')
+bot.load_extension('cogs.music')
 #create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
