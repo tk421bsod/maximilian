@@ -15,7 +15,6 @@ class music(commands.Cog):
         self.song_queue = {}
         self.channels_playing_audio = []
 
-
     def process_queue(self, error):
         #this is a callback that is executed after song ends
         try:
@@ -32,12 +31,7 @@ class music(commands.Cog):
         except IndexError:
             self.channels_playing_audio.remove(channel.id)
             self.song_queue[channel.id] = None
-            fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
-            try:
-                fut.result()
-            except:
-                pass
-    
+
     async def get_song_from_cache(self, ctx, url, ydl_opts):
         try:
             print("getting song from cache")
@@ -64,7 +58,7 @@ class music(commands.Cog):
                     #doesn't return the correct file extension
                     self.name = info["title"]
                     self.url = f"https://youtube.com/watch?v={video}"
-                    self.filename = youtubedl.prepare_filename(info).replace(".webm", ".mp3")
+                    self.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
         return
 
     async def get_song(self, ctx, url):
