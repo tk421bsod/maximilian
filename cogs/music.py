@@ -183,6 +183,7 @@ class music(commands.Cog):
     async def leave(self, ctx):
         '''Leaves the current voice channel.'''
         try:
+            self.channels_playing_audio.remove(ctx.voice_client.channel.id)
             await ctx.voice_client.move_to(None)
             self.ctx = ctx
             self.song_queue[self.channel.id] == []
