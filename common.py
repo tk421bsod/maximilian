@@ -67,7 +67,7 @@ class db:
                 self.dbobj.close()
                 return "success"
     
-    def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug):
+    def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug=False):
         self.connect(database)
         self.dbc.execute("select {} from {} where {} = %s".format(valuetoretrieve, table, valuenametoretrieve), (retrievedvalue))
         row = self.dbc.fetchone()
