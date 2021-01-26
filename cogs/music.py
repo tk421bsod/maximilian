@@ -99,11 +99,11 @@ class music(commands.Cog):
                 except Exception:
                     #if not, search youtube
                     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                        #search youtube, get first result, check cache,  download file if it's not in cache
+                        #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
                         print("searching youtube...")
-                        info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %%s%", (url))
-                        print(info)
-                        if info != None and info.strip() != "()":
+                        info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %s", (f"%{url}%"))
+                        if info != None:
+                            print("found song in db! trying to get from cache...")
                             id = info["id"]
                             self.name = info["name"]
                         else:
@@ -158,12 +158,12 @@ class music(commands.Cog):
         if vc:
             if vc.channel.id == self.channel.id:
                 await ctx.send(f"I'm already in your voice channel, so I won't reconnect.")
-                pass
-            try:
-                await vc.move_to(self.channel)
-            except asyncio.TimeoutError:
-                await ctx.send(f'Moving to the `{self.channel}` voice channel timed out.')
-                return
+            else:
+                try:
+                    await vc.move_to(self.channel)
+                except asyncio.TimeoutError:
+                    await ctx.send(f'Moving to the `{self.channel}` voice channel timed out.')
+                    return
         else:
             try:
                 await self.channel.connect()
