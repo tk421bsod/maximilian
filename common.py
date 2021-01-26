@@ -83,7 +83,7 @@ class db:
         if row != None:
             return row[valuetoretrieve]
         else:
-            return row
+            return None
 
     def delete(self, database, table, valuetodelete, valuenametodelete, extraparam, extraparamvalue, extraparamenabled):
         self.connect(database)
