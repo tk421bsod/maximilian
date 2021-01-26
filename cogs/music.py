@@ -101,7 +101,7 @@ class music(commands.Cog):
                     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                         #search youtube, get first result, check cache,  download file if it's not in cache
                         print("searching youtube...")
-                        info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %s", (url))
+                        info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %%s%", (url))
                         print(info)
                         if info != None and info.strip() != "()":
                             id = info["id"]
