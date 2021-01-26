@@ -107,6 +107,15 @@ class db:
             row = self.dbc.fetchone()
         return row
 
+    def exec_safe_query(self, database, querytoexecute, params, debug=False, fetchallrows=False):
+        self.connect(database)
+        self.dbc.execute(str(querytoexecute), params)
+        if fetchallrows:
+            row = self.dbc.fetchall()
+        else:
+            row = self.dbc.fetchone()
+        return row
+
 class token:
     def get(self, filename):
         with open(filename, "r") as tokenfile:
