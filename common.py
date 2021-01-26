@@ -20,7 +20,7 @@ class db:
         self.dbc=self.dbobj.cursor()
         return self.dbc
 
-    def insert(self, database, table, valuesdict, valuenodupe, debug, valueallnum, valueallnumenabled, extraparam, extraparamenabled):
+    def insert(self, database, table, valuesdict, valuenodupe, debug=False, valueallnum=None, valueallnumenabled=False, extraparam=None, extraparamenabled=False):
         #this might be vulnerable to sql injection, it depends on whether pymysql escapes stuff passed to execute as a positional argument after the query. i've heard it does, but i'm still skeptical.
         #valuesdict's values are the only things that are passed by the user
         if debug == False:
@@ -85,7 +85,7 @@ class db:
         else:
             return None
 
-    def delete(self, database, table, valuetodelete, valuenametodelete, extraparam, extraparamvalue, extraparamenabled):
+    def delete(self, database, table, valuetodelete, valuenametodelete, extraparam=None, extraparamvalue=None, extraparamenabled=False):
         self.connect(database)
         if self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False) == None:
             return "value-non-existent"
@@ -98,13 +98,11 @@ class db:
         else:
             return "error"
             
-    def exec_query(self, database, querytoexecute, debug, fetchallrows):
+    def exec_query(self, database, querytoexecute, debug=False, fetchallrows=False):
         self.connect(database)
         self.dbc.execute(str(querytoexecute))
         if fetchallrows:
             row = self.dbc.fetchall()
-        elif fetchallrows == None:
-            return None
         else:
             row = self.dbc.fetchone()
         return row
