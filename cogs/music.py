@@ -38,27 +38,42 @@ class music(commands.Cog):
             #get video id from parameters, try to open mp3 file matching that id (if that file exists, play it instead of downloading it)
             if "youtu.be" in url:
                 video = url.split("/")[3]
-            else:
+            elif "youtube.com" in url:
                 url_data = urllib.parse.urlparse(url)
                 query = urllib.parse.parse_qs(url_data.query)
                 video = query["v"][0]
+            else:
+                #function doesn't take user input, so it's safe to assume the url is an id
+                video = url 
             open(f"{video}.mp3", "r")
-            with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
-                info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
-            self.url = f"https://youtube.com/watch?v={video}"
-            self.name = info["title"]
-            self.filename = f"{video}.mp3"
+            #check if video id is in database before 
+            info = self.bot.dbinst.retrieve(self.bot.database, "songs", "name", "id", f"{video}", False)
+            print(info)
+            if info != None:
+                self.name = info
+                self.filename = f"{video}.mp3"
+                self.url = f"https://youtube.com/watch?v={video}"
+            else:
+                with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
+                    info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
+                    self.url = f"https://youtube.com/watch?v={video}"
+                    self.name = info["title"]
+                    self.filename = f"{video}.mp3"
+                    if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id", False, None, False, None, False) != "success":
+                        self.bot.dbinst.delete(self.bot.database, "songs", self.video, "id", None, None, False)
+                        self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id", False, None, False, None, False)
         except FileNotFoundError:
             print("song isn't in cache")
             async with ctx.typing():
                 with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
                     #the self.bot.loop.run_in_executor is to prevent the extract_info call from blocking other stuff
-                    info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(url, download=True))
+                    info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
                     #get name of file we're going to play, for some reason prepare_filename
                     #doesn't return the correct file extension
                     self.name = info["title"]
                     self.url = f"https://youtube.com/watch?v={video}"
                     self.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
+                    self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id", False, None, False, None, False)
         return
 
     async def get_song(self, ctx, url):
@@ -89,8 +104,7 @@ class music(commands.Cog):
                         info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch:{url}", download=False))
                         id = info["entries"][0]["id"]
                         self.name = info["entries"][0]["title"]
-                        url = f"https://youtube.com/watch?v={id}"
-                        await self.get_song_from_cache(ctx, url, ydl_opts)
+                        await self.get_song_from_cache(ctx, id, ydl_opts)
                 else:
                     #if the url is valid, don't try to search youtube, just get it from cache
                     await self.get_song_from_cache(ctx, url, ydl_opts)
@@ -153,9 +167,7 @@ class music(commands.Cog):
         print("connected to vc")
         await ctx.send(f'Connected to the `{self.channel}` voice channel. Getting audio... (this may take a while for long songs)')
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
-        await self.get_song(ctx, url)  
-        #create AudioSource instance,
-        #set volume
+        await self.get_song(ctx, url)
         self.ctx = ctx
         print("playing audio...")
         try:
