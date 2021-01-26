@@ -46,7 +46,7 @@ class music(commands.Cog):
                 #function doesn't take user input, so it's safe to assume the url is an id
                 video = url 
             open(f"{video}.mp3", "r")
-            #check if video id is in database before 
+            #check if video id is in database, add it if it isn't
             info = self.bot.dbinst.retrieve(self.bot.database, "songs", "name", "id", f"{video}", False)
             print(info)
             if info != None:
@@ -59,9 +59,9 @@ class music(commands.Cog):
                     self.url = f"https://youtube.com/watch?v={video}"
                     self.name = info["title"]
                     self.filename = f"{video}.mp3"
-                    if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id", False, None, False, None, False) != "success":
-                        self.bot.dbinst.delete(self.bot.database, "songs", self.video, "id", None, None, False)
-                        self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id", False, None, False, None, False)
+                    if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id") != "success":
+                        self.bot.dbinst.delete(self.bot.database, "songs", self.video, "id")
+                        self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id")
         except FileNotFoundError:
             print("song isn't in cache")
             async with ctx.typing():
@@ -101,9 +101,15 @@ class music(commands.Cog):
                     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                         #search youtube, get first result, check cache,  download file if it's not in cache
                         print("searching youtube...")
-                        info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch:{url}", download=False))
-                        id = info["entries"][0]["id"]
-                        self.name = info["entries"][0]["title"]
+                        info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %s", (url))
+                        print(info)
+                        if info != None and info.strip() != "()":
+                            id = info["id"]
+                            self.name = info["name"]
+                        else:
+                            info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch:{url}", download=False))
+                            id = info["entries"][0]["id"]
+                            self.name = info["entries"][0]["title"]
                         await self.get_song_from_cache(ctx, id, ydl_opts)
                 else:
                     #if the url is valid, don't try to search youtube, just get it from cache
