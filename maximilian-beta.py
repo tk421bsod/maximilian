@@ -265,7 +265,7 @@ async def listprefixes(ctx):
     for key in bot.prefixes.keys():
         if key == str(ctx.message.guild.id):
             prefixstring = prefixstring + "`" + bot.prefixes[key] + "`"
-    await ctx.send("My prefixes in this server are " + prefixstring + " and <@!620022782016618528>")
+    await ctx.send(f"My prefixes in this server are {prefixstring} and {ctx.guild.me.mention}")
 
 @bot.before_invoke
 async def before_anything(ctx):
