@@ -169,6 +169,8 @@ async def on_message(message):
     bot.commandprefix = bot.prefixes[str(message.guild.id)]
     ctx = await bot.get_context(message)
     if message.author != bot.user:
+        if message.guild.me in message.mentions:
+            await ctx.send("Mentions are deprecated, and will not work as a prefix starting February 1st 2021.")
         if message.guild is not None:
             try:    
                 bot.command_prefix = commands.when_mentioned_or(bot.prefixes[str(message.guild.id)])
