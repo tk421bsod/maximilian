@@ -30,7 +30,7 @@ class music(commands.Cog):
             ctx.voice_client.play(source, after=self.process_queue)
         except IndexError:
             self.channels_playing_audio.remove(channel.id)
-            self.song_queue[channel.id] = None
+            self.song_queue[channel.id] = []
 
     async def get_song_from_cache(self, ctx, url, ydl_opts):
         try:
@@ -62,6 +62,7 @@ class music(commands.Cog):
                     if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id") != "success":
                         self.bot.dbinst.delete(self.bot.database, "songs", self.video, "id")
                         self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id")
+            print("got song from cache!")
         except FileNotFoundError:
             print("song isn't in cache")
             async with ctx.typing():
@@ -150,6 +151,7 @@ class music(commands.Cog):
                 await ctx.send(f"Added `{self.name}` to your queue! ({self.url}) Currently, you have {len(self.song_queue[self.channel.id])} songs in your queue.")
                 return
         except AttributeError:
+            traceback.print_exc()
             await ctx.send("You aren't in a voice channel. Join one, then run this command again.")
             return
         except Exception:
@@ -190,7 +192,7 @@ class music(commands.Cog):
         '''Leaves the current voice channel.'''
         try:
             self.channels_playing_audio.remove(ctx.voice_client.channel.id)
-            await ctx.voice_client.move_to(None)
+            await ctx.voice_client.disconnect()
             self.ctx = ctx
             self.song_queue[self.channel.id] == []
             await ctx.send("Left the voice channel.")
