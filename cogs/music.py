@@ -25,7 +25,7 @@ class music(commands.Cog):
             channel = self.channel
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
             print("playing next song in queue...")
-            coro = ctx.send(f"{self.ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... ({self.song_queue[channel.id][0][2]})")
+            coro = ctx.send(f"{self.ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>)")
             fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
             fut.result()
             self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
@@ -186,7 +186,7 @@ class music(commands.Cog):
         except Exception:
             await ctx.send("I've encountered an error. Either something went seriously wrong or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term), contact tk421#7244. ")
             return
-        await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... ({self.url})")
+        await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>)")
         #then play the audio
         ctx.voice_client.play(source, after=self.process_queue)
 
