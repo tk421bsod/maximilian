@@ -19,6 +19,8 @@ class music(commands.Cog):
         #this is a callback that is executed after song ends
         try:
             #this variable could change as we're executing the stuff below, so create (and use) a local variable just in case
+            if self.song_queue[channel.id] == []:
+                return
             ctx = self.ctx
             channel = self.channel
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
@@ -193,9 +195,9 @@ class music(commands.Cog):
         '''Leaves the current voice channel.'''
         try:
             self.channels_playing_audio.remove(ctx.voice_client.channel.id)
-            await ctx.voice_client.disconnect()
             self.ctx = ctx
             self.song_queue[self.channel.id] == []
+            await ctx.voice_client.disconnect()
             print("left vc, reset queue")
             await ctx.send("Left the voice channel.")
         except:
