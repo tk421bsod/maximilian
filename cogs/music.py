@@ -22,12 +22,11 @@ class music(commands.Cog):
             ctx = self.ctx
             channel = self.channel
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
-            self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
-            
             print("playing next song in queue...")
             coro = ctx.send(f"{self.ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... ({self.song_queue[channel.id][0][2]})")
             fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
             fut.result()
+            self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
             ctx.voice_client.play(source, after=self.process_queue)
         except IndexError:
             print("done with queue!")
