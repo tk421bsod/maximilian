@@ -21,14 +21,16 @@ class music(commands.Cog):
             #this variable could change as we're executing the stuff below, so create (and use) a local variable just in case
             ctx = self.ctx
             channel = self.channel
-            print(self.song_queue[channel.id][0])
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
+            self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
+            
+            print("playing next song in queue...")
             coro = ctx.send(f"{self.ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... ({self.song_queue[channel.id][0][2]})")
             fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
             fut.result()
-            self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
             ctx.voice_client.play(source, after=self.process_queue)
         except IndexError:
+            print("done with queue!")
             self.channels_playing_audio.remove(channel.id)
             self.song_queue[channel.id] = []
 
@@ -195,6 +197,7 @@ class music(commands.Cog):
             await ctx.voice_client.disconnect()
             self.ctx = ctx
             self.song_queue[self.channel.id] == []
+            print("left vc, reset queue")
             await ctx.send("Left the voice channel.")
         except:
             await ctx.send("I'm not in a voice channel.")
