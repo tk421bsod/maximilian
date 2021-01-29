@@ -20,13 +20,13 @@ class reactionroles(commands.Cog, name="reaction roles"):
                     print("added a reaction role")
                     await ctx.send("Added a reaction role.")
                 else: 
-                    raise discord.ext.commands.CommandError(message="Failed to add a reaction role, there might be a duplicate. Try deleting the reaction role you just tried to add.")
+                    await ctx.send("Failed to add a reaction role, there might be a duplicate. Try deleting the reaction role you just tried to add.")
             if action == "delete":
                 print("deleted a reaction role")
                 if self.bot.dbinst.delete(self.bot.database, "roles", str(role.id), "role_id", "", "", False) == "successful":
                     await ctx.send("Deleted a reaction role.")
                 else:
-                    raise discord.ext.commands.CommandError(message=f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(role.id)}'? Try using '{str(self.bot.commandprefix)}'reactionroles list all all' to see if you have any reaction roles set up.")
+                    await ctx.send(f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(role.id)}'? Try using '{str(self.bot.commandprefix)}'reactionroles list all all' to see if you have any reaction roles set up.")
         elif action == "list":
             roles = self.bot.dbinst.exec_query(self.bot.database, "select * from roles where guild_id={}".format(ctx.guild.id), False, True)
             reactionrolestring = ""
