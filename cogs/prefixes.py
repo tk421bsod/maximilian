@@ -25,6 +25,7 @@ class prefixes(commands.Cog):
     @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission", aliases=['prefixes'])
     async def prefix(self, ctx, newprefix):
     #this try/except is to fall back to a default prefix if it isn't in the list for some reason
+    #might not be necessary, as a guild's prefix is set to "!" if it's not in the db (lines 17-19 of this file)
         try:
             oldprefix = self.bot.prefixes[str(ctx.guild.id)]
         except KeyError:
@@ -86,20 +87,8 @@ class prefixes(commands.Cog):
                         await self.reset_prefixes()
                         await ctx.send(prefixsetmessage)
                         return "success"
-                    else: 
-                        print("error")
-                        await ctx.send("An error occurred when setting the prefix. Please try again later.")
-                        print(result)
-                        return "error"
-                else:
-                    print("error")
-                    await ctx.send("An error occurred when setting the prefix. Please try again later.")
-                    print(deletionresult)
-                    return "error"
-            else:
-                await ctx.send("An error occurred when setting the prefix. Please try again later.")
-                print(result)
-                return "error"
+            await ctx.send("An error occurred when setting the prefix. Please try again later.")
+            return "error"
 
 def setup(bot):
     bot.add_cog(prefixes(bot))
