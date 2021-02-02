@@ -36,6 +36,7 @@ class reminders(commands.Cog):
             await ctx.send("Setting your reminder...")
             parsablereminder = reminder.strip(",")
             #search for dates in the string provided, if found get a datetime object that represents that date
+            #TODO: improve date parsing using regex as dateparser is very picky about what dates it accepts (it accepts "in 5 minutes" but not "5m" or "5 minutes from now", for example)
             remindertimelist = search_dates(parsablereminder)
             if remindertimelist == None:
                 await ctx.send("You need to specify a time that you want to be reminded at.")
@@ -58,7 +59,7 @@ class reminders(commands.Cog):
             #we need to round remindertimeseconds as humanize hates decimals (not rounding this sometimes causes the precisedeltas to be one off, like 14 minutes instead of 15 minutes)
             await self.handle_reminder(ctx, round(remindertimeseconds), remindertext)
     
-    @commands.command(hidden=True, aliases=["to-do", "TODO"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
+    @commands.command(aliases=["to-do", "TODO"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
     async def todo(self, ctx, action="list", *, entry=None):
         if entry is None or action == "list":
             entrystring = ""
