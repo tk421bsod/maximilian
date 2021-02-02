@@ -8,6 +8,7 @@ class userinfo(commands.Cog):
         self.bot = bot
         self.bot.requested_user = None
 
+    #might need a refactor
     @commands.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
     async def userinfo(self, ctx, requested_user : typing.Optional[discord.Member]=None):
         if requested_user is None:
@@ -38,7 +39,7 @@ class userinfo(commands.Cog):
                 rolestring = rolestring + each.name + ", "
         for each in requested_user.guild_permissions:
             if each[1] == True:
-                permissionstring = f"{permissionstring}{each[0].replace('_', ' ').capitalize()}, "
+                permissionstring = f"{permissionstring}{each[0].replace('_', ' ').replace('guild', 'server').capitalize()}, "
         rolestring = rolestring[:-2]
         permissionstring = permissionstring[:-2]
         if "Administrator" in permissionstring:
