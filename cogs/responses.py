@@ -6,22 +6,24 @@ class responses(commands.Cog, name='Custom Commands'):
     def __init__(self, bot):
         self.bot = bot
     
+    async def check_if_ready(self):
+        if not self.bot.is_ready():
+            self.bot.logger.warn("not ready yet, waiting for cache")
+            await self.bot.wait_until_ready()
+        else:
+            print("already ready") 
+    
     async def get_responses(self):
-        await self.bot.wait_until_ready()
-        print("getting responses...")
         tempresponses = []
-        #if guildlist doesn't exist for some reason, get it
-        if not self.bot.guildlist:    
-            for guild in self.bot.guilds:
-                self.bot.guildlist.append(str(guild.id))
+        #make sure cache is ready before we try to iterate over bot.guilds (if we don't wait, bot.guilds may be incomplete)
+        await self.check_if_ready()
         #then for each guild in the list, check if the guild has any responses in the database
-        for guild in self.bot.guildlist:
-            count = self.bot.dbinst.exec_query(self.bot.database, "select count(*) from responses where guild_id={}".format(str(guild)), False, False)
-            if count is not None:
+        for guild in self.bot.guilds:
+            if (count := self.bot.dbinst.exec_query(self.bot.database, "select count(*) from responses where guild_id={}".format(str(guild.id)), False, False)) is not None:
                 #if there are responses, check if there's one or more
                 if int(count['count(*)']) >= 1:
                     #if so, get a list of responses and iterate over that, adding each one to the list
-                    response = self.bot.dbinst.exec_query(self.bot.database, "select * from responses where guild_id={}".format(str(guild)), False, True)
+                    response = self.bot.dbinst.exec_query(self.bot.database, "select * from responses where guild_id={}".format(str(guild.id)), False, True)
                     for each in range(int(count['count(*)'])):
                         tempresponses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
         self.bot.responses = tempresponses
