@@ -9,6 +9,7 @@ class db:
         with open("dbp.txt", "r") as dbpfile:
             self.databasepassword = dbpfile.readline()
         self.ip = bot.dbip
+        
     def connect(self, database):
         self.dbobj=pymysql.connect(host=self.ip,
                     user="maximilianbot",
