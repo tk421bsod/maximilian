@@ -13,9 +13,9 @@ class prefixes(commands.Cog):
         for guild in self.bot.guilds:
             prefixindb = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild.id), False)
             if prefixindb == "" or prefixindb == None:
-                self.bot.prefixes[guild.id] = '!'
+                self.bot.prefixes[str(guild.id)] = '!'
             else:
-                self.bot.prefixes[guild.id] = prefixindb
+                self.bot.prefixes[str(guild.id)] = prefixindb
         print("reset prefixes")
 
     async def set_nickname(self, ctx, oldprefix, newprefix):
