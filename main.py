@@ -111,7 +111,7 @@ class HelpCommand(commands.HelpCommand):
                     embed.add_field(name=name, value=value)
         responseslist = self.context.bot.dbinst.exec_query(self.context.bot.database, "select * from responses where guild_id = {}".format(self.context.guild.id), False, True)
         responsestring = "A list of custom commands for this server. These don't have help entries. \n"
-        if responseslist is not None and responseslist.strip() is not "()":
+        if responseslist is not None and responseslist != "()":
             for i in responseslist:
                 responsestring += f"`{i['response_trigger']}` "
             embed.add_field(name="Custom Commands List", value=responsestring)
