@@ -113,6 +113,14 @@ class misc(commands.Cog):
             return
         await ctx.send(f"`{emoji}`")      
 
+    @commands.command(aliases=["wn", "new", "changelog"])
+    async def whatsnew(self, ctx):
+        '''Get information about new features or changes.'''
+        entry = self.bot.dbinst.exec_query(self.bot.database, "select entry from whatsnew order by date desc")
+        date = self.bot.dbinst.exec_query(self.bot.database, f"select date from whatsnew where entry=\"{entry['entry']}\"")
+        await ctx.send(embed=discord.Embed(title=f"What's new: ", description=f"{date['date']} \n{entry['entry']}", color=discord.Color.blurple()))
+
+
 
 def setup(bot):
     bot.add_cog(misc(bot))
