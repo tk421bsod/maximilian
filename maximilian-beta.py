@@ -65,9 +65,9 @@ bot.load_extension('cogs.dadocserver')
 bot.load_extension('cogs.reminders')
 #test if pynacl is installed, don't load stuff that depends on it (and show warning) if it isn't installed
 try:
-    import pynacl
+    import nacl
     bot.load_extension('cogs.music')
-except ImportError:
+except ModuleNotFoundError:
     bot.logger.warning("One or more dependencies for voice isn't installed, music will not be supported")
 #create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
