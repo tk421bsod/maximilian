@@ -20,7 +20,7 @@ intents.guilds = True
 intents.members = True
 intents.presences = True
 #create Bot instance, setting default prefix, owner id, intents, and status
-bot = commands.Bot(commands.when_mentioned_or("!"), owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
+bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="myself start up!"))
 #set up logging
 logging.basicConfig(level=logging.WARN)
 bot.logger = logging.getLogger('maximilian')
@@ -169,18 +169,17 @@ async def on_ready():
     
 @bot.event
 async def on_message(message):
-    bot.commandprefix = bot.prefixes[str(message.guild.id)]
     ctx = await bot.get_context(message)
     if message.author != bot.user:
-        if message.guild.me in message.mentions:
-            await ctx.send("Mentions are deprecated, and will not work as a prefix starting February 1st 2021.")
         if message.guild is not None:
             try:    
-                bot.command_prefix = commands.when_mentioned_or(bot.prefixes[str(message.guild.id)])
+                bot.command_prefix = bot.prefixes[str(message.guild.id)]
             except KeyError:
                 bot.logger.warning("Couldn't get prefixes for this guild, (am I starting up or resetting prefixes?), falling back to default prefix (!)")
-                bot.command_prefix = commands.when_mentioned_or("!")
+                bot.command_prefix = "!"
                 pass
+            #required because a bunch of other stuff relies on it, will change it later
+            bot.commandprefix = bot.command_prefix
             for each in range(len(bot.responses)):
                 if int(bot.responses[each][0]) == int(message.guild.id):
                     try:
