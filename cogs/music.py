@@ -19,10 +19,10 @@ class music(commands.Cog):
         #this is a callback that is executed after song ends
         try:
             #this variable could change as we're executing the stuff below, so create (and use) a local variable just in case
-            if self.song_queue[channel.id] == []:
-                return
             ctx = self.ctx
             channel = self.channel
+            if self.song_queue[channel.id] == [] or channel.id not in self.channels_playing_audio:
+                return
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
             print("playing next song in queue...")
             coro = ctx.send(f"{self.ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>)")
@@ -151,7 +151,7 @@ class music(commands.Cog):
                 print(self.song_queue[self.channel.id])
                 self.song_queue[self.channel.id].append([self.filename, self.name, self.url])
                 print(self.song_queue[self.channel.id])
-                await ctx.send(f"Added `{self.name}` to your queue! ({self.url}) Currently, you have {len(self.song_queue[self.channel.id])} songs in your queue.")
+                await ctx.send(f"Added `{self.name}` to your queue! (<{self.url}>) Currently, you have {len(self.song_queue[self.channel.id])} songs in your queue.")
                 return
         except AttributeError:
             traceback.print_exc()
@@ -195,8 +195,7 @@ class music(commands.Cog):
         '''Leaves the current voice channel.'''
         try:
             self.channels_playing_audio.remove(ctx.voice_client.channel.id)
-            self.ctx = ctx
-            self.song_queue[self.channel.id] == []
+            self.song_queue[ctx.voice_client.channel.id] == []
             await ctx.voice_client.disconnect()
             print("left vc, reset queue")
             await ctx.send("Left the voice channel.")
@@ -205,8 +204,10 @@ class music(commands.Cog):
     
     @commands.command(hidden=True, aliases=["q"])
     async def queue(self, ctx):
-        await ctx.send("You can't see what's in your queue yet, I'm working on it.")
-
+        try:
+            await ctx.send("Your queue: ")
+        except IndexError:
+            await ctx.send("You don't have anything in your queue.")
 def setup(bot):
     bot.add_cog(music(bot))
 
