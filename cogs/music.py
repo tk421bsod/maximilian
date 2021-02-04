@@ -33,7 +33,7 @@ class music(commands.Cog):
             #this variable could change as we're executing the stuff below, so create (and use) a local variable just in case
             ctx = self.ctx
             channel = self.channel
-            if self.song_queue[channel.id] == [] or channel.id not in self.channels_playing_audio:
+            if channel.id not in self.channels_playing_audio:
                 return
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
             print("playing next song in queue...")
