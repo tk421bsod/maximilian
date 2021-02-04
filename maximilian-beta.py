@@ -30,7 +30,7 @@ if len(sys.argv) > 1:
     if "--ip" in sys.argv:
         try:
             bot.dbip = sys.argv[sys.argv.index("--ip")+1]
-        except ValueError:
+        except IndexError:
             bot.logger.warning("If you use the --ip argument, which you did, you need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost.")
             bot.dbip = "localhost"
     else:
@@ -56,26 +56,27 @@ try:
 except pymysql.err.OperationalError:
     bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
 #load extensions
-bot.load_extension('cogs.responses')
-bot.load_extension('cogs.prefixes')
-bot.load_extension('cogs.misc')
-bot.load_extension('cogs.reactionroles')
-bot.load_extension('cogs.userinfo')
-bot.load_extension('cogs.dadocserver')
-bot.load_extension('cogs.reminders')
+extensioncount = 0
+for roots, dirs, files in os.walk("./cogs"):
+    for each in files:
+        if each.endswith(".py"):
+            bot.load_extension(f"cogs.{each.replace('.py', '')}")
+            extensioncount += 1
 #test if pynacl is installed, don't load stuff that depends on it (and show warning) if it isn't installed
 try:
     import nacl
     bot.load_extension('cogs.music')
 except ModuleNotFoundError:
-    bot.logger.warning("One or more dependencies for voice isn't installed, music will not be supported")
+    bot.logger.warning("One or more dependencies for voice isn't installed, music will not be supported. \nUse 'pip install discord.py[voice]' to install those dependencies.")
+    bot.unload_extension('cogs.music')
+    extensioncount -= 1
 #create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
 bot.reactionrolesinst = bot.get_cog('reaction roles')
 bot.remindersinst = bot.get_cog('reminders')
-bot.logger.info('loaded extensions, waiting for on-ready')
+print(f'loaded {extensioncount} extensions, waiting for ready')
 
 class HelpCommand(commands.HelpCommand):
     color = discord.Colour.blurple()
