@@ -60,7 +60,7 @@ class music(commands.Cog):
             else:
                 #function doesn't take user input, so it's safe to assume the url is an id
                 video = url 
-            open(f"{video}.mp3", "r")
+            open(f"songcache/{video}.mp3", "r")
             #check if video id is in database, add it if it isn't
             info = self.bot.dbinst.retrieve(self.bot.database, "songs", "name", "id", f"{video}", False)
             print(info)
