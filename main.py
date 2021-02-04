@@ -146,15 +146,11 @@ class HelpCommand(commands.HelpCommand):
 
 @tasks.loop(seconds=60)
 async def reset_status():
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"{len(bot.guilds)} guilds and {len(bot.users)} users!"))
 
 @reset_status.before_loop
 async def before_reset_status():
     await bot.wait_until_ready()
-
-async def startup():
-    await bot.wait_until_ready()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
 
 
 @bot.event
@@ -163,7 +159,6 @@ async def on_ready():
     await bot.prefixesinst.reset_prefixes()
     await bot.responsesinst.get_responses()
     bot.help_command = HelpCommand()
-    bot.loop.create_task(startup())
     reset_status.start()
     print("ready")
     
@@ -293,8 +288,8 @@ async def on_guild_remove(guild):
 
 @commands.is_owner()
 @bot.command(hidden=True)
-async def change_status(ctx, type, newstatus):
-    reset_status.stop()
+async def change_status(ctx, *, newstatus):
+    reset_status.cancel()
     await ctx.send("Changing status...")
     if type.lower() == "streaming":
         await bot.change_presence(activity=discord.Streaming(name=" my development!", url=newstatus))
