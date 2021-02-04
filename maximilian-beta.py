@@ -291,16 +291,16 @@ async def on_guild_remove(guild):
 
 @commands.is_owner()
 @bot.command(hidden=True)
-async def change_status(ctx, type, newstatus):
+async def change_status(ctx, statustype, newstatus):
     reset_status.stop()
     await ctx.send("Changing status...")
-    if type.lower() == "streaming":
+    if statustype.lower() == "streaming":
         await bot.change_presence(activity=discord.Streaming(name=" my development!", url=newstatus))
-    elif type.lower() == "listening":
+    elif statustype.lower() == "listening":
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=newstatus))
-    elif type.lower() == "watching":
+    elif statustype.lower() == "watching":
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=newstatus))
-    elif type.lower() == "default":
+    elif statustype.lower() == "default":
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
         reset_status.start()
     else:
