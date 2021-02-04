@@ -14,15 +14,27 @@ class music(commands.Cog):
         self.bot = bot
         self.song_queue = {}
         self.channels_playing_audio = []
+        
+
+    def push_queue_item_to_db(self, entry, position, ctx):
+        if self.bot.dbinst.insert(self.bot.database, "queues", {"channel_id":ctx.author.voice.channel.id, "position":position, "name":entry[1], "url":entry[2], "filename":entry[0]}, "position")=="success":
+            return
+        else:
+            raise commands.CommandInvokeError("Error while adding a song to the queue. If this happens frequently, let tk421#7244 know.")
+    def remove_queue_item_from_db(self, entry, position, ctx):
+        if self.bot.dbinst.delete(self.bot.database, "queues", {"channel_id":ctx.author.voice.channel.id, "position":position, "name":entry[1], "url":entry[2], "filename":entry[0]})=="success":
+            return
+        else:
+            raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
     def process_queue(self, error):
         #this is a callback that is executed after song ends
         try:
             #this variable could change as we're executing the stuff below, so create (and use) a local variable just in case
-            if self.song_queue[channel.id] == []:
-                return
             ctx = self.ctx
             channel = self.channel
+            if self.song_queue[channel.id] == []:
+                return
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
             print("playing next song in queue...")
             coro = ctx.send(f"{self.ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>)")
@@ -54,16 +66,16 @@ class music(commands.Cog):
             print(info)
             if info != None:
                 self.name = info
-                self.filename = f"{video}.mp3"
+                self.filename = f"songcache/{video}.mp3"
                 self.url = f"https://youtube.com/watch?v={video}"
             else:
                 with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
                     info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
                     self.url = f"https://youtube.com/watch?v={video}"
                     self.name = info["title"]
-                    self.filename = f"{video}.mp3"
+                    self.filename = f"songcache/{video}.mp3"
                     if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id") != "success":
-                        self.bot.dbinst.delete(self.bot.database, "songs", self.video, "id")
+                        self.bot.dbinst.delete(self.bot.database, "songs", video, "id")
                         self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id")
             print("got song from cache!")
         except FileNotFoundError:
@@ -83,7 +95,7 @@ class music(commands.Cog):
     async def get_song(self, ctx, url):
         ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': '%(id)s.%(ext)s',
+        'outtmpl': 'songcache/%(id)s.%(ext)s',
         'quiet': True,
         'ignoreerrors': False,
         'logtostderr': False,
