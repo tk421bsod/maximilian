@@ -123,6 +123,7 @@ class misc(commands.Cog):
 
     @commands.command(aliases=["bottomify", "bm"])
     async def bottom(self, ctx, action, *, text):
+        '''Turn UTF-8 encoded text into Bottom encoded text, and decode from Bottom back to UTF-8. See <https://github.com/kaylynn234/bottom> for more details on Bottom encoding.'''
         if action.lower() == "encode":
             await ctx.send(bottomify.encode(text))
         elif action.lower() == "decode":
