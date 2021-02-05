@@ -6,6 +6,7 @@ import io
 import asyncio
 from zalgo_text import zalgo as zalgo_text_gen
 import typing
+import bottom as bottomify
 
 class misc(commands.Cog):
     '''Some commands that don\'t really fit into other categories'''
@@ -120,7 +121,14 @@ class misc(commands.Cog):
         date = self.bot.dbinst.exec_query(self.bot.database, f"select date from whatsnew where entry=\"{entry['entry']}\"")
         await ctx.send(embed=discord.Embed(title=f"What's new: ", description=f"{date['date']} \n{entry['entry']}", color=discord.Color.blurple()))
 
-
+    @commands.command(aliases=["bottomify", "bm"])
+    async def bottom(self, ctx, action, *, text):
+        if action.lower() == "encode":
+            await ctx.send(bottomify.encode(text))
+        elif action.lower() == "decode":
+            await ctx.send(bottomify.decode(text))
+        else:
+            await ctx.send("You need to specify whether you want to encode or decode text.")
 
 def setup(bot):
     bot.add_cog(misc(bot))
