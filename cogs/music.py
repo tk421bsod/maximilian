@@ -29,6 +29,8 @@ class music(commands.Cog):
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
     def process_queue(self, ctx, channel, error):
+        print(ctx.message.channel.name)
+        print(channel.id)
         #this is a callback that is executed after song ends
         try:
             #this variable could change as we're executing the stuff below, so create (and use) a local variable just in case
@@ -45,6 +47,7 @@ class music(commands.Cog):
             print("done with queue!")
             self.channels_playing_audio.remove(channel.id)
             self.song_queue[channel.id] = []
+            print(self.song_queue[channel.id])
 
     async def get_song_from_cache(self, ctx, url, ydl_opts):
         try:
