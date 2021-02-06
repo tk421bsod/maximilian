@@ -55,25 +55,26 @@ try:
 except pymysql.err.OperationalError:
     bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
 #load extensions
-bot.load_extension('cogs.responses')
-bot.load_extension('cogs.prefixes')
-bot.load_extension('cogs.misc')
-bot.load_extension('cogs.reactionroles')
-bot.load_extension('cogs.userinfo')
-bot.load_extension('cogs.reminders')
+extensioncount = 0
+for roots, dirs, files in os.walk("./cogs"):
+    for each in files:
+        if each.endswith(".py"):
+            bot.load_extension(f"cogs.{each[:-3]}")
+            extensioncount += 1
 #test if pynacl is installed, don't load stuff that depends on it (and show warning) if it isn't installed
 try:
     import nacl
-    bot.load_extension('cogs.music')
 except ModuleNotFoundError:
     bot.logger.warning("One or more dependencies for voice isn't installed, music will not be supported")
+    bot.unload_extension('cogs.music')
+    extensioncount -= 1
 #create instances of certain cogs, because we need to call functions within those cogs
 bot.responsesinst = bot.get_cog('Custom Commands')
 bot.prefixesinst = bot.get_cog('prefixes')
 bot.miscinst = bot.get_cog('misc')
 bot.reactionrolesinst = bot.get_cog('reaction roles')
 bot.remindersinst = bot.get_cog('reminders')
-print('loaded extensions, waiting for on-ready')
+print(f'loaded {extensioncount} extensions, waiting for ready')
 
 class HelpCommand(commands.HelpCommand):
     color = discord.Colour.blurple()
