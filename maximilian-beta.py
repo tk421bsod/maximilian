@@ -60,12 +60,11 @@ extensioncount = 0
 for roots, dirs, files in os.walk("./cogs"):
     for each in files:
         if each.endswith(".py"):
-            bot.load_extension(f"cogs.{each.replace('.py', '')}")
+            bot.load_extension(f"cogs.{each[:-3]}")
             extensioncount += 1
 #test if pynacl is installed, don't load stuff that depends on it (and show warning) if it isn't installed
 try:
     import nacl
-    bot.load_extension('cogs.music')
 except ModuleNotFoundError:
     bot.logger.warning("One or more dependencies for voice isn't installed, music will not be supported. \nUse 'pip install discord.py[voice]' to install those dependencies.")
     bot.unload_extension('cogs.music')
