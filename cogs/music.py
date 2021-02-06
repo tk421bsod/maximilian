@@ -8,6 +8,7 @@ import urllib
 import aiohttp
 import traceback
 import time
+import functools
 
 class music(commands.Cog):
     def __init__(self, bot):
@@ -27,12 +28,10 @@ class music(commands.Cog):
         else:
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
-    def process_queue(self, error):
+    def process_queue(self, ctx, channel, error):
         #this is a callback that is executed after song ends
         try:
             #this variable could change as we're executing the stuff below, so create (and use) a local variable just in case
-            ctx = self.ctx
-            channel = self.channel
             if channel.id not in self.channels_playing_audio:
                 return
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
@@ -147,23 +146,23 @@ class music(commands.Cog):
             return
         #attempt to join the vc that the command's invoker is in...
         try:
-            self.channel = ctx.author.voice.channel
+            channel = ctx.author.voice.channel
             try:
-                self.song_queue[self.channel.id]
+                self.song_queue[channel.id]
             except KeyError:
-                self.song_queue[self.channel.id] = []
+                self.song_queue[channel.id] = []
             #...unless we're already playing (or fetching) audio
-            if self.channel.id not in self.channels_playing_audio:
-                self.channels_playing_audio.append(self.channel.id)
+            if channel.id not in self.channels_playing_audio:
+                self.channels_playing_audio.append(channel.id)
                 await ctx.send("Attempting to join the voice channel you're in...")
             else:
                 #if we're already playing (or fetching) audio, add song to queue
                 await ctx.send("Adding to your queue...")
                 await self.get_song(ctx, url)
-                print(self.song_queue[self.channel.id])
-                self.song_queue[self.channel.id].append([self.filename, self.name, self.url])
-                print(self.song_queue[self.channel.id])
-                await ctx.send(f"Added `{self.name}` to your queue! (<{self.url}>) Currently, you have {len(self.song_queue[self.channel.id])} songs in your queue.")
+                print(self.song_queue[channel.id])
+                self.song_queue[channel.id].append([self.filename, self.name, self.url])
+                print(self.song_queue[channel.id])
+                await ctx.send(f"Added `{self.name}` to your queue! (<{self.url}>) Currently, you have {len(self.song_queue[channel.id])} songs in your queue.")
                 return
         except AttributeError:
             traceback.print_exc()
@@ -173,22 +172,22 @@ class music(commands.Cog):
             traceback.print_exc()
         vc = ctx.voice_client
         if vc:
-            if vc.channel.id == self.channel.id:
+            if vc.channel.id == channel.id:
                 await ctx.send(f"I'm already in your voice channel, so I won't reconnect.")
             else:
                 try:
-                    await vc.move_to(self.channel)
+                    await vc.move_to(channel)
                 except asyncio.TimeoutError:
-                    await ctx.send(f'Moving to the `{self.channel}` voice channel timed out.')
+                    await ctx.send(f'Moving to the `{channel}` voice channel timed out.')
                     return
         else:
             try:
-                await self.channel.connect()
+                await channel.connect()
             except asyncio.TimeoutError:
-                await ctx.send(f'Connecting to the `{self.channel}` voice channel timed out.')
+                await ctx.send(f'Connecting to the `{channel}` voice channel timed out.')
                 return
         print("connected to vc")
-        await ctx.send(f'Connected to the `{self.channel}` voice channel. Getting audio... (this may take a while for long songs)')
+        await ctx.send(f'Connected to the `{channel}` voice channel. Getting audio... (this may take a while for long songs)')
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
         await self.get_song(ctx, url)
         self.ctx = ctx
@@ -200,7 +199,8 @@ class music(commands.Cog):
             return
         await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>)")
         #then play the audio
-        ctx.voice_client.play(source, after=self.process_queue)
+        handle_queue = functools.partial(self.process_queue, ctx, channel)
+        ctx.voice_client.play(source, after=handle_queue)
 
     @commands.command(aliases=["l"])
     async def leave(self, ctx):
