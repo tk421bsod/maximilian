@@ -41,7 +41,7 @@ class misc(commands.Cog):
     @commands.command(help="Get some info about the bot and commands")
     async def about(self, ctx):
         embed = discord.Embed(title="About", color=discord.Color.blurple())
-        embed.add_field(name="Useful links", value=f"Use `{str(self.bot.commandprefix)}help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=335923264&scope=bot). \nIf you want to contribute to my development, visit my Gitlab repository, at https://gitlab.com/tk421bsod/maximilian.", inline=False)
+        embed.add_field(name="Useful links", value=f"Use `{str(self.bot.commandprefix)}help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=335923264&scope=bot). \nIf you want to contribute to my development, visit my Github repository, at https://github.com/tk421bsod/maximilian.", inline=False)
         embed.add_field(name="Fun Commands", value="Commands that have no purpose. \n `zalgo` `cats` `ping`", inline=True)
         embed.add_field(name="Other Commands", value="Commands that actually have a purpose. \n `about` `help` `userinfo` `reactionroles` `commands` `prefix` `listprefixes` `hi` `privacy` `deleteall`", inline=True)
         print("sent some info about me")
