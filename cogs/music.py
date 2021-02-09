@@ -15,9 +15,10 @@ class music(commands.Cog):
         self.bot = bot
         self.song_queue = {}
         self.channels_playing_audio = []
+        #TODO: defer adding to queue until previous get_song call finishes (this variable will be used for that)
         self.channels_getting_songs = []
         
-
+    #some unused stuff, intended to save queues to db
     def push_queue_item_to_db(self, entry, position, ctx):
         if self.bot.dbinst.insert(self.bot.database, "queues", {"channel_id":ctx.author.voice.channel.id, "position":position, "name":entry[1], "url":entry[2], "filename":entry[0]}, "position")=="success":
             return
@@ -37,11 +38,12 @@ class music(commands.Cog):
                 return
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
             print("playing next song in queue...")
+            #need to do this because this isn't an async function
             coro = ctx.send(f"{ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>)")
             fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
             fut.result()
-            print('got here')
             self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
+            #we can't pass stuff to process_queue in after, so pass some stuff to it before executing it
             handle_queue = functools.partial(self.process_queue, ctx, channel)
             ctx.voice_client.play(source, after=handle_queue)
         except IndexError:
@@ -198,6 +200,7 @@ class music(commands.Cog):
             return
         await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>)")
         #then play the audio
+        #we can't pass stuff to process_queue in after, so pass some stuff to it before executing it
         handle_queue = functools.partial(self.process_queue, ctx, channel)
         ctx.voice_client.play(source, after=handle_queue)
 
