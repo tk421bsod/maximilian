@@ -15,6 +15,7 @@ class music(commands.Cog):
         self.bot = bot
         self.song_queue = {}
         self.channels_playing_audio = []
+        self.channels_getting_songs = []
         
 
     def push_queue_item_to_db(self, entry, position, ctx):
@@ -36,9 +37,10 @@ class music(commands.Cog):
                 return
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
             print("playing next song in queue...")
-            coro = ctx.send(f"{self.ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>)")
+            coro = ctx.send(f"{ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>)")
             fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
             fut.result()
+            print('got here')
             self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
             handle_queue = functools.partial(self.process_queue, ctx, channel)
             ctx.voice_client.play(source, after=handle_queue)
@@ -132,12 +134,8 @@ class music(commands.Cog):
                     await self.get_song_from_cache(ctx, url, ydl_opts)
             except Exception:
                 traceback.print_exc()
-                await ctx.send("There was an error. Make sure you provided a valid Youtube URL or a valid search term. The Youtube URL you provide must be prefixed by `http://` or `https://`, and be in the form `youtube.com/watch?v=xxxxxxx` or `youtu.be/xxxxxxx`.")
-                return
-
-    @commands.command(hidden=True, aliases=["s"])
-    async def skip(self, ctx):
-        raise NotImplementedError
+                #raise CommandError so we don't play anything
+                raise discord.ext.commands.CommandError()
 
     @commands.command(aliases=["p"])
     async def play(self, ctx, *, url=None):
@@ -196,7 +194,7 @@ class music(commands.Cog):
         try:
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.filename), volume=0.5)
         except Exception:
-            await ctx.send("I've encountered an error. Either something went seriously wrong or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term), contact tk421#7244. ")
+            await ctx.send("I've encountered an error. Either something went seriously wrong, you provided an invalid URL, or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term or a URL you're sure is valid), contact tk421#7244. ")
             return
         await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>)")
         #then play the audio
@@ -218,9 +216,56 @@ class music(commands.Cog):
     @commands.command(hidden=True, aliases=["q"])
     async def queue(self, ctx):
         try:
-            await ctx.send("Your queue: ")
-        except IndexError:
+            queuelength = len(self.song_queue[ctx.voice_client.channel.id])
+            if queuelength != 0:
+                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{'Your queue: ' if queuelength != 1 else ''}{', '.join([f'`{i[1]}`(<{i[2]}>)' for i in self.song_queue[ctx.voice_client.channel.id]])}") 
+            else:
+                await ctx.send("You don't have anything in your queue.")
+        except (IndexError, AttributeError):
             await ctx.send("You don't have anything in your queue.")
+
+    @commands.command(aliases=["s"])
+    async def skip(self, ctx):
+        '''Skip the current song.'''
+        try:
+            ctx.voice_client.stop()
+            await ctx.message.add_reaction("\U0001f44d")
+        except Exception:
+            await ctx.send("I'm not in a voice channel.")
+
+    @commands.command()
+    async def pause(self, ctx):
+        '''Pause the current song'''
+        try:
+            assert ctx.guild.me.voice != None
+            if ctx.voice_client.is_playing():
+                ctx.voice_client.pause()
+                await ctx.send(embed=discord.Embed(title=f"\U000023f8 Paused. Run `{self.bot.command_prefix}resume` to resume audio, or use `{self.bot.command_prefix}leave` to make me leave the voice channel.", color=discord.Color.blurple()))
+            elif ctx.voice_client.is_paused():
+                await ctx.send(embed=discord.Embed(title=f"\U0000274c I'm already paused. Use `{self.bot.command_prefix}resume` to resume.", color=discord.Color.blurple()))
+            else:
+                await ctx.send(embed=discord.Embed(title="\U0000274c I'm not playing anything.", color=discord.Color.blurple()))
+        except Exception:
+            traceback.print_exc()
+            await ctx.send("I'm not in a voice channel.")
+
+    @commands.command(aliases=["unpause"])
+    async def resume(self, ctx):
+        '''Resume the current song'''
+        try:
+            assert ctx.guild.me.voice != None
+            if ctx.voice_client.is_paused():
+                await ctx.send(embed=discord.Embed(title="\U000025b6 Resuming...", color=discord.Color.blurple()))
+                ctx.voice_client.resume()
+                return
+            elif ctx.voice_client.is_playing():
+                await ctx.send(embed=discord.Embed(title="\U0000274c I'm already playing something.", color=discord.Color.blurple()))
+            else:
+                await ctx.send(embed=discord.Embed(title="\U0000274c I'm not playing anything.", color=discord.Color.blurple()))
+        except Exception:
+            traceback.print_exc()
+            await ctx.send("I'm not in a voice channel.")
+
 def setup(bot):
     bot.add_cog(music(bot))
 
