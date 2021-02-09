@@ -33,17 +33,16 @@ class music(commands.Cog):
     def process_queue(self, ctx, channel, error):
         #this is a callback that is executed after song ends
         try:
-            #this variable could change as we're executing the stuff below, so create (and use) a local variable just in case
             if channel.id not in self.channels_playing_audio:
                 return
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
             print("playing next song in queue...")
-            #need to do this because this isn't an async function
+            #need to do this because we can't await coros, this isn't an async function
             coro = ctx.send(f"{ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>)")
             fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
             fut.result()
             self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
-            #we can't pass stuff to process_queue in after, so pass some stuff to it before executing it
+            #we can't pass stuff to process_queue in after, so pass some stuff to it before passing it
             handle_queue = functools.partial(self.process_queue, ctx, channel)
             ctx.voice_client.play(source, after=handle_queue)
         except IndexError:
@@ -157,7 +156,7 @@ class music(commands.Cog):
                 self.channels_playing_audio.append(channel.id)
                 await ctx.send("Attempting to join the voice channel you're in...")
             else:
-                #if we're already playing (or fetching) audio, add song to queue
+                #if we're already playing (or fetching) audio, add song to queue (this is likely to error or display the wrong song if many people use this command concurrently)
                 await ctx.send("Adding to your queue...")
                 await self.get_song(ctx, url)
                 print(self.song_queue[channel.id])
