@@ -33,17 +33,16 @@ class music(commands.Cog):
     def process_queue(self, ctx, channel, error):
         #this is a callback that is executed after song ends
         try:
-            #this variable could change as we're executing the stuff below, so create (and use) a local variable just in case
             if channel.id not in self.channels_playing_audio:
                 return
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
             print("playing next song in queue...")
             #need to do this because this isn't an async function
-            coro = ctx.send(f"{ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>)")
+            coro = ctx.send(f"{ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>) \n Duration: {self.song_queue[channel.id][0][3]}")
             fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
             fut.result()
             self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
-            #we can't pass stuff to process_queue in after, so pass some stuff to it before executing it
+            #we can't pass stuff to process_queue in after, so pass some stuff to it before passing it
             handle_queue = functools.partial(self.process_queue, ctx, channel)
             ctx.voice_client.play(source, after=handle_queue)
         except IndexError:
@@ -66,11 +65,12 @@ class music(commands.Cog):
                 video = url 
             open(f"songcache/{video}.mp3", "r")
             #check if video id is in database, add it if it isn't
-            info = self.bot.dbinst.retrieve(self.bot.database, "songs", "name", "id", f"{video}", False)
-            print(info)
-            if info != None:
-                self.name = info
+            name = self.bot.dbinst.retrieve(self.bot.database, "songs", "name", "id", f"{video}", False)
+            duration = self.bot.dbinst.retrieve(self.bot.database, "songs", "duration", "id", f"{video}", False)
+            if name != None and duration != None:
+                self.name = name
                 self.filename = f"songcache/{video}.mp3"
+                self.duration = duration
                 self.url = f"https://youtube.com/watch?v={video}"
             else:
                 with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
@@ -78,9 +78,10 @@ class music(commands.Cog):
                     self.url = f"https://youtube.com/watch?v={video}"
                     self.name = info["title"]
                     self.filename = f"songcache/{video}.mp3"
-                    if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id") != "success":
+                    self.duration = f"{str(info['duration']/60).split('.')[0]}:{info['duration']%60}"
+                    if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id") != "success":
                         self.bot.dbinst.delete(self.bot.database, "songs", video, "id")
-                        self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id")
+                        self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
             print("got song from cache!")
         except FileNotFoundError:
             print("song isn't in cache")
@@ -92,8 +93,9 @@ class music(commands.Cog):
                     #doesn't return the correct file extension
                     self.name = info["title"]
                     self.url = f"https://youtube.com/watch?v={video}"
+                    self.duration = f"{str(info['duration']/60).split('.')[0]}:{info['duration']%60}"
                     self.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
-                    self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video}, "id", False, None, False, None, False)
+                    self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id", False, None, False, None, False)
         return
 
     async def get_song(self, ctx, url):
@@ -130,6 +132,7 @@ class music(commands.Cog):
                             info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch:{url}", download=False))
                             id = info["entries"][0]["id"]
                             self.name = info["entries"][0]["title"]
+                            self.duration = f"{str(info['entries'][0]['duration']/60).split('.')[0]}:{info['entries'][0]['duration']%60}"
                         await self.get_song_from_cache(ctx, id, ydl_opts)
                 else:
                     #if the url is valid, don't try to search youtube, just get it from cache
@@ -157,11 +160,11 @@ class music(commands.Cog):
                 self.channels_playing_audio.append(channel.id)
                 await ctx.send("Attempting to join the voice channel you're in...")
             else:
-                #if we're already playing (or fetching) audio, add song to queue
+                #if we're already playing (or fetching) audio, add song to queue (this is likely to error or display the wrong song if many people use this command concurrently)
                 await ctx.send("Adding to your queue...")
                 await self.get_song(ctx, url)
                 print(self.song_queue[channel.id])
-                self.song_queue[channel.id].append([self.filename, self.name, self.url])
+                self.song_queue[channel.id].append([self.filename, self.name, self.url, self.duration])
                 print(self.song_queue[channel.id])
                 await ctx.send(f"Added `{self.name}` to your queue! (<{self.url}>) Currently, you have {len(self.song_queue[channel.id])} songs in your queue.")
                 return
@@ -198,7 +201,7 @@ class music(commands.Cog):
         except Exception:
             await ctx.send("I've encountered an error. Either something went seriously wrong, you provided an invalid URL, or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term or a URL you're sure is valid), contact tk421#7244. ")
             return
-        await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>)")
+        await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>) \n Duration: {self.duration}")
         #then play the audio
         #we can't pass stuff to process_queue in after, so pass some stuff to it before executing it
         handle_queue = functools.partial(self.process_queue, ctx, channel)
@@ -208,12 +211,15 @@ class music(commands.Cog):
     async def leave(self, ctx):
         '''Leaves the current voice channel.'''
         try:
-            self.channels_playing_audio.remove(ctx.voice_client.channel.id)
-            self.song_queue[ctx.voice_client.channel.id] = []
-            await ctx.voice_client.disconnect()
+            try:
+                self.channels_playing_audio.remove(ctx.voice_client.channel.id)
+                self.song_queue[ctx.voice_client.channel.id] = []
+            except:
+                pass
+            await ctx.guild.voice_client.disconnect()
             print("left vc, reset queue")
             await ctx.send("Left the voice channel.")
-        except:
+        except AttributeError:
             await ctx.send("I'm not in a voice channel.")
     
     @commands.command(hidden=True, aliases=["q"])
@@ -221,7 +227,7 @@ class music(commands.Cog):
         try:
             queuelength = len(self.song_queue[ctx.voice_client.channel.id])
             if queuelength != 0:
-                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{'Your queue: ' if queuelength != 1 else ''}{', '.join([f'`{i[1]}`(<{i[2]}>)' for i in self.song_queue[ctx.voice_client.channel.id]])}") 
+                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{'Your queue: ' if queuelength != 1 else ''}{', '.join([f'`{i[1]}`(<{i[2]}>) Duration: {i[3]}' for i in self.song_queue[ctx.voice_client.channel.id]])}") 
             else:
                 await ctx.send("You don't have anything in your queue.")
         except (IndexError, AttributeError):
