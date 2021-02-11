@@ -209,7 +209,7 @@ class music(commands.Cog):
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
         try:
             await self.get_song(ctx, url)
-        except Exception:
+        except:
             return
         self.ctx = ctx
         print("playing audio...")
