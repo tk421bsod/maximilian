@@ -10,6 +10,7 @@ import traceback
 import time
 import functools
 import typing
+import datetime
 
 class DurationLimitError(discord.ext.commands.CommandError):
     def __init__(self):
@@ -83,8 +84,11 @@ class music(commands.Cog):
                     self.url = f"https://youtube.com/watch?v={video}"
                     self.name = info["title"]
                     self.filename = f"songcache/{video}.mp3"
-                    self.duration = f"{str(info['duration']/60).split('.')[0]}:{info['duration']%60 if len(list(str(info['duration']%60))) != 1 else '0'+str(info['duration']%60)}"
-                    if int(str(info['duration']/60).split('.')[0]) > 60:
+                    m, s = divmod(info["duration"], 60)
+                    print(m)
+                    print(s)
+                    self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+                    if m > 60:
                         raise DurationLimitError()
                     if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id") != "success":
                         self.bot.dbinst.delete(self.bot.database, "songs", video, "id")
@@ -100,7 +104,10 @@ class music(commands.Cog):
                     #doesn't return the correct file extension
                     self.name = info["title"]
                     self.url = f"https://youtube.com/watch?v={video}"
-                    self.duration = f"{str(info['duration']/60).split('.')[0]}:{info['duration']%60}"
+                    m, s = divmod(info["duration"], 60)
+                    self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+                    if m > 60:
+                        raise DurationLimitError()
                     self.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
                     self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id", False, None, False, None, False)
         return
@@ -110,8 +117,9 @@ class music(commands.Cog):
             self.info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False))
         self.id = self.info["entries"][num]["id"]
         self.name = self.info["entries"][num]["title"]
-        self.duration = f"{str(self.info['entries'][num]['duration']/60).split('.')[0]}:{self.info['entries'][0]['duration']%60 if len(list(str(self.info['entries'][0]['duration']%60))) != 1 else '0'+str(self.info['entries'][0]['duration']%60)}"
-        if int(str(self.info['entries'][num]['duration']/60).split('.')[0]) > 60:
+        m, s = divmod(self.info["entries"][num]["duration"], 60)
+        self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+        if m > 60:
             print(f"Max duration exceeded on search result {num+1}. Retrying...")
             await self.search_youtube_for_song(ydl, ctx, url, num+1)
 
