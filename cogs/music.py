@@ -105,6 +105,16 @@ class music(commands.Cog):
                     self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id", False, None, False, None, False)
         return
 
+    async def search_youtube_for_song(self, ydl, ctx, url, num):
+        if num == 0:
+            self.info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False))
+        self.id = self.info["entries"][num]["id"]
+        self.name = self.info["entries"][num]["title"]
+        self.duration = f"{str(self.info['entries'][num]['duration']/60).split('.')[0]}:{self.info['entries'][0]['duration']%60 if len(list(str(self.info['entries'][0]['duration']%60))) != 1 else '0'+str(self.info['entries'][0]['duration']%60)}"
+        if int(str(self.info['entries'][num]['duration']/60).split('.')[0]) > 60:
+            print(f"Max duration exceeded on search result {num+1}. Retrying...")
+            await self.search_youtube_for_song(ydl, ctx, url, num+1)
+
     async def get_song(self, ctx, url):
         ydl_opts = {
         'format': 'bestaudio/best',
@@ -133,18 +143,13 @@ class music(commands.Cog):
                         info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %s", (f"%{url}%"))
                         if info != None:
                             print("found song in db! trying to get from cache...")
-                            id = info["id"]
+                            self.id = info["id"]
                             self.name = info["name"]
                             if int(str(info['duration']).split(':')[0]) > 60:
                                 raise DurationLimitError()
                         else:
-                            info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch:{url}", download=False))
-                            id = info["entries"][0]["id"]
-                            self.name = info["entries"][0]["title"]
-                            self.duration = f"{str(info['entries'][0]['duration']/60).split('.')[0]}:{info['entries'][0]['duration']%60 if len(list(str(info['entries'][0]['duration']%60))) != 1 else '0'+str(info['entries'][0]['duration']%60)}"
-                            if int(str(info['entries'][0]['duration']/60).split('.')[0]) > 60:
-                                raise DurationLimitError()
-                        await self.get_song_from_cache(ctx, id, ydl_opts)
+                            await self.search_youtube_for_song(ydl, ctx, url, 0)
+                        await self.get_song_from_cache(ctx, self.id, ydl_opts)
                 else:
                     #if the url is valid, don't try to search youtube, just get it from cache
                     await self.get_song_from_cache(ctx, url, ydl_opts)
