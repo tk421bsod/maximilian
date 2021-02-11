@@ -11,6 +11,10 @@ import time
 import functools
 import typing
 
+class DurationLimitError(discord.ext.commands.CommandError):
+    def __init__(self):
+        print("Maximum duration was exceeded.")
+
 class music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -129,15 +133,22 @@ class music(commands.Cog):
                             print("found song in db! trying to get from cache...")
                             id = info["id"]
                             self.name = info["name"]
+                            if int(str(info['duration']/60).split('.')[0]) > 60:
+                                raise DurationLimitError()
                         else:
                             info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch:{url}", download=False))
                             id = info["entries"][0]["id"]
                             self.name = info["entries"][0]["title"]
                             self.duration = f"{str(info['entries'][0]['duration']/60).split('.')[0]}:{info['entries'][0]['duration']%60 if len(list(str(info['entries'][0]['duration']%60))) != 1 else '0'+str(info['entries'][0]['duration']%60)}"
+                            if int(str(info['entries'][0]['duration']/60).split('.')[0]) > 60:
+                                raise DurationLimitError()
                         await self.get_song_from_cache(ctx, id, ydl_opts)
                 else:
                     #if the url is valid, don't try to search youtube, just get it from cache
                     await self.get_song_from_cache(ctx, url, ydl_opts)
+            except DurationLimitError:
+                await ctx.send("That song is too long. Due to limits both on data usage and storage space, I can't play songs longer than an hour.")
+
             except Exception:
                 traceback.print_exc()
                 #raise CommandError so we don't play anything
@@ -194,7 +205,10 @@ class music(commands.Cog):
         print("connected to vc")
         await ctx.send(f'Connected to the `{channel}` voice channel. Getting audio... (this may take a while for long songs)')
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
-        await self.get_song(ctx, url)
+        try:
+            await self.get_song(ctx, url)
+        except Exception:
+            return
         self.ctx = ctx
         print("playing audio...")
         try:
