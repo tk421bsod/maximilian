@@ -176,7 +176,11 @@ class music(commands.Cog):
             else:
                 #if we're already playing (or fetching) audio, add song to queue (this is likely to error or display the wrong song if many people use this command concurrently)
                 await ctx.send("Adding to your queue...")
-                await self.get_song(ctx, url)
+                try:
+                    await self.get_song(ctx, url)
+                except:
+                    traceback.print_exc()
+                    return
                 print(self.song_queue[channel.id])
                 self.song_queue[channel.id].append([self.filename, self.name, self.url, self.duration])
                 print(self.song_queue[channel.id])
