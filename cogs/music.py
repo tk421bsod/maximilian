@@ -316,7 +316,7 @@ class music(commands.Cog):
     
     @commands.command(aliases=["v"])
     async def volume(self, ctx, newvolume):
-        '''Set the volume of audio to the provided percentage. The default volume when you start playing music is 50%.'''
+        '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
         try:
             newvolume = int(newvolume)
             if newvolume > 100 or newvolume < 0 or newvolume == None:
@@ -328,6 +328,18 @@ class music(commands.Cog):
             await ctx.send("You can't specify a decimal value for the volume.")
         except AttributeError:
             traceback.print_exc()
+            await ctx.send("I'm not in a voice channel.")
+
+    @commands.command(aliases=["c"])
+    async def clear(self, ctx):
+        '''Clear the queue.'''
+        try:
+            assert self.song_queue[ctx.voice_client.channel.id] != []
+            self.song_queue[ctx.voice_client.channel.id] = []
+            await ctx.send(embed=discord.Embed(title="\U00002705 Cleared your queue!", color=discord.Color.blurple()))
+        except AssertionError:
+            await ctx.send("You don't have anything in your queue.")
+        except Exception:
             await ctx.send("I'm not in a voice channel.")
 
 
