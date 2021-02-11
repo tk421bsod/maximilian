@@ -9,6 +9,7 @@ import aiohttp
 import traceback
 import time
 import functools
+import typing
 
 class music(commands.Cog):
     def __init__(self, bot):
@@ -218,7 +219,7 @@ class music(commands.Cog):
                 pass
             await ctx.guild.voice_client.disconnect()
             print("left vc, reset queue")
-            await ctx.send("Left the voice channel.")
+            await ctx.send(embed=discord.Embed(title="\U00002705 Left the voice channel.", color=discord.Color.blurple()))
         except AttributeError:
             await ctx.send("I'm not in a voice channel.")
     
@@ -237,8 +238,12 @@ class music(commands.Cog):
     async def skip(self, ctx):
         '''Skip the current song.'''
         try:
+            assert self.song_queue[ctx.voice_client.channel.id] != []
+            await ctx.send(embed=discord.Embed(title="\U000023e9 Skipping to the next song in the queue... ", color=discord.Color.blurple()))
+            await asyncio.sleep(1)
             ctx.voice_client.stop()
-            await ctx.message.add_reaction("\U0001f44d")
+        except AssertionError:
+            await ctx.send("You don't have anything in your queue.")
         except Exception:
             await ctx.send("I'm not in a voice channel.")
 
@@ -274,6 +279,24 @@ class music(commands.Cog):
         except Exception:
             traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
+    
+    @commands.command(aliases=["v"])
+    async def volume(self, ctx, newvolume):
+        '''Set the volume of audio to the provided percentage. The default volume when you start playing music is 50%.'''
+        try:
+            newvolume = int(newvolume)
+            if newvolume > 100 or newvolume < 0 or newvolume == None:
+                await ctx.send("You need to specify a volume percentage between 0 and 100.")
+            else:
+                ctx.voice_client.source.volume = newvolume/100
+                await ctx.send(embed=discord.Embed(title=f"\U00002705 Set volume to {newvolume}%.", color=discord.Color.blurple()))
+        except ValueError:
+            await ctx.send("You can't specify a decimal value for the volume.")
+        except AttributeError:
+            traceback.print_exc()
+            await ctx.send("I'm not in a voice channel.")
+
+
 
 def setup(bot):
     bot.add_cog(music(bot))
