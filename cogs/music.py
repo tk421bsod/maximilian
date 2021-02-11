@@ -150,7 +150,7 @@ class music(commands.Cog):
                     await self.get_song_from_cache(ctx, url, ydl_opts)
             except DurationLimitError:
                 await ctx.send("That song is too long. Due to limits both on data usage and storage space, I can't play songs longer than an hour.")
-
+                raise discord.ext.commands.CommandError()
             except Exception:
                 traceback.print_exc()
                 #raise CommandError so we don't play anything
