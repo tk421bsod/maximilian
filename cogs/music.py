@@ -79,7 +79,7 @@ class music(commands.Cog):
                     self.url = f"https://youtube.com/watch?v={video}"
                     self.name = info["title"]
                     self.filename = f"songcache/{video}.mp3"
-                    self.duration = f"{str(info['duration']/60).split('.')[0]}:{info['duration']%60}"
+                    self.duration = f"{str(info['duration']/60).split('.')[0]}:{info['duration']%60 if len(list(str(info['duration']%60))) != 1 else '0'+str(info['duration']%60)}"
                     if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id") != "success":
                         self.bot.dbinst.delete(self.bot.database, "songs", video, "id")
                         self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
@@ -133,7 +133,7 @@ class music(commands.Cog):
                             info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch:{url}", download=False))
                             id = info["entries"][0]["id"]
                             self.name = info["entries"][0]["title"]
-                            self.duration = f"{str(info['entries'][0]['duration']/60).split('.')[0]}:{info['entries'][0]['duration']%60}"
+                            self.duration = f"{str(info['entries'][0]['duration']/60).split('.')[0]}:{info['entries'][0]['duration']%60 if len(list(str(info['entries'][0]['duration']%60))) != 1 else '0'+str(info['entries'][0]['duration']%60)}"
                         await self.get_song_from_cache(ctx, id, ydl_opts)
                 else:
                     #if the url is valid, don't try to search youtube, just get it from cache
