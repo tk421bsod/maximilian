@@ -84,6 +84,8 @@ class music(commands.Cog):
                     self.name = info["title"]
                     self.filename = f"songcache/{video}.mp3"
                     self.duration = f"{str(info['duration']/60).split('.')[0]}:{info['duration']%60 if len(list(str(info['duration']%60))) != 1 else '0'+str(info['duration']%60)}"
+                    if int(str(info['duration']/60).split('.')[0]) > 60:
+                        raise DurationLimitError()
                     if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id") != "success":
                         self.bot.dbinst.delete(self.bot.database, "songs", video, "id")
                         self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
