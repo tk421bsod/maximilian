@@ -135,7 +135,7 @@ class music(commands.Cog):
                             print("found song in db! trying to get from cache...")
                             id = info["id"]
                             self.name = info["name"]
-                            if int(str(info['duration']/60).split('.')[0]) > 60:
+                            if int(str(info['duration']).split(':')[0]) > 60:
                                 raise DurationLimitError()
                         else:
                             info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch:{url}", download=False))
