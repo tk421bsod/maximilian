@@ -210,6 +210,7 @@ class music(commands.Cog):
         try:
             await self.get_song(ctx, url)
         except:
+            self.channels_playing_audio.remove(ctx.voice_client.channel.id)
             return
         self.ctx = ctx
         print("playing audio...")
