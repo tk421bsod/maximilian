@@ -330,7 +330,7 @@ class music(commands.Cog):
     async def volume(self, ctx, newvolume):
         '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
         try:
-            newvolume = int(newvolume.remove("%"))
+            newvolume = int(newvolume.replace("%", "")
             if newvolume > 100 or newvolume < 0 or newvolume == None:
                 await ctx.send("You need to specify a volume percentage between 0 and 100.")
             else:
