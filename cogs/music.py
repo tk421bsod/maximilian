@@ -37,6 +37,8 @@ class music(commands.Cog):
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
     def process_queue(self, ctx, channel, error):
+        coro = asyncio.sleep(1)
+        asyncio.run_coroutine_threadsafe(coro, self.bot.loop).result()
         #this is a callback that is executed after song ends
         try:
             if channel.id not in self.channels_playing_audio:
@@ -335,7 +337,7 @@ class music(commands.Cog):
                 await ctx.send("You need to specify a volume percentage between 0 and 100.")
             else:
                 ctx.voice_client.source.volume = newvolume/100
-                await ctx.send(embed=discord.Embed(title=f"\U00002705 Set volume to {newvolume}%.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title=f"\U00002705 Set volume to {newvolume}%.{' Warning: Music may sound distorted at this volume level.' if newvolume >= 90 else ''}", color=discord.Color.blurple()))
         except ValueError:
             await ctx.send("You can't specify a decimal value for the volume.")
         except AttributeError:
