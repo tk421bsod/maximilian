@@ -84,32 +84,44 @@ class music(commands.Cog):
                     self.url = f"https://youtube.com/watch?v={video}"
                     self.name = info["title"]
                     self.filename = f"songcache/{video}.mp3"
-                    m, s = divmod(info["duration"], 60)
-                    print(m)
-                    print(s)
-                    self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
-                    if m > 60:
-                        raise DurationLimitError()
-                    if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id") != "success":
-                        self.bot.dbinst.delete(self.bot.database, "songs", video, "id")
-                        self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
+                    if info['duration'] == 0.0:
+                        print("this video is a stream")
+                        self.filename = info["url"]
+                        self.duration = "No duration available (this is a stream)"
+                    else:
+                        m, s = divmod(info["duration"], 60)
+                        print(m)
+                        print(s)
+                        self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+                        if m > 60:
+                            raise DurationLimitError()
+                        if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id") != "success":
+                            self.bot.dbinst.delete(self.bot.database, "songs", video, "id")
+                            self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
             print("got song from cache!")
         except FileNotFoundError:
             print("song isn't in cache")
             async with ctx.typing():
                 with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
                     #the self.bot.loop.run_in_executor is to prevent the extract_info call from blocking other stuff
-                    info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
+                    info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
                     #get name of file we're going to play, for some reason prepare_filename
                     #doesn't return the correct file extension
                     self.name = info["title"]
                     self.url = f"https://youtube.com/watch?v={video}"
-                    m, s = divmod(info["duration"], 60)
-                    self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
-                    if m > 60:
-                        raise DurationLimitError()
-                    self.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
-                    self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id", False, None, False, None, False)
+                    #if duration is 0, we got a stream, don't put that in the database/download it
+                    if info['duration'] == 0.0:
+                        print("this video is a stream")
+                        self.filename = info["url"]
+                        self.duration = "No duration available (this is a stream)"
+                    else:
+                        info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
+                        m, s = divmod(info["duration"], 60)
+                        self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+                        if m > 60:
+                            raise DurationLimitError()
+                        self.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
+                        self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id", False, None, False, None, False)
         return
 
     async def search_youtube_for_song(self, ydl, ctx, url, num):
