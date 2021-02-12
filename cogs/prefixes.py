@@ -7,9 +7,17 @@ class prefixes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def reset_prefixes(self):
+    async def reset_prefixes(self, guild=None):
         await self.bot.responsesinst.check_if_ready()
-        print("resetting prefixes...")    
+        print("resetting prefixes...")
+        if guild:
+            prefixindb = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild), False)
+            if prefixindb == "" or prefixindb == None:
+                self.bot.prefixes[str(guild)] = '!'
+            else:
+                self.bot.prefixes[str(guild)] = prefixindb
+            print("reset prefixes")
+            return
         for guild in self.bot.guilds:
             prefixindb = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild.id), False)
             if prefixindb == "" or prefixindb == None:
@@ -49,7 +57,7 @@ class prefixes(commands.Cog):
             result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
             if result == "success":
                 await self.set_nickname(ctx, oldprefix, newprefix)
-                await self.reset_prefixes()
+                await self.reset_prefixes(ctx.guild.id)
                 await ctx.send(prefixsetmessage)
                 return "changed prefix"
         elif dbentry == newprefix:
@@ -61,7 +69,7 @@ class prefixes(commands.Cog):
             result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
             if result == "success":
                 await self.set_nickname(ctx, oldprefix, newprefix)
-                await self.reset_prefixes()
+                await self.reset_prefixes(ctx.guild.id)
                 await ctx.send(prefixsetmessage)
                 return "changed prefix"
             elif result == "error-duplicate":
@@ -71,7 +79,7 @@ class prefixes(commands.Cog):
                     result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
                     if result == "success":
                         await self.set_nickname(ctx, oldprefix, newprefix)
-                        await self.reset_prefixes()
+                        await self.reset_prefixes(ctx.guild.id)
                         await ctx.send(prefixsetmessage)
                         return "success"
             await ctx.send("An error occurred when setting the prefix. Please try again later.")
