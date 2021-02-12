@@ -208,6 +208,8 @@ async def on_command_error(ctx, error):
         bot.command_prefix = "!"
     #get the original error so isinstance works
     error = getattr(error, "original", error)
+    if hasattr(ctx.command.cog, "cog_command_error"):
+        return
     #check for database errors first, these should almost never happen
     if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
         print("database error, printing context and error type")
