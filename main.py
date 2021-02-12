@@ -197,6 +197,12 @@ async def on_message(message):
 #catch errors that occur in commands
 @bot.event
 async def on_command_error(ctx, error):
+    #get the original error so isinstance works
+    error = getattr(error, "original", error)
+    cog = ctx.cog
+    if cog:
+        if cog._get_overridden_method(cog.cog_command_error) is not None:
+            return
     print("error")
     print(ctx.message.content)
     #prefix should be a string, not a function, so get it from the dict of prefixes (use default prefix if that fails)
@@ -204,10 +210,6 @@ async def on_command_error(ctx, error):
         bot.command_prefix = bot.prefixes[str(ctx.guild.id)]
     except KeyError:
         bot.command_prefix = "!"
-    #get the original error so isinstance works
-    error = getattr(error, "original", error)
-    if hasattr(ctx.command.cog, "cog_command_error"):
-        return
     #check for database errors first, these should almost never happen
     if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
         print("database error, printing context and error type")
