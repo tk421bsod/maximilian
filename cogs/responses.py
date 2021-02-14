@@ -29,9 +29,9 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         return
 
     @discord.ext.commands.has_guild_permissions(manage_guild=True)
-    @discord.ext.commands.group(help=f"Add, delete, or list custom commands. This takes 3 arguments, `action` (the action you want to perform, must be either `add`, `delete`, or `list`), `command_trigger` (the text that will trigger the command), and `command_response` (what you want Maximilian to send when you enter Maximilian's prefix followed by the command trigger). \n You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['command'])
+    @discord.ext.commands.group(help=f"Add, delete, or list custom commands. This takes 3 arguments, `action` (the action you want to perform, must be either `add`, `delete`, or `list`), `command_trigger` (the text that will trigger the command), and `command_response` (what you want Maximilian to send when you enter Maximilian's prefix followed by the command trigger). \n You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['command'], invoke_without_subcommand=False)
     async def commands(self, ctx):
-        await ctx.trigger_typing()
+        pass
     
     @commands.command(help="List all of the custom commands you've set up in your server")
     async def list(self, ctx):
@@ -64,8 +64,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
             await ctx.send("Added a custom command.")
         else: 
             raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
-            return
-    
+
     @commands.command(help="Delete a custom command")
     async def delete(self, ctx, command_trigger : str, command_response : str):
         if self.bot.dbinst.delete(self.bot.database, "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
