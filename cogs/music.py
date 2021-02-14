@@ -200,6 +200,7 @@ class music(commands.Cog):
         #attempt to join the vc that the command's invoker is in...
         try:
             channel = ctx.author.voice.channel
+            #check if queue exists, init it if it doesn't exist
             try:
                 self.song_queue[channel.id]
             except KeyError:
@@ -209,7 +210,7 @@ class music(commands.Cog):
                 self.channels_playing_audio.append(channel.id)
                 await ctx.send("Attempting to join the voice channel you're in...")
             else:
-                #if we're already playing (or fetching) audio, add song to queue (this is likely to error or display the wrong song if many people use this command concurrently)
+                #if we're already playing (or fetching) audio, add song to queue
                 await ctx.send("Adding to your queue...")
                 try:
                     #if locked, don't do anything until unlocked
