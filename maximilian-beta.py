@@ -111,12 +111,13 @@ class HelpCommand(commands.HelpCommand):
                         value = '{0}\n{1}'.format(cog.description, value)
 
                     embed.add_field(name=name, value=value)
-        responseslist = self.context.bot.dbinst.exec_query(self.context.bot.database, "select * from responses where guild_id = {}".format(self.context.guild.id), False, True)
-        responsestring = "A list of custom commands for this server. These don't have help entries. \n"
-        if responseslist is not None and str(responseslist)!="()":
-            for i in responseslist:
-                responsestring += f"`{i['response_trigger']}` "
-            embed.add_field(name="Custom Commands List", value=responsestring)
+        if self.context.guild is not None:
+            responseslist = self.context.bot.dbinst.exec_query(self.context.bot.database, "select * from responses where guild_id = {}".format(self.context.guild.id), False, True)
+            responsestring = "A list of custom commands for this server. These don't have help entries. \n"
+            if responseslist is not None and str(responseslist)!="()":
+                for i in responseslist:
+                    responsestring += f"`{i['response_trigger']}` "
+                embed.add_field(name="Custom Commands List", value=responsestring)
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
 
@@ -164,7 +165,7 @@ async def on_ready():
     print("recieved on_ready, finishing startup...")
     await bot.prefixesinst.reset_prefixes()
     await bot.responsesinst.get_responses()
-    bot.help_command = HelpCommand()
+    bot.help_command = HelpCommand(verify_checks=False)
     bot.loop.create_task(startup())
     reset_status.start()
     print("ready")
@@ -180,6 +181,9 @@ async def on_message(message):
                 bot.logger.warning("Couldn't get prefixes for this guild, (am I starting up or resetting prefixes?), falling back to default prefix (!)")
                 bot.command_prefix = "!"
                 pass
+            except AttributeError:
+                bot.logger.warning("message.guild is None, is this in a DM? Falling back to !.")
+                bot.command_prefix = "!"
             #required because a bunch of other stuff relies on it, will change it later
             bot.commandprefix = bot.command_prefix
             for each in range(len(bot.responses)):
@@ -198,6 +202,7 @@ async def on_message(message):
 #catch errors that occur in commands
 @bot.event
 async def on_command_error(ctx, error):
+    traceback.print_exc()
     #get the original error so isinstance works
     error = getattr(error, "original", error)
     cog = ctx.cog
@@ -209,7 +214,7 @@ async def on_command_error(ctx, error):
     #prefix should be a string, not a function, so get it from the dict of prefixes (use default prefix if that fails)
     try:
         bot.command_prefix = bot.prefixes[str(ctx.guild.id)]
-    except KeyError:
+    except (KeyError,AttributeError):
         bot.command_prefix = "!"
     #check for database errors first, these should almost never happen
     if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
@@ -279,7 +284,7 @@ async def before_anything(ctx):
     #before any commands are executed, make sure to set commandprefix
     try:
         bot.commandprefix = bot.prefixes[str(ctx.guild.id)]
-    except KeyError:
+    except (KeyError, AttributeError):
         bot.commandprefix = "!"
 
 @bot.event

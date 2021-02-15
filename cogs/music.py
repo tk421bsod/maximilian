@@ -21,6 +21,7 @@ class music(commands.Cog):
         self.bot = bot
         self.song_queue = {}
         self.channels_playing_audio = []
+        self.is_locked = False
         #TODO: defer adding to queue until previous get_song call finishes (this variable will be used for that)
         self.channels_getting_songs = []
         
@@ -138,6 +139,9 @@ class music(commands.Cog):
             await self.search_youtube_for_song(ydl, ctx, url, num+1)
 
     async def get_song(self, ctx, url):
+        #block this from executing until the previous call is finished, we don't want multiple instances of this running in parallel
+        print("Locked execution.")
+        self.is_locked = True
         ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': 'songcache/%(id)s.%(ext)s',
@@ -175,11 +179,15 @@ class music(commands.Cog):
                 else:
                     #if the url is valid, don't try to search youtube, just get it from cache
                     await self.get_song_from_cache(ctx, url, ydl_opts)
+                print("Done getting song, unlocked.")
+                self.is_locked = False
             except DurationLimitError:
-                await ctx.send("That song is too long. Due to limits both on data usage and storage space, I can't play songs longer than an hour.")
+                await ctx.send("That song is too long. Due to limits on both data usage and storage space, I can't play songs longer than an hour.")
+                self.is_locked = False
                 raise discord.ext.commands.CommandError()
             except Exception:
                 traceback.print_exc()
+                self.is_locked = False
                 #raise CommandError so we don't play anything
                 raise discord.ext.commands.CommandError()
 
@@ -192,6 +200,7 @@ class music(commands.Cog):
         #attempt to join the vc that the command's invoker is in...
         try:
             channel = ctx.author.voice.channel
+            #check if queue exists, init it if it doesn't exist
             try:
                 self.song_queue[channel.id]
             except KeyError:
@@ -201,10 +210,15 @@ class music(commands.Cog):
                 self.channels_playing_audio.append(channel.id)
                 await ctx.send("Attempting to join the voice channel you're in...")
             else:
-                #if we're already playing (or fetching) audio, add song to queue (this is likely to error or display the wrong song if many people use this command concurrently)
+                #if we're already playing (or fetching) audio, add song to queue
                 await ctx.send("Adding to your queue...")
                 try:
-                    await self.get_song(ctx, url)
+                    #if locked, don't do anything until unlocked
+                    async with ctx.typing():
+                        while self.is_locked:
+                            await asyncio.sleep(0.01)
+                        self.is_locked=True
+                        await self.get_song(ctx, url)
                 except:
                     traceback.print_exc()
                     return
@@ -225,6 +239,7 @@ class music(commands.Cog):
                 await ctx.send(f"I'm already in your voice channel, so I won't reconnect.")
             else:
                 try:
+                    self.song_queue[vc.channel.id] = []
                     await vc.move_to(channel)
                 except asyncio.TimeoutError:
                     await ctx.send(f'Moving to the `{channel}` voice channel timed out.')
@@ -239,7 +254,12 @@ class music(commands.Cog):
         await ctx.send(f'Connected to the `{channel}` voice channel. Getting audio... (this may take a while for long songs)')
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
         try:
-            await self.get_song(ctx, url)
+            #if locked, don't do anything until unlocked
+            async with ctx.typing():
+                while self.is_locked:
+                    await asyncio.sleep(0.01)
+                self.is_locked=True
+                await self.get_song(ctx, url)
         except:
             self.channels_playing_audio.remove(ctx.voice_client.channel.id)
             return
@@ -250,6 +270,10 @@ class music(commands.Cog):
         except Exception:
             await ctx.send("I've encountered an error. Either something went seriously wrong, you provided an invalid URL, or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term or a URL you're sure is valid), contact tk421#7244. ")
             return
+        try:
+            ctx.voice_client.stop()
+        except:
+            pass
         await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>) \n Duration: {self.duration}")
         #then play the audio
         #we can't pass stuff to process_queue in after, so pass some stuff to it before executing it
