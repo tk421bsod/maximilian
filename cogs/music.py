@@ -239,6 +239,7 @@ class music(commands.Cog):
                 await ctx.send(f"I'm already in your voice channel, so I won't reconnect.")
             else:
                 try:
+                    self.song_queue[vc.channel.id] = []
                     await vc.move_to(channel)
                 except asyncio.TimeoutError:
                     await ctx.send(f'Moving to the `{channel}` voice channel timed out.')
