@@ -13,6 +13,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
             print("already ready") 
     
     async def get_responses(self):
+        '''Builds cache of custom commands (internally called responses)'''
         tempresponses = []
         #make sure cache is ready before we try to iterate over bot.guilds (if we don't wait, bot.guilds may be incomplete)
         await self.check_if_ready()
@@ -54,7 +55,6 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         command_response.replace("*", r"\*")
         command_trigger.replace("*", r"\*")
         for each in self.bot.commands:
-            print(each.name)
             if command_trigger.lower() == each.name.lower() or command_trigger.lower() == "jishaku" or command_trigger.lower() == "jsk":
                 await ctx.send("You can't create a custom command with the same name as one of my commands.")
                 return
@@ -73,7 +73,6 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
             await ctx.send("Deleted a custom command.")
         else:
             raise discord.ext.commands.CommandError(message="Failed to delete a custom command, are there any custom commands set up that use the command trigger '" + str(command_trigger) + "'?")
-            return
         
 def setup(bot):
     bot.add_cog(responses(bot))
