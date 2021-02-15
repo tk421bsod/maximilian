@@ -270,6 +270,10 @@ class music(commands.Cog):
         except Exception:
             await ctx.send("I've encountered an error. Either something went seriously wrong, you provided an invalid URL, or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term or a URL you're sure is valid), contact tk421#7244. ")
             return
+        try:
+            ctx.voice_client.stop()
+        except:
+            pass
         await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>) \n Duration: {self.duration}")
         #then play the audio
         #we can't pass stuff to process_queue in after, so pass some stuff to it before executing it
