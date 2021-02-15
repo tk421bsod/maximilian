@@ -192,6 +192,15 @@ async def on_message(message):
 #catch errors that occur in commands
 @bot.event
 async def on_command_error(ctx, error):
+    etype = type(error)
+    trace = error.__traceback__
+    lines = traceback.format_exception(etype, error, trace)
+    # format_exception returns a list with line breaks embedded in the lines, so let's just stitch the elements together
+    traceback_text = ''.join(lines)
+    # now we can send it to the user
+    # it would probably be best to wrap this in a codeblock via e.g. a Paginator
+    owner = bot.get_user(538193752913608704)
+    await owner.send(f"`{traceback_text}`")
     #get the original error so isinstance works
     error = getattr(error, "original", error)
     cog = ctx.cog
