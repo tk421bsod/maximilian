@@ -74,8 +74,8 @@ class music(commands.Cog):
                 video = url 
             open(f"songcache/{video}.mp3", "r")
             #check if video id is in database, add it if it isn't
-            name = self.bot.dbinst.retrieve(self.bot.database, "songs", "name", "id", f"{video}", False)
-            duration = self.bot.dbinst.retrieve(self.bot.database, "songs", "duration", "id", f"{video}", False)
+            name = await self.bot.loop.run_in_executor(None, self.bot.dbinst.retrieve, self.bot.database, "songs", "name", "id", f"{video}", False)
+            duration = await self.bot.loop.run_in_executor(None, self.bot.dbinst.retrieve, self.bot.database, "songs", "duration", "id", f"{video}", False)
             if name != None and duration != None:
                 self.name = name
                 self.filename = f"songcache/{video}.mp3"
@@ -98,9 +98,9 @@ class music(commands.Cog):
                         self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                         if m > 60:
                             raise DurationLimitError()
-                        if self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id") != "success":
-                            self.bot.dbinst.delete(self.bot.database, "songs", video, "id")
-                            self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
+                        if await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id") != "success":
+                            await self.bot.loop.run_in_executor(None, self.bot.dbinst.delete, self.bot.database, "songs", video, "id")
+                            await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
             print("got song from cache!")
         except FileNotFoundError:
             print("song isn't in cache")
@@ -124,7 +124,7 @@ class music(commands.Cog):
                         if m > 60:
                             raise DurationLimitError()
                         self.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
-                        self.bot.dbinst.insert(self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id", False, None, False, None, False)
+                        await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
         return
 
     async def search_youtube_for_song(self, ydl, ctx, url, num):
