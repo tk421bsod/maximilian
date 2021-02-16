@@ -181,8 +181,6 @@ class music(commands.Cog):
                 else:
                     #if the url is valid, don't try to search youtube, just get it from cache
                     await self.get_song_from_cache(ctx, url, ydl_opts)
-                print("Done getting song, unlocked.")
-                self.is_locked = False
             except DurationLimitError:
                 await ctx.send("That song is too long. Due to limits on both data usage and storage space, I can't play songs longer than an hour.")
                 self.is_locked = False
@@ -219,15 +217,18 @@ class music(commands.Cog):
                     async with ctx.typing():
                         while self.is_locked:
                             await asyncio.sleep(0.01)
-                        self.is_locked=True
                         await self.get_song(ctx, url)
                 except:
                     traceback.print_exc()
                     return
                 print(self.song_queue[channel.id])
+                #actually add that stuff to queue
                 self.song_queue[channel.id].append([self.filename, self.name, self.url, self.duration])
                 print(self.song_queue[channel.id])
-                await ctx.send(f"Added `{self.name}` to your queue! (<{self.url}>) Currently, you have {len(self.song_queue[channel.id])} songs in your queue.")
+                await ctx.send(f"Added `{self.name}` to your queue! (<{self.url}>) Currently, you have {len(self.song_queue[channel.id])} {'songs' if len(self.song_queue[channel.id]) != 1 else 'song'} in your queue.")
+                #unlock after sending message
+                self.is_locked = False
+                print("Added song to queue, unlocked.")
                 return
         except AttributeError:
             traceback.print_exc()
@@ -260,6 +261,7 @@ class music(commands.Cog):
             async with ctx.typing():
                 while self.is_locked:
                     await asyncio.sleep(0.01)
+                #then immediately lock and get song
                 self.is_locked=True
                 await self.get_song(ctx, url)
         except:
@@ -277,6 +279,9 @@ class music(commands.Cog):
         except:
             pass
         await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>) \n Duration: {self.duration}")
+        #unlock execution of get_song
+        self.is_locked=False
+        print("Done getting song, unlocked.")
         #then play the audio
         #we can't pass stuff to process_queue in after, so pass some stuff to it before executing it
         handle_queue = functools.partial(self.process_queue, ctx, channel)
