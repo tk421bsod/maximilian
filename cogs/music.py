@@ -134,8 +134,10 @@ class music(commands.Cog):
         self.name = self.info["entries"][num]["title"]
         m, s = divmod(self.info["entries"][num]["duration"], 60)
         self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+        #check if max duration (60 minutes) exceeded
         if m > 60:
             print(f"Max duration exceeded on search result {num+1}. Retrying...")
+            #if so, recursively call this function, going to the next search result
             await self.search_youtube_for_song(ydl, ctx, url, num+1)
 
     async def get_song(self, ctx, url):
