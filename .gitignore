@@ -1,0 +1,5 @@
+*.txt
+songcache/*
+*.mp3
+*.pyc
+__pycache__
