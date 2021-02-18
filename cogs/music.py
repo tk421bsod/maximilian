@@ -16,6 +16,10 @@ class DurationLimitError(discord.ext.commands.CommandError):
     def __init__(self):
         print("Maximum duration was exceeded.")
 
+class NoSearchResultsError(discord.ext.commands.CommandError):
+    def __init__(self):
+        print("No search results for this song.")
+
 class music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -130,10 +134,13 @@ class music(commands.Cog):
     async def search_youtube_for_song(self, ydl, ctx, url, num):
         if num == 0:
             self.info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False))
-        self.id = self.info["entries"][num]["id"]
-        self.name = self.info["entries"][num]["title"]
-        m, s = divmod(self.info["entries"][num]["duration"], 60)
-        self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+        try:
+            self.id = self.info["entries"][num]["id"]
+            self.name = self.info["entries"][num]["title"]
+            m, s = divmod(self.info["entries"][num]["duration"], 60)
+            self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+        except IndexError:
+            raise NoSearchResultsError()
         #check if max duration (60 minutes) exceeded
         if m > 60:
             print(f"Max duration exceeded on search result {num+1}. Retrying...")
@@ -185,7 +192,15 @@ class music(commands.Cog):
                 await ctx.send("That song is too long. Due to limits on both data usage and storage space, I can't play songs longer than an hour.")
                 self.is_locked = False
                 raise discord.ext.commands.CommandError()
+            except NoSearchResultsError:
+                await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again, then try entering a more broad search term.")
+                await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
+                traceback.print_exc()
+                self.is_locked = False
+                #raise CommandError so we don't play anything
+                raise discord.ext.commands.CommandError()
             except Exception:
+                await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
                 traceback.print_exc()
                 self.is_locked = False
                 #raise CommandError so we don't play anything
@@ -333,7 +348,7 @@ class music(commands.Cog):
             assert ctx.guild.me.voice != None
             if ctx.voice_client.is_playing():
                 ctx.voice_client.pause()
-                await ctx.send(embed=discord.Embed(title=f"\U000023f8 Paused. Run `{self.bot.command_prefix}resume` to resume audio, or use `{self.bot.command_prefix}leave` to make me leave the voice channel.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title=f"\U000023f8 Paused. Run `{self.bot.command_prefix}resume` to resume audio, or run `{self.bot.command_prefix}leave` to make me leave the voice channel.", color=discord.Color.blurple()))
             elif ctx.voice_client.is_paused():
                 await ctx.send(embed=discord.Embed(title=f"\U0000274c I'm already paused. Use `{self.bot.command_prefix}resume` to resume.", color=discord.Color.blurple()))
             else:
