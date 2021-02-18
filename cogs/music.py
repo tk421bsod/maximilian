@@ -322,10 +322,19 @@ class music(commands.Cog):
         try:
             queuelength = len(self.song_queue[ctx.voice_client.channel.id])
             if queuelength != 0:
-                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{'Your queue: ' if queuelength != 1 else ''}{', '.join([f'`{i[1]}`(<{i[2]}>) Duration: {i[3]}' for i in self.song_queue[ctx.voice_client.channel.id]])}") 
+                m, s = 0, 0
+                #get total duration, could probably clean this up a bit
+                for i in self.song_queue[ctx.voice_client.channel.id]:
+                    m += int(i[3].split(':')[0])
+                    s += int(i[3].split(':')[1])
+                #don't show amounts of seconds greater than 60
+                m += s//60
+                s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
+                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{'Your queue: ' if queuelength != 1 else ''}{', '.join([f'`{i[1]}`(<{i[2]}>) Duration: {i[3]}' for i in self.song_queue[ctx.voice_client.channel.id]])}\n{f'Total duration: {m}:{s}' if queuelength != 1 else ''}") 
             else:
                 await ctx.send("You don't have anything in your queue.")
         except (IndexError, AttributeError):
+            traceback.print_exc()
             await ctx.send("You don't have anything in your queue.")
 
     @commands.command(aliases=["s"])
