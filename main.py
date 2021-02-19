@@ -156,7 +156,6 @@ async def reset_status():
 async def before_reset_status():
     await bot.wait_until_ready()
 
-
 @bot.event
 async def on_ready():
     print("recieved on_ready, finishing startup...")
