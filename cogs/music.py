@@ -317,8 +317,9 @@ class music(commands.Cog):
         except AttributeError:
             await ctx.send("I'm not in a voice channel.")
     
-    @commands.command(hidden=True, aliases=["q"])
+    @commands.command(aliases=["q"])
     async def queue(self, ctx):
+        '''View what's in your queue'''
         try:
             queuelength = len(self.song_queue[ctx.voice_client.channel.id])
             if queuelength != 0:
