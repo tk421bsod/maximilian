@@ -9,6 +9,9 @@ import os
 import git 
 import pymysql
 import sys
+import traceback
+#I recommend you install fuzzywuzzy[speedup] instead of just fuzzywuzzy
+from fuzzywuzzy import fuzz
 
 print("starting...")
 #create instance of 'Token' class, decrypt token
@@ -153,18 +156,13 @@ async def reset_status():
 async def before_reset_status():
     await bot.wait_until_ready()
 
-async def startup():
-    await bot.wait_until_ready()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=str(len(bot.guilds))+" guilds and " + str(len(bot.users)) + " users!"))
-
-
 @bot.event
 async def on_ready():
     print("recieved on_ready, finishing startup...")
+    bot.commandnames = [i.name for i in bot.commands if not i.hidden and i.name != "jishaku"]
     await bot.prefixesinst.reset_prefixes()
     await bot.responsesinst.get_responses()
     bot.help_command = HelpCommand()
-    bot.loop.create_task(startup())
     reset_status.start()
     print("ready")
     
@@ -231,7 +229,10 @@ async def on_command_error(ctx, error):
             await ctx.send("\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
     if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
         print("I'm missing permissions")
-        embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy or giving me the `{error.missing_perms[0]}` permission.", color=discord.Color.blurple())
+        try:
+            embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy or giving me the `{error.missing_perms[0]}` permission.", color=discord.Color.blurple())
+        except AttributeError:
+            embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
         if ctx.guild.me.guild_permissions.embed_links:
             await ctx.send(embed=embed)
         else:
@@ -248,11 +249,20 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.CommandNotFound):
         print("Can't find a command")
-        embed = discord.Embed(title=f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands.", color=discord.Color.blurple())
+        commandscores = []
+        #for each command, check how similar it is to the command the user tried
+        for each in bot.commandnames:
+            await bot.loop.run_in_executor(None, lambda: commandscores.append([each, fuzz.token_set_ratio(ctx.invoked_with, each)]))
+        print(commandscores)
+        #if a command is similar enough, put it in a list of similar commands, then form a string with those commands
+        similarcommands = '\n'.join([i for i in [f'`{i[0]}`' for i in commandscores if i[1] > 55]])
+        #can't include backslashes in fstring expressions, this is a hacky "fix" for that
+        newline = "\n"
+        embed = discord.Embed(title=f"\U0000274c I can't find that command. \n{f'Similar commands: {newline}{similarcommands}' if similarcommands != '' else 'No similar commands found.'}\nUse `{bot.command_prefix}help` to see a list of commands.", color=discord.Color.blurple())
         if ctx.guild.me.guild_permissions.embed_links:
             await ctx.send(embed=embed)
         else:
-            await ctx.send(f"\U0000274c I can't find that command. Use `{bot.command_prefix}help` to see a list of commands, or change my prefix using the `prefix` command if I'm conflicting with another bot. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
+            await ctx.send(f"\U0000274c I can't find that command. \n{f'Similar commands: {newline}{similarcommands}' if similarcommands != '' else 'No similar commands found.'}", description="Change my prefix using the `prefix` command if I'm conflicting with another bot. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
         return
     if isinstance(error, commands.MissingRequiredArgument):
         print("command is missing the required argument")
