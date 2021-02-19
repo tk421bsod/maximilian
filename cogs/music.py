@@ -148,7 +148,7 @@ class music(commands.Cog):
             await self.search_youtube_for_song(ydl, ctx, url, num+1)
 
     async def get_song(self, ctx, url):
-        #block this from executing until the previous call is finished, we don't want multiple instances of this running in parallel
+        #block this from executing until the previous call is finished, we don't want multiple instances of this running in parallel-
         print("Locked execution.")
         self.is_locked = True
         ydl_opts = {
@@ -343,6 +343,10 @@ class music(commands.Cog):
         try:
             assert self.song_queue[ctx.voice_client.channel.id] != []
             await ctx.send(embed=discord.Embed(title="\U000023e9 Skipping to the next song in the queue... ", color=discord.Color.blurple()))
+            #fade audio out
+            while ctx.voice_client.source.volume != 0:
+                ctx.voice_client.source.volume -= 0.01
+                await asyncio.sleep(0.01)
             await asyncio.sleep(1)
             ctx.voice_client.stop()
         except AssertionError:
