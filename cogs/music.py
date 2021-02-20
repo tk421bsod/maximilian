@@ -26,8 +26,7 @@ class music(commands.Cog):
         self.song_queue = {}
         self.channels_playing_audio = []
         self.is_locked = False
-        #TODO: defer adding to queue until previous get_song call finishes (this variable will be used for that)
-        self.channels_getting_songs = []
+        self.current_song = {}
         
     #some unused stuff, intended to save queues to db
     def push_queue_item_to_db(self, entry, position, ctx):
@@ -48,15 +47,20 @@ class music(commands.Cog):
         try:
             if channel.id not in self.channels_playing_audio:
                 return
-            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
-            print("playing next song in queue...")
-            #need to do this because we can't await coros, this isn't an async function
-            coro = ctx.send(f"{ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>)")
-            fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
-            fut.result()
-            self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
-            #we can't pass stuff to process_queue in after, so pass some stuff to it before passing it
-            handle_queue = functools.partial(self.process_queue, ctx, channel)
+            if self.current_song[channel.id][0]:
+                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.current_song[channel.id][1]), volume=0.5)
+                print("repeating song...")
+                #we can't pass stuff to process_queue in after, so pass some stuff to it before passing it
+                handle_queue = functools.partial(self.process_queue, ctx, channel)
+            else:
+                print("playing next song in queue...")
+                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
+                coro = ctx.send(f"{ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>) \n Duration: {self.song_queue[channel.id][0][3]}")
+                fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
+                fut.result()
+                self.current_song[channel.id] = [False, self.song_queue[channel.id][0][0]]
+                self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
+                handle_queue = functools.partial(self.process_queue, ctx, channel)
             ctx.voice_client.play(source, after=handle_queue)
         except IndexError:
             print("done with queue!")
@@ -293,6 +297,7 @@ class music(commands.Cog):
             ctx.voice_client.stop()
         except:
             pass
+        self.current_song[ctx.voice_client.channel.id] = [False, self.filename]
         await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>) \n Duration: {self.duration}")
         #unlock execution of get_song
         self.is_locked=False
@@ -309,6 +314,7 @@ class music(commands.Cog):
             try:
                 self.channels_playing_audio.remove(ctx.voice_client.channel.id)
                 self.song_queue[ctx.voice_client.channel.id] = []
+                self.current_song[ctx.voice_client.channel.id] = []
             except:
                 pass
             await ctx.guild.voice_client.disconnect()
@@ -344,6 +350,7 @@ class music(commands.Cog):
         try:
             assert self.song_queue[ctx.voice_client.channel.id] != []
             await ctx.send(embed=discord.Embed(title="\U000023e9 Skipping to the next song in the queue... ", color=discord.Color.blurple()))
+            self.current_song[ctx.voice_client.channel.id][0] = False
             #fade audio out
             while ctx.voice_client.source.volume != 0:
                 ctx.voice_client.source.volume -= 0.01
@@ -414,6 +421,22 @@ class music(commands.Cog):
         except AssertionError:
             await ctx.send("You don't have anything in your queue.")
         except Exception:
+            await ctx.send("I'm not in a voice channel.")
+
+    @commands.command(aliases=["loop", "lo"])
+    async def repeat(self, ctx):
+        '''Toggle repeating the current song.'''
+        try: 
+            if ctx.voice_client.is_playing():
+                if self.current_song[ctx.voice_client.channel.id][0]:
+                    self.current_song[ctx.voice_client.channel.id][0] = False
+                    await ctx.send(embed=discord.Embed(title="I won't repeat the current song anymore.", color=discord.Color.blurple()))
+                else:
+                    self.current_song[ctx.voice_client.channel.id][0] = True
+                    await ctx.send(embed=discord.Embed(title="\U0001f501 I'll repeat the current song after it finishes. Run this command again to stop repeating the current song.", color=discord.Color.blurple()))
+            else:
+                await ctx.send("I'm not playing anything right now.")
+        except:
             await ctx.send("I'm not in a voice channel.")
 
 
