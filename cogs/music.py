@@ -65,7 +65,11 @@ class music(commands.Cog):
             else:
                 print("playing next song in queue...")
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
-                coro = ctx.send(f"{ctx.author.mention} Playing `{self.song_queue[channel.id][0][1]}`... (<{self.song_queue[channel.id][0][2]}>) \n Duration: {self.song_queue[channel.id][0][3]}")
+                embed = discord.Embed(title="Now playing:", description=f"`{self.song_queue[channel.id][0][1]}`", color=discord.Color.blurple())
+                embed.add_field(name="Video URL", value=f"<{self.song_queue[channel.id][0][2]}>", inline=True)
+                embed.add_field(name="Duration", value=f"{self.song_queue[channel.id][0][3]}")
+                embed.set_image(url=f"{self.song_queue[channel.id][0][4]}")
+                coro = ctx.send(embed=embed)
                 fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
                 fut.result()
                 self.current_song[channel.id] = [False, self.song_queue[channel.id][0][0]]
@@ -94,10 +98,12 @@ class music(commands.Cog):
             #check if video id is in database, add it if it isn't
             name = await self.bot.loop.run_in_executor(None, self.bot.dbinst.retrieve, self.bot.database, "songs", "name", "id", f"{video}", False)
             duration = await self.bot.loop.run_in_executor(None, self.bot.dbinst.retrieve, self.bot.database, "songs", "duration", "id", f"{video}", False)
-            if name != None and duration != None:
+            thumbnail = await self.bot.loop.run_in_executor(None, self.bot.dbinst.retrieve, self.bot.database, "songs", "thumbnail", "id", f"{video}", False)
+            if name != None and duration != None and thumbnail != None:
                 self.name = name
                 self.filename = f"songcache/{video}.mp3"
                 self.duration = duration
+                self.thumbnail = thumbnail
                 self.url = f"https://youtube.com/watch?v={video}"
             else:
                 with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
@@ -105,6 +111,7 @@ class music(commands.Cog):
                     self.url = f"https://youtube.com/watch?v={video}"
                     self.name = info["title"]
                     self.filename = f"songcache/{video}.mp3"
+                    self.thumbnail = info["thumbnail"]
                     if info['duration'] == 0.0:
                         print("this video is a stream")
                         self.filename = info["url"]
@@ -116,9 +123,9 @@ class music(commands.Cog):
                         self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                         if m > 60:
                             raise DurationLimitError()
-                        if await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id") != "success":
+                        if await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration, "thumbnail":self.thumbnail}, "id") != "success":
                             await self.bot.loop.run_in_executor(None, self.bot.dbinst.delete, self.bot.database, "songs", video, "id")
-                            await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
+                            await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration, "thumbnail":self.thumbnail}, "id")
             print("got song from cache!")
         except FileNotFoundError:
             print("song isn't in cache")
@@ -130,19 +137,21 @@ class music(commands.Cog):
                     #doesn't return the correct file extension
                     self.name = info["title"]
                     self.url = f"https://youtube.com/watch?v={video}"
+                    self.thumbnail = info["thumbnail"]
                     #if duration is 0, we got a stream, don't put that in the database/download it
                     if info['duration'] == 0.0:
                         print("this video is a stream")
                         self.filename = info["url"]
                         self.duration = "No duration available (this is a stream)"
                     else:
+                        #now that we're sure it isn't a stream, download the video
                         info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
                         m, s = divmod(info["duration"], 60)
                         self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                         if m > 60:
                             raise DurationLimitError()
                         self.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
-                        await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration}, "id")
+                        await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":self.name, "id":video, "duration":self.duration, "thumbnail":self.thumbnail}, "id")
         return
 
     async def search_youtube_for_song(self, ydl, ctx, url, num):
@@ -153,6 +162,7 @@ class music(commands.Cog):
             self.name = self.info["entries"][num]["title"]
             m, s = divmod(self.info["entries"][num]["duration"], 60)
             self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+            self.thumbnail = self.info["entries"][num]["thumbnail"]
         except IndexError:
             raise NoSearchResultsError()
         #check if max duration (60 minutes) exceeded
@@ -237,10 +247,13 @@ class music(commands.Cog):
             #...unless we're already playing (or fetching) audio
             if channel.id not in self.channels_playing_audio:
                 self.channels_playing_audio.append(channel.id)
-                await ctx.send("Attempting to join the voice channel you're in...")
+                await ctx.send("Joining your voice channel...")
             else:
                 #if we're already playing (or fetching) audio, add song to queue
                 await ctx.send("Adding to your queue...")
+                #show warning if repeating song
+                if self.current_song[channel.id][0] == True:
+                    await ctx.send(f"\U000026a0 I'm repeating a song right now. I'll still add this song to your queue, but I won't play it until you run `{self.bot.command_prefix}loop` again (and wait for the current song to finish) or skip the current song using `{self.bot.command_prefix}skip`.")
                 try:
                     #if locked, don't do anything until unlocked
                     async with ctx.typing():
@@ -252,7 +265,7 @@ class music(commands.Cog):
                     return
                 print(self.song_queue[channel.id])
                 #actually add that stuff to queue
-                self.song_queue[channel.id].append([self.filename, self.name, self.url, self.duration])
+                self.song_queue[channel.id].append([self.filename, self.name, self.url, self.duration, self.thumbnail])
                 print(self.song_queue[channel.id])
                 await ctx.send(f"Added `{self.name}` to your queue! (<{self.url}>) Currently, you have {len(self.song_queue[channel.id])} {'songs' if len(self.song_queue[channel.id]) != 1 else 'song'} in your queue.")
                 #unlock after sending message
@@ -283,7 +296,7 @@ class music(commands.Cog):
                 await ctx.send(f'Connecting to the `{channel}` voice channel timed out.')
                 return
         print("connected to vc")
-        await ctx.send(f'Connected to the `{channel}` voice channel. Getting audio... (this may take a while for long songs)')
+        await ctx.send(f'Connected to `{channel}`. Getting audio... (this may take a while for long songs)')
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
         try:
             #if locked, don't do anything until unlocked
@@ -308,7 +321,11 @@ class music(commands.Cog):
         except:
             pass
         self.current_song[ctx.voice_client.channel.id] = [False, self.filename]
-        await ctx.send(f"{ctx.author.mention} Playing `{self.name}`... (<{self.url}>) \n Duration: {self.duration}")
+        embed = discord.Embed(title="Now playing:", description=f"`{self.name}`", color=discord.Color.blurple())
+        embed.add_field(name="Video URL", value=f"<{self.url}>", inline=True)
+        embed.add_field(name="Duration", value=f"{self.duration}")
+        embed.set_image(url=self.thumbnail)
+        await ctx.send(embed=embed)
         #unlock execution of get_song
         self.is_locked=False
         print("Done getting song, unlocked.")
@@ -347,6 +364,7 @@ class music(commands.Cog):
                 #don't show amounts of seconds greater than 60
                 m += s//60
                 s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
+                #this is really long and hard to read, not sure whether to split into multiple lines or not
                 await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{'Your queue: ' if queuelength != 1 else ''}{', '.join([f'`{i[1]}`(<{i[2]}>) Duration: {i[3]}' for i in self.song_queue[ctx.voice_client.channel.id]])}\n{f'Total duration: {m}:{s}' if queuelength != 1 else ''}") 
             else:
                 await ctx.send("You don't have anything in your queue.")
