@@ -40,6 +40,15 @@ class music(commands.Cog):
         else:
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
+    async def fade_audio(self, newvolume, ctx):
+        while ctx.voice_client.source.volume != newvolume/100:
+            ctx.voice_client.source.volume = round(ctx.voice_client.source.volume, 2)
+            if newvolume/100 < ctx.voice_client.source.volume:
+                ctx.voice_client.source.volume -= 0.01
+            elif newvolume/100 > ctx.voice_client.source.volume:
+                ctx.voice_client.source.volume += 0.01
+            await asyncio.sleep(0.005)
+
     def process_queue(self, ctx, channel, error):
         coro = asyncio.sleep(1)
         asyncio.run_coroutine_threadsafe(coro, self.bot.loop).result()
@@ -352,14 +361,13 @@ class music(commands.Cog):
             await ctx.send(embed=discord.Embed(title="\U000023e9 Skipping to the next song in the queue... ", color=discord.Color.blurple()))
             self.current_song[ctx.voice_client.channel.id][0] = False
             #fade audio out
-            while ctx.voice_client.source.volume != 0:
-                ctx.voice_client.source.volume -= 0.01
-                await asyncio.sleep(0.01)
+            await self.fade_audio(0, ctx)
             await asyncio.sleep(1)
             ctx.voice_client.stop()
         except AssertionError:
             await ctx.send("You don't have anything in your queue.")
         except Exception:
+            traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
 
     @commands.command()
@@ -402,8 +410,10 @@ class music(commands.Cog):
             newvolume = int(newvolume.replace("%", ""))
             if newvolume > 100 or newvolume < 0 or newvolume == None:
                 await ctx.send("You need to specify a volume percentage between 0 and 100.")
+            elif newvolume/100 == ctx.voice_client.source.volume:
+                await ctx.send(f"Volume is already set to {newvolume}%.")
             else:
-                ctx.voice_client.source.volume = newvolume/100
+                await self.fade_audio(newvolume, ctx)
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Set volume to {newvolume}%.{' Warning: Music may sound distorted at this volume level.' if newvolume >= 90 else ''}", color=discord.Color.blurple()))
         except ValueError:
             await ctx.send("You can't specify a decimal value for the volume.")
