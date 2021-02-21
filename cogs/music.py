@@ -42,6 +42,7 @@ class music(commands.Cog):
 
     async def fade_audio(self, newvolume, ctx):
         while ctx.voice_client.source.volume != newvolume/100:
+            #make volume a double so this doesn't loop infinitely (as volume can be something like 1.000000000004 sometimes)
             ctx.voice_client.source.volume = round(ctx.voice_client.source.volume, 2)
             if newvolume/100 < ctx.voice_client.source.volume:
                 ctx.voice_client.source.volume -= 0.01
