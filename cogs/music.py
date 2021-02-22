@@ -72,7 +72,7 @@ class music(commands.Cog):
                 coro = ctx.send(embed=embed)
                 fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
                 fut.result()
-                self.current_song[channel.id] = [False, self.song_queue[channel.id][0][0]]
+                self.current_song[channel.id] = [False, self.song_queue[channel.id][0][0], self.song_queue[channel.id][0][3]]
                 self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
                 handle_queue = functools.partial(self.process_queue, ctx, channel)
             ctx.voice_client.play(source, after=handle_queue)
@@ -164,6 +164,7 @@ class music(commands.Cog):
             self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
             self.thumbnail = self.info["entries"][num]["thumbnail"]
         except IndexError:
+            print(self.info["entries"])
             raise NoSearchResultsError()
         #check if max duration (60 minutes) exceeded
         if m > 60:
@@ -254,6 +255,8 @@ class music(commands.Cog):
                 #show warning if repeating song
                 if self.current_song[channel.id][0] == True:
                     await ctx.send(f"\U000026a0 I'm repeating a song right now. I'll still add this song to your queue, but I won't play it until you run `{self.bot.command_prefix}loop` again (and wait for the current song to finish) or skip the current song using `{self.bot.command_prefix}skip`.")
+                elif self.current_song[ctx.voice_client.channel.id][2] == "No duration available (this is a stream)":
+                    await ctx.send(f"\U000026a0 I'm playing a stream right now. I'll still add this song to your queue, but I won't play it until you run `{self.bot.command_prefix}skip` or the stream ends.")
                 try:
                     #if locked, don't do anything until unlocked
                     async with ctx.typing():
@@ -320,7 +323,7 @@ class music(commands.Cog):
             ctx.voice_client.stop()
         except:
             pass
-        self.current_song[ctx.voice_client.channel.id] = [False, self.filename]
+        self.current_song[ctx.voice_client.channel.id] = [False, self.filename, self.duration]
         embed = discord.Embed(title="Now playing:", description=f"`{self.name}`", color=discord.Color.blurple())
         embed.add_field(name="Video URL", value=f"<{self.url}>", inline=True)
         embed.add_field(name="Duration", value=f"{self.duration}")
@@ -364,8 +367,10 @@ class music(commands.Cog):
                 #don't show amounts of seconds greater than 60
                 m += s//60
                 s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
-                #this is really long and hard to read, not sure whether to split into multiple lines or not
-                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{'Your queue: ' if queuelength != 1 else ''}{', '.join([f'`{i[1]}`(<{i[2]}>) Duration: {i[3]}' for i in self.song_queue[ctx.voice_client.channel.id]])}\n{f'Total duration: {m}:{s}' if queuelength != 1 else ''}") 
+                newline = "\n"  #hacky "fix" for f-strings not allowing backslashes
+                #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
+                #show user's queue, change how it's displayed depending on how many songs are in the queue
+                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'`{i[1]}`(<{i[2]}>) Duration: {i[3]}' for i in self.song_queue[ctx.voice_client.channel.id]])}\n{f'Total duration: {m}:{s}' if queuelength != 1 else ''}") 
             else:
                 await ctx.send("You don't have anything in your queue.")
         except (IndexError, AttributeError):
@@ -382,6 +387,7 @@ class music(commands.Cog):
             #fade audio out
             await self.fade_audio(0, ctx)
             await asyncio.sleep(1)
+            #stop playback, this immediately calls process_queue
             ctx.voice_client.stop()
         except AssertionError:
             await ctx.send("You don't have anything in your queue.")
@@ -398,9 +404,9 @@ class music(commands.Cog):
                 ctx.voice_client.pause()
                 await ctx.send(embed=discord.Embed(title=f"\U000023f8 Paused. Run `{self.bot.command_prefix}resume` to resume audio, or run `{self.bot.command_prefix}leave` to make me leave the voice channel.", color=discord.Color.blurple()))
             elif ctx.voice_client.is_paused():
-                await ctx.send(embed=discord.Embed(title=f"\U0000274c I'm already paused. Use `{self.bot.command_prefix}resume` to resume.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title=f"<:red_x:813135049083191307> I'm already paused. Use `{self.bot.command_prefix}resume` to resume.", color=discord.Color.blurple()))
             else:
-                await ctx.send(embed=discord.Embed(title="\U0000274c I'm not playing anything.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything.", color=discord.Color.blurple()))
         except Exception:
             traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
@@ -415,9 +421,9 @@ class music(commands.Cog):
                 ctx.voice_client.resume()
                 return
             elif ctx.voice_client.is_playing():
-                await ctx.send(embed=discord.Embed(title="\U0000274c I'm already playing something.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm already playing something.", color=discord.Color.blurple()))
             else:
-                await ctx.send(embed=discord.Embed(title="\U0000274c I'm not playing anything.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything.", color=discord.Color.blurple()))
         except Exception:
             traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
@@ -456,16 +462,20 @@ class music(commands.Cog):
     async def repeat(self, ctx):
         '''Toggle repeating the current song.'''
         try: 
-            if ctx.voice_client.is_playing():
+            if ctx.voice_client.is_playing() and self.current_song[ctx.voice_client.channel.id][2] != "No duration available (this is a stream)":
                 if self.current_song[ctx.voice_client.channel.id][0]:
                     self.current_song[ctx.voice_client.channel.id][0] = False
                     await ctx.send(embed=discord.Embed(title="I won't repeat the current song anymore.", color=discord.Color.blurple()))
                 else:
                     self.current_song[ctx.voice_client.channel.id][0] = True
                     await ctx.send(embed=discord.Embed(title="\U0001f501 I'll repeat the current song after it finishes. Run this command again to stop repeating the current song.", color=discord.Color.blurple()))
+            elif self.current_song[ctx.voice_client.channel.id][2] == "No duration available (this is a stream)":
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I can't repeat streams.", color=discord.Color.blurple()))
             else:
-                await ctx.send("I'm not playing anything right now.")
-        except:
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=discord.Color.blurple()))
+        except AttributeError:
+            await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=discord.Color.blurple()))
+        except IndexError:
             await ctx.send("I'm not in a voice channel.")
 
 
