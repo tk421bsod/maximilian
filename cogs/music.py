@@ -41,6 +41,7 @@ class music(commands.Cog):
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
     async def fade_audio(self, newvolume, ctx):
+        '''Smoothly transition between volume levels'''
         while ctx.voice_client.source.volume != newvolume/100:
             #make volume a double so this doesn't loop infinitely (as volume can be something like 1.000000000004 sometimes)
             ctx.voice_client.source.volume = round(ctx.voice_client.source.volume, 2)
@@ -51,6 +52,7 @@ class music(commands.Cog):
             await asyncio.sleep(0.005)
 
     def process_queue(self, ctx, channel, error):
+        '''Starts playing the next song in the queue, cleans up some stuff if the queue is empty'''
         coro = asyncio.sleep(1)
         asyncio.run_coroutine_threadsafe(coro, self.bot.loop).result()
         #this is a callback that is executed after song ends
@@ -83,6 +85,7 @@ class music(commands.Cog):
             self.song_queue[channel.id] = []
 
     async def get_song_from_cache(self, ctx, url, ydl_opts):
+        '''Attempts to find an mp3 matching the video id locally, downloading the video if that file isn't found. This prioritizes speed, checking if a song is saved locally before downloading it from Youtube.'''
         try:
             print("getting song from cache")
             #get video id from parameters, try to open mp3 file matching that id (if that file exists, play it instead of downloading it)
@@ -156,6 +159,7 @@ class music(commands.Cog):
         return
 
     async def search_youtube_for_song(self, ydl, ctx, url, num):
+        '''Search Youtube for a song and extract metadata from the first search result. If the maximum duration is exceeded, go to the next search result.'''
         if num == 0:
             self.info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False))
         try:
@@ -174,6 +178,7 @@ class music(commands.Cog):
             await self.search_youtube_for_song(ydl, ctx, url, num+1)
 
     async def get_song(self, ctx, url):
+        '''Gets the filename, id, and other metadata of a song. This tries to look up a song in the database first, then it searches Youtube if that fails.'''
         #block this from executing until the previous call is finished, we don't want multiple instances of this running in parallel-
         print("Locked execution.")
         self.is_locked = True
