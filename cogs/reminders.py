@@ -1,7 +1,6 @@
 import datetime
 from dateparser.search import search_dates
 import humanize
-from aioconsole import ainput
 from discord.ext import commands
 import discord
 import asyncio
@@ -13,22 +12,9 @@ class reminders(commands.Cog):
 
     async def handle_reminder(self, ctx, remindertimeseconds, remindertext):
         #wait for as long as needed
-        while True:
-            try:
-                await asyncio.sleep(remindertimeseconds)
-                #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
-                await ctx.send(f"{ctx.author.mention} {humanize.precisedelta(remindertimeseconds)} ago: '{remindertext}'")
-                break
-            except KeyboardInterrupt:
-                self.bot.logger.warning("One or more reminders is running. Stopping the bot now will cause a loss of data. Do you want to stop it? (Y/N)")
-                choice = await ainput()
-                if choice.lower.strip() == "y":
-                    print("Stopping the bot...")
-                    self.bot.logout()
-                    break
-                elif choice.lower.strip() == "n":
-                    print("Continuing...")
-                    continue
+        await asyncio.sleep(remindertimeseconds)
+        #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
+        await ctx.send(f"{ctx.author.mention} {humanize.precisedelta(remindertimeseconds)} ago: '{remindertext}'")
 
     @commands.command(hidden=True)
     async def remind(self, ctx, action, *, reminder):
