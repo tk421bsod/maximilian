@@ -65,6 +65,7 @@ class music(commands.Cog):
             else:
                 print("playing next song in queue...")
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
+                #build now playing embed, send it
                 embed = discord.Embed(title="Now playing:", description=f"`{self.song_queue[channel.id][0][1]}`", color=discord.Color.blurple())
                 embed.add_field(name="Video URL", value=f"<{self.song_queue[channel.id][0][2]}>", inline=True)
                 embed.add_field(name="Duration", value=f"{self.song_queue[channel.id][0][3]}")
@@ -72,7 +73,7 @@ class music(commands.Cog):
                 coro = ctx.send(embed=embed)
                 fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
                 fut.result()
-                self.current_song[channel.id] = [False, self.song_queue[channel.id][0][0], self.song_queue[channel.id][0][3]]
+                self.current_song[channel.id] = [False, self.song_queue[channel.id][0][0], self.song_queue[channel.id][0][3], self.song_queue[channel.id][0][1], self.song_queue[channel.id][0][4], self.song_queue[channel.id][0][2], time.time(), 0, 0]
                 self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
                 handle_queue = functools.partial(self.process_queue, ctx, channel)
             ctx.voice_client.play(source, after=handle_queue)
@@ -231,6 +232,8 @@ class music(commands.Cog):
                 #raise CommandError so we don't play anything
                 raise discord.ext.commands.CommandError()
 
+    
+    #executes when someone sends a message with the prefix followed by 'play'
     @commands.command(aliases=["p"])
     async def play(self, ctx, *, url=None):
         '''Play something from youtube. You need to provide a valid Youtube URL or a search term for this to work.'''
@@ -323,10 +326,13 @@ class music(commands.Cog):
             ctx.voice_client.stop()
         except:
             pass
-        self.current_song[ctx.voice_client.channel.id] = [False, self.filename, self.duration]
+        #current_song is a bunch of information about the current song that's playing.
+        #that information in order:
+        #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: Start time, 7: Time when paused, 8: Total time paused
+        self.current_song[ctx.voice_client.channel.id] = [False, self.filename, self.duration, self.name, self.thumbnail, self.url, time.time(), 0, 0]
         embed = discord.Embed(title="Now playing:", description=f"`{self.name}`", color=discord.Color.blurple())
         embed.add_field(name="Video URL", value=f"<{self.url}>", inline=True)
-        embed.add_field(name="Duration", value=f"{self.duration}")
+        embed.add_field(name="Total Duration", value=f"{self.duration}")
         embed.set_image(url=self.thumbnail)
         await ctx.send(embed=embed)
         #unlock execution of get_song
@@ -362,11 +368,14 @@ class music(commands.Cog):
                 m, s = 0, 0
                 #get total duration, could probably clean this up a bit
                 for i in self.song_queue[ctx.voice_client.channel.id]:
-                    m += int(i[3].split(':')[0])
-                    s += int(i[3].split(':')[1])
-                #don't show amounts of seconds greater than 60
-                m += s//60
-                s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
+                    try:
+                        m += int(i[3].split(':')[0])
+                        s += int(i[3].split(':')[1])
+                    except ValueError:
+                        continue
+                    #don't show amounts of seconds greater than 60
+                    m += s//60
+                    s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
                 newline = "\n"  #hacky "fix" for f-strings not allowing backslashes
                 #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
                 #show user's queue, change how it's displayed depending on how many songs are in the queue
@@ -402,6 +411,7 @@ class music(commands.Cog):
             assert ctx.guild.me.voice != None
             if ctx.voice_client.is_playing():
                 ctx.voice_client.pause()
+                self.current_song[ctx.voice_client.channel.id][7] = time.time()
                 await ctx.send(embed=discord.Embed(title=f"\U000023f8 Paused. Run `{self.bot.command_prefix}resume` to resume audio, or run `{self.bot.command_prefix}leave` to make me leave the voice channel.", color=discord.Color.blurple()))
             elif ctx.voice_client.is_paused():
                 await ctx.send(embed=discord.Embed(title=f"<:red_x:813135049083191307> I'm already paused. Use `{self.bot.command_prefix}resume` to resume.", color=discord.Color.blurple()))
@@ -417,6 +427,7 @@ class music(commands.Cog):
         try:
             assert ctx.guild.me.voice != None
             if ctx.voice_client.is_paused():
+                self.current_song[ctx.voice_client.channel.id][8] += round(time.time() - self.current_song[ctx.voice_client.channel.id][7])
                 await ctx.send(embed=discord.Embed(title="\U000025b6 Resuming...", color=discord.Color.blurple()))
                 ctx.voice_client.resume()
                 return
@@ -478,6 +489,28 @@ class music(commands.Cog):
         except IndexError:
             await ctx.send("I'm not in a voice channel.")
 
+    @commands.command(aliases=["cs", "np", "song", "currentsong", "currentlyplaying", "cp"])
+    async def nowplaying(self, ctx):
+        '''Show the song that's currently playing.'''
+        try:
+            if ctx.voice_client.is_playing():
+                #get elapsed duration, make it human-readable
+                m, s = divmod(round((time.time() - self.current_song[ctx.voice_client.channel.id][6]) - self.current_song[ctx.voice_client.channel.id][8]), 60)
+            elif ctx.voice_client.is_paused():
+                m, s = divmod(round((self.current_song[ctx.voice_client.channel.id][7] - self.current_song[ctx.voice_client.channel.id][6]) - self.current_song[ctx.voice_client.channel.id][8]), 60)
+            else:
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=discord.Color.blurple()))
+                return
+            embed = discord.Embed(title="Currently playing:", description=f"`{self.current_song[ctx.voice_client.channel.id][3]}`", color=discord.Color.blurple())
+            embed.add_field(name="Video URL", value=f"<{self.current_song[ctx.voice_client.channel.id][5]}>", inline=True)
+            if self.current_song[ctx.voice_client.channel.id][2] == "No duration available (this is a stream)":
+                embed.add_field(name="Duration (Elapsed/Total)", value=f"You've been listening to this stream for {m} minutes and {s} seconds.")
+            else:
+                embed.add_field(name="Duration (Elapsed/Total)", value=f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}/{self.current_song[ctx.voice_client.channel.id][2]}")
+            embed.set_image(url=self.current_song[ctx.voice_client.channel.id][4])
+            await ctx.send(embed=embed)
+        except AttributeError:
+            await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not in a voice channel.", color=discord.Color.blurple()))
 
 
 def setup(bot):
