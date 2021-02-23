@@ -153,7 +153,7 @@ class misc(commands.Cog):
             location = obj.callback.__module__.replace('.', '/') + '.py'
             source_url = "https://github.com/Rapptz/discord.py"
             branch = "master"
-        await ctx.send(f'{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}')
+        await ctx.send(f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>')
 
 def setup(bot):
     bot.add_cog(misc(bot))
