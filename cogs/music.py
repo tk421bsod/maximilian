@@ -40,7 +40,8 @@ class music(commands.Cog):
         else:
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
-    async def fade_audio(self, newvolume, ctx):
+<<<<<<< HEAD
+    async def _fade_audio(self, newvolume, ctx):
         '''Smoothly transition between volume levels'''
         while ctx.voice_client.source.volume != newvolume/100:
             #make volume a double so this doesn't loop infinitely (as volume can be something like 1.000000000004 sometimes)
@@ -159,7 +160,7 @@ class music(commands.Cog):
         return
 
     async def search_youtube_for_song(self, ydl, ctx, url, num):
-        '''Search Youtube for a song and extract metadata from the first search result. If the maximum duration is exceeded, go to the next search result.'''
+        '''Searches Youtube for a song and extracts metadata from the first search result. If the maximum duration is exceeded, it goes to the next search result, up to 4 times.'''
         if num == 0:
             self.info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False))
         try:
@@ -253,7 +254,7 @@ class music(commands.Cog):
                 self.song_queue[channel.id]
             except KeyError:
                 self.song_queue[channel.id] = []
-            #...unless we're already playing (or fetching) audio
+            #don't join vc if we're already playing (or fetching) audio
             if channel.id not in self.channels_playing_audio:
                 self.channels_playing_audio.append(channel.id)
                 await ctx.send("Joining your voice channel...")
@@ -399,7 +400,7 @@ class music(commands.Cog):
             await ctx.send(embed=discord.Embed(title="\U000023e9 Skipping to the next song in the queue... ", color=discord.Color.blurple()))
             self.current_song[ctx.voice_client.channel.id][0] = False
             #fade audio out
-            await self.fade_audio(0, ctx)
+            await self._fade_audio(0, ctx)
             await asyncio.sleep(1)
             #stop playback, this immediately calls process_queue
             ctx.voice_client.stop()
@@ -454,7 +455,7 @@ class music(commands.Cog):
             elif newvolume/100 == ctx.voice_client.source.volume:
                 await ctx.send(f"Volume is already set to {newvolume}%.")
             else:
-                await self.fade_audio(newvolume, ctx)
+                await self._fade_audio(newvolume, ctx)
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Set volume to {newvolume}%.{' Warning: Music may sound distorted at this volume level.' if newvolume >= 90 else ''}", color=discord.Color.blurple()))
         except ValueError:
             await ctx.send("You can't specify a decimal value for the volume.")
