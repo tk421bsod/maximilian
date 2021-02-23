@@ -59,7 +59,8 @@ class reminders(commands.Cog):
             return
         if action == "add":
             if (result := self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry}, None, False, None, False, None, False)) == "success":
-                await ctx.send(f"Todo entry added successfully. \n This is the {self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}'")
+                entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
+                await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry added successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
             elif result == "error-duplicate":
                 await ctx.send("That todo entry already exists.")
             else:
@@ -69,7 +70,8 @@ class reminders(commands.Cog):
                 await ctx.send("There was an error while adding your todo entry. I've made my developer aware of this.")
         if action == "delete":
             if self.bot.dbinst.delete(self.bot.database, "todo", entry, "entry", "user_id", ctx.author.id, True) == "successful":
-                await ctx.send("Todo entry deleted successfully.")
+                entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
+                await ctx.send(embed=discord.Embed(title=f"Todo entry deleted successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
             else:
                 await ctx.send("Something went wrong while deleting your todo entry. Make sure that the todo entry you're trying to delete actually exists.")
 
