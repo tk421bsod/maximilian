@@ -1,7 +1,6 @@
 import datetime
 from dateparser.search import search_dates
 import humanize
-from aioconsole import ainput
 from discord.ext import commands
 import discord
 import asyncio
@@ -13,22 +12,9 @@ class reminders(commands.Cog):
 
     async def handle_reminder(self, ctx, remindertimeseconds, remindertext):
         #wait for as long as needed
-        while True:
-            try:
-                await asyncio.sleep(remindertimeseconds)
-                #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
-                await ctx.send(f"{ctx.author.mention} {humanize.precisedelta(remindertimeseconds)} ago: '{remindertext}'")
-                break
-            except KeyboardInterrupt:
-                self.bot.logger.warning("One or more reminders is running. Stopping the bot now will cause a loss of data. Do you want to stop it? (Y/N)")
-                choice = await ainput()
-                if choice.lower.strip() == "y":
-                    print("Stopping the bot...")
-                    self.bot.logout()
-                    break
-                elif choice.lower.strip() == "n":
-                    print("Continuing...")
-                    continue
+        await asyncio.sleep(remindertimeseconds)
+        #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
+        await ctx.send(f"{ctx.author.mention} {humanize.precisedelta(remindertimeseconds)} ago: '{remindertext}'")
 
     @commands.command(hidden=True)
     async def remind(self, ctx, action, *, reminder):
@@ -72,11 +58,22 @@ class reminders(commands.Cog):
             await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
             return
         if action == "add":
-            if self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry}, None, False, None, False, None, False) == "success":
-                await ctx.send("Todo entry added successfully.")
+            if (result := self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry}, None, False, None, False, None, False)) == "success":
+                entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
+                await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry added successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
+            elif result == "error-duplicate":
+                await ctx.send("That todo entry already exists.")
+            else:
+                #dm traceback
+                owner = self.bot.fetch_user(self.bot.owner_id)
+                owner.send(f"Error while adding to the todo list: {result}")
+                await ctx.send("There was an error while adding your todo entry. I've made my developer aware of this.")
         if action == "delete":
             if self.bot.dbinst.delete(self.bot.database, "todo", entry, "entry", "user_id", ctx.author.id, True) == "successful":
-                await ctx.send("Todo entry deleted successfully.")
+                entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
+                await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry deleted successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
+            else:
+                await ctx.send("Something went wrong while deleting your todo entry. Make sure that the todo entry you're trying to delete actually exists.")
 
             
 

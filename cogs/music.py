@@ -41,7 +41,7 @@ class music(commands.Cog):
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
     async def _fade_audio(self, newvolume, ctx):
-        '''Smoothly transition between volume levels'''
+        '''Smoothly transitions between volume levels'''
         while ctx.voice_client.source.volume != newvolume/100:
             #make volume a double so this doesn't loop infinitely (as volume can be something like 1.000000000004 sometimes)
             ctx.voice_client.source.volume = round(ctx.voice_client.source.volume, 2)
@@ -159,7 +159,7 @@ class music(commands.Cog):
         return
 
     async def search_youtube_for_song(self, ydl, ctx, url, num):
-        '''Search Youtube for a song and extract metadata from the first search result. If the maximum duration is exceeded, go to the next search result.'''
+        '''Searches Youtube for a song and extracts metadata from the first search result. If the maximum duration is exceeded, it goes to the next search result, up to 4 times.'''
         if num == 0:
             self.info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False))
         try:
@@ -253,7 +253,7 @@ class music(commands.Cog):
                 self.song_queue[channel.id]
             except KeyError:
                 self.song_queue[channel.id] = []
-            #...unless we're already playing (or fetching) audio
+            #don't join vc if we're already playing (or fetching) audio
             if channel.id not in self.channels_playing_audio:
                 self.channels_playing_audio.append(channel.id)
                 await ctx.send("Joining your voice channel...")
