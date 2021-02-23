@@ -257,7 +257,7 @@ class music(commands.Cog):
             #don't join vc if we're already playing (or fetching) audio
             if channel.id not in self.channels_playing_audio:
                 self.channels_playing_audio.append(channel.id)
-                await ctx.send("Joining your voice channel...")
+                joiningmessage = await ctx.send("Joining your voice channel...")
             else:
                 #if we're already playing (or fetching) audio, add song to queue
                 await ctx.send("Adding to your queue...")
@@ -293,22 +293,22 @@ class music(commands.Cog):
         vc = ctx.voice_client
         if vc:
             if vc.channel.id == channel.id:
-                await ctx.send(f"I'm already in your voice channel, so I won't reconnect.")
+                await joiningmessage.edit(content="I'm already in your voice channel, so I won't reconnect.")
             else:
                 try:
                     self.song_queue[vc.channel.id] = []
                     await vc.move_to(channel)
                 except asyncio.TimeoutError:
-                    await ctx.send(f'Moving to the `{channel}` voice channel timed out.')
+                    await joiningmessage.edit(content='Moving to the `{channel}` voice channel timed out.')
                     return
         else:
             try:
                 await channel.connect()
             except asyncio.TimeoutError:
-                await ctx.send(f'Connecting to the `{channel}` voice channel timed out.')
+                await joiningmessage.edit(content='Connecting to the `{channel}` voice channel timed out.')
                 return
         print("connected to vc")
-        await ctx.send(f'Connected to `{channel}`. Getting audio... (this may take a while for long songs)')
+        await joiningmessage.edit(embed=discord.Embed(title=f'\U00002705 Connected to `{channel}`. Getting audio... (this may take a while for long songs)', color=discord.Color.blurple()), content="")
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
         try:
             #if locked, don't do anything until unlocked
