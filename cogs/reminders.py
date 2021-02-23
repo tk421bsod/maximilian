@@ -71,7 +71,7 @@ class reminders(commands.Cog):
             if self.bot.dbinst.delete(self.bot.database, "todo", entry, "entry", "user_id", ctx.author.id, True) == "successful":
                 await ctx.send("Todo entry deleted successfully.")
             else:
-                await ctx.send("Something went wrong while deleting your todo entry. Make sure that the todo entry you're trying to delete actually exists.
+                await ctx.send("Something went wrong while deleting your todo entry. Make sure that the todo entry you're trying to delete actually exists.")
 
             
 
