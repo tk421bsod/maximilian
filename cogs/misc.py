@@ -7,6 +7,8 @@ import asyncio
 from zalgo_text import zalgo as zalgo_text_gen
 import typing
 import bottom as bottomify
+import inspect
+import os
 
 class misc(commands.Cog):
     '''Some commands that don\'t really fit into other categories'''
@@ -129,6 +131,29 @@ class misc(commands.Cog):
             await ctx.send(bottomify.decode(text))
         else:
             await ctx.send("You need to specify whether you want to encode or decode text.")
+
+    @commands.command(aliases=["code", "src"], hidden=True)
+    async def source(self, ctx, *, command: str = None):
+        """Displays my full source code or the source code for the specified command.
+        """
+        source_url = "https://github.com/TK421bsod/maximilian"
+        branch = "maximilian-dev"
+        if command is None:
+            await ctx.send(source_url)
+            return
+        obj = self.bot.get_command(command)
+        if obj is None:
+            return await ctx.send("I can't find the source code for that command. Make sure you didn't misspell the command's name.")
+        src = obj.callback.__code__
+        lines, firstlineno = inspect.getsourcelines(src)
+        if not obj.callback.__module__.startswith('discord'):
+            # not a built-in command
+            location = os.path.relpath(src.co_filename).replace('\\', '/')
+        else:
+            location = obj.callback.__module__.replace('.', '/') + '.py'
+            source_url = "https://github.com/Rapptz/discord.py"
+            branch = "master"
+        await ctx.send(f'{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}')
 
 def setup(bot):
     bot.add_cog(misc(bot))
