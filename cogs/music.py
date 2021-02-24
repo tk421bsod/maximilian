@@ -309,7 +309,7 @@ class music(commands.Cog):
                 await joiningmessage.edit(content='Connecting to the `{channel}` voice channel timed out.')
                 return
         print("connected to vc")
-        await joiningmessage.edit(embed=discord.Embed(title=f'\U00002705 Connected to `{channel}`. Getting audio... (this may take a while for long songs)', color=discord.Color.blurple()), content="")
+        await ctx.send(embed=discord.Embed(title=f'\U00002705 Connected to `{channel}`. Getting audio... (this may take a while for long songs)', color=discord.Color.blurple()))
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
         try:
             #if locked, don't do anything until unlocked
