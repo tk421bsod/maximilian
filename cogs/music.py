@@ -447,11 +447,13 @@ class music(commands.Cog):
             await ctx.send("I'm not in a voice channel.")
     
     @commands.command(aliases=["v"])
-    async def volume(self, ctx, newvolume):
+    async def volume(self, ctx, newvolume : typing.Optional[str]=None):
         '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
+        if newvolume == None:
+            await ctx.send(f"Volume is currently set to {self.current_song[ctx.voice_client.channel.id][9]}.")
         try:
             newvolume = int(newvolume.replace("%", ""))
-            if newvolume > 100 or newvolume < 0 or newvolume == None:
+            if newvolume > 100 or newvolume < 0:
                 await ctx.send("You need to specify a volume percentage between 0 and 100.")
             elif newvolume/100 == ctx.voice_client.source.volume:
                 await ctx.send(f"Volume is already set to {newvolume}%.")
