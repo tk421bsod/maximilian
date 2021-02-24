@@ -60,13 +60,12 @@ class music(commands.Cog):
             if channel.id not in self.channels_playing_audio:
                 return
             if self.current_song[channel.id][0]:
-                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.current_song[channel.id][1]), volume=0.5)
+                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.current_song[channel.id][1]), volume=self.current_song[channel.id][9])
                 print("repeating song...")
                 #we can't pass stuff to process_queue in after, so pass some stuff to it before passing it
                 handle_queue = functools.partial(self.process_queue, ctx, channel)
             else:
                 print("playing next song in queue...")
-                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=0.5)
                 #build now playing embed, send it
                 embed = discord.Embed(title="Now playing:", description=f"`{self.song_queue[channel.id][0][1]}`", color=discord.Color.blurple())
                 embed.add_field(name="Video URL", value=f"<{self.song_queue[channel.id][0][2]}>", inline=True)
@@ -75,7 +74,9 @@ class music(commands.Cog):
                 coro = ctx.send(embed=embed)
                 fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
                 fut.result()
-                self.current_song[channel.id] = [False, self.song_queue[channel.id][0][0], self.song_queue[channel.id][0][3], self.song_queue[channel.id][0][1], self.song_queue[channel.id][0][4], self.song_queue[channel.id][0][2], time.time(), 0, 0]
+                volume = self.current_song[channel.id][9]
+                self.current_song[channel.id] = [False, self.song_queue[channel.id][0][0], self.song_queue[channel.id][0][3], self.song_queue[channel.id][0][1], self.song_queue[channel.id][0][4], self.song_queue[channel.id][0][2], time.time(), 0, 0, volume]
+                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=volume)
                 self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
                 handle_queue = functools.partial(self.process_queue, ctx, channel)
             ctx.voice_client.play(source, after=handle_queue)
@@ -224,7 +225,7 @@ class music(commands.Cog):
                 self.is_locked = False
                 raise discord.ext.commands.CommandError()
             except NoSearchResultsError:
-                await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again, then try entering a more broad search term.")
+                await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.")
                 await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
                 traceback.print_exc()
                 self.is_locked = False
@@ -333,8 +334,8 @@ class music(commands.Cog):
             pass
         #current_song is a bunch of information about the current song that's playing.
         #that information in order:
-        #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: Start time, 7: Time when paused, 8: Total time paused
-        self.current_song[ctx.voice_client.channel.id] = [False, self.filename, self.duration, self.name, self.thumbnail, self.url, time.time(), 0, 0]
+        #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: Start time, 7: Time when paused, 8: Total time paused, 9: Volume
+        self.current_song[ctx.voice_client.channel.id] = [False, self.filename, self.duration, self.name, self.thumbnail, self.url, time.time(), 0, 0, 0.5]
         embed = discord.Embed(title="Now playing:", description=f"`{self.name}`", color=discord.Color.blurple())
         embed.add_field(name="Video URL", value=f"<{self.url}>", inline=True)
         embed.add_field(name="Total Duration", value=f"{self.duration}")
@@ -455,6 +456,7 @@ class music(commands.Cog):
                 await ctx.send(f"Volume is already set to {newvolume}%.")
             else:
                 await self._fade_audio(newvolume, ctx)
+                self.current_song[ctx.voice_client.channel.id][9] = newvolume/100
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Set volume to {newvolume}%.{' Warning: Music may sound distorted at this volume level.' if newvolume >= 90 else ''}", color=discord.Color.blurple()))
         except ValueError:
             await ctx.send("You can't specify a decimal value for the volume.")
