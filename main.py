@@ -225,8 +225,10 @@ async def on_command_error(ctx, error):
                 bot.musicinst.channels_playing_audio.remove(ctx.voice_client.channel.id)
             except:
                 pass
+            return
     if isinstance(error, KeyError) and cog.qualified_name == "music":
         await ctx.send(f"There was an error. Try making me leave the voice channel using `{bot.command_prefix}leave`, then try repeating what you were doing. My developer has been made aware of this.")
+        return
     #check for database errors first, these should almost never happen
     if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
         print("database error, printing context and error type")
