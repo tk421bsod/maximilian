@@ -526,7 +526,7 @@ class music(commands.Cog):
         error = getattr(error, "original", error)
         if isinstance(error, discord.errors.Forbidden) or isinstance(error, discord.Forbidden):
             if not ctx.guild.me.guild_permissions.embed_links:
-                await ctx.send("I need the 'Embed Links' permission to display song information.")
+                await ctx.send("I need the 'Embed Links' permission to play songs. (or run any music related commands)")
         if isinstance(error, commands.errors.CheckFailure):
             pass
         pass
