@@ -451,6 +451,7 @@ class music(commands.Cog):
         try:
             if newvolume == None:
                 await ctx.send(f"Volume is currently set to {self.current_song[ctx.voice_client.channel.id][9]}.")
+                return
             newvolume = int(newvolume.replace("%", ""))
             if newvolume > 100 or newvolume < 0:
                 await ctx.send("You need to specify a volume percentage between 0 and 100.")
