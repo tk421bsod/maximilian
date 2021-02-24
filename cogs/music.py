@@ -523,18 +523,6 @@ class music(commands.Cog):
         except AttributeError:
             await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not in a voice channel.", color=discord.Color.blurple()))
 
-    async def cog_command_error(self, ctx, error):
-        error = getattr(error, "original", error)
-        if isinstance(error, discord.errors.Forbidden) or isinstance(error, discord.Forbidden):
-            if not ctx.guild.me.guild_permissions.embed_links:
-                await ctx.send("I need the 'Embed Links' permission to play songs. (or run any music related commands)")
-                try:
-                    self.channels_playing_audio.remove(ctx.voice_client.channel.id)
-                except:
-                    pass
-        if isinstance(error, commands.errors.CheckFailure):
-            pass
-        pass
 
 def setup(bot):
     bot.add_cog(music(bot))
