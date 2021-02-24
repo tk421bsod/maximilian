@@ -527,6 +527,10 @@ class music(commands.Cog):
         if isinstance(error, discord.errors.Forbidden) or isinstance(error, discord.Forbidden):
             if not ctx.guild.me.guild_permissions.embed_links:
                 await ctx.send("I need the 'Embed Links' permission to play songs. (or run any music related commands)")
+                try:
+                    self.channels_playing_audio.remove(ctx.voice_client.channel.id)
+                except:
+                    pass
         if isinstance(error, commands.errors.CheckFailure):
             pass
         pass
