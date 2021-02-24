@@ -451,7 +451,7 @@ class music(commands.Cog):
         '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
         try:
             if newvolume == None:
-                await ctx.send(f"Volume is currently set to {self.current_song[ctx.voice_client.channel.id][9]*100}%.")
+                await ctx.send(f"Volume is currently set to {int(self.current_song[ctx.voice_client.channel.id][9]*100)}%.")
                 return
             newvolume = int(newvolume.replace("%", ""))
             if newvolume > 100 or newvolume < 0:
