@@ -135,7 +135,7 @@ class misc(commands.Cog):
             await ctx.send(source_url)
             return
         obj = self.bot.get_command(command)
-        if obj is None:
+        if obj is None or obj.name == "jishaku":
             return await ctx.send("I can't find the source code for that command. Make sure you didn't misspell the command's name.")
         src = obj.callback.__code__
         lines, firstlineno = inspect.getsourcelines(src)
