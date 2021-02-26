@@ -522,6 +522,21 @@ class music(commands.Cog):
         except AttributeError:
             await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not in a voice channel.", color=discord.Color.blurple()))
 
+    @commands.command(aliases=["quit"])
+    async def stop(self, ctx):
+        '''Stop playing music.'''
+        try:
+            try:
+                self.channels_playing_audio.remove(ctx.voice_client.channel.id)
+                queuelength = len(self.song_queue[ctx.voice_client.channel.id])
+                self.song_queue[ctx.voice_client.channel.id] = []
+                self.current_song[ctx.voice_client.channel.id] = []
+            except:
+                pass
+            await ctx.voice_client.stop()
+            await ctx.send(embed=discord.Embed(title=f"\U000023f9 Stopped playing music{'.' if queuelength == 0 else ' and cleared your queue.'}", color=discord.Color.blurple()))
+        except AttributeError:
+            await ctx.send("I'm not in a voice channel.")
 
 def setup(bot):
     bot.add_cog(music(bot))
