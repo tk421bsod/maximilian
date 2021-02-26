@@ -29,6 +29,7 @@ class images(commands.Cog):
 
     @commands.command()
     async def invert(self, ctx, user:typing.Optional[discord.Member]=None):
+        '''Invert someone's avatar. Defaults to yours if you don't specify a user.'''
         avatar_bytes, id = await self._get_avatar(ctx, user)
         im = Image(avatar_bytes)
         im_inverted = await self.bot.loop.run_in_executor(None, im.invert)
@@ -37,14 +38,16 @@ class images(commands.Cog):
 
     @commands.command()
     async def blur(self, ctx, user:typing.Optional[discord.Member]=None):
+        '''Blur someone's avatar. Defaults to yours if you don't specify a user.'''
         avatar_bytes, id = await self._get_avatar(ctx, user)
         im = Image(avatar_bytes)
         im_blurred = await self.bot.loop.run_in_executor(None, im.gaussian_blur, 5)
         im.save(f"imgcache/{id}.png")
         await ctx.send(file=discord.File(f"imgcache/{id}.png"))
 
-    @commands.command()
+    @commands.command(aliases=["so"])
     async def solarize(self, ctx, user:typing.Optional[discord.Member]=None):
+        '''Add a washed out look to someone's avatar. (not sure how else to explain this) Defaults to yours if you don't specify a user.'''
         avatar_bytes, id = await self._get_avatar(ctx, user)
         im = Image(avatar_bytes)
         im_blurred = await self.bot.loop.run_in_executor(None, im.solarize)
@@ -53,6 +56,7 @@ class images(commands.Cog):
 
     @commands.command()
     async def noise(self, ctx, user:typing.Optional[discord.Member]=None):
+        '''Add noise to someone's avatar. Defaults to yours if you don't specify a user.'''
         avatar_bytes, id = await self._get_avatar(ctx, user)
         im = Image(avatar_bytes)
         im_blurred = await self.bot.loop.run_in_executor(None, im.add_noise_rand)
@@ -61,6 +65,7 @@ class images(commands.Cog):
     
     @commands.command()
     async def colorize(self, ctx, user:typing.Optional[discord.Member]=None):
+        '''Attempt to colorize someone's avatar. Defaults to yours if you don't specify a user.'''
         avatar_bytes, id = await self._get_avatar(ctx, user)
         im = Image(avatar_bytes)
         im_blurred = await self.bot.loop.run_in_executor(None, im.colorize)
@@ -69,13 +74,14 @@ class images(commands.Cog):
     
     @commands.command()
     async def gradient(self, ctx, user:typing.Optional[discord.Member]=None):
+        '''Apply a rainbow gradient to someone's avatar. Defaults to yours if you don't specify a user.'''
         avatar_bytes, id = await self._get_avatar(ctx, user)
         im = Image(avatar_bytes)
         im_blurred = await self.bot.loop.run_in_executor(None, im.apply_gradient)
         im.save(f"imgcache/{id}.png")
         await ctx.send(file=discord.File(f"imgcache/{id}.png"))
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def imagetest(self, ctx):
         avatar_bytes, id = await self._get_avatar(ctx, None)
         im = Image(avatar_bytes)
