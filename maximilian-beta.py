@@ -344,14 +344,19 @@ async def reload(ctx, *targetextensions):
             extensionsreloaded = "Successfully reloaded 1 extension."
         elif len(targetextensions) == 0:
             extensionsreloaded=f"Successfully reloaded all extensions."
-            targetextensions = list(bot.extensions.keys())
         else:
             extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
         reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
-        repo = git.Repo(os.getcwd())
-        o = repo.remotes.origin
-        o.pull()
-        await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
+        try:
+            repo = git.Repo(os.getcwd())
+            o = repo.remotes.origin
+            o.pull()
+            await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
+            targetextensions = list(bot.extensions.keys())
+        except:
+            await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Make sure you've set up the proper SSH keys. Reloading local copies of extensions...")
+            extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
+            targetextensions = list(bot.extensions.keys())
         for each in targetextensions:
             bot.reload_extension(each)
         bot.responsesinst = bot.get_cog('Custom Commands')
