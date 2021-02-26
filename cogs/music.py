@@ -533,7 +533,8 @@ class music(commands.Cog):
                 self.current_song[ctx.voice_client.channel.id] = []
             except:
                 pass
-            await ctx.voice_client.stop()
+            print("reset queue")
+            ctx.voice_client.stop()
             await ctx.send(embed=discord.Embed(title=f"\U000023f9 Stopped playing music{'.' if queuelength == 0 else ' and cleared your queue.'}", color=discord.Color.blurple()))
         except AttributeError:
             await ctx.send("I'm not in a voice channel.")
