@@ -115,13 +115,6 @@ class misc(commands.Cog):
             return
         await ctx.send(f"`{emoji}`")      
 
-    @commands.command(aliases=["wn", "new", "changelog"])
-    async def whatsnew(self, ctx):
-        '''Get information about new features or changes.'''
-        entry = self.bot.dbinst.exec_query(self.bot.database, "select entry from whatsnew order by date desc")
-        date = self.bot.dbinst.exec_query(self.bot.database, f"select date from whatsnew where entry=\"{entry['entry']}\"")
-        await ctx.send(embed=discord.Embed(title=f"What's new: ", description=f"{date['date']} \n{entry['entry']}", color=discord.Color.blurple()))
-
     @commands.command(aliases=["bottomify", "bm"])
     async def bottom(self, ctx, action, *, text):
         '''Turn UTF-8 encoded text into Bottom encoded text, and decode from Bottom back to UTF-8. See <https://github.com/kaylynn234/bottom> for more details on Bottom encoding.'''
@@ -132,7 +125,7 @@ class misc(commands.Cog):
         else:
             await ctx.send("You need to specify whether you want to encode or decode text.")
 
-    @commands.command(aliases=["code", "src"], hidden=True)
+    @commands.command(aliases=["code", "src"])
     async def source(self, ctx, *, command: str = None):
         """Displays my full source code or the source code for the specified command.
         """
@@ -142,7 +135,7 @@ class misc(commands.Cog):
             await ctx.send(source_url)
             return
         obj = self.bot.get_command(command)
-        if obj is None:
+        if obj is None or obj.name == "jishaku":
             return await ctx.send("I can't find the source code for that command. Make sure you didn't misspell the command's name.")
         src = obj.callback.__code__
         lines, firstlineno = inspect.getsourcelines(src)
