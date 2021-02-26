@@ -119,7 +119,7 @@ class misc(commands.Cog):
     async def bottom(self, ctx, action, *, text):
         '''Turn UTF-8 encoded text into Bottom encoded text, and decode from Bottom back to UTF-8. See <https://github.com/kaylynn234/bottom> for more details on Bottom encoding.'''
         if action.lower() == "encode":
-            await ctx.send(embed=discord.Embed(title="Here's your bottom encoded text:" description=(encodedtext:=bottomify.encode(text)).set_footer(f"Use '{self.bot.command_prefix}bottom decode {encodedtext}' to decode this.)
+            await ctx.send(embed=discord.Embed(title="Here's your bottom encoded text:" description=(encodedtext:=bottomify.encode(text)).set_footer(f"Use '{self.bot.command_prefix}bottom decode {encodedtext}' to decode this.))
         elif action.lower() == "decode":
             await ctx.send(bottomify.decode(text))
         else:
