@@ -153,7 +153,7 @@ class misc(commands.Cog):
     async def owo(self, ctx, *, text:str):
         '''Uwuify text. I can\'t uwuify text over 2000 characters.'''
         text += " uwu"
-        await ctx.send(text.replace("r", "w").replace("l", "w"))
+        await ctx.send(text.replace("r", "w").replace("l", "w").replace("a", "aw"))
     
 
 def setup(bot):
