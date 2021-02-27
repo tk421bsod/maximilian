@@ -149,6 +149,13 @@ class misc(commands.Cog):
             branch = "master"
         await ctx.send(f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>')
 
+    @commands.command(aliases=["owoify"]
+    async def owo(self, ctx, text:str):
+        '''Owoify text. I can\'t owoify text over 2000 characters.'''
+        text += "owo"
+        await ctx.send(text.replace("r", "w").replace("l", "w"))
+    
+
 def setup(bot):
     bot.add_cog(misc(bot))
 
