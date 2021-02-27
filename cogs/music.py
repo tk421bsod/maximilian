@@ -83,8 +83,18 @@ class music(commands.Cog):
             ctx.voice_client.play(source, after=handle_queue)
         except IndexError:
             print("done with queue!")
-            self.channels_playing_audio.remove(channel.id)
-            self.song_queue[channel.id] = []
+            #remove channel from channels_playing_audio, reset info about current song, blank queue
+            try:
+                self.channels_playing_audio.remove(channel.id)
+                self.current_song[channel.id] = []
+                self.song_queue[channel.id] = []
+            except:
+                pass
+            #if something's downloading, wait until it finishes, then check the queue again
+            while self.is_locked:
+                asyncio.run_coroutine_threadsafe(asyncio.sleep(0.001), self.bot.loop).result()
+                if not self.is_locked:
+                    self.process_queue(ctx, channel, None)
 
     async def get_song_from_cache(self, ctx, url, ydl_opts):
         '''Attempts to find an mp3 matching the video id locally, downloading the video if that file isn't found. This prioritizes speed, checking if a song is saved locally before downloading it from Youtube.'''
