@@ -152,7 +152,6 @@ class misc(commands.Cog):
     @commands.command(aliases=["owoify"]
     async def owo(self, ctx, text:str):
         '''Owoify text. I can\'t owoify text over 2000 characters.'''
-        text += "owo"
         await ctx.send(text.replace("r", "w").replace("l", "w"))
     
 
