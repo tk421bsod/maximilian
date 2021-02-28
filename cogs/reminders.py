@@ -94,10 +94,11 @@ class reminders(commands.Cog):
                 except asyncio.TimeoutError:
                     self.bot.waiting_for_reaction = False
                     await ctx.send("Deletion request timed out. I won't clear your todo list.")
+                    return
             else:
                 await ctx.send("It looks like you already have an active deletion request.")
-
-            if action == "list":
+                return
+            if action == "list" or entry == None:
                 entrystring = ""
                 for count, value in enumerate(self.bot.dbinst.exec_query(self.bot.database, "select entry from todo where user_id={}".format(ctx.author.id), False, True)):
                     entrystring += f"{count+1}. `{value['entry']}`\n"
