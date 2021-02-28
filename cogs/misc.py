@@ -155,6 +155,10 @@ class misc(commands.Cog):
         text += " uwu"
         await ctx.send(text.replace("r", "w").replace("l", "w").replace("a", "aw"))
     
+    @commands.command(aliases=["rm"])
+    async def rolemembers(self, ctx, role:discord.Role):
+        '''Show the names and discriminators of everyone who has the specified role.'''
+        await ctx.send("\n".join([str(member) for member in role.members]))
 
 def setup(bot):
     bot.add_cog(misc(bot))
