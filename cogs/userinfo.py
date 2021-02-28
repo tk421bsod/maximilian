@@ -12,6 +12,7 @@ class userinfo(commands.Cog):
     @commands.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
     async def userinfo(self, ctx, requested_user : typing.Optional[discord.Member]=None):
         if requested_user is None:
+            await ctx.send("Either I couldn't find that user or you didn't specify one. I'll show your information instead."
             requested_user = self.bot.requested_user
         await ctx.trigger_typing()
         rolestring = ""
@@ -28,7 +29,7 @@ class userinfo(commands.Cog):
             embed.add_field(name="Date joined:", value=requested_user.joined_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
             embed.add_field(name="Date created:", value=requested_user.created_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
         except Exception:
-            self.bot.logger.warning("Timestamp formatting failed. (Is Maximilian running on Windows?) ")
+            self.bot.logger.warning("Timestamp formatting failed. (Is Maximilian running on Windows?) Falling back to zero-padded hour values.")
             embed.add_field(name="Date joined:", value=requested_user.joined_at.strftime("%B %d, %Y at %I:%M %p UTC"), inline=False)
             embed.add_field(name="Date created:", value=requested_user.created_at.strftime("%B %d, %Y at %I:%M %p UTC"), inline=False)
         #should probably use .join instead of this
