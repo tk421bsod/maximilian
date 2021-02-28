@@ -158,7 +158,8 @@ class misc(commands.Cog):
     @commands.command(aliases=["rm"])
     async def rolemembers(self, ctx, role:discord.Role):
         '''Show the names and discriminators of everyone who has the specified role.'''
-        await ctx.send("\n".join([str(member) for member in role.members]))
+        rolestring = "\n".join([str(member) for member in role.members])
+        await ctx.send(f"Found {len(role.members)} users with the {role.name} role. \n{rolestring}")
 
 def setup(bot):
     bot.add_cog(misc(bot))
