@@ -98,16 +98,16 @@ class reminders(commands.Cog):
             else:
                 await ctx.send("It looks like you already have an active deletion request.")
                 return
-            if action == "list" or entry == None:
-                entrystring = ""
-                for count, value in enumerate(self.bot.dbinst.exec_query(self.bot.database, "select entry from todo where user_id={}".format(ctx.author.id), False, True)):
-                    entrystring += f"{count+1}. `{value['entry']}`\n"
-                if entrystring.strip() != "":
-                    embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=discord.Color.blurple())
-                    await ctx.send(embed=embed)
-                    return
-                await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
+        if action == "list" or entry == None:
+            entrystring = ""
+            for count, value in enumerate(self.bot.dbinst.exec_query(self.bot.database, "select entry from todo where user_id={}".format(ctx.author.id), False, True)):
+                entrystring += f"{count+1}. `{value['entry']}`\n"
+            if entrystring.strip() != "":
+                embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=discord.Color.blurple())
+                await ctx.send(embed=embed)
                 return
+            await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
+            return
 
             
 
