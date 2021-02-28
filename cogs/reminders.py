@@ -47,16 +47,6 @@ class reminders(commands.Cog):
     
     @commands.command(aliases=["to-do", "TODO"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
     async def todo(self, ctx, action="list", *, entry=None):
-        if entry is None or action == "list":
-            entrystring = ""
-            for count, value in enumerate(self.bot.dbinst.exec_query(self.bot.database, "select entry from todo where user_id={}".format(ctx.author.id), False, True)):
-                entrystring += f"{count+1}. `{value['entry']}`\n"
-            if entrystring.strip() != "":
-                embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=discord.Color.blurple())
-                await ctx.send(embed=embed)
-                return
-            await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
-            return
         if action == "add":
             if (result := self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry}, None, False, None, False, None, False)) == "success":
                 entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
@@ -68,12 +58,55 @@ class reminders(commands.Cog):
                 owner = self.bot.fetch_user(self.bot.owner_id)
                 owner.send(f"Error while adding to the todo list: {result}")
                 await ctx.send("There was an error while adding your todo entry. I've made my developer aware of this.")
+            return
         if action == "delete":
             if self.bot.dbinst.delete(self.bot.database, "todo", entry, "entry", "user_id", ctx.author.id, True) == "successful":
                 entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry deleted successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
             else:
                 await ctx.send("Something went wrong while deleting your todo entry. Make sure that the todo entry you're trying to delete actually exists.")
+            return
+        if action == "deleteall":
+            if not self.bot.waiting_for_reaction:
+                embed = discord.Embed(title="Delete your todo list?", description=f"You've requested that I delete your todo list, and I need you to confirm that you actually want to do this.", color=discord.Color.blurple())
+                embed.add_field(name="Effects", value="If you proceed, your todo list will be deleted. **THIS CANNOT BE UNDONE.**")
+                embed.add_field(name="Your options", value="React with \U00002705 to proceed, or react with \U0000274c to cancel.", inline=False)
+                deletionmessage = await ctx.send(embed=embed)
+                await deletionmessage.add_reaction("\U00002705")
+                await deletionmessage.add_reaction("\U0000274c")
+                try:
+                    await asyncio.sleep(1)
+                    while True:
+                        self.bot.waiting_for_reaction = True
+                        #maybe I should create a check?
+                        reaction = await self.bot.wait_for('reaction_add', timeout=120.0)
+                        async for each in reaction[0].users():
+                            if ctx.message.author == each:
+                                self.bot.waiting_for_reaction = False
+                                if str(reaction[0].emoji) == '\U00002705':
+                                    self.bot.dbinst.delete(self.bot.database, "todo", str(ctx.author.id), "user_id", "", "", False)
+                                    embed = discord.Embed(title="\U00002705 Cleared your todo list!", color=discord.Color.blurple())
+                                    await ctx.send(embed=embed)
+                                    return
+                                if str(reaction[0].emoji) == '\U0000274c':
+                                    await ctx.send("Ok. I won't clear your todo list.")
+                                    return
+                except asyncio.TimeoutError:
+                    self.bot.waiting_for_reaction = False
+                    await ctx.send("Deletion request timed out. I won't clear your todo list.")
+            else:
+                await ctx.send("It looks like you already have an active deletion request.")
+
+            if action == "list":
+                entrystring = ""
+                for count, value in enumerate(self.bot.dbinst.exec_query(self.bot.database, "select entry from todo where user_id={}".format(ctx.author.id), False, True)):
+                    entrystring += f"{count+1}. `{value['entry']}`\n"
+                if entrystring.strip() != "":
+                    embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=discord.Color.blurple())
+                    await ctx.send(embed=embed)
+                    return
+                await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
+                return
 
             
 
