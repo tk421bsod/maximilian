@@ -12,7 +12,7 @@ class userinfo(commands.Cog):
     @commands.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
     async def userinfo(self, ctx, requested_user : typing.Optional[discord.Member]=None):
         if requested_user is None:
-            if ctx.args != []:
+            if len(ctx.args) <= 2:
                 await ctx.send("I couldn't find that user, so I'll show your information instead.")
             requested_user = self.bot.requested_user
         await ctx.trigger_typing()
