@@ -61,22 +61,23 @@ extensioncount = 0
 for roots, dirs, files in os.walk("./cogs"):
     for each in files:
         if each.endswith(".py"):
-            bot.load_extension(f"cogs.{each[:-3]}")
-            extensioncount += 1
-#test if pynacl is installed, don't load stuff that depends on it (and show warning) if it isn't installed
-try:
-    import nacl
-except ModuleNotFoundError:
-    bot.logger.warning("One or more dependencies for voice isn't installed, music will not be supported")
-    bot.unload_extension('cogs.music')
-    extensioncount -= 1
+            try:
+                bot.load_extension(f"cogs.{each[:-3]}")
+                extensioncount += 1
+             except commands.ExtensionFailed as error:
+                bot.logger.error(f"{type(error.original)} while loading '{error.name}'. Check the debug logs for more information.")
+                if isinstance(error.original, SyntaxError):
+                    bot.logger.debug(traceback.format_exc())
+                elif isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
+                    bot.logger.error(f"The {error.original.name} module isn't installed, '{error.name}' won't be loaded")
 #create instances of certain cogs, because we need to call functions within those cogs
-bot.responsesinst = bot.get_cog('Custom Commands')
-bot.prefixesinst = bot.get_cog('prefixes')
-bot.miscinst = bot.get_cog('misc')
-bot.reactionrolesinst = bot.get_cog('reaction roles')
-bot.remindersinst = bot.get_cog('reminders')
-bot.musicinst = bot.get_cog('music')
+try:
+    bot.responsesinst = bot.get_cog('Custom Commands')
+    bot.prefixesinst = bot.get_cog('prefixes')
+    bot.miscinst = bot.get_cog('misc')
+    bot.reactionrolesinst = bot.get_cog('reaction roles')
+except:
+    bot.logger.error("Failed to get one or more cogs, some stuff might not work."
 print(f'loaded {extensioncount} extensions, waiting for ready')
 
 class HelpCommand(commands.HelpCommand):
@@ -160,8 +161,11 @@ async def before_reset_status():
 async def on_ready():
     print("recieved on_ready, finishing startup...")
     bot.commandnames = [i.name for i in bot.commands if not i.hidden and i.name != "jishaku"]
-    await bot.prefixesinst.reset_prefixes()
-    await bot.responsesinst.get_responses()
+    try:
+        await bot.prefixesinst.reset_prefixes()
+        await bot.responsesinst.get_responses()
+    except (NameError, AttributeError):
+        bot.logger.critical("Couldn't get prefixes or custom commands. The cogs might not be loaded.")
     bot.help_command = HelpCommand()
     reset_status.start()
     print("ready")
