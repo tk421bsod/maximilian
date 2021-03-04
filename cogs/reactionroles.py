@@ -57,12 +57,12 @@ class reactionroles(commands.Cog, name="reaction roles"):
                     role = discord.utils.get(payload.member.guild.roles, id=int(roleid))
                     if role in payload.member.roles:
                         #if so, notify them
-                        await ctx.send(f" <@!{str(payload.member.id)}>, you already have the '{role.name}' role.", delete_after=5)
+                        await ctx.send(f" <@!{payload.member.id}>, you already have the '{role.name}' role.", delete_after=5)
                         return
                     #otherwise, give them the role and notify them that they've recieved it
                     await payload.member.add_roles(role)
                     print("added role to user")
-                    await ctx.send(f"Gave <@!{str(payload.member.id)}> the '{role.name}' role!", delete_after=5)
+                    await ctx.send(f"Gave <@!{payload.member.id}> the '{role.name}' role.", delete_after=5)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
@@ -81,9 +81,9 @@ class reactionroles(commands.Cog, name="reaction roles"):
                     if role in member.roles:
                         await member.remove_roles(role)
                         print("removed role from user")
-                        await ctx.send(f"Removed the '{role.name}' role from <@!{str(member.id)}>!", delete_after=5)
+                        await ctx.send(f"Removed the '{role.name}' role from <@!{member.id}>.", delete_after=5)
                         return
-                    await ctx.send(f"<@!{str(member.id)}> For some reason, you don't have the '{role.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again. If this keeps happening, notify tk421#7244.", delete_after=15)
+                    await ctx.send(f"<@!{member.id}> For some reason, you don't have the '{role.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again. If this keeps happening, notify tk421#7244.", delete_after=15)
 
 def setup(bot):
     bot.add_cog(reactionroles(bot))
