@@ -64,7 +64,7 @@ for roots, dirs, files in os.walk("./cogs"):
                 bot.load_extension(f"cogs.{each[:-3]}")
                 extensioncount += 1
             except commands.ExtensionFailed as error:
-                bot.logger.error(f"{type(error.original)} while loading '{error.name}'. Check the debug logs for more information.")
+                bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'. Check the debug logs for more information.")
                 if isinstance(error.original, SyntaxError):
                     bot.logger.debug(traceback.format_exc())
                 elif isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
@@ -76,7 +76,7 @@ try:
     bot.miscinst = bot.get_cog('misc')
     bot.reactionrolesinst = bot.get_cog('reaction roles')
 except:
-    bot.logger.error("Failed to get one or more cogs, some stuff might not work."
+    bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
 print(f'loaded {extensioncount} extensions, waiting for ready')
 
 class HelpCommand(commands.HelpCommand):
