@@ -66,7 +66,7 @@ class reactionroles(commands.Cog, name="reaction roles"):
                     #otherwise, give them the role and notify them that they've recieved it
                     await payload.member.add_roles(role)
                     print("added role to user")
-                    await ctx.send(f"Assigned <@!{str(payload.member.id)}> the '{role.name}' role!", delete_after=5)
+                    await ctx.send(f"Gave <@!{str(payload.member.id)}> the '{role.name}' role!", delete_after=5)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
