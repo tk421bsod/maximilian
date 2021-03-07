@@ -10,11 +10,15 @@ class userinfo(commands.Cog):
 
     #might need a refactor
     @commands.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
-    async def userinfo(self, ctx, requested_user : typing.Optional[discord.Member]=None):
+    async def userinfo(self, ctx, requested_user=None):
         if requested_user is None:
-            if len(ctx.args) <= 2:
-                await ctx.send("I couldn't find that user, so I'll show your information instead.")
-            requested_user = self.bot.requested_user
+            requested_user = ctx.author
+        else:
+            try:
+                requested_user = await commands.MemberConverter().convert(ctx, requested_user)
+            except:
+                await ctx.send("I couldn't find that user, so I'll show your information instead. Make sure that the user is in this server and you didn't make any typos.")
+                requested_user = ctx.author
         await ctx.trigger_typing()
         rolestring = ""
         permissionstring = ""
@@ -65,10 +69,6 @@ class userinfo(commands.Cog):
         print("printed userinfo")
         await ctx.send(embed=embed)
     
-    @userinfo.before_invoke
-    async def before_userinfo(self, ctx):
-        #a bit 'hacky', but I'm not sure how else I would implement this
-        self.bot.requested_user = ctx.author
 
 def setup(bot):
     bot.add_cog(userinfo(bot))
