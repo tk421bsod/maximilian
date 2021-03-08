@@ -50,7 +50,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         else: 
             await ctx.send(responsestring)
     
-    @commands.command(help="Add a custom command")
+    @commands.command(help="Add a custom command, takes the command trigger and response as parameters")
     async def add(self, ctx, command_trigger : str, command_response : str):
         command_response.replace("*", r"\*")
         command_trigger.replace("*", r"\*")
@@ -65,8 +65,8 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         else: 
             raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
 
-    @commands.command(help="Delete a custom command")
-    async def delete(self, ctx, command_trigger : str, command_response : str):
+    @commands.command(help="Delete a custom command, takes the command trigger as a parameter")
+    async def delete(self, ctx, command_trigger : str):
         if self.bot.dbinst.delete(self.bot.database, "responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
             await self.get_responses()
             print("deleted response")
