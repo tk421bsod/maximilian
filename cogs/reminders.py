@@ -64,7 +64,7 @@ class reminders(commands.Cog):
                 await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{self.bot.command_prefix}todo add foo`.")
                 return
             id = await _gen_then_check_id()
-            result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, id=id}, None)
+            result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "id":id}, None)
             if result == "success":
                 entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry added successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
@@ -77,7 +77,7 @@ class reminders(commands.Cog):
                 await ctx.send("There was an error while adding your todo entry. I've made my developer aware of this.")
             return
         if action == "delete":
-            if self.bot.dbinst.delete(self.bot.database, "todo", entry, "id", "user_id", ctx.author.id, True) == "successful":
+            if self.bot.dbinst.delete(self.bot.database, "todo", entry, "id", "user_id", ctx.author.id, True) == "successful" and entry != None:
                 entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry `{entry}` deleted successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
             else:
