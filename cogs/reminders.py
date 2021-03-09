@@ -51,7 +51,7 @@ class reminders(commands.Cog):
         id = random.randint(100000, 999999)
         if (doesidexist := self.bot.dbinst.retrieve(self.bot.database, "todo", "entry", "id", id)) != None and doesidexist != "()":
             print("id already exists")
-            id = await _gen_then_check_id()
+            id = await self._gen_then_check_id()
             return id
         else:
             return id 
@@ -63,7 +63,7 @@ class reminders(commands.Cog):
             if not entry:
                 await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{self.bot.command_prefix}todo add foo`.")
                 return
-            id = await _gen_then_check_id()
+            id = await self._gen_then_check_id()
             result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "id":id}, None)
             if result == "success":
                 entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
