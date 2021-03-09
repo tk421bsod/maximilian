@@ -45,16 +45,6 @@ class reminders(commands.Cog):
             await ctx.send("Your reminder has been added!")
             #we need to round remindertimeseconds as humanize hates decimals (not rounding this sometimes causes the precisedeltas to be one off, like 14 minutes instead of 15 minutes)
             await self.handle_reminder(ctx, round(remindertimeseconds), remindertext)
-    
-    async def _gen_then_check_id(self):
-        '''Generates an id for a todo entry, then checks if it exists, generating a new one if it doesn't exist (through recursively calling this function)'''
-        id = random.randint(100000, 999999)
-        if (doesidexist := self.bot.dbinst.retrieve(self.bot.database, "todo", "entry", "id", id)) != None and doesidexist != "()":
-            print("id already exists")
-            id = await self._gen_then_check_id()
-            return id
-        else:
-            return id 
                 
     
     @commands.command(aliases=["to-do", "TODO"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
@@ -63,8 +53,7 @@ class reminders(commands.Cog):
             if not entry:
                 await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{self.bot.command_prefix}todo add foo`.")
                 return
-            id = await self._gen_then_check_id()
-            result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "id":id}, None)
+            result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "id":int(self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)'])+1}, None)
             if result == "success":
                 entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry added successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
@@ -118,7 +107,7 @@ class reminders(commands.Cog):
         if action == "list" or entry == None:
             entrystring = ""
             for count, value in enumerate(self.bot.dbinst.exec_query(self.bot.database, "select * from todo where user_id={}".format(ctx.author.id), False, True)):
-                entrystring += f"{count+1}. `{value['entry']}` ID: `{value['id']}`\n"
+                entrystring += f"{count+1}. `{value['entry']}`\n"
             if entrystring.strip() != "":
                 embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=discord.Color.blurple())
                 await ctx.send(embed=embed)
