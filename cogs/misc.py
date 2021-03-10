@@ -160,6 +160,11 @@ class misc(commands.Cog):
         '''Show the names and discriminators of everyone who has the specified role.'''
         rolestring = "\n".join([str(member) for member in role.members])
         await ctx.send(f"Found {len(role.members)} users with the {role.name} role. \n{rolestring}")
+    
+    @commands.command(aliases=["members"])
+    async def membercount(self, ctx):
+        '''Show the amount of people in this server.'''
+        await ctx.send(f"Found {len(ctx.guild.members)} members. ({len([i for i in ctx.guild.members if not i.bot])} people and {len([i for i in ctx.guild.members if i.bot])} bots)")
 
 def setup(bot):
     bot.add_cog(misc(bot))
