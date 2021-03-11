@@ -2,16 +2,16 @@
 import discord
 from discord.ext import commands 
 from discord.ext import tasks
-import common
 import logging
-import os
-import git 
-import pymysql
 import sys
+import init
+import common
+import helpcommand
+import pymysql
 import traceback
-from fuzzywuzzy import fuzz
 
 print("starting...")
+<<<<<<< HEAD
 #create instance of 'Token' class, get token
 tokeninst = common.token()
 token = tokeninst.get("betatoken.txt")
@@ -43,6 +43,13 @@ else:
     bot.logger.warning("No database IP provided. Falling back to localhost.")
     bot.dbip = "localhost"
 #initialize variables that'll be needed later
+=======
+token = common.token().get("betatoken.txt")
+bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=discord.Intents.all(), activity=discord.Activity(type=discord.ActivityType.playing, name=" with new features! v0.5.2 (beta)"))
+init.config_logging(sys.argv)
+init.init(bot).parse_arguments(sys.argv)
+bot.logger = logging.getLogger('maximilian-beta')
+>>>>>>> 16216f1 (restructure main files)
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
@@ -55,27 +62,13 @@ try:
     print("Connected to database successfully.")
 except pymysql.err.OperationalError:
     bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
-#load extensions
-extensioncount = 0
-for roots, dirs, files in os.walk("./cogs"):
-    for each in files:
-        if each.endswith(".py"):
-            try:
-                bot.load_extension(f"cogs.{each[:-3]}")
-                extensioncount += 1
-            except commands.ExtensionFailed as error:
-                bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'. Check the debug logs for more information.")
-                if isinstance(error.original, SyntaxError):
-                    bot.logger.debug(traceback.format_exc())
-                elif isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
-                    bot.logger.error(f"The {error.original.name} module isn't installed, '{error.name}' won't be loaded")
-#create instances of certain cogs, because we need to call functions within those cogs
+#load extensions, starting with required ones
+print("Loading required extensions...")
 try:
-    bot.responsesinst = bot.get_cog('Custom Commands')
-    bot.prefixesinst = bot.get_cog('prefixes')
-    bot.miscinst = bot.get_cog('misc')
-    bot.reactionrolesinst = bot.get_cog('reaction roles')
+    bot.load_extension("core")
+    bot.load_extension("errorhandling")
 except:
+<<<<<<< HEAD
     bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
 print(f'loaded {extensioncount} extensions, waiting for ready')
 
@@ -152,162 +145,29 @@ class HelpCommand(commands.HelpCommand):
 @tasks.loop(seconds=60)
 async def reset_status():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"{len(bot.guilds)} guilds and {len(bot.users)} users!"))
+=======
+    bot.logger.critical("Failed to load required extensions.")
+    traceback.print_exc()
+    quit()
+>>>>>>> 16216f1 (restructure main files)
 
-@reset_status.before_loop
-async def before_reset_status():
-    await bot.wait_until_ready()
-
-@bot.event
-async def on_ready():
-    print("recieved on_ready, finishing startup...")
-    bot.commandnames = [i.name for i in bot.commands if not i.hidden and i.name != "jishaku"]
-    try:
-        await bot.prefixesinst.reset_prefixes()
-        await bot.responsesinst.get_responses()
-    except (NameError, AttributeError):
-        bot.logger.critical("Couldn't get prefixes or custom commands. The cogs might not be loaded.")
-    except pymysql.OperationalError:
-        bot.logger.critical("Couldn't fetch prefixes or custom commands from the database.")
-    bot.help_command = HelpCommand(verify_checks=False)
-    reset_status.start()
-    print("ready")
+print("Loaded required extensions successfully. Loading other cogs...")
+init.init(bot).load_extensions()
     
 @bot.event
 async def on_message(message):
-    ctx = await bot.get_context(message)
-    if message.author != bot.user:
-        if message.guild is not None:
-            try:    
-                bot.command_prefix = bot.prefixes[str(message.guild.id)]
-            except KeyError:
-                bot.logger.warning("Couldn't get prefixes for this guild, (am I starting up or resetting prefixes?), falling back to default prefix (!)")
-                bot.command_prefix = "!"
-                pass
-            except AttributeError:
-                bot.logger.warning("message.guild is None, is this in a DM? Falling back to !.")
-                bot.command_prefix = "!"
-            #required because a bunch of other stuff relies on it, will change it later
-            bot.commandprefix = bot.command_prefix
-            for each in range(len(bot.responses)):
-                if int(bot.responses[each][0]) == int(message.guild.id):
-                    try:
-                        if ctx.prefix + bot.responses[each][1].lower() == message.content.lower():
-                            await message.channel.send(bot.responses[each][2])
-                            return
-                    #if ctx.prefix is None, we get a TypeError, so catch it and do the same check, with the prefix in the prefix list instead (the two different kinds of prefixes are necessary to make mentions work with custom commands)
-                    except TypeError:
-                        if bot.prefixes[str(message.guild.id)] + bot.responses[each][1].lower() == message.content.lower():
-                            await message.channel.send(bot.responses[each][2])
-                            return
+    if await bot.coreinst.prepare(message):
         await bot.process_commands(message)
-
-#catch errors that occur in commands
-@bot.event
-async def on_command_error(ctx, error):
-    etype = type(error)
-    trace = error.__traceback__
-    lines = traceback.format_exception(etype, error, trace)
-    # format_exception returns a list with line breaks embedded in the lines, so let's just stitch the elements together
-    traceback_text = ''.join(lines)
-    # it would probably be best to wrap this in a codeblock via e.g. a Paginator
-    owner = bot.get_user(538193752913608704)
-    await owner.send(f"`{traceback_text}`")
-    #get the original error so isinstance works
-    error = getattr(error, "original", error)
-    cog = ctx.cog
-    if cog:
-        if cog._get_overridden_method(cog.cog_command_error) is not None:
-            return
-    print("error")
-    print(ctx.message.content)
-    #prefix should be a string, not a function, so get it from the dict of prefixes (use default prefix if that fails)
-    try:
-        bot.command_prefix = bot.prefixes[str(ctx.guild.id)]
-    except (KeyError,AttributeError):
-        bot.command_prefix = "!"
-    #check for database errors first, these should almost never happen
-    if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
-        print("database error, printing context and error type")
-        print(str(error))
-        print(str(ctx))
-        embed = discord.Embed(title="Fatal Error",description="\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it.", color=discord.Color.blurple())
-        if ctx.guild.me.guild_permissions.embed_links:
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send("\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
-    if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
-        print("I'm missing permissions")
-        try:
-            embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy or giving me the `{error.missing_perms[0]}` permission.", color=discord.Color.blurple())
-        except AttributeError:
-            embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy.", color=discord.Color.blurple())
-        if ctx.guild.me.guild_permissions.embed_links:
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send("\U0000274c I don't have the permissions to run this command, try moving my role up in the hierarchy. I'm also not allowed to send embeds, which will make some responses look worse, and will prevent userinfo from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
-        return
-    if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
-        print("User doesn't have the correct permissions")
-        embed = discord.Embed(title="\U0000274c You don't have the permissions to run this command.", color=discord.Color.blurple())
-        embed.add_field(name="Why did this happen? What can I do?", value=f"Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info on that command, including the required permissions.", inline=False)
-        if ctx.guild.me.guild_permissions.embed_links:
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send(f"You don't have the permissions to run this command. Some commands require certain permissions; try using `{bot.command_prefix}help <commandname>` to get more info about that command, including the required permissions. I'm also not allowed to send embeds, which will make some responses look worse, and will prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
-        return
-    if isinstance(error, commands.CommandNotFound):
-        print("Can't find a command")
-        commandscores = []
-        #for each command, check how similar it is to the command the user tried
-        for each in bot.commandnames:
-            await bot.loop.run_in_executor(None, lambda: commandscores.append([each, fuzz.token_set_ratio(ctx.invoked_with, each)]))
-        print(commandscores)
-        #if a command is similar enough, put it in a list of similar commands, then form a string with those commands
-        similarcommands = '\n'.join([i for i in [f'`{i[0]}`' for i in commandscores if i[1] > 55]])
-        #can't include backslashes in fstring expressions, this is a hacky "fix" for that
-        newline = "\n"
-        embed = discord.Embed(title=f"\U0000274c I can't find that command. \n{f'Similar commands: {newline}{similarcommands}' if similarcommands != '' else 'No similar commands found.'}\nUse `{bot.command_prefix}help` to see a list of commands.", color=discord.Color.blurple())
-        if ctx.guild.me.guild_permissions.embed_links:
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send(f"\U0000274c I can't find that command. \n{f'Similar commands: {newline}{similarcommands}' if similarcommands != '' else 'No similar commands found.'}", description="Change my prefix using the `prefix` command if I'm conflicting with another bot. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
-        return
-    if isinstance(error, commands.MissingRequiredArgument):
-        print("command is missing the required argument")
-        if ctx.guild.me.guild_permissions.embed_links:
-            embed = discord.Embed(title="\U0000274c You didn't provide the required argument `" + error.param.name + "`. See the help entry for `" + ctx.command.name + "` to see what arguments this command takes." )
-            await ctx.send(embed=embed)
-            return
-        else:
-            await ctx.send(f"\U0000274c You didn't provide the required argument `{error.param.name}`. See the help entry for `{ctx.command.name}` to see what arguments this command takes. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
-            return
-    print("Other error")
-    print(str(error))
-    await ctx.send("There was an error. Please try again later.")
-    await ctx.send(f"`{error}`")
-
-@bot.command(help="Get a new list of custom responses after adding a new response", aliases=['fetchresponses', 'getresponses'])
-async def fetch_responses(ctx):
-    gettingresponsesmessage = await ctx.send("Getting a new list of responses...")
-    await bot.responsesinst.get_responses()
-    await gettingresponsesmessage.edit(content="Got a new list of responses!")
-
-@bot.command(help="List all prefixes")
-async def listprefixes(ctx):
-    prefixstring = ""
-    for key in bot.prefixes.keys():
-        if key == str(ctx.message.guild.id):
-            prefixstring = prefixstring + "`" + bot.prefixes[key] + "`"
-    await ctx.send(f"My prefixes in this server are {prefixstring} and {ctx.guild.me.mention}")
 
 @bot.before_invoke
 async def before_anything(ctx):
-    #before any commands are executed, make sure to set commandprefix
+    #before any commands are executed, make sure to set commandprefix (will be removed soon)
     try:
         bot.commandprefix = bot.prefixes[str(ctx.guild.id)]
     except (KeyError, AttributeError):
         bot.commandprefix = "!"
 
+<<<<<<< HEAD
 @bot.event
 async def on_guild_join(guild):
     print("joined guild, adding guild id to list of guilds and resetting prefixes")
@@ -384,3 +244,6 @@ async def reload(ctx, *targetextensions):
     await ctx.send(embed=embed) 
 
 bot.run(token)
+=======
+bot.run(token)
+>>>>>>> 16216f1 (restructure main files)

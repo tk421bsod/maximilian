@@ -348,7 +348,7 @@ class music(commands.Cog):
             pass
         #current_song is a bunch of information about the current song that's playing.
         #that information in order:
-        #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: Start time, 7: Time when paused, 8: Total time paused, 9: Volume
+        #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: time the song started (now), 7: Time when paused, 8: Total time paused, 9: Volume
         self.current_song[ctx.voice_client.channel.id] = [False, self.filename, self.duration, self.name, self.thumbnail, self.url, time.time(), 0, 0, 0.5]
         embed = discord.Embed(title="Now playing:", description=f"`{self.name}`", color=discord.Color.blurple())
         embed.add_field(name="Video URL", value=f"<{self.url}>", inline=True)
