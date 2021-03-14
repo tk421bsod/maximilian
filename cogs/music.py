@@ -392,11 +392,12 @@ class music(commands.Cog):
                         continue
                     #don't show amounts of seconds greater than 60
                     m += s//60
-                    s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
+                s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
+                h = f"{'' if m//60 < 1 else f'{m//60}:'}"
                 newline = "\n"  #hacky "fix" for f-strings not allowing backslashes
                 #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
                 #show user's queue, change how it's displayed depending on how many songs are in the queue
-                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(self.song_queue[ctx.voice_client.channel.id])])}\n{f'Total duration: {m}:{s}' if queuelength != 1 else ''}\nUse `{self.bot.command_prefix} remove <song's position>` to remove a song from your queue. For example, `{self.bot.command_prefix} remove 1` removes the first item in the queue.") 
+                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'`{i[1]}`(<{i[2]}>) Duration: {i[3]}' for i in self.song_queue[ctx.voice_client.channel.id]])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}") 
             else:
                 await ctx.send("You don't have anything in your queue.")
         except (IndexError, AttributeError):
