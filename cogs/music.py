@@ -60,6 +60,8 @@ class music(commands.Cog):
             if channel.id not in self.channels_playing_audio:
                 return
             if self.current_song[channel.id][0]:
+                #reset duration when repeating
+                self.current_song[channel.id][6], self.current_song[channel.id][7], self.current_song[channel.id][8] = time.time(), 0, 0
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.current_song[channel.id][1]), volume=self.current_song[channel.id][9])
                 print("repeating song...")
                 #we can't pass stuff to process_queue in after, so pass some stuff to it before passing it
@@ -75,6 +77,7 @@ class music(commands.Cog):
                 fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
                 fut.result()
                 volume = self.current_song[channel.id][9]
+                #update current_song with info about the new song
                 self.current_song[channel.id] = [False, self.song_queue[channel.id][0][0], self.song_queue[channel.id][0][3], self.song_queue[channel.id][0][1], self.song_queue[channel.id][0][4], self.song_queue[channel.id][0][2], time.time(), 0, 0, volume]
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.song_queue[channel.id][0][0]), volume=volume)
                 self.song_queue[channel.id].remove(self.song_queue[channel.id][0])
@@ -344,7 +347,7 @@ class music(commands.Cog):
             pass
         #current_song is a bunch of information about the current song that's playing.
         #that information in order:
-        #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: Start time, 7: Time when paused, 8: Total time paused, 9: Volume
+        #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: time the song started (now), 7: Time when paused, 8: Total time paused, 9: Volume
         self.current_song[ctx.voice_client.channel.id] = [False, self.filename, self.duration, self.name, self.thumbnail, self.url, time.time(), 0, 0, 0.5]
         embed = discord.Embed(title="Now playing:", description=f"`{self.name}`", color=discord.Color.blurple())
         embed.add_field(name="Video URL", value=f"<{self.url}>", inline=True)
