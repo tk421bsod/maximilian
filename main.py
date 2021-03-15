@@ -70,7 +70,7 @@ class HelpCommand(commands.HelpCommand):
 
     async def send_bot_help(self, mapping):
         if not self.context.guild.me.guild_permissions.embed_links:
-            return await self.get_destination().send("It looks like I don't have permission to send embeds. My developer's working on a different help command that doesn't use them, but for now you'll need to enable the 'Embed Links' permission to be able to use the help command. To enable it, go to Server Settings > Roles > Maximilian, and you should see the Embed Links permission there.")
+            return await self.get_destination().send("It looks like I don't have permission to send embeds. My developer's working on a different help command that doesn't use them, but for now you'll need to enable the 'Embed Links' permission to be able to use the help command. Go to Server Settings > Roles > Maximilian, and enable the Embed Links permission.")
         embed = discord.Embed(title='Commands', colour=self.color)
         description = self.context.bot.description
         if description:
@@ -97,7 +97,7 @@ class HelpCommand(commands.HelpCommand):
 
     async def send_cog_help(self, cog):
         if not self.context.guild.me.guild_permissions.embed_links:
-            return await self.get_destination().send("It looks like I don't have permission to send embeds. My developer's working on a different help command that doesn't use them, but for now you'll need to enable the 'Embed Links' permission to be able to use the help command. To enable it, go to Server Settings > Roles > Maximilian, and you should see the Embed Links permission there.")
+            return await self.get_destination().send("It looks like I don't have permission to send embeds. My developer's working on a different help command that doesn't use them, but for now you'll need to enable the 'Embed Links' permission to be able to use the help command. Go to Server Settings > Roles > Maximilian, and enable the Embed Links permission.")
         embed = discord.Embed(title='{0.qualified_name} Commands'.format(cog), colour=self.color)
         if cog.description:
             embed.description = cog.description
@@ -111,7 +111,7 @@ class HelpCommand(commands.HelpCommand):
 
     async def send_group_help(self, group):
         if not self.context.guild.me.guild_permissions.embed_links:
-            return await self.get_destination().send("It looks like I don't have permission to send embeds. My developer's working on a different help command that doesn't use them, but for now you'll need to enable the 'Embed Links' permission to be able to use the help command. To enable it, go to Server Settings > Roles > Maximilian, and you should see the Embed Links permission there.")
+            return await self.get_destination().send("It looks like I don't have permission to send embeds. My developer's working on a different help command that doesn't use them, but for now you'll need to enable the 'Embed Links' permission to be able to use the help command. Go to Server Settings > Roles > Maximilian, and enable the Embed Links permission.")
         embed = discord.Embed(title=group.qualified_name, colour=self.color)
         if group.help:
             embed.description = group.help
