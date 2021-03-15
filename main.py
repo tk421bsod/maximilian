@@ -28,8 +28,21 @@ try:
     print("Connected to database successfully.")
 except pymysql.err.OperationalError:
     bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
-#load extensions, starting with required ones
-print("Loading required extensions...")
+#load extensions
+extensioncount = 0
+for roots, dirs, files in os.walk("./cogs"):
+    for each in files:
+        if each.endswith(".py"):
+            try:
+                bot.load_extension(f"cogs.{each[:-3]}")
+                extensioncount += 1
+            except commands.ExtensionFailed as error:
+                bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'. Check the debug logs for more information.")
+                if isinstance(error.original, SyntaxError):
+                    bot.logger.debug(traceback.format_exc())
+                elif isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
+                    bot.logger.error(f"The {error.original.name} module isn't installed, '{error.name}' won't be loaded")
+#create instances of certain cogs, because we need to call functions within those cogs
 try:
     bot.load_extension("core")
     bot.load_extension("errorhandling")
