@@ -64,7 +64,7 @@ for roots, dirs, files in os.walk("./cogs"):
             try:
                 bot.load_extension(f"cogs.{each[:-3]}")
                 extensioncount += 1
-             except commands.ExtensionFailed as error:
+            except commands.ExtensionFailed as error:
                 bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'. Check the debug logs for more information.")
                 if isinstance(error.original, SyntaxError):
                     bot.logger.debug(traceback.format_exc())
