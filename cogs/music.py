@@ -252,9 +252,8 @@ class music(commands.Cog):
 
     
     #executes when someone sends a message with the prefix followed by 'play'
-    @commands.command(aliases=["p"])
+    @commands.command(aliases=["p"], help=f"Play something from youtube. You need to provide a valid Youtube URL or a search term for this to work. For example, you can use `?play never gonna give you up` (this assumes the prefix is `?`, just replace `?` with the current prefix if it's different) to search youtube for a song named 'never gonna give you up' and rickroll all of your friends in the voice channel.")
     async def play(self, ctx, *, url=None):
-        '''Play something from youtube. You need to provide a valid Youtube URL or a search term for this to work.'''
         if url == None:
             await ctx.send("You need to specify a url or something to search for.")
             return
@@ -274,10 +273,14 @@ class music(commands.Cog):
                 #if we're already playing (or fetching) audio, add song to queue
                 await ctx.send("Adding to your queue...")
                 #show warning if repeating song
-                if self.current_song[channel.id][0] == True:
-                    await ctx.send(f"\U000026a0 I'm repeating a song right now. I'll still add this song to your queue, but I won't play it until you run `{self.bot.command_prefix}loop` again (and wait for the current song to finish) or skip the current song using `{self.bot.command_prefix}skip`.")
-                elif self.current_song[ctx.voice_client.channel.id][2] == "No duration available (this is a stream)":
-                    await ctx.send(f"\U000026a0 I'm playing a stream right now. I'll still add this song to your queue, but I won't play it until you run `{self.bot.command_prefix}skip` or the stream ends.")
+                try:
+                    if self.current_song[channel.id][0] == True:
+                        await ctx.send(f"\U000026a0 I'm repeating a song right now. I'll still add this song to your queue, but I won't play it until you run `{self.bot.command_prefix}loop` again (and wait for the current song to finish) or skip the current song using `{self.bot.command_prefix}skip`.")
+                    elif self.current_song[ctx.voice_client.channel.id][2] == "No duration available (this is a stream)":
+                        await ctx.send(f"\U000026a0 I'm playing a stream right now. I'll still add this song to your queue, but I won't play it until you run `{self.bot.command_prefix}skip` or the stream ends.")
+                except KeyError:
+                    #if there's a keyerror, nothing's playing. this is normal if someone adds stuff to queue rapidly, so ignore it
+                    pass
                 try:
                     #if locked, don't do anything until unlocked
                     async with ctx.typing():
@@ -285,6 +288,7 @@ class music(commands.Cog):
                             await asyncio.sleep(0.01)
                         await self.get_song(ctx, url)
                 except:
+                    #get_song SHOULD handle exceptions properly so we don't need to do anything here
                     traceback.print_exc()
                     return
                 #actually add that stuff to queue
@@ -397,7 +401,7 @@ class music(commands.Cog):
                 newline = "\n"  #hacky "fix" for f-strings not allowing backslashes
                 #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
                 #show user's queue, change how it's displayed depending on how many songs are in the queue
-                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(self.song_queue[ctx.voice_client.channel.id])])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{self.bot.command_prefix} remove <song's position>` to remove a song from your queue. For example, `{self.bot.command_prefix} remove 1` removes the first item in the queue.") 
+                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(self.song_queue[ctx.voice_client.channel.id])])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{self.bot.command_prefix} remove <song's position>` to remove a song from your queue. For example, `{self.bot.command_prefix} remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing.") 
             else:
                 await ctx.send("You don't have anything in your queue.")
         except (IndexError, AttributeError):
