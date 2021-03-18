@@ -396,9 +396,9 @@ class music(commands.Cog):
                         continue
                     #don't show amounts of seconds greater than 60
                     m += s//60
-                s = int(f"{0 if len(list(str(s))) == 1 else ''}{s%60}")
-                m = int(f"{0 if len(str(m)) == 1 else ''}{m%60}")
-                h = f"{'' if m//60 < 1 else f'{m//60}:'}"
+                s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
+                h = f"{'' if int(m)//60 < 1 else f'{int(m)//60}:'}"
+                m = f"{0 if len(str(m)) == 1 else ''}{m%60}"
                 newline = "\n"  #hacky "fix" for f-strings not allowing backslashes
                 #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
                 #show user's queue, change how it's displayed depending on how many songs are in the queue
