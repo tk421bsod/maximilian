@@ -193,8 +193,8 @@ class music(commands.Cog):
     async def get_song(self, ctx, url):
         '''Gets the filename, id, and other metadata of a song. This tries to look up a song in the database first, then it searches Youtube if that fails.'''
         #block this from executing until the previous call is finished, we don't want multiple instances of this running in parallel-
-        self.logger.info("Locked execution.")
         self.is_locked = True
+        self.logger.info("Locked execution.")
         ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': 'songcache/%(id)s.%(ext)s',
@@ -304,6 +304,7 @@ class music(commands.Cog):
             return
         except Exception:
             traceback.print_exc()
+            return
         vc = ctx.voice_client
         if vc:
             if vc.channel.id == channel.id:
@@ -568,6 +569,25 @@ class music(commands.Cog):
         except IndexError:
             quote = "\'"
             await ctx.send(f"{f'That queue entry doesn{quote}t exist.' if len(self.song_queue[ctx.voice_client.channel.id]) > 0 else f'You don{quote}t have anything in your queue.'}")
+
+    @commands.command(aliases=["d"])
+    async def download(self, ctx, *, url=None):
+        '''Very similar to `play`, but sends the mp3 file in chat instead of playing it in a voice channel.'''
+        if not url:
+            return await ctx.send(f"Run this command again and specify something you want to search for. For example, running `{self.bot.command_prefix}download never gonna give you up` will download and send Never Gonna Give You Up in the channel you sent the command in.")
+        await ctx.send("Getting that song...")
+        async with ctx.typing():
+            while self.is_locked:
+                await asyncio.sleep(0.01)
+            await self.get_song(ctx, url)
+            self.logger.info("Uploading file...")
+            try:
+                await ctx.send("Here's the file:", file=discord.File(self.filename))
+            except discord.HTTPException:
+                traceback.print_exc()
+                await ctx.send("That file is too large. Try specifying a different song.")
+            self.is_locked = False
+            self.logger.info("Done getting song, unlocked.")
 
 def setup(bot):
     bot.add_cog(music(bot))
