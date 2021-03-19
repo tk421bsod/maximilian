@@ -315,7 +315,6 @@ class music(commands.Cog):
                 await joiningmessage.edit(content="I'm already in your voice channel, so I won't reconnect.")
             else:
                 try:
-                    self.song_queue[vc.channel.id] = []
                     await vc.move_to(channel)
                 except asyncio.TimeoutError:
                     await joiningmessage.edit(content='Moving to the `{channel}` voice channel timed out.')
