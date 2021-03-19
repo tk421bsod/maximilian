@@ -41,7 +41,12 @@ class music(commands.Cog):
         else:
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
-    async def fade_audio(self, newvolume, ctx):
+    async def _wait_for unlock(self)
+        while self.is_locked:
+            await asyncio.sleep(0.01)
+        return
+
+    async def _fade_audio(self, newvolume, ctx):
         '''Smoothly transitions between volume levels'''
         while ctx.voice_client.source.volume != newvolume/100:
             #make volume a double so this doesn't loop infinitely (as volume can be something like 1.000000000004 sometimes)
@@ -284,8 +289,7 @@ class music(commands.Cog):
                 try:
                     #if locked, don't do anything until unlocked
                     async with ctx.typing():
-                        while self.is_locked:
-                            await asyncio.sleep(0.01)
+                        await self._wait_for_unlock()
                         await self.get_song(ctx, url)
                 except:
                     #get_song SHOULD handle exceptions properly so we don't need to do anything here
@@ -328,10 +332,8 @@ class music(commands.Cog):
         try:
             #if locked, don't do anything until unlocked
             async with ctx.typing():
-                while self.is_locked:
-                    await asyncio.sleep(0.01)
+                await self._wait_for_unlock()
                 #then immediately lock and get song
-                self.is_locked=True
                 await self.get_song(ctx, url)
         except:
             self.channels_playing_audio.remove(ctx.voice_client.channel.id)
@@ -400,7 +402,7 @@ class music(commands.Cog):
                 s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
                 h = f"{'' if int(m)//60 < 1 else f'{int(m)//60}:'}"
                 m = f"{0 if len(str(m)) == 1 else ''}{m%60}"
-                newline = "\n"  #hacky "fix" for f-strings not allowing backslashes
+                newline = "\n" #terrible, evil hack for using newlines in fstrings
                 #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
                 #show user's queue, change how it's displayed depending on how many songs are in the queue
                 await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(self.song_queue[ctx.voice_client.channel.id])])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{self.bot.command_prefix} remove <song's position>` to remove a song from your queue. For example, `{self.bot.command_prefix} remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing.") 
@@ -577,8 +579,7 @@ class music(commands.Cog):
             return await ctx.send(f"Run this command again and specify something you want to search for. For example, running `{self.bot.command_prefix}download never gonna give you up` will download and send Never Gonna Give You Up in the channel you sent the command in.")
         await ctx.send("Getting that song...")
         async with ctx.typing():
-            while self.is_locked:
-                await asyncio.sleep(0.01)
+            await self._wait_for_unlock()
             await self.get_song(ctx, url)
             self.logger.info("Uploading file...")
             try:
