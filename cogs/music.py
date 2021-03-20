@@ -11,6 +11,7 @@ import time
 import functools
 import typing
 import logging
+import ffmpeg
 
 class DurationLimitError(discord.ext.commands.CommandError):
     def __init__(self):
@@ -19,6 +20,9 @@ class DurationLimitError(discord.ext.commands.CommandError):
 class NoSearchResultsError(discord.ext.commands.CommandError):
     def __init__(self):
         print("No search results for this song.")
+
+class FileTooLargeError(discord.ext.commands.CommandError):
+    pass
 
 class music(commands.Cog):
     def __init__(self, bot):
@@ -41,13 +45,13 @@ class music(commands.Cog):
         else:
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
-    async def _wait_for unlock(self):
+    async def _wait_for_unlock(self):
         while self.is_locked:
             await asyncio.sleep(0.01)
         return
 
     async def _fade_audio(self, newvolume, ctx):
-        '''Smoothly transition between volume levels'''
+        '''Smoothly transitions between volume levels'''
         while ctx.voice_client.source.volume != newvolume/100:
             #make volume a double so this doesn't loop infinitely (as volume can be something like 1.000000000004 sometimes)
             ctx.voice_client.source.volume = round(ctx.voice_client.source.volume, 2)
@@ -59,8 +63,6 @@ class music(commands.Cog):
 
     def process_queue(self, ctx, channel, error):
         '''Starts playing the next song in the queue, cleans up some stuff if the queue is empty'''
-        coro = asyncio.sleep(1)
-        asyncio.run_coroutine_threadsafe(coro, self.bot.loop).result()
         #this is a callback that is executed after song ends
         try:
             if channel.id not in self.channels_playing_audio:
@@ -580,12 +582,42 @@ class music(commands.Cog):
         async with ctx.typing():
             await self._wait_for_unlock()
             await self.get_song(ctx, url)
+            if self.duration == "0:0":
+                return await ctx.send("I can't download streams.")
             self.logger.info("Uploading file...")
             try:
                 await ctx.send("Here's the file:", file=discord.File(self.filename))
             except discord.HTTPException:
                 traceback.print_exc()
-                await ctx.send("That file is too large. Try specifying a different song.")
+                await ctx.send("I couldn't upload that file because it's too large. I'll reduce the quality (reduction in quality varies with song length) and try to send it again.")
+                try:
+                    async with ctx.typing():
+                        await ctx.send("Reducing quality...")
+                        #parse total seconds from duration value 
+                        #TODO: add raw_duration class attr which has duration in seconds
+                        s = 60*int(self.duration.split(":")[0])+int(self.duration.split(":")[1])
+                        #for each bitrate value from 128kbps to 64kbps (64 possible values) from highest to lowest
+                        for i in range(64, 0, -1):
+                            self.logger.info(f"File was too large. Trying to transcode to {i+64} kbps...")
+                            self.logger.info(f"Estimated file size: {((i+64)*s)/8}KB")
+                            #check if the output file size (bitrate*seconds) in kilobytes (8 bits = 1 byte, so divide by 8)
+                            #is less than the upload limit (8mb or 8000kb)
+                            if ((i+64)*s)/8 <= 7900:
+                                self.logger.info(f"Suitable bitrate found. Transcoding to {i+64} kbps...")
+                                #if so, transcode to that bitrate
+                                inputfile = ffmpeg.input(self.filename)
+                                output = functools.partial(ffmpeg.output, inputfile, f"{self.filename[:-4]}temp.mp3", audio_bitrate=f"{i+64}k")
+                                stream = await self.bot.loop.run_in_executor(None, output)
+                                run = functools.partial(ffmpeg.run, stream, quiet=True, overwrite_output=True)
+                                await self.bot.loop.run_in_executor(None, run)
+                                await ctx.send("Here's the file (with lower quality):", file=discord.File(f"{self.filename[:-4]}temp.mp3"))
+                                self.is_locked = False
+                                self.logger.info("Done getting song, unlocked.")
+                                return
+                        #if we didn't return yet, the file's too large 
+                        raise FileTooLargeError
+                except (discord.HTTPException, FileTooLargeError):
+                    await ctx.send("<:blobpain:822921526629236797> I couldn't upload a lower quality version. Try choosing a shorter song.")
             self.is_locked = False
             self.logger.info("Done getting song, unlocked.")
 
