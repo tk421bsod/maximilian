@@ -41,7 +41,7 @@ class music(commands.Cog):
         else:
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
-    async def _wait_for unlock(self):
+    async def _wait_for_unlock(self):
         while self.is_locked:
             await asyncio.sleep(0.01)
         return
