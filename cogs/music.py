@@ -63,8 +63,6 @@ class music(commands.Cog):
 
     def process_queue(self, ctx, channel, error):
         '''Starts playing the next song in the queue, cleans up some stuff if the queue is empty'''
-        coro = asyncio.sleep(1)
-        asyncio.run_coroutine_threadsafe(coro, self.bot.loop).result()
         #this is a callback that is executed after song ends
         try:
             if channel.id not in self.channels_playing_audio:
@@ -599,7 +597,6 @@ class music(commands.Cog):
                         #TODO: add raw_duration class attr which has duration in seconds
                         s = 60*int(self.duration.split(":")[0])+int(self.duration.split(":")[1])
                         #for each bitrate value from 128kbps to 64kbps (64 possible values) from highest to lowest
-                        #(lowest bitrate allowed is 64kbps because anything below that sounds like shit)
                         for i in range(64, 0, -1):
                             self.logger.info(f"File was too large. Trying to transcode to {i+64} kbps...")
                             self.logger.info(f"Estimated file size: {((i+64)*s)/8}KB")
@@ -617,7 +614,7 @@ class music(commands.Cog):
                                 self.is_locked = False
                                 self.logger.info("Done getting song, unlocked.")
                                 return
-                        #if we didn't return yet, the file's too large or we fucked up somewhere
+                        #if we didn't return yet, the file's too large 
                         raise FileTooLargeError
                 except (discord.HTTPException, FileTooLargeError):
                     await ctx.send("<:blobpain:822921526629236797> I couldn't upload a lower quality version. Try choosing a shorter song.")
