@@ -9,6 +9,7 @@ import common
 import helpcommand
 import pymysql
 import traceback
+import datetime
 
 print("starting...")
 token = common.token().get("betatoken.txt")
