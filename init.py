@@ -18,7 +18,7 @@ def config_logging(args):
             logging.disable()
             print(value[1])
             return
-    logging.basicConfig(level=logging.WARN, handlers=[logging.FileHandler(f"maximilian-{datetime.date.today()}.log"), logging.StreamHandler(sys.stdout)])
+    logging.basicConfig(level=logging.WARN, handlers=[logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"), logging.StreamHandler(sys.stdout)])
     print("No logging level specified, falling back to WARN.")
 
 class init():
