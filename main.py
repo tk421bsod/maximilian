@@ -9,6 +9,7 @@ import common
 import helpcommand
 import pymysql
 import traceback
+import datetime
 
 print("starting...")
 token = common.token().get("token.txt")
@@ -16,6 +17,7 @@ bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=disc
 init.config_logging(sys.argv)
 init.init(bot).parse_arguments(sys.argv)
 bot.logger = logging.getLogger('maximilian-stable')
+bot.logger.warning(f"Logging started at {datetime.datetime.now()}")
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
