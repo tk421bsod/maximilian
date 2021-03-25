@@ -2,6 +2,8 @@ import os
 import traceback
 from discord.ext import commands
 import logging
+import datetime
+import sys
 
 def config_logging(args):
     levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
@@ -9,14 +11,14 @@ def config_logging(args):
         if key not in args:
             pass
         elif key in args and key != "-q" and key != "--quiet":
-            logging.basicConfig(level=value[0], handlers=[logging.FileHandler(f"maximilian-{datetime.datetime.date()}.log"), logging.StreamHandler(sys.stdout)])
+            logging.basicConfig(level=value[0], handlers=[logging.FileHandler(f"maximilian-{datetime.date.today()}.log"), logging.StreamHandler(sys.stdout)])
             print(value[1])
             return
         else:
             logging.disable()
             print(value[1])
             return
-    logging.basicConfig(level=logging.WARN, handlers=[logging.FileHandler(f"maximilian-{datetime.datetime.date()}.log"), logging.StreamHandler(sys.stdout)])
+    logging.basicConfig(level=logging.WARN, handlers=[logging.FileHandler(f"maximilian-{datetime.date.today()}.log"), logging.StreamHandler(sys.stdout)])
     print("No logging level specified, falling back to WARN.")
 
 class init():
