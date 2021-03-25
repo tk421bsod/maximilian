@@ -11,7 +11,7 @@ def config_logging(args):
         if key not in args:
             pass
         elif key in args and key != "-q" and key != "--quiet":
-            logging.basicConfig(level=value[0], handlers=[logging.FileHandler(f"maximilian-{datetime.date.today()}.log"), logging.StreamHandler(sys.stdout)])
+            logging.basicConfig(level=value[0], handlers=[logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"), logging.StreamHandler(sys.stdout)])
             print(value[1])
             return
         else:
