@@ -9,14 +9,14 @@ def config_logging(args):
         if key not in args:
             pass
         elif key in args and key != "-q" and key != "--quiet":
-            logging.basicConfig(level=value[0])
+            logging.basicConfig(level=value[0], handlers=[logging.FileHandler(f"maximilian-{datetime.datetime.date()}.log"), logging.StreamHandler(sys.stdout)])
             print(value[1])
             return
         else:
             logging.disable()
             print(value[1])
             return
-    logging.basicConfig(level=logging.WARN)
+    logging.basicConfig(level=logging.WARN, handlers=[logging.FileHandler(f"maximilian-{datetime.datetime.date()}.log"), logging.StreamHandler(sys.stdout)])
     print("No logging level specified, falling back to WARN.")
 
 class init():
