@@ -614,7 +614,7 @@ class music(commands.Cog):
                                 stream = await self.bot.loop.run_in_executor(None, output)
                                 run = functools.partial(ffmpeg.run, stream, quiet=True, overwrite_output=True)
                                 await self.bot.loop.run_in_executor(None, run)
-                                await ctx.send("Here's the file (with lower quality):", file=discord.File(f"{self.filename[:-4]}temp.mp3"))
+                                await ctx.send(f"Here's the file (at {i+64} kbps):", file=discord.File(f"{self.filename[:-4]}temp.mp3"))
                                 self.is_locked = False
                                 self.logger.info("Done getting song, unlocked.")
                                 return
