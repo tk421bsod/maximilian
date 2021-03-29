@@ -106,7 +106,7 @@ class db:
             row = self.dbc.fetchall()
         else:
             row = self.dbc.fetchone()
-        return row
+        return row if row != () and row != "()" else None
 
     def exec_safe_query(self, database, querytoexecute, params, debug=False, fetchallrows=False):
         self.connect(database)
@@ -115,7 +115,7 @@ class db:
             row = self.dbc.fetchall()
         else:
             row = self.dbc.fetchone()
-        return row
+        return row if row != () and row != "()" else None
 
 class token:
     def get(self, filename):
