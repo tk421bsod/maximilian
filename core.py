@@ -125,7 +125,7 @@ class core(commands.Cog):
             await ctx.message.add_reaction("\U00002757")
             return await ctx.send(traceback.format_exc())
         await ctx.message.add_reaction("\U00002705")
-        if result:
+        if result and result != ():
             await ctx.send(f"`{result}`")
 
 
