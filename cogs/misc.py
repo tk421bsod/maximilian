@@ -166,6 +166,17 @@ class misc(commands.Cog):
         '''Show the amount of people in this server.'''
         await ctx.send(f"Found {len(ctx.guild.members)} members. ({len([i for i in ctx.guild.members if not i.bot])} people and {len([i for i in ctx.guild.members if i.bot])} bots)")
 
+    @commands.command(aliases=["randomdog", "dog"])
+    async def dogs(self, ctx):
+        '''Get a random image of a dog.'''
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get('https://dog.ceo/api/breeds/image/random') as r:
+                    imagename = (await r.json())['message']
+                    async with cs.get(imagename) as img:
+                        buffer = io.BytesIO(await img.read())
+                    await ctx.send(file=discord.File(buffer, filename=f"dog.{imagename[-3:]}"))
+
 def setup(bot):
     bot.add_cog(misc(bot))
 
