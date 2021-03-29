@@ -6,6 +6,9 @@ import os
 import pymysql
 import traceback
 import logging
+import asyncio
+import datetime
+import time
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
@@ -60,7 +63,8 @@ class core(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("finishing startup...")
+        self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
+        self.logger.info("finishing startup...")
         self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
         try:
             await self.bot.prefixesinst.reset_prefixes()
@@ -70,7 +74,7 @@ class core(commands.Cog):
             self.logger.critical("Couldn't fetch prefixes or custom commands from the database. Logging out...")
             await self.bot.logout()    
         self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
-        print("ready")
+        self.logger.info(f"ready, full startup took {time.time()-self.bot.start_time} seconds")
 
     async def prepare(self, message):
         if message.author != self.bot.user:
@@ -112,6 +116,19 @@ class core(commands.Cog):
             return
         await ctx.send("Changed status!")
 
+    @commands.is_owner()
+    @utils.command(hidden=True)
+    async def sql(self, ctx, query):
+        try:
+            result=self.bot.dbinst.exec_query(self.bot.database, query, False, True)
+        except:
+            await ctx.message.add_reaction("\U00002757")
+            return await ctx.send(traceback.format_exc())
+        await ctx.message.add_reaction("\U00002705")
+        if result:
+            await ctx.send(f"`{result}`")
+
+
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         self.logger.info("joined guild, adding guild id to list of guilds and resetting prefixes")
@@ -125,13 +142,23 @@ class core(commands.Cog):
         self.bot.guildlist.remove(str(guild.id))
         await self.bot.prefixesinst.reset_prefixes()
 
-    @commands.command(help="List all prefixes")
+    @commands.command(help="List all prefixes", hidden=True)
     async def listprefixes(self, ctx):
         try:
             prefix = self.bot.prefixes[str(ctx.guild.id)]
         except (KeyError, AttributeError):
             prefix = "!"
         await ctx.send(f"My prefix in this server is {prefix}.")
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, reaction):
+        await reaction.reaction.message.channel.send("Reaction removed.")
+    
+    async def cog_command_error(self, ctx, error):
+        error = getattr(error, "original", error)
+        if isinstance(error, commands.errors.CheckFailure):
+            await ctx.send("How did you find these commands? These aren't supposed to be used by anyone but the owner. \nIf you're selfhosting and want to make yourself the owner to prevent this from happening, replace the id after `owner_id=` and before the comma with your user id.")
+        pass
 
 def setup(bot):
     bot.add_cog(core(bot))
