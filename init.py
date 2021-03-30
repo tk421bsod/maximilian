@@ -54,7 +54,7 @@ class init():
                     self.logger.info(f"Loaded cogs.{each[:-3]}.")
                 except commands.ExtensionFailed as error:
                     errorcount += 1
-                    self.logger.error(f"{type(error.original).__name__} while loading '{error.name}'. If the error was a SyntaxError, run Maximilian again with the -v command line argument to show additional information.")
+                    self.logger.error(f"{type(error.original).__name__} while loading '{error.name}'. {'Run Maximilian again with the -v command line argument to show additional information.' if type(error.original).__name__ == 'SyntaxError' else ''}")
                     if isinstance(error.original, SyntaxError):
                         self.logger.debug(traceback.format_exc())
                     elif isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
@@ -68,4 +68,4 @@ class init():
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
         except:
             self.logger.error("Failed to get one or more cogs, some stuff might not work.")
-        print(f"loaded {extensioncount} extensions successfully{f' ({errorcount} extension(s) not loaded)'}, waiting for ready")
+        self.logger.info(f"loaded {extensioncount} extensions successfully{f' ({errorcount} extension(s) not loaded)'}, waiting for ready")
