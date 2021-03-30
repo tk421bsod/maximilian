@@ -10,6 +10,7 @@ import helpcommand
 import pymysql
 import traceback
 import datetime
+import time
 
 print("starting...")
 token = common.token().get("token.txt")
@@ -21,6 +22,7 @@ bot.logger.warning(f"Logging started at {datetime.datetime.now()}")
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
+bot.start_time = time.time()
 bot.dbinst = common.db(bot)
 bot.database = "maximilian"
 #try to connect to database, if it fails warn
