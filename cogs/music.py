@@ -47,11 +47,13 @@ class music(commands.Cog):
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
 
     async def _wait_for_unlock(self):
+        '''Blocks until self.is_locked is False'''
         while self.is_locked:
             await asyncio.sleep(0.01)
         return
 
     async def _join_voice(self, ctx, channel):
+        '''Helper function that handles joining a voice channel'''
         joiningmessage = await ctx.send("Joining your voice channel...")
         vc = ctx.voice_client
         if vc:
@@ -84,17 +86,18 @@ class music(commands.Cog):
             await asyncio.sleep(0.005)
 
     async def _handle_errors(self, ctx, error):
-            if isinstance(error, DurationLimitError):
-                await ctx.send("That song is too long. Due to limits on both data usage and storage space, I can't play songs longer than an hour.")
-                self.is_locked = False
-            elif isinstance(error, NoSearchResultsError):
-                await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.")
-                self.is_locked = False
-            else:
-                await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
-                traceback.print_exc()
-                await ctx.send("There was an error while trying to get that song. My developer has been made aware of this.")
-                self.is_locked = False
+        '''Handle certain errors (should probably use cog_command_error instead of this)'''
+        if isinstance(error, DurationLimitError):
+            await ctx.send("That song is too long. Due to limits on both data usage and storage space, I can't play songs longer than an hour.")
+            self.is_locked = False
+        elif isinstance(error, NoSearchResultsError):
+            await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.")
+            self.is_locked = False
+        else:
+            await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
+            traceback.print_exc()
+            await ctx.send("There was an error while trying to get that song. My developer has been made aware of this.")
+            self.is_locked = False
 
     def process_queue(self, ctx, channel, error):
         '''Starts playing the next song in the queue, cleans up some stuff if the queue is empty'''
