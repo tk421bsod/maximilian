@@ -54,6 +54,11 @@ class music(commands.Cog):
 
     async def _join_voice(self, ctx, channel):
         '''Helper function that handles joining a voice channel'''
+        #check if queue exists, init it if it doesn't exist
+        try:
+            self.song_queue[channel.id]
+        except KeyError:
+            self.song_queue[channel.id] = []
         joiningmessage = await ctx.send("Joining your voice channel...")
         vc = ctx.voice_client
         if vc:
@@ -290,11 +295,6 @@ class music(commands.Cog):
         #attempt to join the vc that the command's invoker is in...
         try:
             channel = ctx.author.voice.channel
-            #check if queue exists, init it if it doesn't exist
-            try:
-                self.song_queue[channel.id]
-            except KeyError:
-                self.song_queue[channel.id] = []
             #don't join vc if we're already playing (or fetching) audio
             if channel.id not in self.channels_playing_audio:
                 self.channels_playing_audio.append(channel.id)
