@@ -13,11 +13,15 @@ class errorhandling(commands.Cog):
         etype = type(error)
         trace = error.__traceback__
         lines = traceback.format_exception(etype, error, trace)
+        traceback.print_exc()
         # format_exception returns a list with line breaks embedded in the lines, so let's just stitch the elements together
         traceback_text = ''.join(lines)
         # it would probably be best to wrap this in a codeblock via e.g. a Paginator
         owner = self.bot.get_user(538193752913608704)
-        await owner.send(f"`{traceback_text}`")
+        try:
+            await owner.send(f"`{traceback_text}`")
+        except:
+            pass
         #get the original error so isinstance works
         error = getattr(error, "original", error)
         cog = ctx.cog
