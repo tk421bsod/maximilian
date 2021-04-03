@@ -16,7 +16,7 @@ class core(commands.Cog):
         self.bot = bot
         self.logger = logging.getLogger(f'maximilian.{__name__}')
 
-    @commands.group(invoke_without_subcommand=False, hidden=True)
+    @commands.group(invoke_without_command=False, hidden=True)
     async def utils(self, ctx):
         pass
 
