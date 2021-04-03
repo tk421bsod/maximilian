@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
 import asyncio
-import random
-import os
 import youtube_dl
 import urllib
 import aiohttp
@@ -11,6 +9,7 @@ import time
 import functools
 import typing
 import logging
+#warning: this uses ffmpeg-python, not ffmpeg (the python module) or python-ffmpeg
 import ffmpeg
 
 class DurationLimitError(discord.ext.commands.CommandError):
