@@ -10,11 +10,11 @@ class prefixes(commands.Cog):
         self.logger = logging.getLogger(__name__)
         
     async def _fetch_prefix(self, guild_id):
-        prefixindb = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild_id), False)
-            if prefixindb == "" or prefixindb == None:
+        prefix = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild_id), False)
+            if not prefix:
                 self.bot.prefixes[guild_id] = '!'
             else:
-                self.bot.prefixes[guild_id] = prefixindb
+                self.bot.prefixes[guild_id] = prefix
 
     async def update_prefix_cache(self, guild_id=None):
         await self.bot.responsesinst.check_if_ready()
@@ -52,7 +52,7 @@ class prefixes(commands.Cog):
         duplicateprefixmessage = f"My prefix in this server is already `{str(newprefix)}`."
         dbentry = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(ctx.guild.id), False)
         #might need a refactor soon
-        if dbentry == "" or dbentry == None:
+        if not dbentry:
             print("no db entry found")
             self.bot.prefixes[ctx.guild.id] = newprefix
             result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
