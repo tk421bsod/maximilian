@@ -10,6 +10,7 @@ class prefixes(commands.Cog):
         self.logger = logging.getLogger(__name__)
         
     async def _fetch_prefix(self, guild_id):
+        '''Fetches a prefix corresponding to a guild id from the database'''
         prefix = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild_id), False)
         if not prefix:
             self.bot.prefixes[guild_id] = '!'
@@ -21,10 +22,10 @@ class prefixes(commands.Cog):
         await self.bot.responsesinst.check_if_ready()
         self.logger.info("updating prefix cache...")
         if guild_id:
-            await _fetch_prefix(guild_id)
+            await self._fetch_prefix(guild_id)
         else:
             for id in [guild.id for guild in self.bot.guilds]:
-                await _fetch_prefix(guild_id)
+                await self._fetch_prefix(guild_id)
         self.logger.info("cache has been updated!")
 
     async def set_nickname(self, ctx, oldprefix, newprefix):
