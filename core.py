@@ -60,9 +60,7 @@ class core(commands.Cog):
             print(e)
             if len(list(str(e))) >= 200:
                 embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
-                embed.add_field(name="Error:", value=str(e))
-            else:
-                embed = discord.Embed(title=f"\U0000274c Error while reloading extensions: {str(e)}.")
+                embed.add_field(name="Error:", value=traceback.format_exc())
         await ctx.send(embed=embed) 
 
     @commands.Cog.listener()
