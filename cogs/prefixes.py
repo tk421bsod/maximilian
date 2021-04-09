@@ -11,10 +11,10 @@ class prefixes(commands.Cog):
         
     async def _fetch_prefix(self, guild_id):
         prefix = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild_id), False)
-            if not prefix:
-                self.bot.prefixes[guild_id] = '!'
-            else:
-                self.bot.prefixes[guild_id] = prefix
+        if not prefix:
+            self.bot.prefixes[guild_id] = '!'
+        else:
+            self.bot.prefixes[guild_id] = prefix
 
     async def update_prefix_cache(self, guild_id=None):
         await self.bot.responsesinst.check_if_ready()
