@@ -127,7 +127,7 @@ class core(commands.Cog):
     @utils.command(hidden=True, aliases=["info"])
     async def stats(self, ctx):
         newline="\n"
-        embed=discord.Embed(title="bot information stuff").add_field(name="Extensions", value=f"Extensions loaded ({len(list(self.bot.extensions.keys()))} in total): \n{f'{newline}'.join([i for i in list(self.bot.extensions.keys())}")
+        embed=discord.Embed(title="bot information stuff").add_field(name="Extensions", value=f"Extensions loaded ({len(list(self.bot.extensions.keys()))} in total): \n{f'{newline}'.join([i for i in list(self.bot.extensions.keys())]}")
         embed.add_field(name="Uptime", value=humanize.naturaltime(time.time()-self.bot.start_time))
         embed.add_field(name="misc", value=f"{len([i for i in self.bot.commands if not i.hidden and i.name != 'jishaku'])} commands \n{sum([len(open(i, 'r').splitlines()) for i in os.listdir('.') if i.endswith('.py')])+sum([len(open(i, 'r').splitlines()) for i in os.listdir('./cogs') if i.endswith('.py')])} lines of code \n{len([i for i in os.listdir('.') if i.endswith('.py')])+len([i for i in os.listdir('./cogs') if i.endswith('.py')} Python files")
         await ctx.send(embed=embed)
