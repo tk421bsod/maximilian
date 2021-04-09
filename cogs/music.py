@@ -587,7 +587,11 @@ class music(commands.Cog):
         await ctx.send("Getting that song...")
         async with ctx.typing():
             await self._wait_for_unlock()
-            await self.get_song(ctx, url)
+            try:
+                await self.get_song(ctx, url)
+            except Exception as e:
+                await self._handle_errors(ctx, e)
+                return
             if self.duration == "0:0":
                 return await ctx.send("I can't download streams.")
             self.logger.info("Uploading file...")
