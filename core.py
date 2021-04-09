@@ -58,9 +58,8 @@ class core(commands.Cog):
             embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
         except Exception as e:
             print(e)
-            if len(list(str(e))) >= 200:
-                embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
-                embed.add_field(name="Error:", value=traceback.format_exc())
+            embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
+            embed.add_field(name="Error:", value=traceback.format_exc())
         await ctx.send(embed=embed) 
 
     @commands.Cog.listener()
