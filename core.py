@@ -35,6 +35,7 @@ class core(commands.Cog):
                 extensionsreloaded = "Successfully reloaded 1 extension."
             elif len(targetextensions) == 0:
                 extensionsreloaded=f"Successfully reloaded all extensions."
+                targetextensions = list(self.bot.extensions.keys())
             else:
                 extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
             reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
@@ -43,11 +44,9 @@ class core(commands.Cog):
                 o = repo.remotes.origin
                 o.pull()
                 await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
-                targetextensions = list(self.bot.extensions.keys())
             except:
                 await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Make sure you've set up the proper SSH keys. Reloading local copies of extensions...")
                 extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
-                targetextensions = list(self.bot.extensions.keys())
             for each in targetextensions:
                 self.bot.reload_extension(each)
             self.bot.prefixesinst = self.bot.get_cog('prefixes')
