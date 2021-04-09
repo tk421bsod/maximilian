@@ -11,10 +11,11 @@ import pymysql
 import traceback
 import datetime
 import time
+import core
 
 print("starting...")
 token = common.token().get("token.txt")
-bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=discord.Intents.all(), activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.5.1 (stable)"))
+bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=discord.Intents.all(), activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.5.1 (stable)"))
 init.config_logging(sys.argv)
 init.init(bot).parse_arguments(sys.argv)
 bot.logger = logging.getLogger('maximilian-stable')
@@ -48,7 +49,7 @@ for roots, dirs, files in os.walk("./cogs"):
                     bot.logger.error(f"The {error.original.name} module isn't installed, '{error.name}' won't be loaded")
 #create instances of certain cogs, because we need to call functions within those cogs
 try:
-    bot.load_extension("core")
+    bot.load_extension("cogs.prefixes")
     bot.load_extension("errorhandling")
 except:
     bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
