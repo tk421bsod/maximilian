@@ -1,33 +1,33 @@
 import discord
 import time
 from discord.ext import commands
+import logging
 
 class prefixes(commands.Cog):
     '''Change Maximilian's prefix'''
     def __init__(self, bot):
         self.bot = bot
+        self.logger = logging.getLogger(__name__)
+        
+    async def _fetch_prefix(self, guild_id):
+        prefixindb = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild_id), False)
+            if prefixindb == "" or prefixindb == None:
+                self.bot.prefixes[guild_id] = '!'
+            else:
+                self.bot.prefixes[guild_id] = prefixindb
 
-    async def reset_prefixes(self, guild=None):
+    async def update_prefix_cache(self, guild_id=None):
         await self.bot.responsesinst.check_if_ready()
-        print("resetting prefixes...")
+        self.logger.info("updating prefix cache...")
         if guild:
-            prefixindb = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild), False)
-            if prefixindb == "" or prefixindb == None:
-                self.bot.prefixes[str(guild)] = '!'
-            else:
-                self.bot.prefixes[str(guild)] = prefixindb
-            print("reset prefixes")
-            return
-        for guild in self.bot.guilds:
-            prefixindb = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild.id), False)
-            if prefixindb == "" or prefixindb == None:
-                self.bot.prefixes[str(guild.id)] = '!'
-            else:
-                self.bot.prefixes[str(guild.id)] = prefixindb
-        print("reset prefixes")
+            await _fetch_prefix(guild_id)
+        else:
+            for id in [guild.id for guild in self.bot.guilds]:
+                await _fetch_prefix(guild_id)
+        self.logger.info("cache has been updated!")
 
     async def set_nickname(self, ctx, oldprefix, newprefix):
-        if ctx.guild.me.nick == None:
+        if not ctx.guild.me.nick:
             oldnickname = "Maximilian"
         else:
             oldnickname = ctx.guild.me.nick
@@ -40,6 +40,7 @@ class prefixes(commands.Cog):
     async def prefix(self, ctx, newprefix):
     #this try/except is to fall back to a default prefix if it isn't in the list for some reason
     #might not be necessary, as a guild's prefix is set to "!" if it's not in the db (lines 15-16 of this file)
+    #TODO: rework error handling in common.py
         try:
             oldprefix = self.bot.prefixes[str(ctx.guild.id)]
         except KeyError:
@@ -57,21 +58,18 @@ class prefixes(commands.Cog):
             result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
             if result == "success":
                 await self.set_nickname(ctx, oldprefix, newprefix)
-                await self.reset_prefixes(ctx.guild.id)
-                await ctx.send(prefixsetmessage)
-                return "changed prefix"
+                await self.update_prefix_cache(ctx.guild.id)
+                return await ctx.send(prefixsetmessage)
         elif dbentry == newprefix:
             print("tried to change to same prefix")
-            await ctx.send(duplicateprefixmessage)
-            return "changed prefix"
+            return await ctx.send(duplicateprefixmessage)
         elif dbentry != "" and dbentry != newprefix:
             print("db entry found")
             result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
             if result == "success":
                 await self.set_nickname(ctx, oldprefix, newprefix)
-                await self.reset_prefixes(ctx.guild.id)
-                await ctx.send(prefixsetmessage)
-                return "changed prefix"
+                await self.update_prefix_cache(ctx.guild.id)
+                return await ctx.send(prefixsetmessage)
             elif result == "error-duplicate":
                 print("there's already an entry for this guild")
                 deletionresult = self.bot.dbinst.delete(self.bot.database, "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
@@ -79,9 +77,8 @@ class prefixes(commands.Cog):
                     result = self.bot.dbinst.insert(self.bot.database, "prefixes", {"guild_id":str(ctx.guild.id), "prefix":str(newprefix)}, "guild_id", False, "", False, "", False)
                     if result == "success":
                         await self.set_nickname(ctx, oldprefix, newprefix)
-                        await self.reset_prefixes(ctx.guild.id)
-                        await ctx.send(prefixsetmessage)
-                        return "success"
+                        await self.update_prefix_cache(ctx.guild.id)
+                        return await ctx.send(prefixsetmessage)
             await ctx.send("An error occurred when setting the prefix. Please try again later.")
             return "error"
 
