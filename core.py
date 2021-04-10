@@ -147,7 +147,8 @@ class core(commands.Cog):
         error = getattr(error, "original", error)
         if isinstance(error, commands.errors.CheckFailure):
             await ctx.send("How did you find these commands? These aren't supposed to be used by anyone but the owner. \nIf you're selfhosting and want to make yourself the owner to prevent this from happening, replace the id after `owner_id=` and before the comma on line 18 of main.py with your user id.")
-        pass
+        else:
+            await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
 
 def setup(bot):
     bot.add_cog(core(bot))
