@@ -4,12 +4,14 @@ import datetime
 class db:
     dbobj = ""
     dbc = ""
-    def __init__(self, bot):
+    def __init__(self, bot=None):
         self.error=""
         with open("dbp.txt", "r") as dbpfile:
             self.databasepassword = dbpfile.readline()
-        self.ip = bot.dbip
-        
+        if bot:
+            self.ip = bot.dbip
+        else:
+            self.ip = 10.0.0.51
     def connect(self, database):
         self.dbobj=pymysql.connect(host=self.ip,
                     user="maximilianbot",
