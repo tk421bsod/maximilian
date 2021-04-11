@@ -14,6 +14,8 @@ import humanize
 def get_prefix(bot, message):
     if not bot.prefixes:
         bot.prefixinst.update_prefix_cache()
+    if not message.guild:
+        return "!"
     try:
         return bot.prefixes[message.guild.id]
     except KeyError:
