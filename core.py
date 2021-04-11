@@ -14,7 +14,11 @@ import humanize
 def get_prefix(bot, message):
     if not bot.prefixes:
         bot.prefixinst.update_prefix_cache()
-    return bot.prefixes[message.guild.id]
+    try:
+        return bot.prefixes[message.guild.id]
+    except KeyError:
+        bot.prefixes[message.guild.id] = "!"
+        return "!"
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
