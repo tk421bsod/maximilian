@@ -87,7 +87,6 @@ class core(commands.Cog):
         if message.author != self.bot.user:
             if message.guild is not None:
                 #required because a bunch of other stuff relies on it, will change it later
-                self.bot.commandprefix = self.bot.command_prefix
                 for each in range(len(self.bot.responses)):
                     if int(self.bot.responses[each][0]) == int(message.guild.id):
                         if await self.bot.get_prefix(message) + self.bot.responses[each][1].lower() == message.content.lower():

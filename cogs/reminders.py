@@ -51,7 +51,7 @@ class reminders(commands.Cog):
     async def todo(self, ctx, action="list", *, entry=None):
         if action == "add":
             if not entry:
-                await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{self.bot.command_prefix}todo add foo`.")
+                await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add foo`.")
                 return
             result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "id":int(self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)'])+1}, None)
             if result == "success":
