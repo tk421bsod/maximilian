@@ -11,10 +11,11 @@ import pymysql
 import traceback
 import datetime
 import time
+import core
 
 print("starting...")
 token = common.token().get("betatoken.txt")
-bot = commands.Bot(command_prefix="!", owner_id=538193752913608704, intents=discord.Intents.all(), activity=discord.Activity(type=discord.ActivityType.playing, name=" with new features! v0.5.2 (beta)"))
+bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=discord.Intents.all(), activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.5.3 (beta)"))
 init.config_logging(sys.argv)
 init.init(bot).parse_arguments(sys.argv)
 bot.logger = logging.getLogger('maximilian-beta')
@@ -35,6 +36,7 @@ except pymysql.err.OperationalError:
 #load extensions, starting with required ones
 print("Loading required extensions...")
 try:
+    bot.load_extension("cogs.prefixes")
     bot.load_extension("core")
     bot.load_extension("errorhandling")
 except:
