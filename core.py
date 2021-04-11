@@ -90,7 +90,7 @@ class core(commands.Cog):
                 self.bot.commandprefix = self.bot.command_prefix
                 for each in range(len(self.bot.responses)):
                     if int(self.bot.responses[each][0]) == int(message.guild.id):
-                        if self.bot.prefixes[str(message.guild.id)] + self.bot.responses[each][1].lower() == message.content.lower():
+                        if await self.bot.get_prefix(message) + self.bot.responses[each][1].lower() == message.content.lower():
                             await message.channel.send(self.bot.responses[each][2])
                             return False
             return True
