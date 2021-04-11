@@ -12,7 +12,7 @@ class prefixes(commands.Cog):
     async def _fetch_prefix(self, guild_id):
         '''Fetches a prefix corresponding to a guild id from the database'''
         prefix = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild_id), False)
-        if not prefix:
+        if not prefix and prefix != () and prefix != "()":
             self.bot.prefixes[guild_id] = '!'
         else:
             self.bot.prefixes[guild_id] = prefix
