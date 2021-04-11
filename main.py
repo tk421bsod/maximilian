@@ -50,6 +50,7 @@ for roots, dirs, files in os.walk("./cogs"):
 #create instances of certain cogs, because we need to call functions within those cogs
 try:
     bot.load_extension("cogs.prefixes")
+    bot.load_extension("core")
     bot.load_extension("errorhandling")
 except:
     bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
