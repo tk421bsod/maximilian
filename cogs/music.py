@@ -29,9 +29,9 @@ class music(commands.Cog):
         self.bot = bot
         self.song_queue = {}
         self.channels_playing_audio = []
-        self.is_locked = False
         self.current_song = {}
         self.logger = logging.getLogger(f"maximilian.{__name__}")
+        self.lock = asyncio.Lock()
         
     #some unused stuff, intended to save queues to db
     def push_queue_item_to_db(self, entry, position, ctx):
@@ -44,12 +44,6 @@ class music(commands.Cog):
             return
         else:
             raise commands.CommandInvokeError("Error while removing a song from the queue. If this happens frequently, let tk421#7244 know.")
-
-    async def _wait_for_unlock(self):
-        '''Blocks until self.is_locked is False'''
-        while self.is_locked:
-            await asyncio.sleep(0.01)
-        return
 
     async def _join_voice(self, ctx, channel):
         '''Helper function that handles joining a voice channel'''
@@ -144,11 +138,6 @@ class music(commands.Cog):
                 self.song_queue[channel.id] = []
             except:
                 pass
-            #if something's downloading, wait until it finishes, then check the queue again
-            while self.is_locked:
-                asyncio.run_coroutine_threadsafe(asyncio.sleep(0.001), self.bot.loop).result()
-                if not self.is_locked:
-                    self.process_queue(ctx, channel, None)
             return False
 
     async def get_song_from_cache(self, ctx, url, ydl_opts):
@@ -244,8 +233,6 @@ class music(commands.Cog):
 
     async def get_song(self, ctx, url):
         '''Gets the filename, id, and other metadata of a song. This tries to look up a song in the database first, then it searches Youtube if that fails.'''
-        #block this from executing until the previous call is finished, we don't want multiple instances of this running in parallel-
-        self.is_locked = True
         self.logger.info("Locked execution.")
         ydl_opts = {
         'format': 'bestaudio/best',
@@ -309,21 +296,19 @@ class music(commands.Cog):
                 except (KeyError, IndexError):
                     #if there's a keyerror or indexerror, nothing's playing. this is normal if someone adds stuff to queue rapidly, so ignore it
                     pass
-                try:
-                    #if locked, don't do anything until unlocked
-                    async with ctx.typing():
-                        await self._wait_for_unlock()
-                        await self.get_song(ctx, url)
-                except Exception as e:
-                    await self._handle_errors(ctx, e)
+                async with self.lock:
+                    try:
+                        async with ctx.typing():
+                            await self.get_song(ctx, url)
+                    except Exception as e:
+                        await self._handle_errors(ctx, e)
+                        return
+                    #actually add that stuff to queue
+                    self.song_queue[channel.id].append([self.filename, self.name, self.url, self.duration, self.thumbnail])
+                    await ctx.send(embed=discord.Embed(title=f"Added a song to your queue!", color=discord.Color.blurple()).add_field(name="Song Name:", value=f"`{self.name}`", inline=False).add_field(name="Video URL:", value=f"<{self.url}>", inline=True).set_footer(text=f"Currently, you have {len(self.song_queue[channel.id])} {'songs' if len(self.song_queue[channel.id]) != 1 else 'song'} in your queue. \nUse {await self.bot.get_prefix(ctx.message)}queue to view your queue.").add_field(name="Duration:", value=self.duration, inline=True).set_image(url=self.thumbnail))
+                    #unlock after sending message
+                    self.logger.info("Added song to queue, unlocked.")
                     return
-                #actually add that stuff to queue
-                self.song_queue[channel.id].append([self.filename, self.name, self.url, self.duration, self.thumbnail])
-                await ctx.send(embed=discord.Embed(title=f"Added a song to your queue!", color=discord.Color.blurple()).add_field(name="Song Name:", value=f"`{self.name}`", inline=False).add_field(name="Video URL:", value=f"<{self.url}>", inline=True).set_footer(text=f"Currently, you have {len(self.song_queue[channel.id])} {'songs' if len(self.song_queue[channel.id]) != 1 else 'song'} in your queue. \nUse {await self.bot.get_prefix(ctx.message)}queue to view your queue.").add_field(name="Duration:", value=self.duration, inline=True).set_image(url=self.thumbnail))
-                #unlock after sending message
-                self.is_locked = False
-                self.logger.info("Added song to queue, unlocked.")
-                return
         except AttributeError:
             traceback.print_exc()
             await ctx.send("You aren't in a voice channel. Join one, then run this command again.")
@@ -331,40 +316,36 @@ class music(commands.Cog):
         await self._join_voice(ctx, channel)
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
             #if locked, don't do anything until unlocked
-        try:
-            async with ctx.typing():
-                await self._wait_for_unlock()
-                #then immediately lock and get song
-                await self.get_song(ctx, url)
-        except Exception as e:
-            await self._handle_errors(ctx, e)
-            return
-        self.ctx = ctx
+        async with self.lock:
+            try:
+                async with ctx.typing():
+                    await self.get_song(ctx, url)
+            except Exception as e:
+                await self._handle_errors(ctx, e)
+                return
+            try:
+                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.filename), volume=0.5)
+            except Exception:
+                #TODO: rewrite error handling for this command, it sucks in its current state
+                await ctx.send("I've encountered an error. Either something went seriously wrong, you provided an invalid URL, or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term or a URL you're sure is valid), contact tk421#7244. ")
+                return
+            try:
+                ctx.voice_client.stop()
+            except:
+                pass
+            #current_song is a bunch of information about the current song that's playing.
+            #that information in order:
+            #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: time the song started (now), 7: Time when paused, 8: Total time paused, 9: Volume
+            self.current_song[ctx.voice_client.channel.id] = [False, self.filename, self.duration, self.name, self.thumbnail, self.url, time.time(), 0, 0, 0.5]
+            embed = discord.Embed(title="Now playing:", description=f"`{self.name}`", color=discord.Color.blurple())
+            embed.add_field(name="Video URL", value=f"<{self.url}>", inline=True)
+            embed.add_field(name="Total Duration", value=f"{self.duration}")
+            queuelength = len(self.song_queue[ctx.voice_client.channel.id])
+            embed.set_footer(text=f"You have {queuelength} {'song' if queuelength == 1 else 'songs'} in your queue. \nUse the play command to add { 'more songs or use the clear command to clear it.' if queuelength != 0 else 'songs to it.'}")
+            embed.set_image(url=self.thumbnail)
+            await ctx.send(embed=embed)
+            self.logger.info("Done getting song, unlocked.")
         self.logger.info("playing audio...")
-        try:
-            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.filename), volume=0.5)
-        except Exception:
-            #TODO: rewrite error handling for this command, it sucks in its current state
-            await ctx.send("I've encountered an error. Either something went seriously wrong, you provided an invalid URL, or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term or a URL you're sure is valid), contact tk421#7244. ")
-            return
-        try:
-            ctx.voice_client.stop()
-        except:
-            pass
-        #current_song is a bunch of information about the current song that's playing.
-        #that information in order:
-        #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: time the song started (now), 7: Time when paused, 8: Total time paused, 9: Volume
-        self.current_song[ctx.voice_client.channel.id] = [False, self.filename, self.duration, self.name, self.thumbnail, self.url, time.time(), 0, 0, 0.5]
-        embed = discord.Embed(title="Now playing:", description=f"`{self.name}`", color=discord.Color.blurple())
-        embed.add_field(name="Video URL", value=f"<{self.url}>", inline=True)
-        embed.add_field(name="Total Duration", value=f"{self.duration}")
-        queuelength = len(self.song_queue[ctx.voice_client.channel.id])
-        embed.set_footer(text=f"You have {queuelength} {'song' if queuelength == 1 else 'songs'} in your queue. \nUse the play command to add { 'more songs or use the clear command to clear it.' if queuelength != 0 else 'songs to it.'}")
-        embed.set_image(url=self.thumbnail)
-        await ctx.send(embed=embed)
-        #unlock execution of get_song
-        self.is_locked=False
-        self.logger.info("Done getting song, unlocked.")
         #then play the audio
         #we can't pass stuff to process_queue in after, so pass some stuff to it before executing it
         handle_queue = functools.partial(self.process_queue, ctx, channel)
@@ -585,51 +566,49 @@ class music(commands.Cog):
         if not url:
             return await ctx.send(f"Run this command again and specify something you want to search for. For example, running `{await self.bot.get_prefix(ctx.message)}download never gonna give you up` will download and send Never Gonna Give You Up in the channel you sent the command in.")
         await ctx.send("Getting that song...")
-        async with ctx.typing():
-            await self._wait_for_unlock()
-            try:
-                await self.get_song(ctx, url)
-            except Exception as e:
-                await self._handle_errors(ctx, e)
-                return
-            if self.duration == "0:0":
-                return await ctx.send("I can't download streams.")
-            self.logger.info("Uploading file...")
-            try:
-                await ctx.send("Here's the file:", file=discord.File(self.filename))
-            except discord.HTTPException:
-                traceback.print_exc()
-                await ctx.send("I couldn't upload that file because it's too large. I'll reduce the quality (reduction in quality varies with song length) and try to send it again.")
+        async with self.lock:
+            async with ctx.typing():
                 try:
-                    async with ctx.typing():
-                        await ctx.send("Reducing quality...")
-                        #parse total seconds from duration value 
-                        #TODO: add raw_duration class attr which has duration in seconds
-                        s = 60*int(self.duration.split(":")[0])+int(self.duration.split(":")[1])
-                        #for each bitrate value from 128kbps to 64kbps (64 possible values) from highest to lowest
-                        for i in range(64, 0, -1):
-                            self.logger.info(f"File was too large. Trying to transcode to {i+64} kbps...")
-                            self.logger.info(f"Estimated file size: {((i+64)*s)/8}KB")
-                            #check if the output file size (bitrate*seconds) in kilobytes (8 bits = 1 byte, so divide by 8)
-                            #is less than the upload limit (8mb or 8000kb)
-                            if ((i+64)*s)/8 <= 7900:
-                                self.logger.info(f"Suitable bitrate found. Transcoding to {i+64} kbps...")
-                                #if so, transcode to that bitrate
-                                inputfile = ffmpeg.input(self.filename)
-                                output = functools.partial(ffmpeg.output, inputfile, f"{self.filename[:-4]}temp.mp3", audio_bitrate=f"{i+64}k")
-                                stream = await self.bot.loop.run_in_executor(None, output)
-                                run = functools.partial(ffmpeg.run, stream, quiet=True, overwrite_output=True)
-                                await self.bot.loop.run_in_executor(None, run)
-                                await ctx.send(f"Here's the file (at {i+64} kbps):", file=discord.File(f"{self.filename[:-4]}temp.mp3"))
-                                self.is_locked = False
-                                self.logger.info("Done getting song, unlocked.")
-                                return
-                        #if we didn't return yet, the file's too large 
-                        raise FileTooLargeError
-                except (discord.HTTPException, FileTooLargeError):
-                    await ctx.send("<:blobpain:822921526629236797> I couldn't upload a lower quality version. Try choosing a shorter song.")
-            self.is_locked = False
-            self.logger.info("Done getting song, unlocked.")
+                    await self.get_song(ctx, url)
+                except Exception as e:
+                    await self._handle_errors(ctx, e)
+                    return
+                if self.duration == "0:0":
+                    return await ctx.send("I can't download streams.")
+                self.logger.info("Uploading file...")
+                try:
+                    await ctx.send("Here's the file:", file=discord.File(self.filename))
+                except discord.HTTPException:
+                    traceback.print_exc()
+                    await ctx.send("I couldn't upload that file because it's too large. I'll reduce the quality (reduction in quality varies with song length) and try to send it again.")
+                    try:
+                        async with ctx.typing():
+                            await ctx.send("Reducing quality...")
+                            #parse total seconds from duration value 
+                            #TODO: add raw_duration class attr which has duration in seconds
+                            s = 60*int(self.duration.split(":")[0])+int(self.duration.split(":")[1])
+                            #for each bitrate value from 128kbps to 64kbps (64 possible values) from highest to lowest
+                            for i in range(64, 0, -1):
+                                self.logger.info(f"File was too large. Trying to transcode to {i+64} kbps...")
+                                self.logger.info(f"Estimated file size: {((i+64)*s)/8}KB")
+                                #check if the output file size (bitrate*seconds) in kilobytes (8 bits = 1 byte, so divide by 8)
+                                #is less than the upload limit (8mb or 8000kb)
+                                if ((i+64)*s)/8 <= 7900:
+                                    self.logger.info(f"Suitable bitrate found. Transcoding to {i+64} kbps...")
+                                    #if so, transcode to that bitrate
+                                    inputfile = ffmpeg.input(self.filename)
+                                    output = functools.partial(ffmpeg.output, inputfile, f"{self.filename[:-4]}temp.mp3", audio_bitrate=f"{i+64}k")
+                                    stream = await self.bot.loop.run_in_executor(None, output)
+                                    run = functools.partial(ffmpeg.run, stream, quiet=True, overwrite_output=True)
+                                    await self.bot.loop.run_in_executor(None, run)
+                                    await ctx.send(f"Here's the file (at {i+64} kbps):", file=discord.File(f"{self.filename[:-4]}temp.mp3"))
+                                    self.logger.info("Done getting song, unlocked.")
+                                    return
+                            #if we didn't return yet, the file's too large 
+                            raise FileTooLargeError
+                    except (discord.HTTPException, FileTooLargeError):
+                        await ctx.send("<:blobpain:822921526629236797> I couldn't upload a lower quality version. Try choosing a shorter song.")
+                self.logger.info("Done getting song, unlocked.")
 
     @commands.command(aliases=["j"])
     async def join(self, ctx):
