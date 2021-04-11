@@ -11,7 +11,7 @@ class db:
         if bot:
             self.ip = bot.dbip
         else:
-            self.ip = 10.0.0.51
+            self.ip = "10.0.0.51"
     def connect(self, database):
         self.dbobj=pymysql.connect(host=self.ip,
                     user="maximilianbot",
