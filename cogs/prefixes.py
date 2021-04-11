@@ -25,7 +25,7 @@ class prefixes(commands.Cog):
             await self._fetch_prefix(guild_id)
         else:
             for id in [guild.id for guild in self.bot.guilds]:
-                await self._fetch_prefix(guild_id)
+                await self._fetch_prefix(id)
         self.logger.info("cache has been updated!")
 
     async def set_nickname(self, ctx, oldprefix, newprefix):
