@@ -37,6 +37,7 @@ except pymysql.err.OperationalError:
 print("Loading required extensions...")
 try:
     bot.load_extension("cogs.prefixes")
+    bot.load_extension("core")
     bot.load_extension("errorhandling")
 except:
     bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
