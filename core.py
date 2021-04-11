@@ -68,7 +68,7 @@ class core(commands.Cog):
         self.logger.info("finishing startup...")
         self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
         try:
-            await self.bot.prefixesinst.update_cache()
+            await self.bot.prefixesinst.update_prefix_cache()
             await self.bot.responsesinst.get_responses()
         except pymysql.OperationalError:
             traceback.print_exc()
