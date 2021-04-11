@@ -31,7 +31,7 @@ class init():
             if "--ip" in args:
                 try:
                     self.bot.dbip = args[args.index("--ip")+1]
-                    self.logger.info("Set database IP address to {self.bot.dbip}")
+                    self.logger.info(f"Set database IP address to {self.bot.dbip}.")
                 except ValueError:
                     self.logger.warning("You need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost.")
                     self.bot.dbip = "localhost"
@@ -55,7 +55,7 @@ class init():
                     extensioncount += 1
                     self.logger.info(f"Loaded cogs.{each[:-3]}.")
                 except commands.ExtensionAlreadyLoaded:
-                    self.logger.info(f"{each[:-3]} is already loaded, skipping"
+                    self.logger.info(f"{each[:-3]} is already loaded, skipping")
                 except commands.ExtensionFailed as error:
                     errorcount += 1
                     self.logger.error(f"{type(error.original).__name__} while loading '{error.name}'. {'Run Maximilian again with the -v command line argument to show additional information.' if type(error.original).__name__ == 'SyntaxError' else ''}")
