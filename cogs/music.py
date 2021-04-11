@@ -306,8 +306,8 @@ class music(commands.Cog):
                         await ctx.send(f"\U000026a0 I'm repeating a song right now. I'll still add this song to your queue, but I won't play it until you run `{await self.bot.get_prefix(ctx.message)}loop` again (and wait for the current song to finish) or skip the current song using `{await self.bot.get_prefix(ctx.message)}skip`.")
                     elif self.current_song[ctx.voice_client.channel.id][2] == "No duration available (this is a stream)":
                         await ctx.send(f"\U000026a0 I'm playing a stream right now. I'll still add this song to your queue, but I won't play it until you run `{await self.bot.get_prefix(ctx.message)}skip` or the stream ends.")
-                except KeyError:
-                    #if there's a keyerror, nothing's playing. this is normal if someone adds stuff to queue rapidly, so ignore it
+                except (KeyError, IndexError):
+                    #if there's a keyerror or indexerror, nothing's playing. this is normal if someone adds stuff to queue rapidly, so ignore it
                     pass
                 try:
                     #if locked, don't do anything until unlocked
