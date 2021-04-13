@@ -12,52 +12,54 @@ import traceback
 import datetime
 import time
 import core
+import asyncio
 
-print("starting...")
-token = common.token().get("betatoken.txt")
-bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=discord.Intents.all(), activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.5.3 (beta)"))
-init.config_logging(sys.argv)
-init.init(bot).parse_arguments(sys.argv)
-bot.logger = logging.getLogger('maximilian-beta')
-bot.logger.warning(f"Logging started at {datetime.datetime.now()}")
-bot.guildlist = []
-bot.prefixes = {}
-bot.responses = []
-bot.start_time = time.time()
-bot.dbinst = common.db(bot)
-bot.database = "maximilian_test"
-#try to connect to database, if it fails warn
-print(f"Attempting to connect to database '{bot.database}' on '{bot.dbip}'...")
+class maximilian():
+    def __init__(self):
+        print("starting...")
+        self.token = common.token().get("betatoken.txt")
+        init.config_logging(sys.argv)
+
+    async def start(self):
+        self.bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=discord.Intents.all(), activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.5.3 (beta)"))
+        init.init(self.bot).parse_arguments(sys.argv)
+        self.bot.logger = logging.getLogger('maximilian-beta')
+        self.bot.logger.warning(f"Logging started at {datetime.datetime.now()}")
+        self.bot.guildlist = []
+        self.bot.prefixes = {}
+        self.bot.responses = []
+        self.bot.start_time = time.time()
+        self.bot.dbinst = common.db(self.bot)
+        self.bot.database = "maximilian_test"
+        #try to connect to database, if it fails warn
+        print(f"Attempting to connect to database '{self.bot.database}' on '{self.bot.dbip}'...")
+        try:
+            self.bot.dbinst.connect(self.bot.database)
+            print("Connected to database successfully.")
+        except pymysql.err.OperationalError:
+            self.bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
+        #load extensions, starting with required ones
+        print("Loading required extensions...")
+        try:
+            self.bot.load_extension("cogs.prefixes")
+            self.bot.load_extension("core")
+            self.bot.load_extension("errorhandling")
+        except:
+            self.bot.logger.critical("Failed to load required extensions.")
+            traceback.print_exc()
+            quit()
+        print("Loaded required extensions successfully. Loading other cogs...")
+        init.init(self.bot).load_extensions()
+        await self.bot.start(self.token)
+
+    def cleanup(self):
+        self.bot.logger.warning("Shutting down...")
+        self.bot.dbinst.dbc.close()
+        self.bot.logger.info("Closed database connection.")
+        self.bot.logger.warning(f"Logging stopped at {datetime.datetime.now()}.")
+
 try:
-    bot.dbinst.connect(bot.database)
-    print("Connected to database successfully.")
-except pymysql.err.OperationalError:
-    bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
-#load extensions, starting with required ones
-print("Loading required extensions...")
-try:
-    bot.load_extension("cogs.prefixes")
-    bot.load_extension("core")
-    bot.load_extension("errorhandling")
-except:
-    bot.logger.critical("Failed to load required extensions.")
-    traceback.print_exc()
-    quit()
-
-print("Loaded required extensions successfully. Loading other cogs...")
-init.init(bot).load_extensions()
-    
-@bot.event
-async def on_message(message):
-    if await bot.coreinst.prepare(message):
-        await bot.process_commands(message)
-
-@bot.before_invoke
-async def before_anything(ctx):
-    #before any commands are executed, make sure to set commandprefix (will be removed soon)
-    try:
-        bot.commandprefix = bot.prefixes[str(ctx.guild.id)]
-    except (KeyError, AttributeError):
-        bot.commandprefix = "!"
-
-bot.run(token)
+    maximilian = maximilian()
+    asyncio.run(maximilian.start())
+except KeyboardInterrupt:
+    maximilian.cleanup()
