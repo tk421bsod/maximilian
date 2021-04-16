@@ -48,12 +48,12 @@ except:
     quit()
 print("Loaded required extensions successfully. Loading other cogs...")
 init.init(bot).load_extensions()
-#once done loading extensions, get an event loop and start it
+#once done loading extensions, get an event loop
 loop = asyncio.get_event_loop()
 
 def cancel_tasks(loop):
-    bot.logger.info('Cancelling tasks...')
     tasks = {t for t in asyncio.all_tasks(loop=loop) if not t.done()}
+    bot.logger.info(f'Cancelling {len(tasks)} tasks...')
     #don't do anything if there aren't any tasks
     if not tasks:
         return bot.logger.info('No tasks to cancel, skipping this step.')
@@ -68,14 +68,15 @@ def cancel_tasks(loop):
         if task.cancelled():
             continue
         if task.exception() is not None:
+            #call the loop's exception handler instead of raising exception
             loop.call_exception_handler({'message': 'Unhandled exception during task shutdown.', 'exception': task.exception(), 'task': task})
 
 def cleanup(loop):
     try:
-        #first, cancel tasks
+        #first, cancel background tasks
         cancel_tasks(loop)
         bot.logger.info('Closing async generators...')
-        #then close async generators
+        #then close async generators (e.g AsyncIterator objects)
         loop.run_until_complete(loop.shutdown_asyncgens())
         bot.logger.info('Shutting down the executor...')
         # then close the executor (only available in python 3.9+)
@@ -101,6 +102,8 @@ async def start():
             else:
                 [await voice.disconnect() for voice in bot.voice_clients]
                 bot.logger.info("Disconnected from all voice channels.")
+                [del player for player in bot.get_cog('music').players]
+                bot.logger.info("Destroyed all players.")
             #close the database connection
             bot.dbinst.dbc.close()
             bot.logger.info("Closed database connection.")
@@ -110,8 +113,6 @@ async def start():
 
 
 def main():
-    def stop_loop(arg):
-        loop.stop()
     #run start immediately when the loop starts
     future = asyncio.ensure_future(start(), loop=loop)
     try:
@@ -126,7 +127,6 @@ def main():
 
     if not future.cancelled():
         try:
-            print("Got here")
             return future.result()
         except KeyboardInterrupt:
             pass
@@ -136,6 +136,7 @@ try:
     #once all cleanup finishes and the event loop closes, shutdown is finished and main returns.
     bot.logger.info("Shutdown completed successfully.")
 except:
+    #if there's an error, print it
     bot.logger.error("Unhandled error during shutdown:")
     traceback.print_exc()
 
