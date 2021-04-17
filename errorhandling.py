@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import pymysql
 import traceback
-from fuzzywuzzy import fuzz
 
 class errorhandling(commands.Cog):
     def __init__(self, bot):
@@ -30,11 +29,6 @@ class errorhandling(commands.Cog):
                 return
         print("error")
         print(ctx.message.content)
-        #prefix should be a string, not a function, so get it from the dict of prefixes (use default prefix if that fails)
-        try:
-            self.bot.command_prefix = self.bot.prefixes[str(ctx.guild.id)]
-        except (KeyError,AttributeError):
-            self.bot.command_prefix = "!"
         #check for database errors first, these should almost never happen
         if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
             print("database error, printing context and error type")
@@ -64,23 +58,6 @@ class errorhandling(commands.Cog):
                 await ctx.send(embed=embed)
             else:
                 await ctx.send(f"You don't have the permissions to run this command. Some commands require certain permissions; try using `{await self.bot.get_prefix(ctx.message)}help <commandname>` to get more info about that command, including the required permissions. I'm also not allowed to send embeds, which will make some responses look worse, and will prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
-            return
-        if isinstance(error, commands.CommandNotFound):
-            print("Can't find a command")
-            commandscores = []
-            #for each command, check how similar it is to the command the user tried
-            for each in self.bot.commandnames:
-                await self.bot.loop.run_in_executor(None, lambda: commandscores.append([each, fuzz.token_set_ratio(ctx.invoked_with, each)]))
-            print(commandscores)
-            #if a command is similar enough, put it in a list of similar commands, then form a string with those commands
-            similarcommands = '\n'.join([i for i in [f'`{i[0]}`' for i in commandscores if i[1] > 55]])
-            #can't include backslashes in fstring expressions, this is a hacky "fix" for that
-            newline = "\n"
-            embed = discord.Embed(title=f"\U0000274c I can't find that command. \n{f'Similar commands: {newline}{similarcommands}' if similarcommands != '' else 'No similar commands found.'}\nUse `{await self.bot.get_prefix(ctx.message)}help` to see a list of commands.", color=discord.Color.blurple())
-            if ctx.guild.me.guild_permissions.embed_links:
-                await ctx.send(embed=embed)
-            else:
-                await ctx.send(f"\U0000274c I can't find that command. \n{f'Similar commands: {newline}{similarcommands}' if similarcommands != '' else 'No similar commands found.'}", description="Change my prefix using the `prefix` command if I'm conflicting with another bot. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
             return
         if isinstance(error, commands.MissingRequiredArgument):
             print("command is missing the required argument")
