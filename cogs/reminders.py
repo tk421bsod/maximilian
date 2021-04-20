@@ -5,12 +5,28 @@ from discord.ext import commands
 import discord
 import asyncio
 import random
+import logging
 
 class reminders(commands.Cog):
     '''Reminders to do stuff.'''
-    def __init__(self, bot):
+    def __init__(self, bot, teardown=False):
         self.bot = bot
+        self.logger = logging.getLogger(__name__)
+        self.bot.todo_entries = {}
+        #don't update cache on teardown (manual unload or automatic unload on shutdown)
+        if not teardown:
+            self.bot.loop.create_task(self.update_todo_cache())
 
+    async def update_todo_cache(self):
+        await self.bot.prefixesinst.check_if_ready()
+        self.logger.info("Updating todo cache...")
+        try:
+            for item in (todolists := self.bot.dbinst.exec_query(self.bot.database, "select * from todo order by timestamp desc", False, True)):
+                self.bot.todo_entries[item['user_id']] = [i for i in todolists if i['user_id'] == item['user_id']]
+        except:
+            self.logger.info("Couldn't update todo cache. Is anything in the database?")
+        self.logger.info("Updated todo cache!")
+    
     async def handle_reminder(self, ctx, remindertimeseconds, remindertext):
         #wait for as long as needed
         await asyncio.sleep(remindertimeseconds)
@@ -51,10 +67,12 @@ class reminders(commands.Cog):
     async def todo(self, ctx, action="list", *, entry=None):
         if action == "add":
             if not entry:
-                await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add foo`.")
-                return
-            result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "id":int(self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)'])+1}, None)
+                return await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add foo`.")
+            elif entry in [i['entry'] for i in self.bot.todo_entries if i['user_id'] == ctx.author.id]:
+                return await ctx.send("That entry already exists.")
+            result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "timestamp":datetime.datetime.now()}, None)
             if result == "success":
+                await self.update_todo_cache()
                 entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry added successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
             elif result == "error-duplicate":
@@ -63,14 +81,17 @@ class reminders(commands.Cog):
                 #dm traceback
                 owner = self.bot.get_user(self.bot.owner_id)
                 owner.send(f"Error while adding to the todo list: {result}")
-                await ctx.send("There was an error while adding your todo entry. I've made my developer aware of this.")
+                await ctx.send("There was an error while adding that todo entry. I've made my developer aware of this.")
             return
         if action == "delete":
-            if self.bot.dbinst.delete(self.bot.database, "todo", entry, "id", "user_id", ctx.author.id, True) == "successful" and entry != None:
-                entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
-                await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry `{entry}` deleted successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
-            else:
-                await ctx.send("Something went wrong while deleting your todo entry. Make sure that the todo entry you're trying to delete actually exists, and you didn't mistype the ID.")
+            try:
+                self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry']
+                if self.bot.dbinst.delete(self.bot.database, "todo", self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], "entry", "user_id", ctx.author.id, True) == "successful" and entry:
+                    entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
+                    await self.update_todo_cache()
+                    await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry `{entry}` deleted successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
+            except:
+                await ctx.send("Something went wrong while deleting that todo entry. Make sure that the todo entry you're trying to delete actually exists.")
             return
         if action == "deleteall":
             if not self.bot.waiting_for_reaction:
@@ -92,6 +113,7 @@ class reminders(commands.Cog):
                                 if str(reaction[0].emoji) == '\U00002705':
                                     self.bot.dbinst.delete(self.bot.database, "todo", str(ctx.author.id), "user_id", "", "", False)
                                     embed = discord.Embed(title="\U00002705 Cleared your todo list!", color=discord.Color.blurple())
+                                    await self.update_todo_cache()
                                     await ctx.send(embed=embed)
                                     return
                                 if str(reaction[0].emoji) == '\U0000274c':
@@ -106,21 +128,18 @@ class reminders(commands.Cog):
                 return
         if action == "list" or entry == None:
             entrystring = ""
-            for count, value in enumerate(self.bot.dbinst.exec_query(self.bot.database, "select * from todo where user_id={}".format(ctx.author.id), False, True)):
-                entrystring += f"{count+1}. `{value['entry']}`\n"
-            if entrystring.strip() != "":
-                embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=discord.Color.blurple())
-                await ctx.send(embed=embed)
-                return
-            await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
-            return
-
-            
-
+            try:
+                for count, value in enumerate(self.bot.todo_entries[ctx.author.id]):
+                    entrystring += f"{count+1}. `{value['entry']}`\nCreated {humanize.precisedelta(value['timestamp'], format='%0.0f')} ago.\n"
+                if entrystring:
+                    embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=discord.Color.blurple())
+                    return await ctx.send(embed=embed)
+            except KeyError:
+                return await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
 
 def setup(bot):
     bot.add_cog(reminders(bot))
 
 def teardown(bot):
-    bot.remove_cog(reminders(bot))
+    bot.remove_cog(reminders(bot, True))
     
