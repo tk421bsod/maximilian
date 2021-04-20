@@ -23,8 +23,6 @@ class userinfo(commands.Cog):
         rolestring = ""
         permissionstring = ""
         status = requested_user.status[0]
-        statusnames = {"online" : "Online", "dnd" : "Do Not Disturb", "idle" : "Idle", "offline" : "Invisible/Offline"}
-        statusemojis = {"online" : "<:online:767294866488295475>", "dnd": "<:dnd:767510004135493662>", "idle" : "<:idle:767510329139396610>", "offline" : "<:invisible:767510747466170378>"}
         if len(requested_user.roles) == 1:
             rolecolor = discord.Color.blurple()
         else:
@@ -52,21 +50,8 @@ class userinfo(commands.Cog):
             permissionstring = "Administrator"
         embed.add_field(name="Roles:", value=rolestring, inline=False)
         embed.add_field(name="Permissions:", value=permissionstring, inline=False)
-        embed.add_field(name="Status:", value=f"{statusemojis[status]} {statusnames[status]}", inline=False)
-        if requested_user.activity == None:
-            statusinfo = "No status details available"
-        else:
-            if requested_user.activity.type.name is not None and requested_user.activity.type.name != "custom":
-                activitytype = requested_user.activity.type.name.capitalize()
-            else:
-                activitytype = ""
-            statusinfo = f"Status details: '{activitytype} {requested_user.activity.name}'"
-        if requested_user.id == self.bot.owner_id:
-            embed.set_footer(text=f"{statusinfo}  |  Requested by {str(ctx.author)}  |  This is my owner's info!")
-        else:
-            embed.set_footer(text=f"{statusinfo}  |  Requested by {str(ctx.author)}")
+        embed.set_footer(text=f"=Requested by {str(ctx.author)}.")
         embed.set_thumbnail(url=requested_user.avatar_url)
-        print("printed userinfo")
         await ctx.send(embed=embed)
     
 
