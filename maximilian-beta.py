@@ -1,4 +1,5 @@
 #import libraries
+print("Importing everything, this may take a bit on first run")
 import discord
 from discord.ext import commands 
 from discord.ext import tasks
@@ -22,7 +23,7 @@ intents.members=True
 bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.5.3 (beta)"))
 init.init(bot).parse_arguments(sys.argv)
 bot.logger = logging.getLogger('maximilian-beta')
-bot.logger.warning(f"Logging started at {datetime.datetime.now()}")
+bot.logger.warning(f"Maximilian Beta v0.5.3 ({'Jishaku enabled' if '--enablejsk' in sys.argv else 'Jishaku disabled'}, Python {sys.version}, discord.py {discord.__version__}) ")
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
@@ -102,11 +103,15 @@ async def start():
             else:
                 [await voice.disconnect() for voice in bot.voice_clients]
                 bot.logger.info("Disconnected from all voice channels.")
-                [del player for player in bot.get_cog('music').players]
+                #destroy all players too
+                bot.get_cog('music').players={}
                 bot.logger.info("Destroyed all players.")
             #close the database connection
             bot.dbinst.dbc.close()
             bot.logger.info("Closed database connection.")
+            #unload extensions
+            [bot.unload_extension(extension) for extension in list(bot.extensions.keys())]
+            bot.logger.info("Unloaded all extensions.")
             #then close the connection to Discord
             await bot.close()
             bot.logger.info("Closed connection to Discord.")
