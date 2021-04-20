@@ -68,7 +68,7 @@ class reminders(commands.Cog):
         if action == "add":
             if not entry:
                 return await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add foo`.")
-            elif entry in [i['entry'] for i in self.bot.todo_entries if i['user_id'] == ctx.author.id]:
+            elif entry in [i['entry'] for i in [j for j in list(self.bot.todo_entries.values())][0] if i['user_id'] == ctx.author.id]:
                 return await ctx.send("That entry already exists.")
             result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "timestamp":datetime.datetime.now()}, None)
             if result == "success":
