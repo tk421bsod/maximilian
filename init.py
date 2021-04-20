@@ -12,6 +12,7 @@ def config_logging(args):
             pass
         elif key in args and key != "-q" and key != "--quiet":
             logging.basicConfig(level=value[0], handlers=[logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"), logging.StreamHandler(sys.stdout)])
+            logging.getLogger("maximilian.init.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
             print(value[1])
             return
         else:
@@ -20,6 +21,7 @@ def config_logging(args):
             return
     logging.basicConfig(level=logging.WARN, handlers=[logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"), logging.StreamHandler(sys.stdout)])
     print("No logging level specified, falling back to WARN.")
+    logging.getLogger("maximilian.init.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
 
 class init():
     def __init__(self, bot):
