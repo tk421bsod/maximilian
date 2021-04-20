@@ -177,6 +177,10 @@ class misc(commands.Cog):
                         buffer = io.BytesIO(await img.read())
                     await ctx.send(file=discord.File(buffer, filename=f"dog.{imagename[-3:]}"))
 
+    @commands.command(help="Repeats what you say. For example, `!say hi` would make Maximiilian say 'hi'. This command automatically prevents user, role, everyone, and here mentions from working.")
+    async def say(self, ctx, *, thing):
+        return await ctx.send(thing, allowed_mentions=discord.AllowedMentions.none())
+
 def setup(bot):
     bot.add_cog(misc(bot))
 
