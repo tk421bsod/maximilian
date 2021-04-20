@@ -46,9 +46,7 @@ class core(commands.Cog):
                 extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
             reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
             try:
-                repo = git.Repo(os.getcwd())
-                o = repo.remotes.origin
-                o.pull()
+                repo = git.Repo(os.getcwd()).remotes.origin.pull()
                 await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
             except:
                 await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Make sure you've set up the proper SSH keys. Reloading local copies of extensions...")
@@ -73,13 +71,6 @@ class core(commands.Cog):
         self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
         self.logger.info("finishing startup...")
         self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
-        try:
-            await self.bot.prefixesinst.update_prefix_cache()
-            await self.bot.responsesinst.get_responses()
-        except pymysql.OperationalError:
-            traceback.print_exc()
-            self.logger.critical("Couldn't fetch prefixes or custom commands from the database.")
-            await self.bot.logout()    
         self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
         self.logger.info(f"ready, full startup took {time.time()-self.bot.start_time} seconds")
 
