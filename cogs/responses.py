@@ -2,21 +2,16 @@ import discord
 import typing
 
 class responses(discord.ext.commands.Cog, name='Custom Commands'):
-    def __init__(self, bot):
+    def __init__(self, bot, teardown=False):
         self.bot = bot
-    
-    async def check_if_ready(self):
-        if not self.bot.is_ready():
-            self.bot.logger.warn("not ready yet, waiting for cache")
-            await self.bot.wait_until_ready()
-        else:
-            print("already ready") 
+        if not teardown:
+            self.bot.loop.create_task(self.get_responses())
     
     async def get_responses(self):
         '''Builds cache of custom commands (internally called responses)'''
         tempresponses = []
         #make sure cache is ready before we try to iterate over bot.guilds (if we don't wait, bot.guilds may be incomplete)
-        await self.check_if_ready()
+        await self.bot.prefixesinst.check_if_ready()
         #then for each guild in the list, check if the guild has any responses in the database
         for guild in self.bot.guilds:
             if (count := self.bot.dbinst.exec_query(self.bot.database, "select count(*) from responses where guild_id={}".format(str(guild.id)), False, False)) is not None:
@@ -78,4 +73,4 @@ def setup(bot):
     bot.add_cog(responses(bot))
 
 def teardown(bot):
-    bot.remove_cog(responses(bot))
+    bot.remove_cog(responses(bot, True))
