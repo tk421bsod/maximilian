@@ -52,6 +52,11 @@ init.init(bot).load_extensions()
 #once done loading extensions, get an event loop
 loop = asyncio.get_event_loop()
 
+@bot.event
+async def on_message(message):
+    if await bot.coreinst.prepare(message):
+        await bot.process_commands(message)
+
 def cancel_tasks(loop):
     tasks = {t for t in asyncio.all_tasks(loop=loop) if not t.done()}
     bot.logger.info(f'Cancelling {len(tasks)} tasks...')
