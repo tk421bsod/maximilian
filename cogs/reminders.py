@@ -1,11 +1,29 @@
 import datetime
 from dateparser.search import search_dates
 import humanize
+import re
 from discord.ext import commands
 import discord
 import asyncio
 import random
 import logging
+
+#Thanks to Vexs for help with this.
+time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
+time_dict = {"h":3600, "s":1, "m":60, "d":86400}
+
+class TimeConverter(commands.Converter):
+    async def convert(self, ctx, argument):
+        matches = time_regex.findall(argument.lower())
+        time = 0
+        for v, k in matches:
+            try:
+                time += time_dict[k]*float(v)
+            except KeyError:
+                raise commands.BadArgument(f"{k} is an invalid unit of time! h/m/s/d are valid!")
+            except ValueError:
+                raise commands.BadArgument(f"{v} is not a number!")
+        return time
 
 class reminders(commands.Cog):
     '''Reminders to do stuff.'''
@@ -13,10 +31,24 @@ class reminders(commands.Cog):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
         self.bot.todo_entries = {}
+        self.bot.reminders = {}
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
         if not teardown:
             self.bot.loop.create_task(self.update_todo_cache())
+            self.bot.loop.create_task(self.update_reminder_cache())
 
+    async def update_reminder_cache(self):
+        await self.bot.prefixesinst.check_if_ready()
+        self.logger.info("Updating reminder cache...")
+        try:
+            for item in (reminders := self.bot.dbinst.exec_query(self.bot.database, "select * from reminders order by user_id desc", False, True)):
+                self.bot.reminders[item['user_id']] = [i for i in reminders if i['user_id'] == item['user_id']]
+                self.bot.loop.create_task(self.handle_reminder(item['user_id'], item['channel_id'], item['reminder_time'], item['now'], item['reminder_text']))
+                self.logger.info(f"Started handling a reminder for user {item['user_id']}")
+        except:
+            self.logger.info("Couldn't update reminder cache! Is there anything in the database?")
+        self.logger.info("Updated reminder cache!")
+        
     async def update_todo_cache(self):
         await self.bot.prefixesinst.check_if_ready()
         self.logger.info("Updating todo cache...")
@@ -24,43 +56,32 @@ class reminders(commands.Cog):
             for item in (todolists := self.bot.dbinst.exec_query(self.bot.database, "select * from todo order by timestamp desc", False, True)):
                 self.bot.todo_entries[item['user_id']] = [i for i in todolists if i['user_id'] == item['user_id']]
         except:
-            self.logger.info("Couldn't update todo cache. Is anything in the database?")
+            self.logger.info("Couldn't update todo cache! Is anything in the database?")
         self.logger.info("Updated todo cache!")
     
-    async def handle_reminder(self, ctx, remindertimeseconds, remindertext):
+    async def handle_reminder(self, user_id, channel_id, remindertime, reminderstarted, remindertext):
         #wait for as long as needed
-        await asyncio.sleep(remindertimeseconds)
+        self.logger.info("handling reminder...")
+        #make timestamp human readable before sleeping (otherwise it just shows up as 0 seconds)
+        hrtimedelta = humanize.precisedelta(remindertime-reminderstarted, format='%0.0f')
+        await discord.utils.sleep_until(remindertime)
         #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
-        await ctx.send(f"{ctx.author.mention} {humanize.precisedelta(remindertimeseconds)} ago: '{remindertext}'")
+        await self.bot.get_channel(channel_id).send(f"<@{user_id}> {hrtimedelta} ago: '{remindertext}'")
+        #and delete it from the database
+        self.bot.dbinst.exec_safe_query(self.bot.database, f"delete from reminders where user_id=%s and channel_id=%s and reminder_time=%s and now=%s and reminder_text=%s", (user_id, channel_id, remindertime, reminderstarted, remindertext))
 
-    @commands.command(hidden=True)
-    async def remind(self, ctx, action, *, reminder):
+    @commands.command(hidden=True, aliases=['reminders', 'reminder'])
+    async def remind(self, ctx, action, time:TimeConverter, *, reminder):
         if action == "add":
             await ctx.send("Setting your reminder...")
             parsablereminder = reminder.strip(",")
-            #search for dates in the string provided, if found get a datetime object that represents that date
-            #TODO: improve date parsing using regex as dateparser is very picky about what dates it accepts (it accepts "in 5 minutes" but not "5m" or "5 minutes from now", for example)
-            remindertimelist = search_dates(parsablereminder)
-            if remindertimelist == None:
-                await ctx.send("You need to specify a time that you want to be reminded at.")
-                return
-            elif len(remindertimelist) > 1:
-                await ctx.send("You can't include more than 1 time in your reminder.")
-                return
-            elif remindertimelist[0][1] < datetime.datetime.now():
-                await ctx.send("You can't specify a date in the past.")
-            #get the object
-            remindertime = remindertimelist[0][1]
-            #get the current time
-            currenttime = datetime.datetime.now()
+            #get the date the reminder will fire at
+            remindertime = datetime.datetime.now()+datetime.timedelta(0, time)
             #take the date out of the string
-            remindertext = reminder.replace(remindertimelist[0][0], "")
-            #then subtract the current time from the date provided, and get the total number of seconds for that difference
-            remindertimeseconds = (remindertime - currenttime).total_seconds()
-            #self.bot.dbinst.exec_query(self.bot.database, f"insert into reminders(user_id, reminder_time) values ({ctx.author.id}, '{remindertimeseconds}', False, None)
-            await ctx.send("Your reminder has been added!")
-            #we need to round remindertimeseconds as humanize hates decimals (not rounding this sometimes causes the precisedeltas to be one off, like 14 minutes instead of 15 minutes)
-            await self.handle_reminder(ctx, round(remindertimeseconds), remindertext)
+            self.bot.dbinst.exec_safe_query(self.bot.database, f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text) values(%s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder))
+            await ctx.send(f"'Ok, in {humanize.precisedelta(remindertime-datetime.datetime.now(), format='%0.0f')}: '{reminder}'")
+            self.logger.info("added reminder")
+            await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder)
                 
     
     @commands.command(aliases=["to-do", "TODO"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
