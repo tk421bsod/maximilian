@@ -1,5 +1,4 @@
 import datetime
-from dateparser.search import search_dates
 import humanize
 import re
 from discord.ext import commands
@@ -20,7 +19,7 @@ class TimeConverter(commands.Converter):
             try:
                 time += time_dict[k]*float(v)
             except KeyError:
-                raise commands.BadArgument(f"{k} is an invalid unit of time! h/m/s/d are valid!")
+                raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s/d are valid!")
             except ValueError:
                 raise commands.BadArgument(f"{v} is not a number!")
         return time
@@ -76,10 +75,15 @@ class reminders(commands.Cog):
             await ctx.send("Setting your reminder...")
             parsablereminder = reminder.strip(",")
             #get the date the reminder will fire at
-            remindertime = datetime.datetime.now()+datetime.timedelta(0, time)
+            currenttime = datetime.datetime.now()
+            if currenttime.microsecond >= 500_000:
+                currenttime += datetime.timedelta(seconds=1)
+            else:
+                currenttime.replace(microsecond=0)
+            remindertime = currenttime+datetime.timedelta(0, round(time))
             #take the date out of the string
             self.bot.dbinst.exec_safe_query(self.bot.database, f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text) values(%s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder))
-            await ctx.send(f"'Ok, in {humanize.precisedelta(remindertime-datetime.datetime.now(), format='%0.0f')}: '{reminder}'")
+            await ctx.send(f"Ok, in {humanize.precisedelta(remindertime-datetime.datetime.now(), format='%0.0f')}: '{reminder}'")
             self.logger.info("added reminder")
             await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder)
                 
