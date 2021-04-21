@@ -73,19 +73,13 @@ class reminders(commands.Cog):
     async def remind(self, ctx, action, time:TimeConverter, *, reminder):
         if action == "add":
             await ctx.send("Setting your reminder...")
-            parsablereminder = reminder.strip(",")
             #get the date the reminder will fire at
             currenttime = datetime.datetime.now()
-            if currenttime.microsecond >= 500_000:
-                currenttime += datetime.timedelta(seconds=1)
-            else:
-                currenttime.replace(microsecond=0)
             remindertime = currenttime+datetime.timedelta(0, round(time))
-            #take the date out of the string
+            #add the reminder to the database
             self.bot.dbinst.exec_safe_query(self.bot.database, f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text) values(%s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder))
-            await ctx.send(f"Ok, in {humanize.precisedelta(remindertime-datetime.datetime.now(), format='%0.0f')}: '{reminder}'")
-            self.logger.info("added reminder")
-            await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder)
+            await ctx.send(f"Ok, in {humanize.precisedelta(remindertime-currenttime, format='%0.0f')}: '{reminder}'")
+            await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder)
                 
     
     @commands.command(aliases=["to-do", "TODO"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
