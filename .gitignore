@@ -2,4 +2,7 @@
 songcache/*
 *.mp3
 *.pyc
+*.jpg
+imgcache/*
+logs/*
 __pycache__
