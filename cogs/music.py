@@ -36,7 +36,7 @@ class Player():
         self.logger.info(f"Created player for guild id {self.guild.id}")
     
     async def notify_of_destroy(self):
-        self.logger.info(f"Player is being destroyed by {inspect.stack()[2][3]}.")
+        self.logger.info(f"Player is being destroyed by {inspect.stack()[2][3] if inspect.stack()[2][3] != '<listcomp>' else 'a listcomp'}.")
 
 class music(commands.Cog):
     '''Music commands'''
@@ -583,13 +583,17 @@ class music(commands.Cog):
     @commands.command(aliases=["quit"])
     async def stop(self, ctx):
         '''Stop playing music. Clears your queue if you have anything in it.'''
+        if not await self._check_player(ctx):
+            return await ctx.send("It doesn't look like I'm in a voice channel.")
+        if not ctx.voice_client.is_playing():
+            return await ctx.send("I'm not playing anything right now.")
         player = await self._get_player(ctx)
         try:
             try:
-                self.channels_playing_audio.remove(ctx.voice_client.channel.id)
                 queuelength = len(player.queue)
                 player.queue = []
                 player.current_song = []
+                self.channels_playing_audio.remove(ctx.voice_client.channel.id)
             except:
                 pass
             await self.destroy_player(ctx)

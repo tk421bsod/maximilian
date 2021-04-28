@@ -18,6 +18,7 @@ class errorhandling(commands.Cog):
         # it would probably be best to wrap this in a codeblock via e.g. a Paginator
         owner = self.bot.get_user(538193752913608704)
         try:
+            await owner.send(f"An error occurred in {ctx.guild.name} ({ctx.guild.id}): ")
             await owner.send(f"`{traceback_text}`")
         except:
             pass
@@ -27,8 +28,6 @@ class errorhandling(commands.Cog):
         if cog:
             if cog._get_overridden_method(cog.cog_command_error) is not None:
                 return
-        print("error")
-        print(ctx.message.content)
         #check for database errors first, these should almost never happen
         if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
             print("database error, printing context and error type")
