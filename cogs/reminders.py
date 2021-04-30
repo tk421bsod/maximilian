@@ -154,7 +154,7 @@ class reminders(commands.Cog):
             entrystring = ""
             try:
                 for count, value in enumerate(self.bot.todo_entries[ctx.author.id]):
-                    entrystring += f"{count+1}. `{value['entry']}`\nCreated {humanize.precisedelta(value['timestamp'], format='%0.0f')} ago.\n"
+                    entrystring += f"{count+1}. `{value['entry']}`\nCreated {humanize.precisedelta(value['timestamp'], format='%0.0f')} ago.\n\n"
                 if entrystring:
                     embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=discord.Color.blurple())
                     return await ctx.send(embed=embed)
