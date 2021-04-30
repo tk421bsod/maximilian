@@ -25,7 +25,7 @@ class TimeConverter(commands.Converter):
         return time
 
 class reminders(commands.Cog):
-    '''Reminders to do stuff.'''
+    '''Reminders to do stuff. (and todo lists!)'''
     def __init__(self, bot, teardown=False):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
@@ -82,13 +82,13 @@ class reminders(commands.Cog):
             await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder)
                 
     
-    @commands.command(aliases=["to-do", "TODO"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
+    @commands.command(aliases=["to-do", "todos"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
     async def todo(self, ctx, action="list", *, entry=None):
         if action == "add":
             if not entry:
                 return await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add foo`.")
             elif entry in [i['entry'] for i in [j for j in list(self.bot.todo_entries.values())][0] if i['user_id'] == ctx.author.id]:
-                return await ctx.send("That entry already exists.")
+                return await ctx.send("That todo entry already exists.")
             result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "timestamp":datetime.datetime.now()}, None)
             if result == "success":
                 await self.update_todo_cache()
