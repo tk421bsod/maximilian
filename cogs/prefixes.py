@@ -16,7 +16,7 @@ class prefixes(commands.Cog):
         if not self.bot.is_ready():
             self.logger.warn(f"Cache isn't ready yet! Waiting to call {inspect.stack()[1][3]} until cache is ready.")
             await self.bot.wait_until_ready()
-            self.logger.warn(f"Cache is now ready. {inspect.stack()[1][3]} will now run.")
+            self.logger.info(f"Cache is now ready, and {inspect.stack()[1][3]} will run.")
         else:
             self.logger.info(f"Cache is already ready, running {inspect.stack()[1][3]}")
         
