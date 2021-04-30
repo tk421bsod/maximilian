@@ -34,16 +34,19 @@ class reminders(commands.Cog):
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
         if not teardown:
             self.bot.loop.create_task(self.update_todo_cache())
-            self.bot.loop.create_task(self.update_reminder_cache())
+            self.bot.loop.create_task(self.update_reminder_cache(True))
 
-    async def update_reminder_cache(self):
+    async def update_reminder_cache(self, load=False):
         await self.bot.prefixesinst.check_if_ready()
         self.logger.info("Updating reminder cache...")
         try:
             for item in (reminders := self.bot.dbinst.exec_query(self.bot.database, "select * from reminders order by user_id desc", False, True)):
                 self.bot.reminders[item['user_id']] = [i for i in reminders if i['user_id'] == item['user_id']]
-                self.bot.loop.create_task(self.handle_reminder(item['user_id'], item['channel_id'], item['reminder_time'], item['now'], item['reminder_text']))
-                self.logger.info(f"Started handling a reminder for user {item['user_id']}")
+                #only start handling reminders if the extension was loaded, we don't want reminders to fire twice once this function is
+                #called by handle_reminder
+                if load:
+                    self.bot.loop.create_task(self.handle_reminder(item['user_id'], item['channel_id'], item['reminder_time'], item['now'], item['reminder_text']))
+                    self.logger.info(f"Started handling a reminder for user {item['user_id']}")
         except:
             self.logger.info("Couldn't update reminder cache! Is there anything in the database?")
         self.logger.info("Updated reminder cache!")
@@ -68,6 +71,8 @@ class reminders(commands.Cog):
         await self.bot.get_channel(channel_id).send(f"<@{user_id}> {hrtimedelta} ago: '{remindertext}'")
         #and delete it from the database
         self.bot.dbinst.exec_safe_query(self.bot.database, f"delete from reminders where user_id=%s and channel_id=%s and reminder_time=%s and now=%s and reminder_text=%s", (user_id, channel_id, remindertime, reminderstarted, remindertext))
+        await self.update_reminder_cache()
+
 
     @commands.command(hidden=True, aliases=['reminders', 'reminder'])
     async def remind(self, ctx, action, time:TimeConverter, *, reminder):
