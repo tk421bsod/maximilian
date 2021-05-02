@@ -23,7 +23,7 @@ intents.members=True
 bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.6.1 (beta)"))
 init.init(bot).parse_arguments(sys.argv)
 bot.logger = logging.getLogger('maximilian-beta')
-bot.logger.warning(f"Maximilian Beta v0.5.3 ({'Jishaku enabled' if '--enablejsk' in sys.argv else 'Jishaku disabled'}, Python {sys.version}, discord.py {discord.__version__}) ")
+print(f"Maximilian Beta v0.6.1 ({'Jishaku enabled' if '--enablejsk' in sys.argv else 'Jishaku disabled'}, Python {sys.version}, discord.py {discord.__version__})")
 bot.guildlist = []
 bot.prefixes = {}
 bot.responses = []
@@ -109,7 +109,7 @@ async def start():
                 [await voice.disconnect() for voice in bot.voice_clients]
                 bot.logger.info("Disconnected from all voice channels.")
                 #destroy all players too
-                bot.get_cog('music').players={}
+                [await bot.get_cog('music').destroy_player(player) for player in list(bot.get_cog('music').players.values())]
                 bot.logger.info("Destroyed all players.")
             #close the database connection
             bot.dbinst.dbc.close()
