@@ -256,7 +256,7 @@ class music(commands.Cog):
         return
 
     async def search_youtube_for_song(self, ydl, ctx, url, num, player):
-        '''Searches Youtube for a song and extracts metadata from the first search result. If the maximum duration is exceeded, it goes to the next search result, up to 4 times.'''
+        '''Searches Youtube for a song and extracts metadata from the first search result. If the maximum duration is exceeded, it goes to the next search result, up to 4 times. If no more search results are available, it raises NoSearchResultsError'''
         if num == 0:
             player.metadata.info = await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False))
         try:
