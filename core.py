@@ -10,6 +10,7 @@ import asyncio
 import datetime
 import time
 import humanize
+import errors
 
 def get_prefix(bot, message):
     if not bot.prefixes:
@@ -21,6 +22,62 @@ def get_prefix(bot, message):
     except KeyError:
         bot.prefixes[message.guild.id] = "!"
         return "!"
+
+class deletion_request():
+    def __init__(self, bot):
+        self.waiting_for_reaction = False
+        #mainembeds is a mapping of type to embed (see https://discord.com/developers/docs/resources/channel#embed-object for information on the format of these embeds)
+        self.mainembeds = {"todo":{'fields': [{'inline': True, 'name': 'Effects', 'value': 'If you proceed, your todo list will be deleted. **THIS CANNOT BE UNDONE.**'}, {'inline': False, 'name': 'Your options', 'value': 'React with ✅ to proceed, or react with <:red_x:813135049083191307> to cancel.'}], 'color': 7506394, 'type': 'rich', 'description': "You've requested that I delete your todo list, and I need you to confirm that you actually want to do this.", 'title': 'Delete your todo list?'}, "all":{'fields': [{'inline': True, 'name': 'Effects', 'value': 'If you proceed, all reaction roles and custom commands you\'ve set up will be deleted, and my prefix will be reset to `!`. **THIS CANNOT BE UNDONE.**'}, {'inline': False, 'name': 'Your options', 'value': 'React with ✅ to proceed, or react with <:red_x:813135049083191307> to cancel.'}], 'color': 7506394, 'type': 'rich', 'description': "You've requested that I delete all the information I have stored about this server (use the `privacy` command to view details on the data I collect). I need you to confirm that you actually want to do this.", 'title': 'Delete all data?'}}
+        self.clearedembeds = {"todo":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 Cleared your todo list!'}, "all":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 All data for this server has been cleared!'}}
+        self.bot = bot
+
+
+    async def _handle_request(self, id, requesttype, ctx):
+        deletionmessage = await ctx.send(embed=discord.Embed.from_dict(self.mainembeds[requesttype]))
+        await deletionmessage.add_reaction("\U00002705")
+        await deletionmessage.add_reaction("<:red_x:813135049083191307>")
+        await asyncio.sleep(0.5)
+        self.waiting_for_reaction = True
+        try:
+            while self.waiting_for_reaction:
+                reaction = await self.bot.wait_for('reaction_add', timeout=60.0)
+                async for each in reaction[0].users():
+                    if ctx.message.author == each:
+                        self.waiting_for_reaction = False
+                        if str(reaction[0].emoji) == '\U00002705':
+                            if requesttype == "todo":
+                                self.bot.dbinst.delete(self.bot.database, "todo", str(ctx.author.id), "user_id", "", "", False)
+                                await self.bot.get_cog('reminders').update_todo_cache()
+                            elif requesttype == "all":
+                                await self.delete_all(ctx)
+                            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id=", (id,))
+                            await ctx.send(embed=discord.Embed.from_dict(self.clearedembeds[requesttype]))
+                            return
+                        if str(reaction[0].emoji) == '<:red_x:813135049083191307>':
+                            await ctx.send("Ok. I won't delete anything.")
+                            return
+        except asyncio.TimeoutError:
+            self.bot.waiting_for_reaction = False
+            await ctx.send("Deletion request timed out. I won't delete anything.")
+            return
+
+    async def create_request(self, requesttype, ctx):
+        '''Attempts to create a deletion request, raises errors.DeletionRequestAlreadyActive if one's active'''
+        id = ctx.guild.id if requesttype == 'all' else ctx.author.id
+        if not (result := self.bot.dbinst.exec_safe_query(self.bot.database, "select id from active_requests where id=%s", (id,))):
+            self.bot.dbinst.exec_safe_query(self.bot.database, "insert into active_requests values(%s)", (id,))
+            await self._handle_request(id, requesttype, ctx)
+        elif result:
+            print(result)
+            raise errors.DeletionRequestAlreadyActive()
+
+    async def delete_all(self, ctx):
+        self.bot.dbinst.delete(self.bot.database, "roles", str(ctx.guild.id), "guild_id", "", "", False)
+        self.bot.dbinst.delete(self.bot.database, "responses", str(ctx.guild.id), "guild_id", "", "", False)
+        self.bot.dbinst.delete(self.bot.database, "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
+        await ctx.guild.me.edit(nick=f"[!] Maximilian")
+        await self.bot.responsesinst.get_responses()
+        await self.bot.prefixesinst.update_prefix_cache()
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
