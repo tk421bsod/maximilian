@@ -48,6 +48,7 @@ class reminders(commands.Cog):
                     self.bot.loop.create_task(self.handle_reminder(item['user_id'], item['channel_id'], item['reminder_time'], item['now'], item['reminder_text']))
                     self.logger.info(f"Started handling a reminder for user {item['user_id']}")
         except:
+            self.bot.reminders = {}
             self.logger.info("Couldn't update reminder cache! Is there anything in the database?")
         self.logger.info("Updated reminder cache!")
         
