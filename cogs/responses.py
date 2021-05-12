@@ -11,7 +11,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         '''Builds cache of custom commands (internally called responses)'''
         tempresponses = []
         #make sure cache is ready before we try to iterate over bot.guilds (if we don't wait, bot.guilds may be incomplete)
-        await self.bot.prefixesinst.check_if_ready()
+        await self.bot.coreinst.check_if_ready()
         #then for each guild in the list, check if the guild has any responses in the database
         for guild in self.bot.guilds:
             if (count := self.bot.dbinst.exec_query(self.bot.database, "select count(*) from responses where guild_id={}".format(str(guild.id)), False, False)) is not None:

@@ -11,6 +11,7 @@ import datetime
 import time
 import humanize
 import errors
+import inspect
 
 def get_prefix(bot, message):
     if not bot.prefixes:
@@ -83,7 +84,16 @@ class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
     def __init__(self, bot):
         self.bot = bot
+        self.waiting = []
         self.logger = logging.getLogger(f'maximilian.{__name__}')
+
+    async def check_if_ready(self):
+        if not self.bot.is_ready():
+            self.logger.debug(f"Cache isn't ready yet! Waiting to call {inspect.stack()[1][3]} until cache is ready.")
+            await self.bot.wait_until_ready()
+            self.logger.debug(f"Cache is now ready. Running {inspect.stack()[1][3]}.")
+        else:
+            self.logger.debug(f"Cache is already ready, running {inspect.stack()[1][3]}")
 
     @commands.group(invoke_without_command=False, hidden=True)
     async def utils(self, ctx):
@@ -130,7 +140,7 @@ class core(commands.Cog):
         self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
         self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
         self.logger.info(f"ready, full startup took {time.time()-self.bot.start_time} seconds")
-        if self.bot.logger.disabled or self.bot.logger.level >= logging.WARN:
+        if self.bot.logger.disabled or self.bot.logger.level > logging.INFO:
             print("Ready")
 
     async def prepare(self, message):
