@@ -2,7 +2,6 @@ import discord
 import time
 from discord.ext import commands
 import logging
-import inspect
 
 class prefixes(commands.Cog):
     '''Change Maximilian's prefix'''
@@ -11,14 +10,6 @@ class prefixes(commands.Cog):
         self.logger = logging.getLogger(__name__)
         if not teardown:
             self.bot.loop.create_task(self.update_prefix_cache())
-
-    async def check_if_ready(self):
-        if not self.bot.is_ready():
-            self.logger.warn(f"Cache isn't ready yet! Waiting to call {inspect.stack()[1][3]} until cache is ready.")
-            await self.bot.wait_until_ready()
-            self.logger.info(f"Cache is now ready, and {inspect.stack()[1][3]} will run.")
-        else:
-            self.logger.info(f"Cache is already ready, running {inspect.stack()[1][3]}")
         
     async def _fetch_prefix(self, guild_id):
         '''Fetches a prefix corresponding to a guild id from the database'''
@@ -30,7 +21,7 @@ class prefixes(commands.Cog):
 
     async def update_prefix_cache(self, guild_id=None):
         '''Builds/updates cache of prefixes'''
-        await self.check_if_ready()
+        await self.bot.coreinst.check_if_ready()
         self.logger.info("updating prefix cache...")
         if guild_id:
             await self._fetch_prefix(guild_id)
