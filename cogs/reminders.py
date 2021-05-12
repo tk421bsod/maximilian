@@ -37,7 +37,7 @@ class reminders(commands.Cog):
             self.bot.loop.create_task(self.update_reminder_cache(True))
 
     async def update_reminder_cache(self, load=False):
-        await self.bot.prefixesinst.check_if_ready()
+        await self.bot.coreinst.check_if_ready()
         self.logger.info("Updating reminder cache...")
         try:
             for item in (reminders := self.bot.dbinst.exec_query(self.bot.database, "select * from reminders order by user_id desc", False, True)):
@@ -53,7 +53,7 @@ class reminders(commands.Cog):
         self.logger.info("Updated reminder cache!")
         
     async def update_todo_cache(self):
-        await self.bot.prefixesinst.check_if_ready()
+        await self.bot.coreinst.check_if_ready()
         self.logger.info("Updating todo cache...")
         try:
             for item in (todolists := self.bot.dbinst.exec_query(self.bot.database, "select * from todo order by timestamp desc", False, True)):
