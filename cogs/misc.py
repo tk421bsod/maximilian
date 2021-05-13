@@ -8,7 +8,14 @@ from zalgo_text import zalgo as zalgo_text_gen
 import typing
 import bottom as bottomify
 import inspect
-import os
+import sys
+import os 
+import inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+import core
+import errors
 
 class misc(commands.Cog):
     '''Some commands that don\'t really fit into other categories'''
@@ -68,44 +75,10 @@ class misc(commands.Cog):
     @commands.bot_has_permissions(add_reactions=True)
     @commands.command(help="**Permanently** delete all data that Maximilian's stored about your server. (requires the Administrator permission)")
     async def deleteall(self, ctx):
-        if not self.bot.waiting_for_reaction:
-            embed = discord.Embed(title="Delete all data?", description=f"You've requested that I delete all the information I have stored about this server. (see `{await self.bot.get_prefix(ctx.message)}privacy` for details on the data I collect)", color=discord.Color.blurple())
-            embed.add_field(name="Effects", value="If you proceed, all of the reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`.\n**THIS CANNOT BE UNDONE.**", inline=False)
-            embed.add_field(name="Your options", value="React with \U00002705 to proceed, or react with \U0000274c to stop the deletion process.", inline=False)
-            deletionmessage = await ctx.send(embed=embed)
-            await deletionmessage.add_reaction("\U00002705")
-            await deletionmessage.add_reaction("\U0000274c")
-            try:
-                #this is to prevent the bot's reactions from triggering wait_for
-                await asyncio.sleep(1)
-                #this while loop is to prevent reactions from other users from ending the deletion request, it's also for preventing multiple deletion requests
-                while True:
-                    self.bot.waiting_for_reaction = True
-                    #maybe I should create a check?
-                    reaction = await self.bot.wait_for('reaction_add', timeout=120.0)
-                    async for each in reaction[0].users():
-                        if ctx.message.author == each:
-                            self.bot.waiting_for_reaction = False
-                            if str(reaction[0].emoji) == '\U00002705':
-                                await ctx.send("Deleting data for this server...")
-                                await ctx.trigger_typing()
-                                self.bot.dbinst.delete(self.bot.database, "roles", str(ctx.guild.id), "guild_id", "", "", False)
-                                self.bot.dbinst.delete(self.bot.database, "responses", str(ctx.guild.id), "guild_id", "", "", False)
-                                self.bot.dbinst.delete(self.bot.database, "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
-                                await ctx.guild.me.edit(nick=f"[!] Maximilian")
-                                await self.bot.responsesinst.get_responses()
-                                await self.bot.prefixesinst.reset_prefixes()
-                                embed = discord.Embed(title="\U00002705 All data for this server has been cleared!", color=discord.Color.blurple())
-                                await ctx.send(embed=embed)
-                                return
-                            if str(reaction[0].emoji) == '\U0000274c':
-                                await ctx.send("Ok. I won't delete anything.")
-                                return
-            except asyncio.TimeoutError:
-                self.bot.waiting_for_reaction = False
-                await ctx.send("Deletion request timed out. I won't delete anything.")
-        else:
-            await ctx.send("It looks like you already have an active deletion request.")
+        try:
+            await core.deletion_request(self.bot).create_request("all", ctx)
+        except errors.DeletionRequestAlreadyActive:
+            await ctx.send("A deletion request is already active.")
 
     @commands.command(hidden=True)
     async def emojiinfo(self, ctx, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
