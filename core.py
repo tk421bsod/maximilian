@@ -58,7 +58,8 @@ class deletion_request():
                             await ctx.send("Ok. I won't delete anything.")
                             return
         except asyncio.TimeoutError:
-            self.bot.waiting_for_reaction = False
+            self.waiting_for_reaction = False
+            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id=", (id,))
             await ctx.send("Deletion request timed out. I won't delete anything.")
             return
 
@@ -139,9 +140,8 @@ class core(commands.Cog):
         self.logger.info("finishing startup...")
         self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
         self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
-        self.logger.info(f"ready, full startup took {time.time()-self.bot.start_time} seconds")
-        if self.bot.logger.disabled or self.bot.logger.level > logging.INFO:
-            print("Ready")
+        self.logger.info(f"full startup took {time.time()-self.bot.start_time} seconds")
+        print("Ready")
 
     async def prepare(self, message):
         if message.author != self.bot.user:
