@@ -6,6 +6,14 @@ import discord
 import asyncio
 import random
 import logging
+import sys
+import os 
+import inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+import core
+import errors
 
 #Thanks to Vexs for help with this.
 time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
@@ -31,6 +39,7 @@ class reminders(commands.Cog):
         self.logger = logging.getLogger(__name__)
         self.bot.todo_entries = {}
         self.bot.reminders = {}
+        print(sys.path)
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
         if not teardown:
             self.bot.loop.create_task(self.update_todo_cache())
@@ -119,38 +128,10 @@ class reminders(commands.Cog):
                 await ctx.send("Something went wrong while deleting that todo entry. Make sure that the todo entry you're trying to delete actually exists.")
             return
         if action == "deleteall":
-            if not self.bot.waiting_for_reaction:
-                embed = discord.Embed(title="Delete your todo list?", description=f"You've requested that I delete your todo list, and I need you to confirm that you actually want to do this.", color=discord.Color.blurple())
-                embed.add_field(name="Effects", value="If you proceed, your todo list will be deleted. **THIS CANNOT BE UNDONE.**")
-                embed.add_field(name="Your options", value="React with \U00002705 to proceed, or react with \U0000274c to cancel.", inline=False)
-                deletionmessage = await ctx.send(embed=embed)
-                await deletionmessage.add_reaction("\U00002705")
-                await deletionmessage.add_reaction("\U0000274c")
-                try:
-                    await asyncio.sleep(1)
-                    while True:
-                        self.bot.waiting_for_reaction = True
-                        #maybe I should create a check?
-                        reaction = await self.bot.wait_for('reaction_add', timeout=120.0)
-                        async for each in reaction[0].users():
-                            if ctx.message.author == each:
-                                self.bot.waiting_for_reaction = False
-                                if str(reaction[0].emoji) == '\U00002705':
-                                    self.bot.dbinst.delete(self.bot.database, "todo", str(ctx.author.id), "user_id", "", "", False)
-                                    embed = discord.Embed(title="\U00002705 Cleared your todo list!", color=discord.Color.blurple())
-                                    await self.update_todo_cache()
-                                    await ctx.send(embed=embed)
-                                    return
-                                if str(reaction[0].emoji) == '\U0000274c':
-                                    await ctx.send("Ok. I won't clear your todo list.")
-                                    return
-                except asyncio.TimeoutError:
-                    self.bot.waiting_for_reaction = False
-                    await ctx.send("Deletion request timed out. I won't clear your todo list.")
-                    return
-            else:
-                await ctx.send("It looks like you already have an active deletion request.")
-                return
+            try:
+                await core.deletion_request(self.bot).create_request("todo", ctx)
+            except errors.DeletionRequestAlreadyActive:
+                await ctx.send("A deletion request is already active.")
         if action == "list" or entry == None:
             entrystring = ""
             try:
@@ -161,6 +142,9 @@ class reminders(commands.Cog):
                     return await ctx.send(embed=embed)
             except KeyError:
                 return await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
+            except discord.HTTPException:
+                return await ctx.send("Your todo list is too long to show in a single message.")
+                #maybe work on a paginator???
 
 def setup(bot):
     bot.add_cog(reminders(bot))
