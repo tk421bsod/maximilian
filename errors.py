@@ -1,6 +1,6 @@
 import discord
 
-class DeletionRequestAlreadyActive():
+class DeletionRequestAlreadyActive(discord.ext.commands.CommandError):
     pass
 
 class DurationLimitError(discord.ext.commands.CommandError):
