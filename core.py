@@ -51,7 +51,7 @@ class deletion_request():
                                 await self.bot.get_cog('reminders').update_todo_cache()
                             elif requesttype == "all":
                                 await self.delete_all(ctx)
-                            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id=", (id,))
+                            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id=%s", (id,))
                             await ctx.send(embed=discord.Embed.from_dict(self.clearedembeds[requesttype]))
                             return
                         if str(reaction[0].emoji) == '<:red_x:813135049083191307>':
@@ -59,7 +59,7 @@ class deletion_request():
                             return
         except asyncio.TimeoutError:
             self.waiting_for_reaction = False
-            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id=", (id,))
+            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id=%s", (id,))
             await ctx.send("Deletion request timed out. I won't delete anything.")
             return
 
