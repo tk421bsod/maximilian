@@ -129,7 +129,7 @@ class reminders(commands.Cog):
             return
         if action == "deleteall":
             try:
-                await core.deletion_request(self.bot).create_request("todo", ctx)
+                return await core.deletion_request(self.bot).create_request("todo", ctx)
             except errors.DeletionRequestAlreadyActive:
                 await ctx.send("A deletion request is already active.")
         if action == "list" or entry == None:
