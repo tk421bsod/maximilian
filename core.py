@@ -169,7 +169,7 @@ class core(commands.Cog):
         elif type.lower() == "default":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" v0.5.2 (stable)"))
         else:
-            await ctx.send("That's an invalid status type!")
+            await ctx.send("oh :blobpaiN; invalid status! ¯\_(ツ)_/¯")
             return
         await ctx.send("Changed status!")
 
@@ -213,7 +213,7 @@ class core(commands.Cog):
         if isinstance(error, commands.errors.CheckFailure):
             await ctx.send("How did you find these commands? These aren't supposed to be used by anyone but the owner. \nIf you're selfhosting and want to make yourself the owner to prevent this from happening, replace the id after `owner_id=` and before the comma on line 18 of main.py with your user id.")
         else:
-            await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
+            await self.bot.get_user(self.bot.owner_id).send("oh :blobpaiN; here's an error" + traceback.format_exc())
 
 def setup(bot):
     bot.add_cog(core(bot))
