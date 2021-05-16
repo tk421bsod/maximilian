@@ -117,7 +117,7 @@ class core(commands.Cog):
                 repo = git.Repo(os.getcwd()).remotes.origin.pull()
                 await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
             except:
-                await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Make sure you've set up the proper SSH keys. Reloading local copies of extensions...")
+                await reloadmessage.edit(content="\U000026a0 oh :blobpaiN; couldn't get latest revision! Make sure you've set up the proper SSH keys. Reloading local copies of extensions...")
                 extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
             for each in targetextensions:
                 self.bot.reload_extension(each)
@@ -130,8 +130,8 @@ class core(commands.Cog):
             embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
         except Exception as e:
             print(e)
-            embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
-            embed.add_field(name="Error:", value=traceback.format_exc())
+            embed = discord.Embed(title=f"\U0000274c oh :blobpaiN; error while reloading extensions")
+            embed.add_field(name="oh :blobpaiN;", value=traceback.format_exc())
         await ctx.send(embed=embed) 
 
     @commands.Cog.listener()
