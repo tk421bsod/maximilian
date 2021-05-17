@@ -66,8 +66,16 @@ class misc(commands.Cog):
     @commands.command(help="View information about what data Maximilian accesses and stores.")
     async def privacy(self, ctx):
         embed = discord.Embed(title="Maximilian Privacy Policy", color=discord.Color.blurple())
-        embed.add_field(name="Why Maximilian collects data", value="Maximilian accesses/stores certain information that is necessary for certain functions (types of data collected are described below)", inline=False)
-        embed.add_field(name="Data that Maximilian stores", value="**-Server IDs**\nMaximilian stores server IDs when you create a custom command, add a reaction role, or change its prefix to distinguish between different servers.\n\n**-Role IDs**\nMaximilian stores role IDs whenever you add a reaction role so it can assign the correct role to users.\n\n**-Music**\nTo keep track of what channels it's playing audio in, Maximilian puts your voice channel's ID in a list temporarily. This data isn't retrievable by anyone, and your channel ID is removed from the list when Maximilian stops playing audio in your voice channel.\nWhen you play a song, Maximilian stores information about that song, like the video ID and name, so it can play it without a long delay next time. When you add a song to your queue, Maximilian temporarily stores your voice channel's ID, the song's position in the queue, the song's name, and the song's id to keep track of your queue.\n", inline=False)
+        embed.add_field(name="Why Maximilian collects data", value="Maximilian accesses/stores certain information that is necessary for certain functions. It doesn't collect any sort of personally identifiable information. (types of data collected are described below)", inline=False)
+        embed.add_field(name="Data that Maximilian stores", value="**-Server IDs**\nMaximilian stores server IDs when you create a custom command, add a reaction role, or change its prefix to distinguish between different servers.", inline=False)
+        embed.add_field(name="-Role IDs", value="Maximilian stores role IDs whenever you add a reaction role so it can give people the correct role.")
+        embed.add_field(name="-User IDs", value="Maximilian stores user IDs so it can keep track of your todo list and active reminders.")
+        try:
+            embed.add_field(name="-Timezones", value=f"Maximilian stores the timezone you chose during timezone setup (currently it's {self.bot.timezones['user_id']}) to convert UTC timestamps (like account creation/join dates in userinfo) to your timezone. If you want to delete this information, run `{await self.bot.coreinst.get_prefix(self.bot, ctx.message)}tzsetup` again and choose UTC.")
+        except:
+            #fail silently on errors as self.bot.timezones isn't a thing yet
+            pass
+        embed.add_field(name="-Music", value="To keep track of what channels it's playing audio in, Maximilian puts your voice channel's ID in a list temporarily. This data isn't retrievable by anyone, and your channel ID is removed from the list when Maximilian stops playing audio in your voice channel.\nWhen you play a song, Maximilian stores information about that song, like the video ID and name, so it can play it without a long delay next time. When you add a song to your queue, Maximilian temporarily stores your voice channel's ID, the song's position in the queue, the song's name, and the song's id to keep track of your queue.")
         embed.add_field(name="I want to delete my server's data, how do I request that?", value=f"You can delete all the data in your server by using `{await self.bot.get_prefix(ctx.message)}deleteall`. This will irreversibly delete all of the reaction roles and custom commands you have set up and reset the prefix to the default of `!`. Only people with the Administrator permission can use this.", inline=False)
         await ctx.send(embed=embed)
 
@@ -114,7 +122,6 @@ class misc(commands.Cog):
         src = obj.callback.__code__
         lines, firstlineno = inspect.getsourcelines(src)
         if not obj.callback.__module__.startswith('discord'):
-            # not a built-in command
             location = os.path.relpath(src.co_filename).replace('\\', '/')
         else:
             location = obj.callback.__module__.replace('.', '/') + '.py'
