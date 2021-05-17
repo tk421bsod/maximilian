@@ -50,7 +50,7 @@ class userinfo(commands.Cog):
             permissionstring = "Administrator"
         embed.add_field(name="Roles:", value=rolestring, inline=False)
         embed.add_field(name="Permissions:", value=permissionstring, inline=False)
-        embed.set_footer(text=f"=Requested by {str(ctx.author)}.")
+        embed.set_footer(text=f"Requested by {str(ctx.author)}.")
         embed.set_thumbnail(url=requested_user.avatar_url)
         await ctx.send(embed=embed)
     
