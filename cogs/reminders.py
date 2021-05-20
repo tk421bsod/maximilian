@@ -39,7 +39,6 @@ class reminders(commands.Cog):
         self.logger = logging.getLogger(__name__)
         self.bot.todo_entries = {}
         self.bot.reminders = {}
-        print(sys.path)
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
         if not teardown:
             self.bot.loop.create_task(self.update_todo_cache())
@@ -48,14 +47,16 @@ class reminders(commands.Cog):
     async def update_reminder_cache(self, load=False):
         await self.bot.coreinst.check_if_ready()
         self.logger.info("Updating reminder cache...")
+        self.bot.newreminders = {}
         try:
             for item in (reminders := self.bot.dbinst.exec_query(self.bot.database, "select * from reminders order by user_id desc", False, True)):
-                self.bot.reminders[item['user_id']] = [i for i in reminders if i['user_id'] == item['user_id']]
+                self.bot.newreminders[item['user_id']] = [i for i in reminders if i['user_id'] == item['user_id']]
                 #only start handling reminders if the extension was loaded, we don't want reminders to fire twice once this function is
                 #called by handle_reminder
                 if load:
                     self.bot.loop.create_task(self.handle_reminder(item['user_id'], item['channel_id'], item['reminder_time'], item['now'], item['reminder_text']))
                     self.logger.info(f"Started handling a reminder for user {item['user_id']}")
+            self.bot.reminders = self.bot.newreminders
         except:
             self.bot.reminders = {}
             self.logger.info("Couldn't update reminder cache! Is there anything in the database?")
