@@ -1,18 +1,21 @@
-import discord
-from discord.ext import commands
+#stdlib
 import asyncio
-import youtube_dl
 import urllib
-import aiohttp
 import traceback
 import time
 import functools
 import typing
 import logging
 import inspect
+import contextlib
+#external
+import aiohttp
+import discord
+from discord.ext import commands
+import ffmpeg
+import youtube_dl
 #import lavalink
 #warning: this uses ffmpeg-python, not ffmpeg (the python module) or python-ffmpeg
-import ffmpeg
 
 class DurationLimitError(discord.ext.commands.CommandError):
     def __init__(self):
@@ -38,18 +41,15 @@ class Metadata():
 
 class Player():
     '''An object that stores the queue and current song for a specific guild.'''
-    def __init__(self, ctx):
+    def __init__(self, ctx, logger):
         self.queue = []
         self.current_song = []
         self.guild = ctx.guild
-        self.logger = logging.getLogger(f"maximilian.cogs.music.player{self.guild.id}")
         self.owner=ctx.author
-        self.logger.info(f"Created player for guild id {self.guild.id}")
+        logger.info(f"Created player for guild id {self.guild.id}")
         self.lock = asyncio.Lock()
         self.metadata = Metadata()
     
-    async def notify_of_destroy(self):
-        self.logger.info(f"Player is being destroyed by {inspect.stack()[2][3] if inspect.stack()[2][3] != '<listcomp>' else 'a listcomp'}.")
 
 class music(commands.Cog):
     '''Music commands'''
@@ -71,16 +71,14 @@ class music(commands.Cog):
         if await self._check_player(ctx):
             self.logger.info(f"A player already exists for guild {ctx.guild.id}")
         else:
-            self.players[ctx.guild.id] = Player(ctx)
+            self.players[ctx.guild.id] = Player(ctx, self.logger)
         return self.players[ctx.guild.id]
 
     async def destroy_player(self, ctx):
         '''Destroys (deletes) the player for the specified guild.'''
         try:
-            await self.players[ctx.guild.id].notify_of_destroy()
             del self.players[ctx.guild.id]
         except:
-            traceback.print_exc()
             self.logger.warning("Tried to destroy a player that doesn't exist!")
         self.logger.info(f"Destroyed the player for guild {ctx.guild.id}")
 
@@ -132,9 +130,16 @@ class music(commands.Cog):
         elif isinstance(error, NoSearchResultsError):
             await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.")
         else:
-            await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
-            traceback.print_exc()
-            await ctx.send("There was an error while trying to get that song. My developer has been made aware of this.")
+            try:
+                paginator = commands.Paginator()
+                for line in traceback.format_exc().split("\n"):
+                    paginator.add_line(line)
+                [await self.bot.get_user(self.bot.owner_id).send(page) for page in paginator.pages]
+            except discord.HTTPException:
+                pass
+            await ctx.send(f"Hmm, something went wrong. Try that again. I've left the voice channel and reported this error to my developer.")
+            await self.leave(ctx)
+
 
     def process_queue(self, ctx, channel, error):
         '''Starts playing the next song in the queue, cleans up some stuff if the queue is empty'''
@@ -317,7 +322,7 @@ class music(commands.Cog):
 
     
     #executes when someone sends a message with the prefix followed by 'play'
-    @commands.command(aliases=["p"], help=f"Play something from youtube. You need to provide a valid Youtube URL or a search term for this to work. For example, you can use `?play never gonna give you up` (this assumes the prefix is `?`, just replace `?` with the current prefix if it's different) to search youtube for a song named 'never gonna give you up' and rickroll all of your friends in the voice channel.")
+    @commands.command(aliases=["p"], help=f"Play something from youtube. You need to provide a valid Youtube URL or a search term for this to work. For example, you can use `<prefix>play never gonna give you up` to search youtube for a song named 'never gonna give you up' and rickroll all of your friends in the voice channel.")
     async def play(self, ctx, *, url=None):
         if not url:
             await ctx.send("You need to specify a url or something to search for.")
@@ -419,22 +424,21 @@ class music(commands.Cog):
         '''Leaves the current voice channel.'''
         player = await self._get_player(ctx)
         try:
-            try:
+            assert ctx.guild.me.voice
+            with contextlib.suppress(AttributeError, IndexError):
                 self.channels_playing_audio.remove(ctx.voice_client.channel.id)
-                player.queue = []
-                player.current_song = []
-            except:
-                pass
             await self.destroy_player(ctx)
             await ctx.guild.voice_client.disconnect()
             self.logger.info("left vc, reset queue and destroyed player")
             await ctx.send(embed=discord.Embed(title="\U00002705 Left the voice channel.", color=discord.Color.blurple()))
-        except AttributeError:
-            await ctx.send("I'm not in a voice channel.")
+        except AssertionError:
+            return await ctx.send("I'm not in a voice channel.")
+        except Exception as e:
+            return await self._handle_errors(ctx, e)
     
     @commands.command(aliases=["q"])
     async def queue(self, ctx):
-        '''View what's in your queue'''
+        '''View what's in your queue.'''
         player = await self._get_player(ctx)
         try:
             queuelength = len(player.queue)
@@ -487,7 +491,7 @@ class music(commands.Cog):
 
     @commands.command()
     async def pause(self, ctx):
-        '''Pause the current song'''
+        '''Pause the current song.'''
         player = await self._get_player(ctx)
         try:
             assert ctx.guild.me.voice != None
@@ -505,7 +509,7 @@ class music(commands.Cog):
 
     @commands.command(aliases=["unpause"])
     async def resume(self, ctx):
-        '''Resume the current song'''
+        '''Resume the current song.'''
         player = await self._get_player(ctx)
         try:
             assert ctx.guild.me.voice != None
@@ -547,7 +551,7 @@ class music(commands.Cog):
 
     @commands.command(aliases=["c"])
     async def clear(self, ctx):
-        '''Clear the queue.'''
+        '''Clear the queue. '''
         player = await self._get_player(ctx)
         try:
             assert player.queue != []
@@ -604,7 +608,7 @@ class music(commands.Cog):
 
     @commands.command(aliases=["quit"])
     async def stop(self, ctx):
-        '''Stop playing music. Clears your queue if you have anything in it.'''
+        '''Stop playing music. Clears your queue if you have anything in it. '''
         if not await self._check_player(ctx):
             return await ctx.send("It doesn't look like I'm in a voice channel.")
         if not ctx.voice_client.is_playing():
