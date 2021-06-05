@@ -20,7 +20,7 @@ class images(commands.Cog):
         
 
     @commands.command()
-    async def avatar(self, ctx, user:typing.Optional[discord.Member]=None):
+    async def avatar(self, ctx, *, user:typing.Optional[discord.Member]=None):
         '''View another user's avatar, or yours if you don't specify anyone'''
         if not user:
             await ctx.send(embed=discord.Embed(title=f"{ctx.author}'s avatar", color=discord.Color.blurple()).set_image(url=str(ctx.author.avatar_url)))
