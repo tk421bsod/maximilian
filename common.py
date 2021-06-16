@@ -1,5 +1,6 @@
 import pymysql.cursors
 import datetime
+import warnings
 
 class db:
     dbobj = ""
@@ -27,8 +28,9 @@ class db:
     def insert(self, database, table, valuesdict, valuenodupe, debug=False, valueallnum=None, valueallnumenabled=False, extraparam=None, extraparamenabled=False):
         #this might be vulnerable to sql injection, it depends on whether pymysql escapes stuff passed to execute as a positional argument after the query. i've heard it does, but i'm still skeptical.
         #valuesdict's values are the only things that are passed by the user
+        warnings.warn("This function is deprecated. Use 'exec_safe_query' instead.", category=DeprecationWarning, stacklevel=2)
         if debug == False:
-            self.connect(database)
+            self.dbc = self.connect(database)
         else:
             pass
         valuenameplaceholders = ', '.join([f'{i}' for i in list(valuesdict.keys())])
@@ -72,7 +74,8 @@ class db:
                 return "success"
     
     def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug=False):
-        self.connect(database)
+        warnings.warn("This function is deprecated. Use 'exec_safe_query' instead.", category=DeprecationWarning)
+        self.dbc = self.connect(database)
         self.dbc.execute("select {} from {} where {} = %s".format(valuetoretrieve, table, valuenametoretrieve), (retrievedvalue))
         row = self.dbc.fetchone()
         if debug == True:
@@ -90,7 +93,8 @@ class db:
             return None
 
     def delete(self, database, table, valuetodelete, valuenametodelete, extraparam=None, extraparamvalue=None, extraparamenabled=False):
-        self.connect(database)
+        warnings.warn("This function is deprecated. Use 'exec_safe_query' instead.", category=DeprecationWarning, stacklevel=2)
+        self.dbc = self.connect(database)
         if self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False) == None:
             return "value-non-existent"
         if extraparamenabled:
@@ -103,6 +107,7 @@ class db:
             return "error"
             
     def exec_query(self, database, querytoexecute, debug=False, fetchallrows=False):
+        warnings.warn("This function is deprecated due to the potential for sql injection. Use 'exec_safe_query' instead.", category=DeprecationWarning, stacklevel=2)
         self.connect(database)
         self.dbc.execute(str(querytoexecute))
         if fetchallrows:
@@ -112,7 +117,7 @@ class db:
         return row if row != () and row != "()" else None
 
     def exec_safe_query(self, database, querytoexecute, params, debug=False, fetchallrows=False):
-        self.connect(database)
+        self.dbc = self.connect(database)
         self.dbc.execute(str(querytoexecute), params)
         if fetchallrows:
             row = self.dbc.fetchall()
