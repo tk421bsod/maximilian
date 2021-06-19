@@ -75,4 +75,4 @@ class init():
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
         except:
             self.logger.error("Failed to get one or more cogs, some stuff might not work.")
-        self.logger.info(f"loaded {extensioncount} extensions successfully{f' ({errorcount} extension{'s' if errorcount != 1 else ''} not loaded)'}, waiting for ready")
+        self.logger.info(f"loaded {extensioncount} extensions successfully ({errorcount} extension{'s' if errorcount != 1 else ''} not loaded'), waiting for ready")
