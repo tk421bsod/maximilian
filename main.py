@@ -16,6 +16,8 @@ import core
 import asyncio
 
 print("starting...")
+#get a new event loop before doing anything else
+loop = asyncio.new_event_loop()
 token = common.token().get("token.txt")
 init.config_logging(sys.argv)
 intents = discord.Intents.default()
@@ -47,10 +49,8 @@ except:
     bot.logger.critical("Failed to load required extensions.")
     traceback.print_exc()
     quit()
-print("Loaded required extensions successfully. Loading other cogs...")
+print("Loaded required extensions successfully. Loading other extensions...")
 init.init(bot).load_extensions()
-#once done loading extensions, get an event loop
-loop = asyncio.get_event_loop()
 
 @bot.event
 async def on_message(message):
