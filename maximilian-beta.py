@@ -16,11 +16,13 @@ import core
 import asyncio
 
 print("starting...")
+#get a new event loop before doing anything else
+loop = asyncio.new_event_loop()
 token = common.token().get("betatoken.txt")
 init.config_logging(sys.argv)
 intents = discord.Intents.default()
 intents.members=True
-bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.6.1 (beta)"))
+bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.6.1 (beta)"), loop=loop)
 init.init(bot).parse_arguments(sys.argv)
 bot.logger = logging.getLogger('maximilian-beta')
 print(f"Maximilian Beta v0.6.1 ({'Jishaku enabled' if '--enablejsk' in sys.argv else 'Jishaku disabled'}, Python {sys.version}, discord.py {discord.__version__})")
@@ -49,8 +51,6 @@ except:
     quit()
 print("Loaded required extensions successfully. Loading other cogs...")
 init.init(bot).load_extensions()
-#once done loading extensions, get an event loop
-loop = asyncio.get_event_loop()
 
 @bot.event
 async def on_message(message):
