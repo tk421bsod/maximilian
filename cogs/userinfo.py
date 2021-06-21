@@ -10,7 +10,7 @@ class userinfo(commands.Cog):
 
     #might need a refactor
     @commands.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
-    async def userinfo(self, ctx, requested_user=None):
+    async def userinfo(self, ctx, *, requested_user=None):
         if requested_user is None:
             requested_user = ctx.author
         else:
