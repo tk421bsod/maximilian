@@ -1,5 +1,5 @@
 #import libraries
-print("Importing everything, this may take a bit on first run")
+print("Loading libraries...")
 import discord
 from discord.ext import commands 
 from discord.ext import tasks
@@ -22,7 +22,7 @@ token = common.token().get("token.txt")
 init.config_logging(sys.argv)
 intents = discord.Intents.default()
 intents.members=True
-bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.6 (stable)"))
+bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=intents, loop=loop, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.6 (stable)"))
 init.init(bot).parse_arguments(sys.argv)
 bot.logger = logging.getLogger('maximilian-stable')
 bot.logger.warning(f"Maximilian v0.6 ({'Jishaku enabled' if '--enablejsk' in sys.argv else 'Jishaku disabled'}, Python {sys.version}, discord.py {discord.__version__}) ")
