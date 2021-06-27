@@ -61,9 +61,8 @@ class init():
                 except commands.ExtensionFailed as error:
                     errorcount += 1
                     self.logger.error(f"{type(error.original).__name__} while loading '{error.name}'. {'Run Maximilian again with the -v command line argument to show additional information.' if type(error.original).__name__ == 'SyntaxError' else ''}")
-                    if isinstance(error.original, SyntaxError):
-                        self.logger.debug(traceback.format_exc())
-                    elif isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
+                    self.logger.info(traceback.format_exc())
+                    if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
                         self.logger.error(f"The {error.original.name} module isn't installed, '{error.name}' won't be loaded")
         #create instances of certain cogs
         try:
