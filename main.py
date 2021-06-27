@@ -1,5 +1,5 @@
 #import libraries
-print("Importing everything, this may take a bit on first run")
+print("Loading libraries...")
 import discord
 from discord.ext import commands 
 from discord.ext import tasks
@@ -16,11 +16,13 @@ import core
 import asyncio
 
 print("starting...")
+#get a new event loop before doing anything else
+loop = asyncio.new_event_loop()
 token = common.token().get("token.txt")
 init.config_logging(sys.argv)
 intents = discord.Intents.default()
 intents.members=True
-bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.6 (stable)"))
+bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=intents, loop=loop, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.6 (stable)"))
 init.init(bot).parse_arguments(sys.argv)
 bot.logger = logging.getLogger('maximilian-stable')
 bot.logger.warning(f"Maximilian v0.6 ({'Jishaku enabled' if '--enablejsk' in sys.argv else 'Jishaku disabled'}, Python {sys.version}, discord.py {discord.__version__}) ")
@@ -47,10 +49,8 @@ except:
     bot.logger.critical("Failed to load required extensions.")
     traceback.print_exc()
     quit()
-print("Loaded required extensions successfully. Loading other cogs...")
+print("Loaded required extensions successfully. Loading other extensions...")
 init.init(bot).load_extensions()
-#once done loading extensions, get an event loop
-loop = asyncio.get_event_loop()
 
 @bot.event
 async def on_message(message):

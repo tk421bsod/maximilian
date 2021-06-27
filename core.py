@@ -5,6 +5,7 @@ import helpcommand
 import os
 import pymysql
 import traceback
+import typing
 import logging
 import asyncio
 import datetime
@@ -83,10 +84,13 @@ class deletion_request():
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
-    def __init__(self, bot):
+    def __init__(self, bot, load=False):
         self.bot = bot
         self.waiting = []
+        self.bot.blocklist = []
         self.logger = logging.getLogger(f'maximilian.{__name__}')
+        if load:
+            self.bot.loop.create_task(self.update_blocklist())
 
     async def check_if_ready(self):
         if not self.bot.is_ready():
@@ -102,9 +106,21 @@ class core(commands.Cog):
 
     @commands.is_owner()
     @utils.command(hidden=True)
+    async def blocklist(self, ctx):
+        await ctx.send("Fetching blocklist...")
+        users = "\n".join([str(self.bot.get_user(i)) for i in self.bot.blocklist]) 
+        await ctx.send(f"I have {len(self.bot.blocklist)} users blocked. They are: \n{users}")
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
     async def reload(self, ctx, *targetextensions):
         await ctx.trigger_typing()
         try:
+            if "--nofetch" in targetextensions:
+                targetextensions = [i for i in targetextensions if i != "--nofetch"]
+                nofetch = True
+            else:
+                nofetch = False
             if len(targetextensions) == 1:
                 extensionsreloaded = "Successfully reloaded 1 extension."
             elif len(targetextensions) == 0:
@@ -112,13 +128,16 @@ class core(commands.Cog):
                 targetextensions = list(self.bot.extensions.keys())
             else:
                 extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
-            reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
-            try:
-                repo = git.Repo(os.getcwd()).remotes.origin.pull()
-                await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
-            except:
-                await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Make sure you've set up the proper SSH keys. Reloading local copies of extensions...")
-                extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
+            if nofetch:
+                await ctx.send("Ok, I won't fetch the latest revision. Reloading extensions...")
+            else:
+                 reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
+                 try:
+                     repo = git.Repo(os.getcwd()).remotes.origin.pull()
+                     await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
+                 except:
+                     await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Make sure you've set up the proper SSH keys. Reloading local copies of extensions...")
+                     extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
             for each in targetextensions:
                 self.bot.reload_extension(each)
             self.bot.prefixesinst = self.bot.get_cog('prefixes')
@@ -146,7 +165,6 @@ class core(commands.Cog):
     async def prepare(self, message):
         if message.author != self.bot.user:
             if message.guild is not None:
-                #required because a bunch of other stuff relies on it, will change it later
                 for each in range(len(self.bot.responses)):
                     if int(self.bot.responses[each][0]) == int(message.guild.id):
                         if await self.bot.get_prefix(message) + self.bot.responses[each][1].lower() == message.content.lower():
@@ -180,20 +198,38 @@ class core(commands.Cog):
             result=self.bot.dbinst.exec_query(self.bot.database, query, False, True)
         except:
             await ctx.message.add_reaction("\U00002757")
-            return await ctx.send(traceback.format_exc())
+            return await ctx.send(f"{traceback.format_exc()}")
         await ctx.message.add_reaction("\U00002705")
         if result and result != ():
             await ctx.send(f"`{result}`")
-   
-    @commands.is_owner()
-    @utils.command(hidden=True, aliases=["info"])
-    async def stats(self, ctx):
-        newline="\n"
-        embed=discord.Embed(title="bot information stuff").add_field(name="Extensions", value=f"Extensions loaded ({len(list(self.bot.extensions.keys()))} in total): \n{f'{newline}'.join([i for i in list(self.bot.extensions.keys())])}")
-        embed.add_field(name="Uptime", value=humanize.naturaltime(time.time()-self.bot.start_time))
-        embed.add_field(name="misc", value=f"{len([i for i in self.bot.commands if not i.hidden and i.name != 'jishaku'])} commands \n{sum([len(open(i, 'r').readlines()) for i in os.listdir('.') if i.endswith('.py')])+sum([len(open(i, 'r').readlines()) for i in os.listdir('./cogs') if i.endswith('.py')])} lines of code \n{len([i for i in os.listdir('.') if i.endswith('.py')])+len([i for i in os.listdir('./cogs') if i.endswith('.py')])} Python files")
-        await ctx.send(embed=embed)
 
+    async def update_blocklist(self):
+        self.logger.info("Updating blocklist...")
+        newblocklist = []
+        try:
+            newblocklist = [i['user_id'] for i in self.bot.dbinst.exec_query(self.bot.database, "select * from blocked", False, True)]
+            self.bot.blocklist = newblocklist
+        except TypeError:
+            return self.logger.info("Failed to update blocklist, is there anything in the database?")
+        self.logger.info("Updated blocklist!")
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
+    async def block(self, ctx, member:typing.Union[discord.Member, discord.User]):
+        if member.id in self.bot.blocklist:
+            return await ctx.send(f"I already have {member} blocked.")
+        self.bot.dbinst.exec_query(self.bot.database, f"insert into blocked values({member.id})")
+        await self.update_blocklist()
+        await ctx.send(f"Added {member} to the blocklist.")
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
+    async def unblock(self, ctx, member:typing.Union[discord.Member, discord.User]):
+        if member.id not in self.bot.blocklist:
+            return await ctx.send(f"{member} isn't blocked.")
+        self.bot.dbinst.exec_query(self.bot.database, f"delete from blocked where user_id = {member.id}")
+        await self.update_blocklist()
+        await ctx.send(f"Removed {member} from the blocklist.")
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -215,8 +251,9 @@ class core(commands.Cog):
         else:
             await self.bot.get_user(self.bot.owner_id).send("oh :blobpaiN; here's an error" + traceback.format_exc())
 
+
 def setup(bot):
-    bot.add_cog(core(bot))
+    bot.add_cog(core(bot, True))
 
 def teardown(bot):
     bot.remove_cog(core(bot))
