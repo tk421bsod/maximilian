@@ -85,7 +85,7 @@ class reminders(commands.Cog):
         await self.update_reminder_cache()
 
 
-    @commands.command(hidden=True, aliases=['reminders', 'reminder'])
+    @commands.command(hidden=True, aliases=['reminders', 'reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.")
     async def remind(self, ctx, action, time:TimeConverter, *, reminder):
         if action == "add":
             await ctx.send("Setting your reminder...")
@@ -98,7 +98,7 @@ class reminders(commands.Cog):
             await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder)
                 
     
-    @commands.command(aliases=["to-do", "todos"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`. I'm working on making deletion easier to use.")
+    @commands.command(aliases=["to-do", "todos"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`.")
     async def todo(self, ctx, action="list", *, entry=None):
         if action == "add":
             if not entry:
