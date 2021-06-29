@@ -33,7 +33,6 @@ class deletion_request():
         self.clearedembeds = {"todo":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 Cleared your todo list!'}, "all":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 All data for this server has been cleared!'}}
         self.bot = bot
 
-
     async def _handle_request(self, id, requesttype, ctx):
         deletionmessage = await ctx.send(embed=discord.Embed.from_dict(self.mainembeds[requesttype]))
         await deletionmessage.add_reaction("\U00002705")
@@ -48,11 +47,11 @@ class deletion_request():
                         self.waiting_for_reaction = False
                         if str(reaction[0].emoji) == '\U00002705':
                             if requesttype == "todo":
-                                self.bot.dbinst.delete(self.bot.database, "todo", str(ctx.author.id), "user_id", "", "", False)
+                                self.bot.dbinst.exec_safe_query(self.bot.database, "delete from todo where user_id = %s", (ctx.author.id,))
                                 await self.bot.get_cog('reminders').update_todo_cache()
                             elif requesttype == "all":
                                 await self.delete_all(ctx)
-                            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id=%s", (id,))
+                            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id = %s", (id,))
                             await ctx.send(embed=discord.Embed.from_dict(self.clearedembeds[requesttype]))
                             return
                         if str(reaction[0].emoji) == '<:red_x:813135049083191307>':
@@ -75,9 +74,9 @@ class deletion_request():
             raise errors.DeletionRequestAlreadyActive()
 
     async def delete_all(self, ctx):
-        self.bot.dbinst.delete(self.bot.database, "roles", str(ctx.guild.id), "guild_id", "", "", False)
-        self.bot.dbinst.delete(self.bot.database, "responses", str(ctx.guild.id), "guild_id", "", "", False)
-        self.bot.dbinst.delete(self.bot.database, "prefixes", str(ctx.guild.id), "guild_id", "", "", False)
+        self.bot.dbinst.exec_safe_query(self.bot.database, "delete from roles where guild_id = %s", (ctx.guild.id,))
+        self.bot.dbinst.exec_safe_query(self.bot.database, "delete from responses where guild_id = %s", (ctx.guild.id,))
+        self.bot.dbinst.exec_safe_query(self.bot.database, "delete from prefixes where guild_id = %s", (ctx.guild.id,))
         await ctx.guild.me.edit(nick=f"[!] Maximilian")
         await self.bot.responsesinst.get_responses()
         await self.bot.prefixesinst.update_prefix_cache()
@@ -218,7 +217,7 @@ class core(commands.Cog):
     async def block(self, ctx, member:typing.Union[discord.Member, discord.User]):
         if member.id in self.bot.blocklist:
             return await ctx.send(f"I already have {member} blocked.")
-        self.bot.dbinst.exec_query(self.bot.database, f"insert into blocked values({member.id})")
+        self.bot.dbinst.exec_safe_query(self.bot.database, f"insert into blocked values(%s)", (member.id,))
         await self.update_blocklist()
         await ctx.send(f"Added {member} to the blocklist.")
 
@@ -227,7 +226,7 @@ class core(commands.Cog):
     async def unblock(self, ctx, member:typing.Union[discord.Member, discord.User]):
         if member.id not in self.bot.blocklist:
             return await ctx.send(f"{member} isn't blocked.")
-        self.bot.dbinst.exec_query(self.bot.database, f"delete from blocked where user_id = {member.id}")
+        self.bot.dbinst.exec_safe_query(self.bot.database, f"delete from blocked where user_id = %s", (member.id,))
         await self.update_blocklist()
         await ctx.send(f"Removed {member} from the blocklist.")
 
@@ -247,7 +246,7 @@ class core(commands.Cog):
     async def cog_command_error(self, ctx, error):
         error = getattr(error, "original", error)
         if isinstance(error, commands.errors.CheckFailure):
-            await ctx.send("How did you find these commands? These aren't supposed to be used by anyone but the owner. \nIf you're selfhosting and want to make yourself the owner to prevent this from happening, replace the id after `owner_id=` and before the comma on line 18 of main.py with your user id.")
+            await ctx.send("How did you find these commands? These aren't supposed to be used by anyone but the owner. \nIf you're selfhosting and want to make yourself the owner to prevent this from happening, replace the id after `owner_id=` and before the comma on line 25 of main.py with your user id.")
         else:
             await self.bot.get_user(self.bot.owner_id).send("oh :blobpaiN; here's an error" + traceback.format_exc())
 
