@@ -29,7 +29,7 @@ class HelpCommand(commands.HelpCommand):
                 name = cog.qualified_name
                 filtered = await self.filter_commands(commands, sort=True)
                 if filtered:
-                    value = '\u2002 '.join('`' + c.name + '`' for c in commands if not c.hidden)
+                    value = '\u2002 '.join(f'`{self.context.bot.command_prefix}' + c.name + '`' for c in commands if not c.hidden)
                     if cog and cog.description:
                         value = '{0}\n{1}'.format(cog.description, value)
 
@@ -64,8 +64,7 @@ class HelpCommand(commands.HelpCommand):
         if isinstance(group, commands.Group):
             filtered = await self.filter_commands(group.commands, sort=True)
             for command in filtered:
-                embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)
-
+                embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)     
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
     send_command_help = send_group_help
