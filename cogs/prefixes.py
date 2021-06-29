@@ -44,7 +44,7 @@ class prefixes(commands.Cog):
             await ctx.guild.me.edit(nick=f"[{newprefix}] {nickname}")
         
     @commands.has_permissions(manage_guild=True)
-    @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission", aliases=['prefixes'])
+    @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission. ", aliases=['prefixes'])
     async def prefix(self, ctx, newprefix):
     #this try/except is to fall back to a default prefix if it isn't in the list for some reason
     #might not be necessary, as a guild's prefix is set to "!" if it's not in the db (lines 15-16 of this file)
