@@ -33,8 +33,8 @@ class misc(commands.Cog):
         print("generated zalgo text")
         await ctx.send(zalgo_text_gen.zalgo().zalgofy(str(arg)))
 
-    @commands.command(help="Get an image of a cat.", aliases=["cats"])
-    async def thiscatdoesntexist(self, ctx):
+    @commands.command(help="Get an image of a cat.", aliases=["thiscatdoesntexist"])
+    async def cats(self, ctx):
         await ctx.trigger_typing()
         async with aiohttp.ClientSession() as cs:
             async with cs.get('https://thiscatdoesnotexist.com') as r:
