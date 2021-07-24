@@ -137,9 +137,26 @@ class music(commands.Cog):
                 [await self.bot.get_user(self.bot.owner_id).send(page) for page in paginator.pages]
             except discord.HTTPException:
                 pass
-            await ctx.send(f"Hmm, something went wrong. Try that again. I've left the voice channel and reported this error to my developer.")
-            await self.leave(ctx)
+            await ctx.send(f"Hmm, something went wrong. Try that again. I've reported this error to my developer.")
+            if ctx.guild.me.voice:
+                await self.leave_voice(ctx, True)
+                await ctx.send("I've also left the voice channel.")
 
+    async def leave_voice(self, ctx, silent=False):
+        try:
+            with contextlib.suppress(AttributeError, IndexError, ValueError):
+                self.channels_playing_audio.remove(ctx.voice_client.channel.id)
+            await self.destroy_player(ctx)
+            await ctx.guild.voice_client.disconnect()
+            self.logger.info("left vc, reset queue and destroyed player")
+            if not silent:
+                await ctx.send(embed=discord.Embed(title="\U00002705 Left the voice channel.", color=discord.Color.blurple()))
+        except AssertionError:
+            if not silent:
+                return await ctx.send("I'm not in a voice channel.")
+        except:
+            if not silent:
+                return await ctx.send("I couldn't leave the voice channel for some reason. Try again later or manually disconnect me.")
 
     def process_queue(self, ctx, channel, error):
         '''Starts playing the next song in the queue, cleans up some stuff if the queue is empty'''
@@ -422,19 +439,7 @@ class music(commands.Cog):
     @commands.command(aliases=["l"])
     async def leave(self, ctx):
         '''Leaves the current voice channel.'''
-        player = await self._get_player(ctx)
-        try:
-            assert ctx.guild.me.voice
-            with contextlib.suppress(AttributeError, IndexError):
-                self.channels_playing_audio.remove(ctx.voice_client.channel.id)
-            await self.destroy_player(ctx)
-            await ctx.guild.voice_client.disconnect()
-            self.logger.info("left vc, reset queue and destroyed player")
-            await ctx.send(embed=discord.Embed(title="\U00002705 Left the voice channel.", color=discord.Color.blurple()))
-        except AssertionError:
-            return await ctx.send("I'm not in a voice channel.")
-        except Exception as e:
-            return await self._handle_errors(ctx, e)
+        await self.leave_voice(ctx)
     
     @commands.command(aliases=["q"])
     async def queue(self, ctx):
@@ -655,8 +660,7 @@ class music(commands.Cog):
                 try:
                     await self.get_song(ctx, url, player)
                 except Exception as e:
-                    await self._handle_errors(ctx, e)
-                    return
+                    return await self._handle_errors(ctx, e)
                 if player.metadata.duration == "0:0":
                     return await ctx.send("I can't download streams.")
                 self.logger.info("Uploading file...")
@@ -672,8 +676,6 @@ class music(commands.Cog):
                             s = 60*int(player.metadata.duration.split(":")[0])+int(player.metadata.duration.split(":")[1])
                             #for each bitrate value from 128kbps to 64kbps (64 possible values) from highest to lowest
                             for i in range(64, 0, -1):
-                                self.logger.info(f"File was too large. Trying to transcode to {i+64} kbps...")
-                                self.logger.info(f"Estimated file size: {((i+64)*s)/8}KB")
                                 #check if the output file size (bitrate*seconds) in kilobytes (8 bits = 1 byte, so divide by 8)
                                 #is less than the upload limit (8mb or 8000kb)
                                 if ((i+64)*s)/8 <= 7900:
