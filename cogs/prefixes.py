@@ -21,7 +21,7 @@ class prefixes(commands.Cog):
 
     async def update_prefix_cache(self, guild_id=None):
         '''Builds/updates cache of prefixes'''
-        await self.bot.coreinst.check_if_ready()
+        await self.bot.wait_until_ready()
         self.logger.info("updating prefix cache...")
         if guild_id:
             await self._fetch_prefix(guild_id)
