@@ -135,9 +135,10 @@ class core(commands.Cog):
             else:
                  reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
                  try:
-                     repo = git.Repo(os.getcwd()).remotes.origin.pull()
+                     git.Repo(os.getcwd()).remotes.origin.pull()
                      await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
                  except:
+                     traceback.print_exc()
                      await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
                      extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
             for each in targetextensions:
@@ -166,6 +167,8 @@ class core(commands.Cog):
 
     async def prepare(self, message):
         if message.author != self.bot.user:
+            if message.author.id in self.bot.blocklist:
+                return False
             if message.guild is not None:
                 for each in range(len(self.bot.responses)):
                     if int(self.bot.responses[each][0]) == int(message.guild.id):
