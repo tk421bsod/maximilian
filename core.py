@@ -152,8 +152,6 @@ class core(commands.Cog):
             self.bot.responsesinst = self.bot.get_cog('Custom Commands')
             self.bot.miscinst = self.bot.get_cog('misc')
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
-            await self.bot.prefixesinst.update_prefix_cache()
-            await self.bot.responsesinst.get_responses()
             embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
         except Exception as e:
             print(e)
