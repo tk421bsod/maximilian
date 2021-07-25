@@ -101,14 +101,6 @@ class core(commands.Cog):
             self.bot.get_command("utils reload").enabled = False
             self.logger.info("Disabled reload command as gitpython isn't installed.")
 
-    async def check_if_ready(self):
-        if not self.bot.is_ready():
-            self.logger.debug(f"Cache isn't ready yet! Waiting to call {inspect.stack()[1][3]} until cache is ready.")
-            await self.bot.wait_until_ready()
-            self.logger.debug(f"Cache is now ready. Running {inspect.stack()[1][3]}.")
-        else:
-            self.logger.debug(f"Cache is already ready, running {inspect.stack()[1][3]}")
-
     @commands.group(invoke_without_command=False, hidden=True)
     async def utils(self, ctx):
         pass
