@@ -421,7 +421,7 @@ class music(commands.Cog):
             embed.add_field(name="Video URL", value=f"<{player.metadata.url}>", inline=True)
             embed.add_field(name="Total Duration", value=f"{player.metadata.duration}")
             queuelength = len(player.queue)
-            embed.set_footer(text=f"You have {queuelength} {'song' if queuelength == 1 else 'songs'} in your queue. \nUse the play command to add { 'more songs or use the clear command to clear it.' if queuelength != 0 else 'songs to it.'}")
+            embed.set_footer(text=f"You have {queuelength} {'song' if queuelength == 1 else 'songs'} in your queue. \nUse the play command to add {'more songs or use the clear command to clear it.' if queuelength != 0 else 'songs to it.'}")
             embed.set_image(url=player.metadata.thumbnail)
             await ctx.send(embed=embed)
             self.logger.info("Done getting song, unlocked.")
@@ -549,14 +549,18 @@ class music(commands.Cog):
                 player.current_song[9] = newvolume/100
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Set volume to {newvolume}%.{' Warning: Music may sound distorted at this volume level.' if newvolume >= 90 else ''}", color=discord.Color.blurple()))
         except ValueError:
-            await ctx.send("You can't specify a decimal value for the volume.")
+            try:
+                float(newvolume)
+                return await ctx.send("You can't specify a decimal for the volume.")
+            except:
+                return await ctx.send("You can't specify a word for the volume.")
         except AttributeError:
             traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
 
     @commands.command(aliases=["c"])
     async def clear(self, ctx):
-        '''Clear the queue. '''
+        '''Clear the queue.'''
         player = await self._get_player(ctx)
         try:
             assert player.queue != []
