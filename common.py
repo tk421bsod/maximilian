@@ -1,6 +1,8 @@
 import pymysql.cursors
 import datetime
 import warnings
+import logging
+import inspect
 
 class db:
     dbobj = ""
@@ -13,6 +15,7 @@ class db:
             self.ip = bot.dbip
         else:
             self.ip = "10.0.0.51"
+        self.logger = logging.getLogger(name=__name__)
 
     def connect(self, database):
         self.dbobj=pymysql.connect(host=self.ip,
@@ -28,7 +31,7 @@ class db:
     def insert(self, database, table, valuesdict, valuenodupe, debug=False, valueallnum=None, valueallnumenabled=False, extraparam=None, extraparamenabled=False):
         #this might be vulnerable to sql injection, it depends on whether pymysql escapes stuff passed to execute as a positional argument after the query. i've heard it does, but i'm still skeptical.
         #valuesdict's values are the only things that are passed by the user
-        warnings.warn("This function is deprecated. Use 'exec_safe_query' instead.", category=DeprecationWarning, stacklevel=2)
+        #self.logger.warning(f"DeprecationWarning: This function is deprecated. Use 'exec_safe_query' instead. \n{inspect.getsource(inspect.stack()[1][0])}")
         if debug == False:
             self.dbc = self.connect(database)
         else:
@@ -74,7 +77,7 @@ class db:
                 return "success"
     
     def retrieve(self, database, table, valuetoretrieve, valuenametoretrieve,  retrievedvalue, debug=False):
-        warnings.warn("This function is deprecated. Use 'exec_safe_query' instead.", category=DeprecationWarning)
+        #self.logger.warning(f"DeprecationWarning: This function is deprecated. Use 'exec_safe_query' instead. \n{inspect.getsource(inspect.stack()[1][0])}")
         self.dbc = self.connect(database)
         self.dbc.execute("select {} from {} where {} = %s".format(valuetoretrieve, table, valuenametoretrieve), (retrievedvalue))
         row = self.dbc.fetchone()
@@ -93,7 +96,7 @@ class db:
             return None
 
     def delete(self, database, table, valuetodelete, valuenametodelete, extraparam=None, extraparamvalue=None, extraparamenabled=False):
-        warnings.warn("This function is deprecated. Use 'exec_safe_query' instead.", category=DeprecationWarning, stacklevel=2)
+        #self.logger.warning(f"DeprecationWarning: This function is deprecated. Use 'exec_safe_query' instead. \n{inspect.getsource(inspect.stack()[1][0])}")
         self.dbc = self.connect(database)
         if self.retrieve(database, table, valuenametodelete, valuenametodelete, valuetodelete, False) == None:
             return "value-non-existent"
@@ -107,7 +110,7 @@ class db:
             return "error"
             
     def exec_query(self, database, querytoexecute, debug=False, fetchallrows=False):
-        warnings.warn("This function is deprecated due to the potential for sql injection. Use 'exec_safe_query' instead.", category=DeprecationWarning, stacklevel=2)
+        #self.logger.warning(f"DeprecationWarning: This function is deprecated. Use 'exec_safe_query' instead. \n{inspect.getsource(inspect.stack()[1][0])}")
         self.connect(database)
         self.dbc.execute(str(querytoexecute))
         if fetchallrows:
