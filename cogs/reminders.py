@@ -45,7 +45,7 @@ class reminders(commands.Cog):
             self.bot.loop.create_task(self.update_reminder_cache(True))
 
     async def update_reminder_cache(self, load=False):
-        await self.bot.coreinst.check_if_ready()
+        await self.bot.wait_until_ready()
         self.logger.info("Updating reminder cache...")
         self.bot.newreminders = {}
         try:
@@ -63,7 +63,7 @@ class reminders(commands.Cog):
         self.logger.info("Updated reminder cache!")
         
     async def update_todo_cache(self):
-        await self.bot.coreinst.check_if_ready()
+        await self.bot.wait_until_ready()
         self.logger.info("Updating todo cache...")
         try:
             for item in (todolists := self.bot.dbinst.exec_query(self.bot.database, "select * from todo order by timestamp desc", False, True)):
@@ -109,14 +109,14 @@ class reminders(commands.Cog):
             if result == "success":
                 await self.update_todo_cache()
                 entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
-                await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry added successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully added that to your todo list. \nYou now have {entrycount} entries in your list.", color=discord.Color.blurple()))
             elif result == "error-duplicate":
                 await ctx.send("That todo entry already exists.")
             else:
                 #dm traceback
                 owner = self.bot.get_user(self.bot.owner_id)
                 owner.send(f"Error while adding to the todo list: {result}")
-                await ctx.send("There was an error while adding that todo entry. I've made my developer aware of this.")
+                await ctx.send("There was an error while adding that to your todo list. I've made my developer aware of this.")
             return
         if action == "delete":
             try:
@@ -124,9 +124,9 @@ class reminders(commands.Cog):
                 if self.bot.dbinst.delete(self.bot.database, "todo", self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], "entry", "user_id", ctx.author.id, True) == "successful" and entry:
                     entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
                     await self.update_todo_cache()
-                    await ctx.send(embed=discord.Embed(title=f"\U00002705 Todo entry `{entry}` deleted successfully. \nYou now have {entrycount} todo entries.", color=discord.Color.blurple()))
+                    await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} entries in your list.", color=discord.Color.blurple()))
             except:
-                await ctx.send("Something went wrong while deleting that todo entry. Make sure that the todo entry you're trying to delete actually exists.")
+                await ctx.send("Something went wrong while deleting that from your todo list. Make sure that the todo entry you're trying to delete actually exists.")
             return
         if action == "deleteall":
             try:
