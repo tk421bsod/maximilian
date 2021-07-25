@@ -10,6 +10,10 @@ import datetime
 import time
 import errors
 import inspect
+try:
+    import git
+except (ImportError, ModuleNotFoundError):
+    pass #we'll deal with it later
 
 def get_prefix(bot, message):
     if not bot.prefixes:
@@ -88,6 +92,7 @@ class core(commands.Cog):
         self.waiting = []
         self.bot.blocklist = []
         self.logger = logging.getLogger(f'maximilian.{__name__}')
+        self.ready = False
         if load:
             self.bot.loop.create_task(self.update_blocklist())
             #disable reload command if gitpython isn't installed
@@ -158,12 +163,14 @@ class core(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
-        self.logger.info("finishing startup...")
-        self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
-        self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
-        self.logger.info(f"full startup took {time.time()-self.bot.start_time} seconds")
-        print("Ready")
+        if not self.ready:
+            self.ready = True
+            self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
+            self.logger.info("finishing startup...")
+            self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
+            self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
+            self.logger.info(f"full startup took {time.time()-self.bot.start_time} seconds")
+            return print("Ready")
 
     async def prepare(self, message):
         if message.author != self.bot.user:
