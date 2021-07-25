@@ -29,12 +29,14 @@ class HelpCommand(commands.HelpCommand):
                 name = cog.qualified_name
                 filtered = await self.filter_commands(commands, sort=True)
                 if filtered:
-                    value = '\u2002 '.join(f'`{await self.context.bot.coreinst.get_prefix(self.context.bot, self.context.message)}' + c.name + '`' for c in commands if not c.hidden)
+                    value = '\u2002 '.join([f'`{self.clean_prefix}' + c.name + '`' for c in commands if not c.hidden])
                     if cog and cog.description:
                         value = '{0}\n{1}'.format(cog.description, value)
 
                     embed.add_field(name=name, value=value)
         if self.context.guild is not None:
+            #TODO: use the existing cache (not sure why I didn't think of it before writing this)
+            #im too lazy to change it rn as it's 1 am
             responseslist = self.context.bot.dbinst.exec_query(self.context.bot.database, "select * from responses where guild_id = {}".format(self.context.guild.id), False, True)
             responsestring = "A list of custom commands for this server. These don't have help entries. \n"
             if responseslist is not None and str(responseslist)!="()":
