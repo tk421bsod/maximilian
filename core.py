@@ -1,16 +1,13 @@
 import discord
 from discord.ext import commands
-import git
 import helpcommand
 import os
-import pymysql
 import traceback
 import typing
 import logging
 import asyncio
 import datetime
 import time
-import humanize
 import errors
 import inspect
 
@@ -56,10 +53,13 @@ class deletion_request():
                             return
                         if str(reaction[0].emoji) == '<:red_x:813135049083191307>':
                             await ctx.send("Ok. I won't delete anything.")
+                            self.waiting_for_reaction = False
+                            print("delete from active_requests where id = %s", (id,))
+                            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id = %s", (id,))
                             return
         except asyncio.TimeoutError:
             self.waiting_for_reaction = False
-            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id=%s", (id,))
+            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id = %s", (id,))
             await ctx.send("Deletion request timed out. I won't delete anything.")
             return
 
@@ -90,6 +90,16 @@ class core(commands.Cog):
         self.logger = logging.getLogger(f'maximilian.{__name__}')
         if load:
             self.bot.loop.create_task(self.update_blocklist())
+            #disable reload command if gitpython isn't installed
+            #this is done in a task to make sure it's done after commands have been registered
+            self.bot.loop.create_task(self.check_for_git())
+
+    async def check_for_git(self):
+        try:
+            import git
+        except (ImportError, ModuleNotFoundError):
+            self.bot.get_command("utils reload").enabled = False
+            self.logger.info("Disabled reload command as gitpython isn't installed.")
 
     async def check_if_ready(self):
         if not self.bot.is_ready():
@@ -116,6 +126,7 @@ class core(commands.Cog):
         await ctx.trigger_typing()
         try:
             if "--nofetch" in targetextensions:
+                #couldn't I just use targetextensions.remove for this
                 targetextensions = [i for i in targetextensions if i != "--nofetch"]
                 nofetch = True
             else:
@@ -135,7 +146,7 @@ class core(commands.Cog):
                      repo = git.Repo(os.getcwd()).remotes.origin.pull()
                      await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
                  except:
-                     await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Make sure you've set up the proper SSH keys. Reloading local copies of extensions...")
+                     await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
                      extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
             for each in targetextensions:
                 self.bot.reload_extension(each)
