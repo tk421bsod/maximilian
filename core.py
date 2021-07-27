@@ -153,8 +153,7 @@ class core(commands.Cog):
             self.bot.miscinst = self.bot.get_cog('misc')
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
             embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
-        except Exception as e:
-            print(e)
+        except:
             embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
             embed.add_field(name="Error:", value=traceback.format_exc())
         await ctx.send(embed=embed) 
@@ -195,8 +194,10 @@ class core(commands.Cog):
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=newstatus))
         elif type.lower() == "watching":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=newstatus))
+        elif type.lower() == "playing":
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=newstatus))
         elif type.lower() == "default":
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" v0.5.2 (stable)"))
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" v0.6 (stable)"))
         else:
             await ctx.send("oh :blobpaiN; invalid status! ¯\_(ツ)_/¯")
             return
