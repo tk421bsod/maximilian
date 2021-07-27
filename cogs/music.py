@@ -1,20 +1,19 @@
 #stdlib
 import asyncio
-import contextlib
-import functools
-import inspect
-import logging
-import time
-import traceback
-import typing
 import urllib
-
+import traceback
+import time
+import functools
+import typing
+import logging
+import inspect
+import contextlib
+#external
 import aiohttp
 import discord
+from discord.ext import commands
 import ffmpeg
 import youtube_dl
-from discord.ext import commands
-
 #import lavalink
 #warning: this uses ffmpeg-python, not ffmpeg (the python module) or python-ffmpeg
 
@@ -132,18 +131,16 @@ class music(commands.Cog):
             await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.")
         else:
             try:
-                #TODO: implement this for other things
                 paginator = commands.Paginator()
                 for line in traceback.format_exc().split("\n"):
                     paginator.add_line(line)
                 [await self.bot.get_user(self.bot.owner_id).send(page) for page in paginator.pages]
             except discord.HTTPException:
                 pass
-            await ctx.send(f"Hmm, something went wrong. Try that again. If this keeps happening, tell tk421#2016. \n:meowcoffee: I've also reported this error to tk421.")
-            with contextlib.suppress(AttributeError):
-                if ctx.guild.me.voice:
-                    await self.leave_voice(ctx, True)
-                    await ctx.send("I've also left the voice channel.")
+            await ctx.send(f"Hmm, something went wrong. Try that again. I've reported this error to my developer.")
+            if ctx.guild.me.voice:
+                await self.leave_voice(ctx, True)
+                await ctx.send("I've also left the voice channel.")
 
     async def leave_voice(self, ctx, silent=False):
         try:
@@ -469,7 +466,7 @@ class music(commands.Cog):
                 #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
                 #show user's queue, change how it's displayed depending on how many songs are in the queue
                 try:
-                    await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue)])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)} remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.") 
+                    await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue)])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.") 
                 except discord.HTTPException:
                     await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\nYour queue is too long to display, so I'm only showing the first 10 songs in it.\n {f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue[:10])])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.")
             else:
@@ -643,17 +640,17 @@ class music(commands.Cog):
 
     @commands.command(aliases=["r"])
     async def remove(self, ctx, item:int):
-        '''Remove the specified entry from the queue. If you want to clear your queue, use the `clear` command.'''
+        '''Remove the specified thing from the queue. If you want to clear your queue, use the `clear` command.'''
         player = await self._get_player(ctx)
         try:
             del player.queue[item-1]
             queuelength = len(player.queue)
-            await ctx.send(f"Successfully removed that entry from your queue. You now have {queuelength} {'songs' if queuelength != 1 else 'song'} in your queue.")
+            await ctx.send(f"Successfully removed that from your queue. You now have {queuelength} {'songs' if queuelength != 1 else 'song'} in your queue.")
         except AttributeError:
             await ctx.send("I'm not in a voice channel.")
         except IndexError:
             quote = "\'"
-            await ctx.send(f"{f'That queue entry doesn{quote}t exist.' if len(player.queue) > 0 else f'You don{quote}t have anything in your queue.'}")
+            await ctx.send(f"{f'That{quote}s not in your queue!' if len(player.queue) > 0 else f'You don{quote}t have anything in your queue.'}")
 
     @commands.command(aliases=["d"])
     async def download(self, ctx, *, url=None):
