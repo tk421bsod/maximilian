@@ -176,7 +176,6 @@ class core(commands.Cog):
             if message.guild is not None:
                 for each in range(len(self.bot.responses)):
                     if int(self.bot.responses[each][0]) == int(message.guild.id):
-                        #:blobyert:
                         if await self.bot.get_prefix(message) + self.bot.responses[each][1].lower() == message.content.lower().strip():
                             await message.channel.send(self.bot.responses[each][2])
                             return False
@@ -217,7 +216,7 @@ class core(commands.Cog):
                 await ctx.send(f"`{result}`")
             except discord.HTTPException:
                 paginator = commands.Paginator()
-                for line in result.split("\n"):
+                for line in list(result):
                     paginator.add_line(line)
                 [await ctx.send(page) for page in paginator.pages]
 
