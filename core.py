@@ -206,18 +206,19 @@ class core(commands.Cog):
     @utils.command(hidden=True)
     async def sql(self, ctx, *, query):
         try:
-            result=self.bot.dbinst.exec_safe_query(self.bot.database, query, (), True)
+            result=self.bot.dbinst.exec_safe_query(self.bot.database, query, (), False, True)
         except:
             await ctx.message.add_reaction("\U00002757")
             return await ctx.send(f"{traceback.format_exc()}")
         await ctx.message.add_reaction("\U00002705")
+        print(result)
         if result:
             try:
                 await ctx.send(f"`{result}`")
             except discord.HTTPException:
                 paginator = commands.Paginator()
-                for line in list(result):
-                    paginator.add_line(line)
+                for line in result:
+                    paginator.add_line(str(line))
                 [await ctx.send(page) for page in paginator.pages]
 
     async def update_blocklist(self):
