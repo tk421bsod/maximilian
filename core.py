@@ -176,7 +176,6 @@ class core(commands.Cog):
             if message.guild is not None:
                 for each in range(len(self.bot.responses)):
                     if int(self.bot.responses[each][0]) == int(message.guild.id):
-                        #:blobyert:
                         if await self.bot.get_prefix(message) + self.bot.responses[each][1].lower() == message.content.lower().strip():
                             await message.channel.send(self.bot.responses[each][2])
                             return False
@@ -205,15 +204,22 @@ class core(commands.Cog):
 
     @commands.is_owner()
     @utils.command(hidden=True)
-    async def sql(self, ctx, query):
+    async def sql(self, ctx, *, query):
         try:
-            result=self.bot.dbinst.exec_query(self.bot.database, query, False, True)
+            result=self.bot.dbinst.exec_safe_query(self.bot.database, query, (), False, True)
         except:
             await ctx.message.add_reaction("\U00002757")
             return await ctx.send(f"{traceback.format_exc()}")
         await ctx.message.add_reaction("\U00002705")
-        if result and result != ():
-            await ctx.send(f"`{result}`")
+        print(result)
+        if result:
+            try:
+                await ctx.send(f"`{result}`")
+            except discord.HTTPException:
+                paginator = commands.Paginator()
+                for line in result:
+                    paginator.add_line(str(line))
+                [await ctx.send(page) for page in paginator.pages]
 
     async def update_blocklist(self):
         self.logger.info("Updating blocklist...")
