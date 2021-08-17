@@ -291,6 +291,8 @@ class music(commands.Cog):
         except IndexError:
             self.logger.info(player.metadata.info["entries"])
             raise NoSearchResultsError()
+        except:
+            traceback.print_exc()
         #check if max duration (60 minutes) exceeded
         if m > 60:
             self.logger.warning(f"Max duration exceeded on search result {num+1}. Retrying...")
@@ -322,8 +324,8 @@ class music(commands.Cog):
                 #if not, search youtube
                 with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                     #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
-                    self.logger.info("searching youtube...")
-                    info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %s", (f"%{url}%"))
+                    self.logger.info("looking for song in db...")
+                    info = self.bot.dbinst.exec_query(self.bot.database, "select * from songs where name like %s", (f"%{url}%"))
                     if info != None:
                         self.logger.info("found song in db! trying to get from cache...")
                         player.metadata.id = info["id"]
@@ -331,6 +333,7 @@ class music(commands.Cog):
                         if int(str(info['duration']).split(':')[0]) > 60:
                             raise DurationLimitError()
                     else:
+                        self.logger.info("song wasn't found in db. searching youtube...")
                         await self.search_youtube_for_song(ydl, ctx, url, 0, player)
                     await self.get_song_from_cache(ctx, player.metadata.id, ydl_opts, player)
             else:
