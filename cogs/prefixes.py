@@ -13,11 +13,11 @@ class prefixes(commands.Cog):
         
     async def _fetch_prefix(self, guild_id):
         '''Fetches a prefix corresponding to a guild id from the database'''
-        prefix = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild_id), False)
+        prefix = self.bot.dbinst.exec_query(self.bot.database, "select prefix from prefixes where guild_id = %s", (guild_id))
         if not prefix and prefix != () and prefix != "()":
             self.bot.prefixes[guild_id] = '!'
         else:
-            self.bot.prefixes[guild_id] = prefix
+            self.bot.prefixes[guild_id] = prefix['prefix']
 
     async def update_prefix_cache(self, guild_id=None):
         '''Builds/updates cache of prefixes'''
@@ -33,6 +33,7 @@ class prefixes(commands.Cog):
                 except KeyError:
                     self.bot.prefixes[id] = "!"
         self.logger.info("cache has been updated!")
+        print(self.bot.prefixes)
 
     async def set_nickname(self, ctx, oldprefix, newprefix):
         if not ctx.guild.me.nick:
