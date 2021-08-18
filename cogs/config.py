@@ -127,7 +127,7 @@ class settings(commands.Cog):
             return await ctx.send(f"<:blobpain:822921526629236797> Something went wrong while changing that setting. Try again in a moment. If this keeps happening, tell tk421#2016.")
         #probably should manually add to cache instead
         #(this is because manually adding one entry to cache is O(1) while running update_settings_cache is O(n^2) where n is len(bot.guilds))
-        await self.update_settings_cache()
+        await self.fill_settings_cache()
         await ctx.send(discord.Embed(title="Changes saved.", description=f"{'Disabled' if not self.bot.settings[setting][ctx.guild.id] else 'Enabled'} {self.settingdescmapping[setting]}.").set_footer(text="Send this command again to turn this back {'off' if self.bot.settings[setting][ctx.guild.id] else 'on'}."))
 
     @commands.Cog.listener()
