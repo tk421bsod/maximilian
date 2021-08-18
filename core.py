@@ -138,10 +138,10 @@ class core(commands.Cog):
             if nofetch:
                 await ctx.send("Ok, I won't fetch the latest revision. Reloading extensions...")
             else:
-                 reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
+                 reloadmessage = await ctx.send("Fetching latest revision...")
                  try:
-                     git.Repo(os.getcwd()).remotes.origin.pull()
-                     await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
+                     msg = git.Repo(os.getcwd()).remotes.origin.pull()
+                     await reloadmessage.edit(content=f"```sh \n{msg}```\nReloading extensions...")
                  except:
                      traceback.print_exc()
                      await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
