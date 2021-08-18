@@ -26,9 +26,9 @@ class tz_setup_request():
 
     async def confirm(self, ctx, message):
         if (originaltimezone := self.bot.dbinst.exec_safe_query(self.bot.database, "select * from timezones where user_id=%s", (ctx.author.id,))):
-            desc = f"Your timezone was set to `{originaltimezone['timezone']}`, and you're changing it to `{self.tz}`. \n**Do you want to change it?**\nReact with \U00002705 to confirm and change your timezone, or react with <:red_x:813135049083191307> to cancel."
+            desc = f"Your timezone was set to `{originaltimezone['timezone']}`, and you're changing it to `{self.tz}`. \n**Do you want to change it?**\nReact with \U00002705 to change your timezone or react with <:red_x:813135049083191307> to cancel."
         else:
-            desc = f"You've said that your timezone is `{message.content.strip()}`. \n**Is this the correct timezone?** \nReact with \U00002705 to set your timezone, or react with <:red_x:813135049083191307> to cancel."
+            desc = f"You've said that your timezone is `{message.content.strip()}`. \n**Is this the correct timezone?** \nReact with \U00002705 to set your timezone or react with <:red_x:813135049083191307> to cancel."
         confirmationmessage = await ctx.send(embed=discord.Embed(title="Confirm timezone change", description=f"{desc}").set_footer(text="You can always change this later using the tzsetup command."))
         await confirmationmessage.add_reaction("\U00002705")
         await confirmationmessage.add_reaction("<:red_x:813135049083191307>")
@@ -128,12 +128,13 @@ class settings(commands.Cog):
         #probably should manually add to cache instead
         #(this is because manually adding one entry to cache is O(1) while running update_settings_cache is O(n^2) where n is len(bot.guilds))
         await self.fill_settings_cache()
-        await ctx.send(discord.Embed(title="Changes saved.", description=f"{'Disabled' if not self.bot.settings[setting][ctx.guild.id] else 'Enabled'} {self.settingdescmapping[setting]}.").set_footer(text="Send this command again to turn this back {'off' if self.bot.settings[setting][ctx.guild.id] else 'on'}."))
+        await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"{'Disabled' if not self.bot.settings[setting][ctx.guild.id] else 'Enabled'} {self.settingdescmapping[setting]}.").set_footer(text="Send this command again to turn this back {'off' if self.bot.settings[setting][ctx.guild.id] else 'on'}."))
 
     @commands.Cog.listener()
     async def on_message(self, message):
         try:
             self.bot.settings['deadchat'][message.guild.id]
+        #keyerrors here should not happen
         except KeyError:
             #default to on
             self.bot.settings['deadchat'][message.guild.id] = True
