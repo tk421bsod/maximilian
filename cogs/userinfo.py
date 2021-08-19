@@ -1,6 +1,8 @@
+import typing
+
 import discord
 from discord.ext import commands
-import typing
+
 
 class userinfo(commands.Cog):
     '''Get information about a certain user.'''

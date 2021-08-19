@@ -1,7 +1,9 @@
-import discord
-import time
-from discord.ext import commands
 import logging
+import time
+
+import discord
+from discord.ext import commands
+
 
 class prefixes(commands.Cog):
     '''Change Maximilian's prefix'''

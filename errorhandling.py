@@ -1,7 +1,9 @@
-import discord
-from discord.ext import commands
-import pymysql
 import traceback
+
+import discord
+import pymysql
+from discord.ext import commands
+
 
 class errorhandling(commands.Cog):
     def __init__(self, bot):

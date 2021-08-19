@@ -1,9 +1,11 @@
-import discord
-from discord.ext import commands
-import pytz
 import asyncio
+import logging
 import traceback
-import logging 
+
+import discord
+import pytz
+from discord.ext import commands
+
 
 class tz_setup_request():
     def __init__(self):

@@ -1,5 +1,7 @@
-import pymysql.cursors
 import logging
+
+import pymysql.cursors
+
 
 class db:
     dbobj = ""

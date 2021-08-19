@@ -1,18 +1,18 @@
 #import libraries
 print("Loading libraries...")
-import discord
-from discord.ext import commands 
-from discord.ext import tasks
-import pymysql
-import logging
-import sys
-import traceback
-import datetime
-import time
 import asyncio
+import datetime
+import logging
 import os
+import sys
+import time
+import traceback
+
+import discord
+import pymysql
+from discord.ext import commands
+
 import common
-import helpcommand
 import core
 
 def config_logging(args):

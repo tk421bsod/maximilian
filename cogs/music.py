@@ -1,19 +1,18 @@
-#stdlib
 import asyncio
-import urllib
-import traceback
-import time
-import functools
-import typing
-import logging
-import inspect
 import contextlib
-#external
+import functools
+import inspect
+import logging
+import time
+import traceback
+import typing
+import urllib
+
 import aiohttp
 import discord
-from discord.ext import commands
 import ffmpeg
 import youtube_dl
+from discord.ext import commands
 #import lavalink
 #warning: this uses ffmpeg-python, not ffmpeg (the python module) or python-ffmpeg
 

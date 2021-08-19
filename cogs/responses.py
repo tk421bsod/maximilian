@@ -1,5 +1,7 @@
-import discord 
 import typing
+
+import discord
+
 
 class responses(discord.ext.commands.Cog, name='Custom Commands'):
     def __init__(self, bot, teardown=False):

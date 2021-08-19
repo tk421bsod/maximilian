@@ -1,8 +1,9 @@
+import typing
+
 import discord
 from discord.ext import commands
-import typing
 from polaroid import Image
-import random
+
 
 class images(commands.Cog):
     '''Apply different effects to images.'''

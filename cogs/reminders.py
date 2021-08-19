@@ -1,14 +1,15 @@
 import datetime
-import humanize
-import re
-from discord.ext import commands
-import discord
-import asyncio
-import random
-import logging
-import sys
-import os 
 import inspect
+import logging
+import os
+import random
+import re
+import sys
+
+import discord
+import humanize
+from discord.ext import commands
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
