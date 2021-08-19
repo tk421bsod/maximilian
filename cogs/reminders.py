@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import inspect
 import logging
@@ -6,7 +5,6 @@ import os
 import random
 import re
 import sys
-import traceback
 
 import discord
 import humanize

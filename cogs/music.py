@@ -1,4 +1,3 @@
-#stdlib
 import asyncio
 import contextlib
 import functools
@@ -14,7 +13,6 @@ import discord
 import ffmpeg
 import youtube_dl
 from discord.ext import commands
-
 #import lavalink
 #warning: this uses ffmpeg-python, not ffmpeg (the python module) or python-ffmpeg
 
