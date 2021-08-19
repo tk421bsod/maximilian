@@ -7,10 +7,10 @@ from discord.ext import commands
 
 class prefixes(commands.Cog):
     '''Change Maximilian's prefix'''
-    def __init__(self, bot, teardown=False):
+    def __init__(self, bot, load=False):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
-        if not teardown:
+        if load:
             self.bot.loop.create_task(self.update_prefix_cache())
         
     async def _fetch_prefix(self, guild_id):
@@ -94,7 +94,7 @@ class prefixes(commands.Cog):
             return "error"
 
 def setup(bot):
-    bot.add_cog(prefixes(bot))
+    bot.add_cog(prefixes(bot, True))
 
 def teardown(bot):
-    bot.remove_cog(prefixes(bot, True))
+    bot.remove_cog(prefixes(bot))
