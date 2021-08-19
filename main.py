@@ -10,7 +10,7 @@ import traceback
 
 import discord
 import pymysql
-from discord.ext import commands, tasks
+from discord.ext import commands
 
 import common
 import core

@@ -1,6 +1,8 @@
+import typing
+
 import discord
 from discord.ext import commands
-import typing
+
 
 class reactionroles(commands.Cog, name="reaction roles"):
     '''Reaction role commands'''

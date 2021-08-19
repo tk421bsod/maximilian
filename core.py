@@ -1,15 +1,18 @@
-import discord
-from discord.ext import commands
-import helpcommand
-import os
-import traceback
-import typing
-import logging
 import asyncio
 import datetime
-import time
-import errors
 import inspect
+import logging
+import os
+import time
+import traceback
+import typing
+
+import discord
+from discord.ext import commands
+
+import errors
+import helpcommand
+
 try:
     import git
 except (ImportError, ModuleNotFoundError):
@@ -141,6 +144,7 @@ class core(commands.Cog):
                  reloadmessage = await ctx.send("Fetching latest revision...")
                  try:
                      msg = git.Repo(os.getcwd()).remotes.origin.pull()
+                     msg = "\n".join([i.note for i in msg])
                      await reloadmessage.edit(content=f"```sh \n{msg}```\nReloading extensions...")
                  except:
                      traceback.print_exc()
