@@ -113,11 +113,11 @@ class settings(commands.Cog):
     async def tzsetup(self, ctx):
         await self.timezone_setup(ctx)
     
+    @commands.has_permissions(manage_guild=True)
     @commands.command()
     async def config(self, ctx, setting=None):
-        '''Toggles the specified setting. Settings are off by default.'''
+        '''Toggles the specified setting. Settings are off by default. You need the `Manage Server` permission to use this.'''
         if not setting:
-            #maybe show this guild's settings??
             embed = discord.Embed(title="Settings for this server")
             for key, value in list(self.bot.settings.items()):
                 if ctx.guild.id in list(value.keys()):
@@ -149,7 +149,7 @@ class settings(commands.Cog):
         #keyerrors here should not happen
         except KeyError:
             #default to on
-            self.bot.settings['deadchat'][message.guild.id] = True
+            self.bot.settings['deadchat'][message.guild.id] = False
         if self.bot.settings['deadchat'][message.guild.id] and "dead chat" in message.content.lower():
             await message.reply(content="https://media.discordapp.net/attachments/768537268452851754/874832974275809290/QRLi7Hv.png")
 
