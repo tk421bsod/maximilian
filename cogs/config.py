@@ -118,7 +118,6 @@ class settings(commands.Cog):
     async def tzsetup(self, ctx):
         await self.timezone_setup(ctx)
     
-    @commands.has_permissions(manage_guild=True)
     @commands.command()
     async def config(self, ctx, setting=None):
         '''Toggles the specified setting. Settings are off by default. You need the `Manage Server` permission to use this.'''
@@ -126,8 +125,12 @@ class settings(commands.Cog):
             embed = discord.Embed(title="Settings for this server")
             for key, value in list(self.bot.settings.items()):
                 if ctx.guild.id in list(value.keys()):
-                    embed.add_field(name=discord.utils.remove_markdown(self.settingdescmapping[key].capitalize()), value=f"{'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}", inline=True)
+                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}", inline=True)
+            if ctx.author.guild_permissions.manage_guild:
+                embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses.")
             return await ctx.send(embed=embed)
+        if not ctx.author.guild_permissions.manage_guild:
+            return await ctx.send("The `Manage Server` permission is required for changing settings.")
         try:
             self.bot.settings[setting]
         except KeyError:
