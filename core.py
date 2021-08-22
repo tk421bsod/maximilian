@@ -143,7 +143,7 @@ class core(commands.Cog):
             else:
                  reloadmessage = await ctx.send("Fetching latest revision...")
                  try:
-                     Sgit.Repo(os.getcwd()).remotes.origin.pull()
+                     git.Repo(os.getcwd()).remotes.origin.pull()
                      await reloadmessage.edit(content=f"Reloading extensions...")
                  except:
                      await ctx.send(traceback.print_exc())
