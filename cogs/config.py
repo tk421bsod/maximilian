@@ -80,11 +80,18 @@ class settings(commands.Cog):
     async def fill_settings_cache(self):
         self.logger.info("Filling settings cache...")
         await self.bot.wait_until_ready()
-        data = self.bot.dbinst.exec_safe_query(self.bot.database, 'select * from config', (), fetchallrows=True)
+        try:
+            data = self.bot.dbinst.exec_safe_query(self.bot.database, 'select * from config', (), fetchallrows=True)
+        except:
+            data = []
+            #if something went wrong, fall back to everything off
+            #TODO: make all caches do this (also make design of caches somewhat consistent)
+            for name in list(self.settingdescmapping.keys()):
+                for guild in self.bot.guilds:
+                    data.append({'setting':name, 'guild_id':guild.id, 'enabled':False})
         tempsettings = {}
         #one design flaw of this is that there needs to be at least one entry in the database for each setting
         #probably could just make one row null idk
-        #also, settings sometimes don't default to on
         for setting in data:
             tempsettings[setting['setting']] = {}
         for setting in data:
@@ -93,7 +100,7 @@ class settings(commands.Cog):
                     if setting['enabled'] is not None:
                         tempsettings[setting['setting']][guild.id] = bool(setting['enabled']) 
                     else:
-                        tempsettings[setting['setting']][guild.id] = True
+                        tempsettings[setting['setting']][guild.id] = False
         self.bot.settings = tempsettings
         self.logger.info("Done filling settings cache.")
         
@@ -106,12 +113,17 @@ class settings(commands.Cog):
     async def tzsetup(self, ctx):
         await self.timezone_setup(ctx)
     
-    @commands.command(hidden=True)
+    @commands.command()
     async def config(self, ctx, setting=None):
-        '''Toggles the specified setting. Settings are on by default.'''
+        '''Toggles the specified setting. Settings are off by default.'''
         if not setting:
             #maybe show this guild's settings??
-            return await ctx.send("You need to specify a setting to toggle.")
+            embed = discord.Embed(title="Settings for this server")
+            for key, value in list(self.bot.settings.items()):
+                if ctx.guild.id in list(value.keys()):
+                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}", inline=True)
+            embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses.")
+            return await ctx.send(embed=embed)
         try:
             self.bot.settings[setting]
         except KeyError:
@@ -119,7 +131,7 @@ class settings(commands.Cog):
         try:
             #does this setting already exist?
             if not self.bot.dbinst.exec_safe_query(self.bot.database, "select * from config where guild_id=%s", (ctx.guild.id)):
-                self.bot.dbinst.exec_safe_query(self.bot.database, "insert into config values(%s, %s, %s)", (ctx.guild.id, 'deadchat', False))
+                self.bot.dbinst.exec_safe_query(self.bot.database, "insert into config values(%s, %s, %s)", (ctx.guild.id, setting, False))
             else:
                 self.bot.dbinst.exec_safe_query(self.bot.database, "update config set enabled=%s where guild_id=%s and setting=%s", (not self.bot.settings[setting][ctx.guild.id], ctx.guild.id, setting))
         #probably should be more explicit

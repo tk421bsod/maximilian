@@ -28,6 +28,8 @@ class db:
         self.dbc=self.dbobj.cursor()
         return self.dbc
 
+    #TODO: remove these old shitty methods (insert, delete, retrieve, exec_query)
+
     def insert(self, database, table, valuesdict, valuenodupe, debug=False, valueallnum=None, valueallnumenabled=False, extraparam=None, extraparamenabled=False):
         #this might be vulnerable to sql injection, it depends on whether pymysql escapes stuff passed to execute as a positional argument after the query. i've heard it does, but i'm still skeptical.
         #valuesdict's values are the only things that are passed by the user
@@ -109,6 +111,7 @@ class db:
         else:
             return "error"
             
+    #maybe make this an alias to exec_safe_query or rename exec_safe query to this?
     def exec_query(self, database, querytoexecute, debug=False, fetchallrows=False):
         #self.logger.warning(f"DeprecationWarning: This function is deprecated. Use 'exec_safe_query' instead. \n{inspect.getsource(inspect.stack()[1][0])}")
         self.connect(database)
