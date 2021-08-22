@@ -149,8 +149,8 @@ class core(commands.Cog):
                      Sgit.Repo(os.getcwd()).remotes.origin.pull()
                      await reloadmessage.edit(content=f"Reloading extensions...")
                  except:
-                     traceback.print_exc()
-                     await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
+                     await ctx.send(traceback.print_exc())
+                     await ctx.send("\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
                      extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
             for each in targetextensions:
                 self.bot.reload_extension(each)
