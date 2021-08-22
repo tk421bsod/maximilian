@@ -121,7 +121,8 @@ class settings(commands.Cog):
             for key, value in list(self.bot.settings.items()):
                 if ctx.guild.id in list(value.keys()):
                     embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}", inline=True)
-            embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses.")
+            if ctx.author.guild_permissions.manage_guild:
+                embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses.")
             return await ctx.send(embed=embed)
         if not ctx.author.guild_permissions.manage_guild:
             return await ctx.send("The `Manage Server` permission is required for changing settings.")
