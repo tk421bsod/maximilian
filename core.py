@@ -20,7 +20,10 @@ except (ImportError, ModuleNotFoundError):
 
 def get_prefix(bot, message):
     if not bot.prefixes:
-        bot.prefixinst.update_prefix_cache()
+        try:
+            bot.loop.create_task(bot.prefixinst.update_prefix_cache())
+        except:
+            return "!"
     if not message.guild:
         return "!"
     try:
@@ -86,7 +89,7 @@ class deletion_request():
         self.bot.dbinst.exec_safe_query(self.bot.database, "delete from prefixes where guild_id = %s", (ctx.guild.id,))
         await ctx.guild.me.edit(nick=f"[!] Maximilian")
         await self.bot.responsesinst.get_responses()
-        await self.bot.prefixesinst.update_prefix_cache()
+        await self.bot.prefixinst.update_prefix_cache()
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
@@ -152,7 +155,7 @@ class core(commands.Cog):
                      extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
             for each in targetextensions:
                 self.bot.reload_extension(each)
-            self.bot.prefixesinst = self.bot.get_cog('prefixes')
+            self.bot.prefixinst = self.bot.get_cog('prefixes')
             self.bot.responsesinst = self.bot.get_cog('Custom Commands')
             self.bot.miscinst = self.bot.get_cog('misc')
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
@@ -257,14 +260,14 @@ class core(commands.Cog):
     async def on_guild_join(self, guild):
         self.logger.info("joined guild, adding guild id to list of guilds and resetting prefixes")
         self.bot.guildlist.append(str(guild.id))
-        await self.bot.prefixesinst.update_prefix_cache(guild.id)
+        await self.bot.prefixinst.update_prefix_cache(guild.id)
         #await guild.system_channel.send("Hi! I'm Maximilian, a constantly evolving bot with many useful features, like music, image effects (beta), and reaction roles! \n\U000026a0 This is a version of Maximilian that's under active development (and used for testing by the developer). This allows you to have access to the latest features before they come out on Maximilian Beta or Stable (regular Maximilian), but it comes at a cost of usablity. Uptime might not be consistent, and features may have a lot of bugs or be unfinished. If you want to switch to using the most stable version of Maximilian, use the `about` command, and you'll see an invite link.")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         self.logger.info("removed from guild, removing that guild from list of guilds and resetting prefixes")
         self.bot.guildlist.remove(str(guild.id))
-        await self.bot.prefixesinst.update_prefix_cache(guild.id)
+        await self.bot.prefixinst.update_prefix_cache(guild.id)
     
     async def cog_command_error(self, ctx, error):
         error = getattr(error, "original", error)

@@ -93,8 +93,7 @@ def load_extensions(bot):
     #create instances of certain cogs
     try:
         bot.coreinst = bot.get_cog('core')
-        if not bot.dbdisabled:
-            bot.prefixesinst = bot.get_cog('prefixes')
+        bot.prefixinst = bot.get_cog('prefixes')
         bot.responsesinst = bot.get_cog('Custom Commands')
         bot.miscinst = bot.get_cog('misc')
         bot.reactionrolesinst = bot.get_cog('reaction roles')
