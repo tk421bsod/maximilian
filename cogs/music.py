@@ -326,7 +326,7 @@ class music(commands.Cog):
                 with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                     #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
                     self.logger.info("looking for song in db...")
-                    info = self.bot.dbinst.exec_query(self.bot.database, "select * from songs where name like %s", (f"%{url}%"))
+                    info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %s", (f"%{url}%"))
                     if info != None:
                         self.logger.info("found song in db! trying to get from cache...")
                         player.metadata.id = info["id"]
