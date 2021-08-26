@@ -209,7 +209,7 @@ class core(commands.Cog):
     @utils.command(hidden=True)
     async def sql(self, ctx, *, query):
         try:
-            result=self.bot.dbinst.exec_query(self.bot.database, query, (), False, True)
+            result=self.bot.dbinst.exec_safe_query(self.bot.database, query, (), False, True)
         except:
             await ctx.message.add_reaction("\U00002757")
             return await ctx.send(f"{traceback.format_exc()}")
