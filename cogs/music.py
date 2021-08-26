@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import functools
-import inspect
 import logging
 import time
 import traceback
@@ -540,6 +539,7 @@ class music(commands.Cog):
         '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
         player = await self._get_player(ctx)
         try:
+            ctx.voice_client.source
             if newvolume == None:
                 await ctx.send(f"Volume is currently set to {int(player.current_song[9]*100)}%.")
                 return
@@ -560,6 +560,8 @@ class music(commands.Cog):
                 return await ctx.send("You can't specify a word for the volume.")
         except AttributeError:
             traceback.print_exc()
+            if player.lock.locked():
+                return await ctx.send("I can't change the volume if I'm not playing something.")
             await ctx.send("I'm not in a voice channel.")
 
     @commands.command(aliases=["c"])
