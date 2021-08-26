@@ -137,6 +137,8 @@ async def run():
     except pymysql.err.OperationalError:
         bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
         bot.dbdisabled = True
+    if not bot.dbdisabled:
+        bot.dbinst.ensure_tables()
     load_extensions(bot)
 
     @bot.event

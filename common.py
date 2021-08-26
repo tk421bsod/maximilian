@@ -1,7 +1,7 @@
 import logging
-import inspect
+import traceback
 
-import pymysql.cursors
+import pymysql
 
 
 class db:
@@ -13,9 +13,29 @@ class db:
             self.databasepassword = dbpfile.readline().strip()
         if bot:
             self.ip = bot.dbip
+            self.database = bot.database
         else:
             self.ip = "10.0.0.51"
-        self.logger = logging.getLogger(name=__name__)
+        self.logger = logging.getLogger(name=f'maximilian.{__name__}')
+        #mapping of schema to table name
+        self.tables = {'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger text, response_text text', 'config':'guild_id bigint, setting text, enabled tinyint', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'songs':'name text, id text, duration varchar(8), thumbnail text', 'todo':'user_id bigint, entry text, id tinyint unsigned, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned'}
+        self.failed = False
+
+    def ensure_tables(self):
+        self.logger.info("Making sure all required tables exist...")
+        self.connect(self.database)
+        for table, schema in self.tables.items():
+            try:
+                self.dbc.execute(f'select * from {table}')
+            except pymysql.err.ProgrammingError:
+                self.logger.warning(f'Table {self.database}.{table} doesn\'t exist. Creating it...')
+                self.dbc.execute(f'create table {table}({schema})')
+                if not self.failed:
+                    self.failed = True
+        if not self.failed:
+            self.logger.info('All required tables exist.')
+        else:
+            self.logger.info('Done creating tables.')
 
     def connect(self, database):
         self.dbobj=pymysql.connect(host=self.ip,
