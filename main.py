@@ -141,8 +141,10 @@ async def run():
         bot.dbinst.connect(bot.database)
         print("Connected to database successfully.")
     except pymysql.err.OperationalError:
-        bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP address through --ip. \nIf you're able to connect to the server, create a user with the name 'maximilianbot' and a database named either 'maximilian' (for stable) or 'maximilian_test' (for beta/dev).")
-    bot.dbinst.ensure_tables()
+        bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
+        bot.dbdisabled = True
+    if not bot.dbdisabled:
+        bot.dbinst.ensure_tables()
     load_extensions(bot)
 
     @bot.event
