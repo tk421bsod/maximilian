@@ -1,21 +1,21 @@
+import inspect
+import io
+import os
+import sys
+import typing
+
+import aiohttp
+import bottom as bottomify
 import discord
 from discord.ext import commands
-import time
-import aiohttp
-import io
-import asyncio
 from zalgo_text import zalgo as zalgo_text_gen
-import typing
-import bottom as bottomify
-import inspect
-import sys
-import os 
-import inspect
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import core
 import errors
+
 
 class misc(commands.Cog):
     '''Some commands that don\'t really fit into other categories'''

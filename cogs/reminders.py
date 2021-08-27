@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import inspect
 import logging
@@ -67,9 +66,11 @@ class reminders(commands.Cog):
     async def update_todo_cache(self):
         await self.bot.wait_until_ready()
         self.logger.info("Updating todo cache...")
+        new_todo_entries = {}
         try:
             for item in (todolists := self.bot.dbinst.exec_query(self.bot.database, "select * from todo order by timestamp desc", False, True)):
-                self.bot.todo_entries[item['user_id']] = [i for i in todolists if i['user_id'] == item['user_id']]
+                new_todo_entries[item['user_id']] = [i for i in todolists if i['user_id'] == item['user_id']]
+            self.bot.todo_entries = new_todo_entries
         except:
             self.logger.info("Couldn't update todo cache! Is anything in the database?")
         self.logger.info("Updated todo cache!")

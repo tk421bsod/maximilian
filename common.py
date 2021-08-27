@@ -1,8 +1,8 @@
-import pymysql.cursors
-import datetime
-import warnings
 import logging
-import inspect
+import traceback
+
+import pymysql
+
 
 class db:
     dbobj = ""
@@ -17,9 +17,29 @@ class db:
             quit()
         if bot:
             self.ip = bot.dbip
+            self.database = bot.database
         else:
             self.ip = "10.0.0.51"
-        self.logger = logging.getLogger(name=__name__)
+        self.logger = logging.getLogger(name=f'maximilian.{__name__}')
+        #mapping of schema to table name
+        self.tables = {'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger text, response_text text', 'config':'guild_id bigint, setting text, enabled tinyint', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'songs':'name text, id text, duration varchar(8), thumbnail text', 'todo':'user_id bigint, entry text, id tinyint unsigned, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned'}
+        self.failed = False
+
+    def ensure_tables(self):
+        self.logger.info("Making sure all required tables exist...")
+        self.connect(self.database)
+        for table, schema in self.tables.items():
+            try:
+                self.dbc.execute(f'select * from {table}')
+            except pymysql.err.ProgrammingError:
+                self.logger.warning(f'Table {self.database}.{table} doesn\'t exist. Creating it...')
+                self.dbc.execute(f'create table {table}({schema})')
+                if not self.failed:
+                    self.failed = True
+        if not self.failed:
+            self.logger.info('All required tables exist.')
+        else:
+            self.logger.info('Done creating tables.')
 
     def connect(self, database):
         self.dbobj=pymysql.connect(host=self.ip,
@@ -31,6 +51,8 @@ class db:
                     autocommit=True)
         self.dbc=self.dbobj.cursor()
         return self.dbc
+
+    #TODO: remove these old shitty methods (insert, delete, retrieve, exec_query)
 
     def insert(self, database, table, valuesdict, valuenodupe, debug=False, valueallnum=None, valueallnumenabled=False, extraparam=None, extraparamenabled=False):
         #this might be vulnerable to sql injection, it depends on whether pymysql escapes stuff passed to execute as a positional argument after the query. i've heard it does, but i'm still skeptical.
@@ -113,6 +135,7 @@ class db:
         else:
             return "error"
             
+    #maybe make this an alias to exec_safe_query or rename exec_safe query to this?
     def exec_query(self, database, querytoexecute, debug=False, fetchallrows=False):
         #self.logger.warning(f"DeprecationWarning: This function is deprecated. Use 'exec_safe_query' instead. \n{inspect.getsource(inspect.stack()[1][0])}")
         self.connect(database)

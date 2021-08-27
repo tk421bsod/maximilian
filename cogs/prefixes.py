@@ -7,19 +7,19 @@ from discord.ext import commands
 
 class prefixes(commands.Cog):
     '''Change Maximilian's prefix'''
-    def __init__(self, bot, teardown=False):
+    def __init__(self, bot, load=False):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
-        if not teardown:
+        if load:
             self.bot.loop.create_task(self.update_prefix_cache())
         
     async def _fetch_prefix(self, guild_id):
         '''Fetches a prefix corresponding to a guild id from the database'''
-        prefix = self.bot.dbinst.exec_safe_query(self.bot.database, "select prefix from prefixes where guild_id = %s", (guild_id))
+        prefix = self.bot.dbinst.exec_query(self.bot.database, "select prefix from prefixes where guild_id = %s", (guild_id))
         if not prefix and prefix != () and prefix != "()":
             self.bot.prefixes[guild_id] = '!'
         else:
-            self.bot.prefixes[guild_id] = prefix
+            self.bot.prefixes[guild_id] = prefix['prefix']
 
     async def update_prefix_cache(self, guild_id=None):
         '''Builds/updates cache of prefixes'''
@@ -35,6 +35,7 @@ class prefixes(commands.Cog):
                 except KeyError:
                     self.bot.prefixes[id] = "!"
         self.logger.info("cache has been updated!")
+        print(self.bot.prefixes)
 
     async def set_nickname(self, ctx, oldprefix, newprefix):
         if not ctx.guild.me.nick:
@@ -93,7 +94,7 @@ class prefixes(commands.Cog):
             return "error"
 
 def setup(bot):
-    bot.add_cog(prefixes(bot))
+    bot.add_cog(prefixes(bot, True))
 
 def teardown(bot):
-    bot.remove_cog(prefixes(bot, True))
+    bot.remove_cog(prefixes(bot))

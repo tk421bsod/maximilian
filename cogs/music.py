@@ -1,8 +1,6 @@
-#stdlib
 import asyncio
 import contextlib
 import functools
-import inspect
 import logging
 import time
 import traceback
@@ -14,7 +12,6 @@ import discord
 import ffmpeg
 import youtube_dl
 from discord.ext import commands
-
 #import lavalink
 #warning: this uses ffmpeg-python, not ffmpeg (the python module) or python-ffmpeg
 
@@ -294,6 +291,8 @@ class music(commands.Cog):
         except IndexError:
             self.logger.info(player.metadata.info["entries"])
             raise NoSearchResultsError()
+        except:
+            traceback.print_exc()
         #check if max duration (60 minutes) exceeded
         if m > 60:
             self.logger.warning(f"Max duration exceeded on search result {num+1}. Retrying...")
@@ -325,7 +324,7 @@ class music(commands.Cog):
                 #if not, search youtube
                 with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                     #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
-                    self.logger.info("searching youtube...")
+                    self.logger.info("looking for song in db...")
                     info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %s", (f"%{url}%"))
                     if info != None:
                         self.logger.info("found song in db! trying to get from cache...")
@@ -334,6 +333,7 @@ class music(commands.Cog):
                         if int(str(info['duration']).split(':')[0]) > 60:
                             raise DurationLimitError()
                     else:
+                        self.logger.info("song wasn't found in db. searching youtube...")
                         await self.search_youtube_for_song(ydl, ctx, url, 0, player)
                     await self.get_song_from_cache(ctx, player.metadata.id, ydl_opts, player)
             else:
@@ -469,7 +469,7 @@ class music(commands.Cog):
                 #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
                 #show user's queue, change how it's displayed depending on how many songs are in the queue
                 try:
-                    await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue)])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)} remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.") 
+                    await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue)])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.") 
                 except discord.HTTPException:
                     await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\nYour queue is too long to display, so I'm only showing the first 10 songs in it.\n {f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue[:10])])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.")
             else:
@@ -539,6 +539,7 @@ class music(commands.Cog):
         '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
         player = await self._get_player(ctx)
         try:
+            ctx.voice_client.source
             if newvolume == None:
                 await ctx.send(f"Volume is currently set to {int(player.current_song[9]*100)}%.")
                 return
@@ -559,6 +560,8 @@ class music(commands.Cog):
                 return await ctx.send("You can't specify a word for the volume.")
         except AttributeError:
             traceback.print_exc()
+            if player.lock.locked():
+                return await ctx.send("I can't change the volume if I'm not playing something.")
             await ctx.send("I'm not in a voice channel.")
 
     @commands.command(aliases=["c"])
@@ -643,17 +646,17 @@ class music(commands.Cog):
 
     @commands.command(aliases=["r"])
     async def remove(self, ctx, item:int):
-        '''Remove the specified entry from the queue. If you want to clear your queue, use the `clear` command.'''
+        '''Remove the specified thing from the queue. If you want to clear your queue, use the `clear` command.'''
         player = await self._get_player(ctx)
         try:
             del player.queue[item-1]
             queuelength = len(player.queue)
-            await ctx.send(f"Successfully removed that entry from your queue. You now have {queuelength} {'songs' if queuelength != 1 else 'song'} in your queue.")
+            await ctx.send(f"Successfully removed that from your queue. You now have {queuelength} {'songs' if queuelength != 1 else 'song'} in your queue.")
         except AttributeError:
             await ctx.send("I'm not in a voice channel.")
         except IndexError:
             quote = "\'"
-            await ctx.send(f"{f'That queue entry doesn{quote}t exist.' if len(player.queue) > 0 else f'You don{quote}t have anything in your queue.'}")
+            await ctx.send(f"{f'That{quote}s not in your queue!' if len(player.queue) > 0 else f'You don{quote}t have anything in your queue.'}")
 
     @commands.command(aliases=["d"])
     async def download(self, ctx, *, url=None):
