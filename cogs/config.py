@@ -1,8 +1,10 @@
-import discord
-from discord.ext import commands
-import pytz
 import asyncio
 import traceback
+
+import discord
+import pytz
+from discord.ext import commands
+
 
 class tz_setup_request():
     def __init__(self):
@@ -74,6 +76,47 @@ class config(commands.Cog):
     @commands.command(help="Set or change your timezone.", aliases=["timezonesetup"])
     async def tzsetup(self, ctx):
         await self.timezone_setup(ctx)
+    
+    #customizable permissions when
+    @commands.command()
+    async def config(self, ctx, setting=None):
+        '''Toggles the specified setting. Settings are off by default.'''
+        if not setting:
+            embed = discord.Embed(title="Settings for this server")
+            for key, value in list(self.bot.settings.items()):
+                if ctx.guild.id in list(value.keys()):
+                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}", inline=True)
+            embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses.")
+            return await ctx.send(embed=embed)
+        try:
+            self.bot.settings[setting]
+        except KeyError:
+            return await ctx.send("That setting doesn't exist. Check the spelling.")
+        try:
+            #does this setting already exist?
+            if not self.bot.dbinst.exec_safe_query(self.bot.database, "select * from config where guild_id=%s", (ctx.guild.id)):
+                self.bot.dbinst.exec_safe_query(self.bot.database, "insert into config values(%s, %s, %s)", (ctx.guild.id, setting, False))
+            else:
+                self.bot.dbinst.exec_safe_query(self.bot.database, "update config set enabled=%s where guild_id=%s and setting=%s", (not self.bot.settings[setting][ctx.guild.id], ctx.guild.id, setting))
+        #probably should be more explicit
+        except:
+            await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
+            return await ctx.send(f"<:blobpain:822921526629236797> Something went wrong while changing that setting. Try again in a moment. If this keeps happening, tell tk421#2016. \n:blobpeek: I've also reported this error to tk421.")
+        #probably should manually add to cache instead
+        #(this is because manually adding one entry to cache is O(1) while running update_settings_cache is O(n^2) where n is len(bot.guilds))
+        await self.fill_settings_cache()
+        await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"{'Disabled' if not self.bot.settings[setting][ctx.guild.id] else 'Enabled'} {self.settingdescmapping[setting]}.").set_footer(text=f"Send this command again to turn this back {'off' if self.bot.settings[setting][ctx.guild.id] else 'on'}."))
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        try:
+            self.bot.settings['deadchat'][message.guild.id]
+        #keyerrors here should not happen
+        except KeyError:
+            #default to on
+            self.bot.settings['deadchat'][message.guild.id] = False
+        if self.bot.settings['deadchat'][message.guild.id] and "dead chat" in message.content.lower() and message.author.id not in self.bot.blocklist:
+            await message.reply(content="https://media.discordapp.net/attachments/768537268452851754/874832974275809290/QRLi7Hv.png")
 
 def setup(bot):
     bot.add_cog(config(bot))

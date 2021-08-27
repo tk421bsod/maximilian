@@ -1,19 +1,21 @@
 #import libraries
 print("Loading libraries...")
-import discord
-from discord.ext import commands 
-from discord.ext import tasks
-import pymysql
-import logging
-import sys
-import traceback
-import datetime
-import time
 import asyncio
+import datetime
+import logging
 import os
+import sys
+import time
+import traceback
+
+import discord
+import pymysql
+from discord.ext import commands, tasks
+
 import common
-import helpcommand
 import core
+import helpcommand
+
 
 def config_logging(args):
     levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
@@ -62,8 +64,7 @@ def load_extensions(bot):
     extensioncount, errorcount = 0, 0
     print("Loading required extensions...")
     try:
-        if not bot.dbdisabled:
-            bot.load_extension("cogs.prefixes")
+        bot.load_extension("cogs.prefixes")
         bot.load_extension("core")
         bot.load_extension("errorhandling")
     except:
@@ -113,17 +114,22 @@ async def run():
         filename = "betatoken.txt"
         sys.argv.pop(sys.argv.index("--beta"))
         bot.database = "maximilian_test"
+        ver = 'beta'
     elif "--dev" in sys.argv:
         filename = "devtoken.txt"
         sys.argv.pop(sys.argv.index("--dev"))
         bot.database = "maximilian_test"
+        ver = 'dev'
     else:
         filename = "token.txt"
         bot.database = "maximilian"
+        ver = 'stable'
     token = common.token().get(filename)
-    bot.logger = logging.getLogger('maximilian-stable')
+    bot.logger = logging.getLogger(f'maximilian')
+    bot.logger.info(f"Logging in as maximilian-{ver}")
     parse_arguments(bot, sys.argv)
-    bot.logger.warning(f"Maximilian v0.6 ({'Jishaku enabled' if '--enablejsk' in sys.argv else 'Jishaku disabled'}, Python {sys.version}, discord.py {discord.__version__}) ")
+    #maybe include latest commit hash here?
+    bot.logger.warning(f" Starting maximilian-{ver} v0.6.1 ({'Jishaku enabled' if '--enablejsk' in sys.argv else 'Jishaku disabled'}, Python {sys.version}, discord.py {discord.__version__}) ")
     bot.guildlist = []
     bot.prefixes = {}
     bot.responses = []
@@ -134,10 +140,9 @@ async def run():
     try:
         bot.dbinst.connect(bot.database)
         print("Connected to database successfully.")
-        bot.dbdisabled = False
     except pymysql.err.OperationalError:
-        bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
-        bot.dbdisabled = True
+        bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP address through --ip. \nIf you're able to connect to the server, create a user with the name 'maximilianbot' and a database named either 'maximilian' (for stable) or 'maximilian_test' (for beta/dev).")
+    bot.dbinst.ensure_tables()
     load_extensions(bot)
 
     @bot.event

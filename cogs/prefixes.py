@@ -1,7 +1,9 @@
-import discord
-import time
-from discord.ext import commands
 import logging
+import time
+
+import discord
+from discord.ext import commands
+
 
 class prefixes(commands.Cog):
     '''Change Maximilian's prefix'''
@@ -13,7 +15,7 @@ class prefixes(commands.Cog):
         
     async def _fetch_prefix(self, guild_id):
         '''Fetches a prefix corresponding to a guild id from the database'''
-        prefix = self.bot.dbinst.retrieve(self.bot.database, "prefixes", "prefix", "guild_id", str(guild_id), False)
+        prefix = self.bot.dbinst.exec_safe_query(self.bot.database, "select prefix from prefixes where guild_id = %s", (guild_id))
         if not prefix and prefix != () and prefix != "()":
             self.bot.prefixes[guild_id] = '!'
         else:

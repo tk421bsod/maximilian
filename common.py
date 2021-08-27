@@ -9,8 +9,12 @@ class db:
     dbc = ""
     def __init__(self, bot=None):
         self.error=""
-        with open("dbp.txt", "r") as dbpfile:
-            self.databasepassword = dbpfile.readline().strip()
+        try:
+            with open("dbp.txt", "r") as dbpfile:
+                self.databasepassword = dbpfile.readline().strip()
+        except FileNotFoundError:
+            print("Couldn't find a file containing the database password. It needs to be named 'dbp.txt'.")
+            quit()
         if bot:
             self.ip = bot.dbip
         else:
@@ -130,6 +134,9 @@ class db:
 
 class token:
     def get(self, filename):
-        with open(filename, "r") as tokenfile:
-            return tokenfile.readline()
-
+        try:
+            with open(filename, "r") as tokenfile:
+                return tokenfile.readline()
+        except:
+            print("Couldn't find a file containing a token. It needs to be named either 'token.txt' (stable), 'betatoken.txt' (beta), or 'devtoken.txt' (dev).")
+            quit()
