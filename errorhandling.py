@@ -15,7 +15,6 @@ class errorhandling(commands.Cog):
         trace = error.__traceback__
         lines = traceback.format_exception(etype, error, trace)
         traceback.print_exc()
-        # format_exception returns a list with line breaks embedded in the lines, so let's just stitch the elements together
         traceback_text = ''.join(lines)
         # it would probably be best to wrap this in a codeblock via e.g. a Paginator
         owner = self.bot.get_user(538193752913608704)
@@ -31,11 +30,8 @@ class errorhandling(commands.Cog):
             if cog._get_overridden_method(cog.cog_command_error) is not None:
                 return
         #check for database errors first, these should almost never happen
-        if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError) or isinstance(error, TypeError):
-            print("database error, printing context and error type")
-            print(str(error))
-            print(str(ctx))
-            embed = discord.Embed(title="Fatal Error",description="\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it.", color=discord.Color.blurple())
+        if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError):
+            embed = discord.Embed(title="Fatal Error",description="\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#2016). They'll look into it.", color=discord.Color.blurple())
             if ctx.guild.me.guild_permissions.embed_links:
                 await ctx.send(embed=embed)
             else:

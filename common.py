@@ -1,5 +1,5 @@
 import logging
-import traceback
+import os
 
 import pymysql
 
@@ -10,11 +10,12 @@ class db:
     def __init__(self, bot=None):
         self.error=""
         try:
+            bot.logger.debug("Getting database password from dbp.txt.")
             with open("dbp.txt", "r") as dbpfile:
                 self.databasepassword = dbpfile.readline().strip()
         except FileNotFoundError:
-            print("Couldn't find a file containing the database password. It needs to be named 'dbp.txt'.")
-            quit()
+            print("Couldn't find a file containing the database password. It needs to be named 'dbp.txt'. \nIf you haven't run setup.sh yet, run it.")
+            os._exit(14)
         if bot:
             self.ip = bot.dbip
             self.database = bot.database
@@ -33,6 +34,7 @@ class db:
                 self.dbc.execute(f'select * from {table}')
             except pymysql.err.ProgrammingError:
                 self.logger.warning(f'Table {self.database}.{table} doesn\'t exist. Creating it...')
+                self.logger.debug(schema)
                 self.dbc.execute(f'create table {table}({schema})')
                 if not self.failed:
                     self.failed = True
@@ -136,20 +138,20 @@ class db:
             return "error"
             
     #maybe make this an alias to exec_safe_query or rename exec_safe query to this?
-    def exec_query(self, database, querytoexecute, debug=False, fetchallrows=False):
+    def exec_query(self, database, querytoexecute, debug=False, fetchall=False):
         #self.logger.warning(f"DeprecationWarning: This function is deprecated. Use 'exec_safe_query' instead. \n{inspect.getsource(inspect.stack()[1][0])}")
         self.connect(database)
         self.dbc.execute(str(querytoexecute))
-        if fetchallrows:
+        if fetchall:
             row = self.dbc.fetchall()
         else:
             row = self.dbc.fetchone()
         return row if row != () and row != "()" else None
 
-    def exec_safe_query(self, database, querytoexecute, params, debug=False, fetchallrows=False):
+    def exec_safe_query(self, database, querytoexecute, params, debug=False, fetchall=False):
         self.dbc = self.connect(database)
         self.dbc.execute(str(querytoexecute), params)
-        if fetchallrows:
+        if fetchall:
             row = self.dbc.fetchall()
         else:
             row = self.dbc.fetchone()
@@ -157,9 +159,11 @@ class db:
 
 class token:
     def get(self, filename):
+        self.logger = logging.getLogger(name=f'maximilian.{__name__}')
+        self.logger.info(f"Getting token from {filename}.")
         try:
             with open(filename, "r") as tokenfile:
                 return tokenfile.readline()
         except:
             print("Couldn't find a file containing a token. It needs to be named either 'token.txt' (stable), 'betatoken.txt' (beta), or 'devtoken.txt' (dev).")
-            quit()
+            os._exit(96)

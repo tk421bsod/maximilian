@@ -16,7 +16,8 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         await self.bot.wait_until_ready()
         #then for each guild in the list, check if the guild has any responses in the database
         for guild in self.bot.guilds:
-            if (count := self.bot.dbinst.exec_query(self.bot.database, "select count(*) from responses where guild_id={}".format(str(guild.id)), False, False)) is not None:
+            count = self.bot.dbinst.exec_query(self.bot.database, "select count(*) from responses where guild_id={}".format(str(guild.id)), False, False)
+            if count is not None:
                 #if there are responses, check if there's one or more
                 if int(count['count(*)']) >= 1:
                     #if so, get a list of responses and iterate over that, adding each one to the list

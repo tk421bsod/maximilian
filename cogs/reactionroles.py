@@ -12,10 +12,6 @@ class reactionroles(commands.Cog, name="reaction roles"):
     @commands.command(help="Add, remove, or list reaction roles, only works if you have the 'Manage Roles' permission. This command takes 4 arguments (1 optional), action (the action to perform, either `add`, `delete`, or `list`), role (a role, you can either mention it or provide the id), messageid (the id of the message you want people to react to), and emoji (the emoji you want people to react with, it must be in a server Maximilian is in or a default emoji, this can be blank if you want people to react with any emoji)", aliases=['reactionrole'])
     @commands.has_guild_permissions(manage_roles=True)
     async def reactionroles(self, ctx, action, role : typing.Optional[discord.Role]=None, messageid : typing.Optional[int]=None, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
-        try:
-            commandprefix = self.bot.prefixes[str(ctx.guild.id)]
-        except KeyError:
-            commandprefix = "!"
         if role != None and messageid != None:
             if action == "add":
                 if self.bot.dbinst.insert(self.bot.database, "roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(role.id), "message_id" : str(messageid), "emoji" : str(emoji)}, "role_id", False, "", False, "", False) == "success":
