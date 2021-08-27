@@ -1,18 +1,18 @@
 #import libraries
 print("Loading libraries...")
-import discord
-from discord.ext import commands 
-from discord.ext import tasks
-import pymysql
-import logging
-import sys
-import traceback
-import datetime
-import time
 import asyncio
+import datetime
+import logging
 import os
+import sys
+import time
+import traceback
+
+import discord
+import pymysql
+from discord.ext import commands
+
 import common
-import helpcommand
 import core
 
 def config_logging(args):
@@ -93,8 +93,7 @@ def load_extensions(bot):
     #create instances of certain cogs
     try:
         bot.coreinst = bot.get_cog('core')
-        if not bot.dbdisabled:
-            bot.prefixesinst = bot.get_cog('prefixes')
+        bot.prefixinst = bot.get_cog('prefixes')
         bot.responsesinst = bot.get_cog('Custom Commands')
         bot.miscinst = bot.get_cog('misc')
         bot.reactionrolesinst = bot.get_cog('reaction roles')
@@ -138,6 +137,8 @@ async def run():
     except pymysql.err.OperationalError:
         bot.logger.critical("Couldn't connect to database, most features won't work. Make sure you passed the right IP and that the database is configured properly.")
         bot.dbdisabled = True
+    if not bot.dbdisabled:
+        bot.dbinst.ensure_tables()
     load_extensions(bot)
 
     @bot.event

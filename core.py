@@ -1,15 +1,18 @@
-import discord
-from discord.ext import commands
-import helpcommand
-import os
-import traceback
-import typing
-import logging
 import asyncio
 import datetime
-import time
-import errors
 import inspect
+import logging
+import os
+import time
+import traceback
+import typing
+
+import discord
+from discord.ext import commands
+
+import errors
+import helpcommand
+
 try:
     import git
 except (ImportError, ModuleNotFoundError):
@@ -17,7 +20,10 @@ except (ImportError, ModuleNotFoundError):
 
 def get_prefix(bot, message):
     if not bot.prefixes:
-        bot.prefixinst.update_prefix_cache()
+        try:
+            bot.loop.create_task(bot.prefixinst.update_prefix_cache())
+        except:
+            return "!"
     if not message.guild:
         return "!"
     try:
@@ -83,7 +89,7 @@ class deletion_request():
         self.bot.dbinst.exec_safe_query(self.bot.database, "delete from prefixes where guild_id = %s", (ctx.guild.id,))
         await ctx.guild.me.edit(nick=f"[!] Maximilian")
         await self.bot.responsesinst.get_responses()
-        await self.bot.prefixesinst.update_prefix_cache()
+        await self.bot.prefixinst.update_prefix_cache()
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
@@ -138,23 +144,22 @@ class core(commands.Cog):
             if nofetch:
                 await ctx.send("Ok, I won't fetch the latest revision. Reloading extensions...")
             else:
-                 reloadmessage = await ctx.send("Fetching latest revision...", delete_after=20)
+                 reloadmessage = await ctx.send("Fetching latest revision...")
                  try:
                      git.Repo(os.getcwd()).remotes.origin.pull()
-                     await reloadmessage.edit(content="Got latest revision. Reloading extensions...")
+                     await reloadmessage.edit(content=f"Reloading extensions...")
                  except:
-                     traceback.print_exc()
-                     await reloadmessage.edit(content="\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
+                     await ctx.send(traceback.print_exc())
+                     await ctx.send("\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
                      extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
             for each in targetextensions:
                 self.bot.reload_extension(each)
-            self.bot.prefixesinst = self.bot.get_cog('prefixes')
+            self.bot.prefixinst = self.bot.get_cog('prefixes')
             self.bot.responsesinst = self.bot.get_cog('Custom Commands')
             self.bot.miscinst = self.bot.get_cog('misc')
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
             embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
-        except Exception as e:
-            print(e)
+        except:
             embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
             embed.add_field(name="Error:", value=traceback.format_exc())
         await ctx.send(embed=embed) 
@@ -177,7 +182,6 @@ class core(commands.Cog):
             if message.guild is not None:
                 for each in range(len(self.bot.responses)):
                     if int(self.bot.responses[each][0]) == int(message.guild.id):
-                        #:blobyert:
                         if await self.bot.get_prefix(message) + self.bot.responses[each][1].lower() == message.content.lower().strip():
                             await message.channel.send(self.bot.responses[each][2])
                             return False
@@ -195,8 +199,10 @@ class core(commands.Cog):
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=newstatus))
         elif type.lower() == "watching":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=newstatus))
+        elif type.lower() == "playing":
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=newstatus))
         elif type.lower() == "default":
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" v0.5.2 (stable)"))
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" v0.6 (stable)"))
         else:
             await ctx.send("oh :blobpaiN; invalid status! ¯\_(ツ)_/¯")
             return
@@ -204,15 +210,22 @@ class core(commands.Cog):
 
     @commands.is_owner()
     @utils.command(hidden=True)
-    async def sql(self, ctx, query):
+    async def sql(self, ctx, *, query):
         try:
-            result=self.bot.dbinst.exec_query(self.bot.database, query, False, True)
+            result=self.bot.dbinst.exec_safe_query(self.bot.database, query, (), False, True)
         except:
             await ctx.message.add_reaction("\U00002757")
             return await ctx.send(f"{traceback.format_exc()}")
         await ctx.message.add_reaction("\U00002705")
-        if result and result != ():
-            await ctx.send(f"`{result}`")
+        print(result)
+        if result:
+            try:
+                await ctx.send(f"`{result}`")
+            except discord.HTTPException:
+                paginator = commands.Paginator()
+                for line in result:
+                    paginator.add_line(str(line))
+                [await ctx.send(page) for page in paginator.pages]
 
     async def update_blocklist(self):
         self.logger.info("Updating blocklist...")
@@ -246,14 +259,14 @@ class core(commands.Cog):
     async def on_guild_join(self, guild):
         self.logger.info("joined guild, adding guild id to list of guilds and resetting prefixes")
         self.bot.guildlist.append(str(guild.id))
-        await self.bot.prefixesinst.update_prefix_cache(guild.id)
+        await self.bot.prefixinst.update_prefix_cache(guild.id)
         #await guild.system_channel.send("Hi! I'm Maximilian, a constantly evolving bot with many useful features, like music, image effects (beta), and reaction roles! \n\U000026a0 This is a version of Maximilian that's under active development (and used for testing by the developer). This allows you to have access to the latest features before they come out on Maximilian Beta or Stable (regular Maximilian), but it comes at a cost of usablity. Uptime might not be consistent, and features may have a lot of bugs or be unfinished. If you want to switch to using the most stable version of Maximilian, use the `about` command, and you'll see an invite link.")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         self.logger.info("removed from guild, removing that guild from list of guilds and resetting prefixes")
         self.bot.guildlist.remove(str(guild.id))
-        await self.bot.prefixesinst.update_prefix_cache(guild.id)
+        await self.bot.prefixinst.update_prefix_cache(guild.id)
     
     async def cog_command_error(self, ctx, error):
         error = getattr(error, "original", error)
