@@ -116,7 +116,7 @@ class settings(commands.Cog):
     #customizable permissions when
     @commands.command()
     async def config(self, ctx, setting=None):
-        '''Toggles the specified setting. Settings are off by default. You need the `Manage Server` permission to use this.'''
+        '''Toggles the specified setting. Settings are off by default.'''
         if not setting:
             embed = discord.Embed(title="Settings for this server")
             for key, value in list(self.bot.settings.items()):
