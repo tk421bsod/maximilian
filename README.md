@@ -2,7 +2,10 @@
 
 An easy to use Discord bot written in Python.
 
-# features
+# Maximilian (the Discord bot) has ceased development.
+See https://media.discordapp.net/attachments/773681895636467712/881301713506689124/unknown.png for details.
+
+# Features
 
 - Reaction roles
 - Plays music from Youtube
