@@ -2,6 +2,8 @@
 
 An easy to use Discord bot written in Python.
 
+# Maximilian has ceased development. See HOSTING.md for instructions on hosting this yourself.
+
 # features
 
 - Reaction roles
@@ -10,8 +12,6 @@ An easy to use Discord bot written in Python.
 - Tagging text for later use
 - Reminders
 - Todo lists
-
-# Maximilian has ceased development. See HOSTING.md for instructions on hosting this yourself.
 
 
 # obligatory support server link
