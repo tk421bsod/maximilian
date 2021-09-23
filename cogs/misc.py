@@ -5,10 +5,8 @@ import sys
 import typing
 
 import aiohttp
-import bottom as bottomify
 import discord
 from discord.ext import commands
-from zalgo_text import zalgo as zalgo_text_gen
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -27,11 +25,6 @@ class misc(commands.Cog):
     async def hi(self, ctx):
         print("said hi")
         await ctx.send("Hello! I'm a robot. tk421#7244 made me!")
-
-    @commands.command(help="zalgo text")
-    async def zalgo(self, ctx, *, arg):
-        print("generated zalgo text")
-        await ctx.send(zalgo_text_gen.zalgo().zalgofy(str(arg)))
 
     @commands.command(help="Get an image of a cat.", aliases=["thiscatdoesntexist"])
     async def cats(self, ctx):
@@ -95,17 +88,6 @@ class misc(commands.Cog):
             await ctx.send(f"`<{emoji.name}:{emoji.id}>`")
             return
         await ctx.send(f"`{emoji}`")      
-
-    @commands.command(aliases=["bottomify", "bm"])
-    async def bottom(self, ctx, action, *, text):
-        '''Turn UTF-8 encoded text into Bottom encoded text, and decode from Bottom back to UTF-8. See <https://github.com/kaylynn234/bottom> for more details on Bottom encoding.'''
-        if action.lower() == "encode":
-            encodedtext = bottomify.encode(text)
-            await ctx.send(embed=discord.Embed(title="Here's your bottom encoded text:", description=encodedtext).set_footer(text=f"Use '{await self.bot.get_prefix(ctx.message)}bottom decode {encodedtext}' to decode this."))
-        elif action.lower() == "decode":
-            await ctx.send(bottomify.decode(text))
-        else:
-            await ctx.send("You need to specify whether you want to encode or decode text.")
 
     @commands.command(aliases=["code", "src"])
     async def source(self, ctx, *, command: str = None):

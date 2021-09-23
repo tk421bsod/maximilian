@@ -22,7 +22,9 @@ def get_prefix(bot, message):
     if not bot.prefixes:
         try:
             bot.loop.create_task(bot.prefixinst.update_prefix_cache())
+        #fall back if something goes wrong
         except:
+            traceback.print_exc()
             return "!"
     if not message.guild:
         return "!"
@@ -35,7 +37,7 @@ def get_prefix(bot, message):
 class deletion_request():
     def __init__(self, bot):
         self.waiting_for_reaction = False
-        #mainembeds is a mapping of type to embed (see https://discord.com/developers/docs/resources/channel#embed-object for information on the format of these embeds)
+        #mainembeds and clearedembeds are mappings of type to embed (see https://discord.com/developers/docs/resources/channel#embed-object for information on the format of these embeds)
         self.mainembeds = {"todo":{'fields': [{'inline': True, 'name': 'Effects', 'value': 'If you proceed, your todo list will be deleted. **THIS CANNOT BE UNDONE.**'}, {'inline': False, 'name': 'Your options', 'value': 'React with ✅ to proceed, or react with <:red_x:813135049083191307> to cancel.'}], 'color': 7506394, 'type': 'rich', 'description': "You've requested that I delete your todo list, and I need you to confirm that you actually want to do this.", 'title': 'Delete your todo list?'}, "all":{'fields': [{'inline': True, 'name': 'Effects', 'value': 'If you proceed, all reaction roles and custom commands you\'ve set up will be deleted, and my prefix will be reset to `!`. **THIS CANNOT BE UNDONE.**'}, {'inline': False, 'name': 'Your options', 'value': 'React with ✅ to proceed, or react with <:red_x:813135049083191307> to cancel.'}], 'color': 7506394, 'type': 'rich', 'description': "You've requested that I delete all the information I have stored about this server (use the `privacy` command to view details on the data I collect). I need you to confirm that you actually want to do this.", 'title': 'Delete all data?'}}
         self.clearedembeds = {"todo":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 Cleared your todo list!'}, "all":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 All data for this server has been cleared!'}}
         self.bot = bot
@@ -76,11 +78,11 @@ class deletion_request():
     async def create_request(self, requesttype, ctx):
         '''Attempts to create a deletion request, raises errors.DeletionRequestAlreadyActive if one's active'''
         id = ctx.guild.id if requesttype == 'all' else ctx.author.id
-        if not (result := self.bot.dbinst.exec_safe_query(self.bot.database, "select id from active_requests where id=%s", (id,))):
+        result = self.bot.dbinst.exec_safe_query(self.bot.database, "select id from active_requests where id=%s", (id,))
+        if not result:
             self.bot.dbinst.exec_safe_query(self.bot.database, "insert into active_requests values(%s)", (id,))
             await self._handle_request(id, requesttype, ctx)
         elif result:
-            print(result)
             raise errors.DeletionRequestAlreadyActive()
 
     async def delete_all(self, ctx):

@@ -129,16 +129,18 @@ class music(commands.Cog):
             await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.")
         else:
             try:
+                #TODO: implement this for other things
                 paginator = commands.Paginator()
                 for line in traceback.format_exc().split("\n"):
                     paginator.add_line(line)
                 [await self.bot.get_user(self.bot.owner_id).send(page) for page in paginator.pages]
             except discord.HTTPException:
                 pass
-            await ctx.send(f"Hmm, something went wrong. Try that again. I've reported this error to my developer.")
-            if ctx.guild.me.voice:
-                await self.leave_voice(ctx, True)
-                await ctx.send("I've also left the voice channel.")
+            await ctx.send(f"Hmm, something went wrong. Try that again. If this keeps happening, tell tk421#2016. \n<:meowcoffee:849518622140530698> I've also reported this error to tk421.")
+            with contextlib.suppress(AttributeError):
+                if ctx.guild.me.voice:
+                    await self.leave_voice(ctx, True)
+                    await ctx.send("I've left the voice channel too.")
 
     async def leave_voice(self, ctx, silent=False):
         try:

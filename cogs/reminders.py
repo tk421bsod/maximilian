@@ -5,6 +5,8 @@ import os
 import random
 import re
 import sys
+import traceback
+import uuid
 
 import discord
 import humanize
@@ -35,31 +37,31 @@ class TimeConverter(commands.Converter):
 
 class reminders(commands.Cog):
     '''Reminders to do stuff. (and todo lists!)'''
-    def __init__(self, bot, teardown=False):
+    def __init__(self, bot, load=False):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
         self.bot.todo_entries = {}
         self.bot.reminders = {}
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
-        if not teardown:
+        if load:
             self.bot.loop.create_task(self.update_todo_cache())
             self.bot.loop.create_task(self.update_reminder_cache(True))
 
     async def update_reminder_cache(self, load=False):
         await self.bot.wait_until_ready()
         self.logger.info("Updating reminder cache...")
-        self.bot.newreminders = {}
+        new_reminders = {}
         try:
-            for item in (reminders := self.bot.dbinst.exec_query(self.bot.database, "select * from reminders order by user_id desc", False, True)):
-                self.bot.newreminders[item['user_id']] = [i for i in reminders if i['user_id'] == item['user_id']]
+            reminders = self.bot.dbinst.exec_query(self.bot.database, "select * from reminders order by user_id desc", False, True)
+            for item in reminders:
+                new_reminders[item['user_id']] = [i for i in reminders if i['user_id'] == item['user_id']]
                 #only start handling reminders if the extension was loaded, we don't want reminders to fire twice once this function is
                 #called by handle_reminder
                 if load:
-                    self.bot.loop.create_task(self.handle_reminder(item['user_id'], item['channel_id'], item['reminder_time'], item['now'], item['reminder_text']))
+                    self.bot.loop.create_task(self.handle_reminder(item['user_id'], item['channel_id'], item['reminder_time'], item['now'], item['reminder_text'], item['uuid']))
                     self.logger.info(f"Started handling a reminder for user {item['user_id']}")
-            self.bot.reminders = self.bot.newreminders
+            self.bot.reminders = new_reminders
         except:
-            self.bot.reminders = {}
             self.logger.info("Couldn't update reminder cache! Is there anything in the database?")
         self.logger.info("Updated reminder cache!")
         
@@ -68,15 +70,16 @@ class reminders(commands.Cog):
         self.logger.info("Updating todo cache...")
         new_todo_entries = {}
         try:
-            for item in (todolists := self.bot.dbinst.exec_query(self.bot.database, "select * from todo order by timestamp desc", False, True)):
+            todolists = self.bot.dbinst.exec_query(self.bot.database, "select * from todo order by timestamp desc", False, True)
+            for item in todolists:
                 new_todo_entries[item['user_id']] = [i for i in todolists if i['user_id'] == item['user_id']]
             self.bot.todo_entries = new_todo_entries
         except:
             self.logger.info("Couldn't update todo cache! Is anything in the database?")
         self.logger.info("Updated todo cache!")
     
-    async def handle_reminder(self, user_id, channel_id, remindertime, reminderstarted, remindertext):
-        #wait for as long as needed
+    async def handle_reminder(self, user_id, channel_id, remindertime, reminderstarted, remindertext, uuid):
+        #waait for as long as needed
         self.logger.info("handling reminder...")
         #make timestamp human readable before sleeping (otherwise it just shows up as 0 seconds)
         hrtimedelta = humanize.precisedelta(remindertime-reminderstarted, format='%0.0f')
@@ -84,7 +87,7 @@ class reminders(commands.Cog):
         #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
         await self.bot.get_channel(channel_id).send(f"<@{user_id}> {hrtimedelta} ago: '{remindertext}'")
         #and delete it from the database
-        self.bot.dbinst.exec_safe_query(self.bot.database, f"delete from reminders where user_id=%s and channel_id=%s and reminder_time=%s and now=%s and reminder_text=%s", (user_id, channel_id, remindertime, reminderstarted, remindertext))
+        self.bot.dbinst.exec_safe_query(self.bot.database, f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
 
 
@@ -95,41 +98,62 @@ class reminders(commands.Cog):
             #get the date the reminder will fire at
             currenttime = datetime.datetime.now()
             remindertime = currenttime+datetime.timedelta(0, round(time))
+            #generate uuid (surely there's a better way to do this)
+            uuid = uuid.uuid4()
             #add the reminder to the database
-            self.bot.dbinst.exec_safe_query(self.bot.database, f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text) values(%s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder))
+            self.bot.dbinst.exec_safe_query(self.bot.database, f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder, uuid))
+            await self.update_reminder_cache()
             await ctx.send(f"Ok, in {humanize.precisedelta(remindertime-currenttime, format='%0.0f')}: '{reminder}'")
-            await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder)
+            await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder, uuid)
+        #if action == "list":
+            #try:
+                #self.bot.reminders[ctx.author.id]
+            #except KeyError:
+                #return await ctx.send("You don't have any reminders active right now.")
+            #else:  
+                #this being blank should cause a keyerror
+                #if it doesn't for some reason, something weird happened
+                #if not self.bot.reminders[ctx.author.id]:
+                    #return await ctx.send("You don't have any reminders active right now.")
+                #for reminder in self.bot.reminders:
                 
-    
     @commands.command(aliases=["to-do", "todos"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`.")
     async def todo(self, ctx, action="list", *, entry=None):
+        #TODO: subcommands?
         if action == "add":
             if not entry:
-                return await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'foo' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add foo`.")
+                return await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add fix error handling`.")
             elif entry in [i['entry'] for i in [j for j in list(self.bot.todo_entries.values())][0] if i['user_id'] == ctx.author.id]:
-                return await ctx.send("That todo entry already exists.")
-            result = self.bot.dbinst.insert(self.bot.database, "todo", {"user_id":ctx.author.id, "entry":entry, "timestamp":datetime.datetime.now()}, None)
+                return await ctx.send("That entry already exists.")
+            result = self.bot.dbinst.exec_safe_query(self.bot.database, "insert into todo values(%s, %s, %s)", (ctx.author.id, entry, datetime.datetime.now()))
+            #blobpain
             if result == "success":
                 await self.update_todo_cache()
-                entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
+                entrycount = self.bot.dbinst.exec_safe_query(self.bot.database, f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully added that to your todo list. \nYou now have {entrycount} entries in your list.", color=discord.Color.blurple()))
             elif result == "error-duplicate":
-                await ctx.send("That todo entry already exists.")
+                await ctx.send("That entry already exists.")
             else:
                 #dm traceback
                 owner = self.bot.get_user(self.bot.owner_id)
                 owner.send(f"Error while adding to the todo list: {result}")
-                await ctx.send("There was an error while adding that to your todo list. I've made my developer aware of this.")
+                await ctx.send("There was an error while adding that to your todo list. Try again later. If this keeps happening, tell tk421#2016. \n<:blobyert:835970723935158282> I've also reported this error to tk421.")
             return
         if action == "delete":
             try:
                 self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry']
-                if self.bot.dbinst.delete(self.bot.database, "todo", self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], "entry", "user_id", ctx.author.id, True) == "successful" and entry:
-                    entrycount = self.bot.dbinst.exec_query(self.bot.database, f'select count(entry) from todo where user_id={ctx.author.id}')['count(entry)']
+                if self.bot.dbinst.exec_safe_query(self.bot.database, "delete from todo where entry=%s and user_id=%s", (self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], ctx.author.id)) and entry:
+                    entrycount = self.bot.dbinst.exec_safe_query(self.bot.database, f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
                     await self.update_todo_cache()
                     await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} entries in your list.", color=discord.Color.blurple()))
+            except IndexError:
+                return await ctx.send("I couldn't find the entry you're trying to delete. Does it exist?")
+            except KeyError:
+                await ctx.send("You don't have anything in your todo list.")
             except:
-                await ctx.send("Something went wrong while deleting that from your todo list. Make sure that the todo entry you're trying to delete actually exists.")
+                #TODO: standardize this for all commands
+                await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
+                await ctx.send("Hmm, something went wrong while deleting that from your todo list. Try again later. If this keeps happening, tell tk421#2016. \n<:meowowo:847000407733174282> I've also reported this error to tk421.")
             return
         if action == "deleteall":
             try:
@@ -148,11 +172,14 @@ class reminders(commands.Cog):
                 return await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
             except discord.HTTPException:
                 return await ctx.send("Your todo list is too long to show in a single message.")
-                #maybe work on a paginator???
+                #paginator when
+            except:
+                await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
+                return await ctx.send("Hmm, something went wrong while trying to show your todo list. Try again later. If this keeps happening, tell tk421#2016. \n<:blobpeek:846768868738596924> I've also reported this error to tk421.")
 
 def setup(bot):
-    bot.add_cog(reminders(bot))
+    bot.add_cog(reminders(bot, True))
 
 def teardown(bot):
-    bot.remove_cog(reminders(bot, True))
+    bot.remove_cog(reminders(bot))
     

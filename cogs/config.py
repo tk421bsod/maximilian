@@ -25,7 +25,8 @@ class tz_setup_request():
             return False
 
     async def confirm(self, ctx, message):
-        if (originaltimezone := self.bot.dbinst.exec_safe_query(self.bot.database, "select * from timezones where user_id=%s", (ctx.author.id,))):
+        originaltimezone = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from timezones where user_id=%s", (ctx.author.id,))
+        if originaltimezone:
             desc = f"Your timezone was set to `{originaltimezone['timezone']}`, and you're changing it to `{self.tz}`. \n**Do you want to change it?**\nReact with \U00002705 to change your timezone or react with <:red_x:813135049083191307> to cancel."
         else:
             desc = f"You've said that your timezone is `{message.content.strip()}`. \n**Is this the correct timezone?** \nReact with \U00002705 to set your timezone or react with <:red_x:813135049083191307> to cancel."
@@ -76,19 +77,29 @@ class settings(commands.Cog):
         self.logger = logging.getLogger(name="cogs.config")
         if load:
             bot.loop.create_task(self.fill_settings_cache())
+            self.logger.debug("Created a task for filling the setting cache")
 
     async def fill_settings_cache(self):
         self.logger.info("Filling settings cache...")
         await self.bot.wait_until_ready()
         try:
-            data = self.bot.dbinst.exec_safe_query(self.bot.database, 'select * from config', (), fetchallrows=True)
+            data = self.bot.dbinst.exec_safe_query(self.bot.database, 'select * from config', (), fetchall=True)
         except:
+            self.logger.debug('An error occurred while filling the setting cache, falling back to every setting disabled')
             data = []
             #if something went wrong, fall back to everything off
             #TODO: make all caches do this (also make design of caches somewhat consistent)
             for name in list(self.settingdescmapping.keys()):
                 for guild in self.bot.guilds:
                     data.append({'setting':name, 'guild_id':guild.id, 'enabled':False})
+        else:
+            if not data:
+                self.logger.info("No settings are in the database for some reason. Creating the row and falling back to every setting disabled")
+                data = []
+                for name in list(self.settingdescmapping.keys()):
+                    self.bot.dbinst.exec_safe_query(self.bot.database, 'insert into config values(%s, %s, %s)', (self.bot.guilds[0].id, name, False))
+                    for guild in self.bot.guilds:
+                        data.append({'setting':name, 'guild_id':guild.id, 'enabled':False})
         tempsettings = {}
         #one design flaw of this is that there needs to be at least one entry in the database for each setting
         #probably could just make one row null idk
@@ -136,7 +147,8 @@ class settings(commands.Cog):
                 self.bot.dbinst.exec_safe_query(self.bot.database, "update config set enabled=%s where guild_id=%s and setting=%s", (not self.bot.settings[setting][ctx.guild.id], ctx.guild.id, setting))
         #probably should be more explicit
         except:
-            return await ctx.send(f"<:blobpain:822921526629236797> Something went wrong while changing that setting. Try again in a moment. If this keeps happening, tell tk421#2016.")
+            await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
+            return await ctx.send(f"<:blobpain:822921526629236797> Something went wrong while changing that setting. Try again in a moment. If this keeps happening, tell tk421#2016. \n<:blobpeek:846768868738596924> I've also reported this error to tk421.")
         #probably should manually add to cache instead
         #(this is because manually adding one entry to cache is O(1) while running update_settings_cache is O(n^2) where n is len(bot.guilds))
         await self.fill_settings_cache()
@@ -150,7 +162,7 @@ class settings(commands.Cog):
         except KeyError:
             #default to on
             self.bot.settings['deadchat'][message.guild.id] = False
-        if self.bot.settings['deadchat'][message.guild.id] and "dead chat" in message.content.lower():
+        if self.bot.settings['deadchat'][message.guild.id] and "dead chat" in message.content.lower() and message.author.id not in self.bot.blocklist:
             await message.reply(content="https://media.discordapp.net/attachments/768537268452851754/874832974275809290/QRLi7Hv.png")
 
 def setup(bot):
