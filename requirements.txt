@@ -1,0 +1,8 @@
+discord.py[voice]
+pymysql
+ffmpeg-python
+youtube_dl
+pytz
+gitpython
+jishaku
+humanize
