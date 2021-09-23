@@ -1,11 +1,19 @@
 # maximilian
 
-An easy to use Discord bot with a web interface. 
+An easy to use Discord bot written in Python.
 
-# Features
+# features
 
 - Reaction roles
-- Can play music from Youtube (beta)
+- Plays music from Youtube
 - Customizable prefix
 - Tagging text for later use
-- Reminders (beta, very buggy)
+- Reminders
+- Todo lists
+
+# Maximilian has ceased development. See HOSTING.md for instructions on hosting this yourself.
+
+
+# obligatory support server link
+
+https://discord.gg/Ugpx8R8

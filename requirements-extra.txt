@@ -1,0 +1,3 @@
+polaroid
+bottomify
+zalgo_text

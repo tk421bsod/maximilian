@@ -136,11 +136,11 @@ class music(commands.Cog):
                 [await self.bot.get_user(self.bot.owner_id).send(page) for page in paginator.pages]
             except discord.HTTPException:
                 pass
-            await ctx.send(f"Hmm, something went wrong. Try that again. If this keeps happening, tell tk421#2016. \n:meowcoffee: I've also reported this error to tk421.")
+            await ctx.send(f"Hmm, something went wrong. Try that again. If this keeps happening, tell tk421#2016. \n<:meowcoffee:849518622140530698> I've also reported this error to tk421.")
             with contextlib.suppress(AttributeError):
                 if ctx.guild.me.voice:
                     await self.leave_voice(ctx, True)
-                    await ctx.send("I've also left the voice channel.")
+                    await ctx.send("I've left the voice channel too.")
 
     async def leave_voice(self, ctx, silent=False):
         try:
