@@ -34,43 +34,79 @@ def get_prefix(bot, message):
         bot.prefixes[message.guild.id] = "!"
         return "!"
 
-class deletion_request():
+class confirmation:
+    def __init__(self, bot, message, ctx, callback, *additional_callback_args):
+        '''A class that handles a bit of confirmation logic for you. You\'ll need to provide a callback coroutine that takes: (reaction:discord.RawReactionActionEvent, message:discord.Message, ctx:discord.ext.commands.Context, confirmed:bool) and whatever other arguments you pass to additional_callback_args.'''
+        self.bot = bot
+        self.GREEN_CHECK = '\U00002705'
+        self.RED_X = '<:red_x:813135049083191307>'
+        if not inspect.iscoroutinefunction(callback):
+            raise TypeError("callback must be a coroutine!!!")
+        #call handle_confirmation to prevent weird syntax like
+        #await confirmation()._handle_confirmation()
+        bot.loop.create_task(self._handle_confirmation(message, ctx, callback, *additional_callback_args))
+
+    async def _check_confirmed(self, ctx, message, reaction):
+        '''Check if the user confirmed the action by reacting with GREEN_CHECK. '''
+        emoji = str(reaction[0].emoji)
+        async for each in reaction[0].users():
+            #make sure we're only looking at a: the confirmation message and b: the reaction added by the command's invoker
+            if ctx.message.author == each and reaction[0].message.id == message.id:
+                if emoji == self.GREEN_CHECK:
+                    return True
+                elif emoji == self.RED_X:
+                    return False
+        #wait for another reaction (without running the callback) if the user that reacted wasn't the command's invoker
+        return None
+
+    async def _handle_confirmation(self, message, ctx, callback, *additional_callback_args):
+        '''Handles a confirmation, transferring control to a callback if _check_confirmed returns a non-None value'''
+        await message.add_reaction(self.GREEN_CHECK)
+        await message.add_reaction(self.RED_X)
+        while True:
+            reaction = await self.bot.wait_for('reaction_add', timeout=60.0)
+            confirmed = await self._check_confirmed(ctx, message, reaction)
+            if confirmed != None:
+                ret = await callback(reaction, message, ctx, confirmed, *additional_callback_args)
+                if ret:
+                    break
+
+class deletion_request:
     def __init__(self, bot):
-        self.waiting_for_reaction = False
+        '''A class that handles some deletion request logic. Has some similar attributes to `confirmation` but doesn't subclass as `confirmation`'s __init__ calls _handle_confirmation (subclassing may cause naming conflicts too)'''
         #mainembeds and clearedembeds are mappings of type to embed (see https://discord.com/developers/docs/resources/channel#embed-object for information on the format of these embeds)
         self.mainembeds = {"todo":{'fields': [{'inline': True, 'name': 'Effects', 'value': 'If you proceed, your todo list will be deleted. **THIS CANNOT BE UNDONE.**'}, {'inline': False, 'name': 'Your options', 'value': 'React with ✅ to proceed, or react with <:red_x:813135049083191307> to cancel.'}], 'color': 7506394, 'type': 'rich', 'description': "You've requested that I delete your todo list, and I need you to confirm that you actually want to do this.", 'title': 'Delete your todo list?'}, "all":{'fields': [{'inline': True, 'name': 'Effects', 'value': 'If you proceed, all reaction roles and custom commands you\'ve set up will be deleted, and my prefix will be reset to `!`. **THIS CANNOT BE UNDONE.**'}, {'inline': False, 'name': 'Your options', 'value': 'React with ✅ to proceed, or react with <:red_x:813135049083191307> to cancel.'}], 'color': 7506394, 'type': 'rich', 'description': "You've requested that I delete all the information I have stored about this server (use the `privacy` command to view details on the data I collect). I need you to confirm that you actually want to do this.", 'title': 'Delete all data?'}}
         self.clearedembeds = {"todo":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 Cleared your todo list!'}, "all":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 All data for this server has been cleared!'}}
         self.bot = bot
 
+    async def confirmation_callback(self, reaction, message, ctx, confirmed, requesttype, id):
+        try:
+            if confirmed:
+                if requesttype == "todo":
+                    self.bot.dbinst.exec_safe_query(self.bot.database, "delete from todo where user_id = %s", (ctx.author.id,))
+                    await self.bot.get_cog('reminders').update_todo_cache()
+                elif requesttype == "all":
+                    await self.delete_all(ctx)
+                self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id = %s", (id,))
+                await ctx.send(embed=discord.Embed.from_dict(self.clearedembeds[requesttype]))
+                return True
+            if not confirmed:
+                await ctx.send("Ok. I won't delete anything.")
+                self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id = %s", (id,))
+                return True
+        except Exception as e:
+            #clean up
+            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id = %s", (id,))
+            #then re-raise the error
+            #this **will** cancel the confirmation
+            raise e
+        return False
+
     async def _handle_request(self, id, requesttype, ctx):
         deletionmessage = await ctx.send(embed=discord.Embed.from_dict(self.mainembeds[requesttype]))
-        await deletionmessage.add_reaction("\U00002705")
-        await deletionmessage.add_reaction("<:red_x:813135049083191307>")
-        await asyncio.sleep(0.5)
-        self.waiting_for_reaction = True
         try:
-            while self.waiting_for_reaction:
-                reaction = await self.bot.wait_for('reaction_add', timeout=60.0)
-                async for each in reaction[0].users():
-                    if ctx.message.author == each:
-                        self.waiting_for_reaction = False
-                        if str(reaction[0].emoji) == '\U00002705':
-                            if requesttype == "todo":
-                                self.bot.dbinst.exec_safe_query(self.bot.database, "delete from todo where user_id = %s", (ctx.author.id,))
-                                await self.bot.get_cog('reminders').update_todo_cache()
-                            elif requesttype == "all":
-                                await self.delete_all(ctx)
-                            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id = %s", (id,))
-                            await ctx.send(embed=discord.Embed.from_dict(self.clearedembeds[requesttype]))
-                            return
-                        if str(reaction[0].emoji) == '<:red_x:813135049083191307>':
-                            await ctx.send("Ok. I won't delete anything.")
-                            self.waiting_for_reaction = False
-                            print("delete from active_requests where id = %s", (id,))
-                            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id = %s", (id,))
-                            return
+            confirmation(self.bot, deletionmessage, ctx, self.confirmation_callback, requesttype, id)
         except asyncio.TimeoutError:
-            self.waiting_for_reaction = False
             self.bot.dbinst.exec_safe_query(self.bot.database, "delete from active_requests where id = %s", (id,))
             await ctx.send("Deletion request timed out. I won't delete anything.")
             return
@@ -97,6 +133,12 @@ class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
     def __init__(self, bot, load=False):
         self.bot = bot
+        #we need to do black magic fuckery to import this from files in the cogs folder
+        #provide references to other classes in the file to prevent this
+        #note that this cog is referenced by bot.coreinst after extensions are loaded
+        #none of these classes should be used before extensions are loaded anyways as they require the bot to be ready
+        self.bot.confirmation = confirmation
+        self.bot.deletion_request = deletion_request
         self.waiting = []
         self.bot.blocklist = []
         self.logger = logging.getLogger(f'maximilian.{__name__}')

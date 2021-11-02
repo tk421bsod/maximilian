@@ -9,6 +9,7 @@ import time
 import traceback
 
 import discord
+from discord.ext.commands.errors import NoEntryPointError
 import pymysql
 from discord.ext import commands
 
@@ -38,7 +39,7 @@ def config_logging(args):
     for key, value in levelmapping.items():
         if key not in args:
             pass
-        elif key in args and key != "-q" and key != "--quiet":
+        elif key != "-q" and key != "--quiet":
             logging.basicConfig(level=value[0], handlers=_handlers)
             print(value[1])
             logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
@@ -124,8 +125,11 @@ def load_extensions(bot):
             #catch the error so we can continue anyways
             except commands.ExtensionAlreadyLoaded:
                 bot.logger.debug(f"{cleanname} is already loaded, skipping")
-            except commands.ExtensionFailed as error:
+            except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
                 errorcount += 1
+                if not hasattr(error, 'original'):
+                    #only NoEntryPointError doesn't have original
+                    error.original = commands.errors.NoEntryPointError('')
                 bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This extension won't be loaded.")
                 if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
                     bot.logger.error(f"The {error.original.name} module isn't installed.")
