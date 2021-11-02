@@ -6,7 +6,7 @@ import random
 import re
 import sys
 import traceback
-import uuid
+import uuid as uuid_generator #prevent conflict with the local variable 'uuid'
 
 import discord
 import humanize
@@ -98,8 +98,8 @@ class reminders(commands.Cog):
             #get the date the reminder will fire at
             currenttime = datetime.datetime.now()
             remindertime = currenttime+datetime.timedelta(0, round(time))
-            #generate uuid (surely there's a better way to do this)
-            uuid = uuid.uuid4()
+            #generate uuid
+            uuid = str(uuid_generator.uuid4())
             #add the reminder to the database
             self.bot.dbinst.exec_safe_query(self.bot.database, f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder, uuid))
             await self.update_reminder_cache()
@@ -125,27 +125,29 @@ class reminders(commands.Cog):
                 return await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add fix error handling`.")
             elif entry in [i['entry'] for i in [j for j in list(self.bot.todo_entries.values())][0] if i['user_id'] == ctx.author.id]:
                 return await ctx.send("That entry already exists.")
-            result = self.bot.dbinst.exec_safe_query(self.bot.database, "insert into todo values(%s, %s, %s)", (ctx.author.id, entry, datetime.datetime.now()))
-            #blobpain
-            if result == "success":
+            try:
+                self.bot.dbinst.exec_safe_query(self.bot.database, "insert into todo values(%s, %s, %s)", (ctx.author.id, entry, datetime.datetime.now()))
                 await self.update_todo_cache()
                 entrycount = self.bot.dbinst.exec_safe_query(self.bot.database, f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
-                await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully added that to your todo list. \nYou now have {entrycount} entries in your list.", color=discord.Color.blurple()))
-            elif result == "error-duplicate":
-                await ctx.send("That entry already exists.")
-            else:
+                await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully added that to your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=discord.Color.blurple()))
+            except:
                 #dm traceback
                 owner = self.bot.get_user(self.bot.owner_id)
-                owner.send(f"Error while adding to the todo list: {result}")
+                await owner.send(f"Error while adding to the todo list: {traceback.format_exc()}")
                 await ctx.send("There was an error while adding that to your todo list. Try again later. If this keeps happening, tell tk421#2016. \n<:blobyert:835970723935158282> I've also reported this error to tk421.")
             return
-        if action == "delete":
+        if action == "delete" or action == "remove":
             try:
-                self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry']
-                if self.bot.dbinst.exec_safe_query(self.bot.database, "delete from todo where entry=%s and user_id=%s", (self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], ctx.author.id)) and entry:
-                    entrycount = self.bot.dbinst.exec_safe_query(self.bot.database, f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
-                    await self.update_todo_cache()
-                    await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} entries in your list.", color=discord.Color.blurple()))
+                if not entry:
+                    return await ctx.send("You didn't say what entry you wanted to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, use 'todo delete 1'.")
+                try:
+                    int(entry)
+                except TypeError:
+                    return await ctx.send("You need to specify the number of the entry you want to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.")
+                self.bot.dbinst.exec_safe_query(self.bot.database, "delete from todo where entry=%s and user_id=%s", (self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
+                entrycount = self.bot.dbinst.exec_safe_query(self.bot.database, f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
+                await self.update_todo_cache()
+                await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=discord.Color.blurple()))
             except IndexError:
                 return await ctx.send("I couldn't find the entry you're trying to delete. Does it exist?")
             except KeyError:
