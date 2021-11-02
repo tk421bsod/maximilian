@@ -12,12 +12,6 @@ import discord
 import humanize
 from discord.ext import commands
 
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir) 
-import core
-import errors
-
 #Thanks to Vexs for help with this.
 time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
 time_dict = {"h":3600, "s":1, "m":60, "d":86400}
@@ -160,7 +154,7 @@ class reminders(commands.Cog):
         if action == "deleteall":
             try:
                 return await core.deletion_request(self.bot).create_request("todo", ctx)
-            except errors.DeletionRequestAlreadyActive:
+            except bot.errors.DeletionRequestAlreadyActive:
                 return await ctx.send("A deletion request is already active.")
         if action == "list" or entry == None:
             entrystring = ""

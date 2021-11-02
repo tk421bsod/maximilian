@@ -8,13 +8,6 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir) 
-import core
-import errors
-
-
 class misc(commands.Cog):
     '''Some commands that don\'t really fit into other categories'''
     def __init__(self, bot):
@@ -77,8 +70,8 @@ class misc(commands.Cog):
     @commands.command(help="**Permanently** delete all data that Maximilian's stored about your server. (requires the Administrator permission)")
     async def deleteall(self, ctx):
         try:
-            await core.deletion_request(self.bot).create_request("all", ctx)
-        except errors.DeletionRequestAlreadyActive:
+            await bot.coreinst.deletion_request(self.bot).create_request("all", ctx)
+        except bot.errors.DeletionRequestAlreadyActive:
             await ctx.send("A deletion request is already active.")
 
     @commands.command(hidden=True)

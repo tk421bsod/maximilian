@@ -15,7 +15,7 @@ from discord.ext import commands
 
 import common
 import core
-
+import errors
 
 def get_latest_commit():
     try:
@@ -146,6 +146,7 @@ def load_extensions(bot):
         bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
     bot.logger.info(f"loaded {extensioncount} extensions successfully ({errorcount} extension{'s' if errorcount != 1 else ''} not loaded), waiting for ready")
 
+#wrap the main on_message event in a function for prettiness
 async def wrap_event(bot):
     @bot.event
     async def on_message(message):
@@ -170,6 +171,7 @@ async def run(logger):
     #set up some important stuff
     bot.database = database
     bot.logger = logger
+    bot.errors = errors
     #on_message is wrapped so it looks better
     await wrap_event(bot)
     #show version information
