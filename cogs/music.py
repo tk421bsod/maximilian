@@ -51,7 +51,7 @@ class Player():
     '''An object that stores the queue and current song for a specific guild.'''
     def __init__(self, ctx, logger):
         self.queue = []
-        self.current_song = CurrentSong()
+        self.current_song = []
         self.guild = ctx.guild
         self.owner=ctx.author
         self.lock = asyncio.Lock()
@@ -67,12 +67,6 @@ class music(commands.Cog):
         self.lock = asyncio.Lock()
         self.bot = bot
         self.players = {}
-        #lavalink stuff
-        #if not hasattr(bot, 'lavalink'): 
-        #    bot.lavalink = lavalink.Client(bot.user.id)
-        #    bot.lavalink.add_node('127.0.0.1', 2333, 'password', 'us', 'default-node')  # Host, Port, Password, Region, Name
-        #    bot.add_listener(bot.lavalink.voice_update_handler, 'on_socket_response')
-        #lavalink.add_event_hook(track_hook)
 
     async def _get_player(self, ctx):
         '''Gets a player if it exists, creates one if it doesn't exist'''
@@ -91,7 +85,7 @@ class music(commands.Cog):
         self.logger.info(f"Destroyed the player for guild {ctx.guild.id}")
 
     async def _check_player(self, ctx):
-        '''Checks if a player exists, returns False if it doesn't and True if it does'''
+        '''Returns whether a player exists'''
         try:
             self.players[ctx.guild.id]
         except KeyError:
@@ -99,7 +93,7 @@ class music(commands.Cog):
         return True
 
     async def _join_voice(self, ctx, channel):
-        '''Helper function that handles joining a voice channel'''
+        '''Joins a voice channel'''
         joiningmessage = await ctx.send("Joining your voice channel...")
         vc = ctx.voice_client
         if vc:
