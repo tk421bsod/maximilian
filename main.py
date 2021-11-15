@@ -171,19 +171,18 @@ async def run(logger):
     #set up some important stuff
     bot.database = database
     bot.logger = logger
+    #see the comment in core.py at around line 137 for an explanation of this
     bot.errors = errors
-    #on_message is wrapped so it looks better
     await wrap_event(bot)
     #show version information
     bot.logger.warning(f" Starting maximilian-{ver} v0.6.2{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
-    #this will exit if no token is found (also logs to INFO with filename)
+    #get the token, this will exit if no token is found (also logs to INFO with filename)
     token = common.token().get(tokenfilename)
     #parse additional arguments (ip, enablejsk, noload)
     bot.noload = []
     bot.logger.debug("Parsing command line arguments...")
     parse_arguments(bot, sys.argv)
     bot.logger.debug("Done parsing command line arguments.")
-    #this really shouldn't be here
     bot.guildlist = []
     bot.prefixes = {}
     bot.responses = []
@@ -221,6 +220,6 @@ try:
 except KeyboardInterrupt:
     logger.error("KeyboardInterrupt detected. Exiting.")
 except:
-    logger.error("Uncaught exception!")
+    logger.error("Uncaught exception! Exiting.")
     logger.error(traceback.format_exc())
 
