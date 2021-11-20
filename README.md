@@ -3,7 +3,7 @@
 An easy to use Discord bot written in Python.
 
 # selfhosting
-See hosting.md.
+See HOSTING.md.
 
 # features
 
