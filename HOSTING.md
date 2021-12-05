@@ -12,8 +12,9 @@ Run it with `remote` if you plan on running Maximilian on a different computer, 
 Follow the prompts setup.sh gives you.
 It'll install almost everything Maximilian needs (python, mariadb, pip, python packages, etc) and set them up.
 
-Now you're ready to run Maximilian. Just run `main.py` with the Python version you installed the dependencies to.
-If you see an "Invalid syntax" error when starting Maximilian, make sure you're running it on Python3.7 or above.
+Now you're ready to run Maximilian. Just run `python3 main.py`.
+If you see an "Invalid syntax" error when starting Maximilian, make sure you're running it on Python3.7 or above. 
+On some older versions of Linux you might need to compile a newer version of Python yourself.
 
 If you get some weird output and can't see it anymore, check the log file. It's located in `./logs/maximilian-<date>.log`.
 
