@@ -16,7 +16,7 @@ import helpcommand
 try:
     import git
 except (ImportError, ModuleNotFoundError):
-    pass #we'll deal with it later
+    pass #we'll deal with it in a bit
 
 def get_prefix(bot, message):
     if not bot.prefixes:
@@ -40,6 +40,8 @@ class confirmation:
         self.bot = bot
         self.GREEN_CHECK = '\U00002705'
         self.RED_X = '<:red_x:813135049083191307>'
+        if not bot.ready:
+            return await ctx.send("This command isn't ready yet. Try again in a moment.")
         if not inspect.iscoroutinefunction(callback):
             raise TypeError("callback must be a coroutine!!!")
         #call handle_confirmation to prevent weird syntax like
@@ -133,16 +135,16 @@ class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
     def __init__(self, bot, load=False):
         self.bot = bot
-        #we need to do black magic fuckery to import this from files in the cogs folder
+        #we can't easily import this file from files in the cogs folder
         #provide references to other classes in the file to prevent this
-        #note that this cog is referenced by bot.coreinst after extensions are loaded
+        #this class is referenced by bot.coreinst after extensions are loaded
         #none of these classes should be used before extensions are loaded anyways as they require the bot to be ready
         self.bot.confirmation = confirmation
         self.bot.deletion_request = deletion_request
         self.waiting = []
         self.bot.blocklist = []
         self.logger = logging.getLogger(f'maximilian.{__name__}')
-        self.ready = False
+        self.bot.ready = False
         if load:
             self.bot.loop.create_task(self.update_blocklist())
             #disable reload command if gitpython isn't installed
@@ -210,8 +212,8 @@ class core(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        if not self.ready:
-            self.ready = True
+        if not self.bot.ready:
+            self.bot.ready = True
             self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
             self.logger.info("finishing startup...")
             self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
