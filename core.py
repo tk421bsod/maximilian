@@ -24,7 +24,8 @@ def get_prefix(bot, message):
             bot.loop.create_task(bot.prefixinst.update_prefix_cache())
         #fall back if something goes wrong
         except:
-            traceback.print_exc()
+            bot.logger.error("Something went wrong while updating the prefix cache. Falling back to '!'.")
+            bot.logger.error(traceback.format_exc())
             return "!"
     if not message.guild:
         return "!"
