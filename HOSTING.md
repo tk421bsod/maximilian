@@ -30,3 +30,10 @@ You can specify a logging level (which filters the information Maximilian output
 It defaults to -w if nothing's specified.
 For example, `python3 main.py -i` will start Maximilian with the INFO logging level.
 I recommend using `-i` as it outputs some information you wouldn't see at other logging levels.
+
+#known issues
+- Maximilian requires multiple custom emoji.
+I'm going to introduce the ability to change or disable these soontm.
+
+- None of Maximilian's `utils` commands work.
+This is because the owner id is set as mine. I'll make this an option soon.
