@@ -8,7 +8,6 @@ class userinfo(commands.Cog):
     '''Get information about a certain user.'''
     def __init__(self, bot):
         self.bot = bot
-        self.bot.requested_user = None
 
     #might need a refactor
     @commands.command(help="Get information about a certain user, including status, roles, profile picture, and permissions", aliases=['getuserinfo'])
@@ -21,7 +20,6 @@ class userinfo(commands.Cog):
             except:
                 await ctx.send("I couldn't find that user, so I'll show your information instead. Make sure that the user is in this server and you didn't make any typos.")
                 requested_user = ctx.author
-        await ctx.trigger_typing()
         rolestring = ""
         permissionstring = ""
         status = requested_user.status[0]
