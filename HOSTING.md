@@ -31,7 +31,7 @@ It defaults to -w if nothing's specified.
 For example, `python3 main.py -i` will start Maximilian with the INFO logging level.
 I recommend using `-i` as it outputs some information you wouldn't see at other logging levels.
 
-#known issues
+# known issues
 - Maximilian requires multiple custom emoji.
 I'm going to introduce the ability to change or disable these soontm.
 
