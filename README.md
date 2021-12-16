@@ -1,7 +1,8 @@
 # maximilian
 
 An easy to use Discord bot written in Python.
-May or may not have a website in the future.
+
+https://tk421bsod.github.io/maximilian
 
 # selfhosting
 See HOSTING.md.
