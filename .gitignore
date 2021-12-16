@@ -1,8 +1,10 @@
 *.txt
-songcache/*
 *.mp3
 *.pyc
 *.jpg
-imgcache/*
-logs/*
+imgcache
+logs
+songcache
+languages
 __pycache__
+config
