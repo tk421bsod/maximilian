@@ -1,6 +1,7 @@
 print("Loading libraries...")
 import asyncio
 import datetime
+import json
 import logging
 import os
 import subprocess
@@ -12,7 +13,6 @@ import discord
 from discord.ext.commands.errors import NoEntryPointError
 import pymysql
 from discord.ext import commands
-
 import common
 import core
 import errors
@@ -31,6 +31,34 @@ def get_latest_commit():
         return commit
     except Exception:
         pass
+
+def load_config():
+    config = {}
+    #Uncomment the following line to suppress KeyErrors. This may break stuff.
+    #import collections; config = collections.defaultdict(lambda: None)
+    with open('config', 'r') as configfile:
+        for i in configfile.readlines():
+            if not i.strip().startswith('#'):
+                i = i.strip().split(':',1)
+                config[i[0]] = i[1]
+    return config
+
+def initialize_i18n(bot):
+    bot.logger.info('Initializing i18n...')
+    if '--language' in sys.argv:
+        language = sys.argv[sys.argv.index('--language')+1]
+        supported = [i.split('.')[0] for i in os.listdir('languages') if i.endswith('.txt')]
+        if language not in supported:
+            bot.logger.error(f"That language isn't supported right now. The only supported languages are {supported}")
+            os._exit(25)
+    else:
+        bot.logger.info("No language specified, defaulting to en")
+        language = 'en'
+    bot.logger.info(f"Set language to {language}")
+    with open(f'languages/{language}', 'r') as data:
+        bot.i18n = json.load(data)
+    bot.logger.info('Initialized i18n, everything after this message will use the language above')
+
 
 def config_logging(args):
     #mapping of argument to logging level and status message
@@ -132,7 +160,7 @@ def load_extensions(bot):
                     error.original = commands.errors.NoEntryPointError('')
                 bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This extension won't be loaded.")
                 if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
-                    bot.logger.error(f"The {error.original.name} module isn't installed.")
+                    bot.logger.error(f"The {error.original.name} module isn't installed. Consider installing the packages in requirements_extra.txt.")
                 else:
                     bot.logger.error(traceback.format_exc())
     #create instances of certain cogs
@@ -157,28 +185,43 @@ async def wrap_event(bot):
 
 #wrap everything in a function to prevent conflicting event loops
 async def run(logger):
+    logger.debug("Loading settings from file...")
+    config = load_config()
+    logger.debug("Loaded settings from file!")
+    token = config['token']
     intents = discord.Intents.default()
     intents.members=True
+    logger.debug("Getting version information...")
     #figure out what we're logging in as
     tokenfilename, database, ver = get_release_level()
-    #show commit hash if not logging in as stable
+    logger.debug(f"Logging in as '{ver}'")
+    #show commit hash and get token from file if not logging in as stable
     if ver != 'stable':
+        token = common.token().get(tokenfilename)
         logger.debug("Getting latest commit hash...")
         commit = get_latest_commit()
         logger.debug("Done getting latest commit hash.")
     else:
         commit = ''
-    bot = commands.Bot(command_prefix=core.get_prefix, owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.6.2{f'-{commit}' if commit else ''} ({ver})"))
+    logger.debug("Setting up some stuff")
+    bot = commands.Bot(command_prefix=core.get_prefix, owner_id=config['owner_id'], intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v0.6.2{f'-{commit}' if commit else ''} ({ver})"))
     #set up some important stuff
     bot.database = database
     bot.logger = logger
+    try:
+        #experimental i18n, not used at the moment
+        #initialize_i18n(bot)
+        pass
+    except:
+        if '--i18n-errors' in sys.argv:
+            traceback.print_exc()
+        logger.critical('i18n initialization failed! Does the translation file exist?')
+        os._exit(53)
     #see the comment in core.py at around line 137 for an explanation of this
     bot.errors = errors
     await wrap_event(bot)
     #show version information
-    bot.logger.warning(f" Starting maximilian-{ver} v0.6.2{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
-    #get the token, this will exit if no token is found (also logs to INFO with filename)
-    token = common.token().get(tokenfilename)
+    bot.logger.warning(f"Starting maximilian-{ver} v0.6.2{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
     #parse additional arguments (ip, enablejsk, noload)
     bot.noload = []
     bot.logger.debug("Parsing command line arguments...")
@@ -188,8 +231,8 @@ async def run(logger):
     bot.prefixes = {}
     bot.responses = []
     bot.start_time = time.time()
-    bot.dbinst = common.db(bot)
-    bot.logger.debug("Done setting up database.")
+    bot.dbinst = common.db(bot, config['dbp'])
+    bot.logger.debug("Done setting up stuff.")
     #try to connect to database, exit if it fails
     bot.logger.info(f"Attempting to connect to database '{bot.database}' on '{bot.dbip}'...")
     try:
@@ -197,7 +240,7 @@ async def run(logger):
         bot.logger.info("Connected to database successfully.")
         bot.dbdisabled = False
     except pymysql.err.OperationalError:
-        bot.logger.critical(f"Couldn't connect to database! Make sure you passed the right IP address through --ip. \nIf you're able to connect to the server, create a user with the name 'maximilianbot' and a database named '{'maximilian' if ver == 'stable' else 'maximilian_test'}'.")
+        bot.logger.critical(f"Couldn't connect to database! \nMaybe try running setup.sh again?")
         os._exit(96)
     #make sure all tables exist
     try:
@@ -208,7 +251,8 @@ async def run(logger):
     load_extensions(bot)
     #and log in
     print("Logging in...")
-    await bot.start(token)
+    if not "--nologin" in sys.argv:
+        await bot.start(token)
 
 print("starting...")
 if "--verbose" in sys.argv or "--debug" in sys.argv or "-v" in sys.argv:
@@ -220,6 +264,9 @@ try:
     asyncio.run(run(logger))
 except KeyboardInterrupt:
     logger.error("KeyboardInterrupt detected. Exiting.")
+except KeyError:
+    logger.error("The configuration file is missing something. Try pulling changes and re-running setup.sh.")
+    logger.info(traceback.format_exc())
 except:
     logger.error("Uncaught exception! Exiting.")
     logger.error(traceback.format_exc())
