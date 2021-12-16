@@ -1,6 +1,10 @@
 # maximilian
 
 An easy to use Discord bot written in Python.
+May or may not have a website in the future.
+
+# selfhosting
+See HOSTING.md.
 
 # features
 
@@ -10,8 +14,6 @@ An easy to use Discord bot written in Python.
 - Tagging text for later use
 - Reminders
 - Todo lists
-
-# Maximilian has ceased development. See HOSTING.md for instructions on hosting this yourself.
 
 
 # obligatory support server link

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#uwu formatting
+#fancy text
 #these might not display correctly on some terminals 
 bold=$(tput bold)
 normal=$(tput sgr0)
@@ -31,7 +31,7 @@ then
 else 
     echo "${bold}You didn't pass any arguments, so the database will only be configured for local access.${normal} Maximilian will still be set up."
 fi
-echo "This script installs several packages (and also downloads some code) so ${bold}you'll need a stable Internet connection${normal}."
+echo "This script installs several packages (and also downloads some code) so ${bold}you'll need a stable Internet connection${normal} and around 1 gigabyte of free space."
 echo "You can press ${bold}Ctrl-C${normal} or ${bold}Ctrl-Z${normal} to quit at any time."
 echo "${bold}Read the README.md (and HOSTING.md) for Maximilian if you haven't already, because a README isn't any good if you don't read it.${normal}"
 echo ""
@@ -51,7 +51,7 @@ fi
 echo ""
 if [ ! -f "token.txt" -a ! $ip == '%' ];
 then
-    echo "It doesn't look like you've put a token in token.txt."
+    echo "It doesn't look like you've put a token in token.txt." 
     echo "Enter the token you want Maximiian to use. If you don't know what this is, create an application in Discord's Developer Portal, create a bot account for that application, and copy the account's token. Then paste it here."
     echo "Your input will be hidden to keep the token secret."
     read -s token
@@ -105,12 +105,13 @@ then
     packages+=" mariadb-server"
 fi
 sudo apt -y install $packages
+pip3 install -U pip
 echo ""
 if [ $nodb == 'false' ];
 then
     echo "Setting up the database..."
     sudo service mysql start
-    sudo mysql -Be "CREATE DATABASE maximilian; CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
+    sudo mysql -Be "CREATE DATABASE maximilian; CREATE DATABASE maximilian_test; CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE on maximilian_test.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
 else
     echo "Not setting up the database."
 fi

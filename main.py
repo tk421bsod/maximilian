@@ -9,12 +9,13 @@ import time
 import traceback
 
 import discord
+from discord.ext.commands.errors import NoEntryPointError
 import pymysql
 from discord.ext import commands
 
 import common
 import core
-
+import errors
 
 def get_latest_commit():
     try:
@@ -38,7 +39,7 @@ def config_logging(args):
     for key, value in levelmapping.items():
         if key not in args:
             pass
-        elif key in args and key != "-q" and key != "--quiet":
+        elif key != "-q" and key != "--quiet":
             logging.basicConfig(level=value[0], handlers=_handlers)
             print(value[1])
             logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
@@ -124,8 +125,11 @@ def load_extensions(bot):
             #catch the error so we can continue anyways
             except commands.ExtensionAlreadyLoaded:
                 bot.logger.debug(f"{cleanname} is already loaded, skipping")
-            except commands.ExtensionFailed as error:
+            except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
                 errorcount += 1
+                if not hasattr(error, 'original'):
+                    #only NoEntryPointError doesn't have original
+                    error.original = commands.errors.NoEntryPointError('')
                 bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This extension won't be loaded.")
                 if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
                     bot.logger.error(f"The {error.original.name} module isn't installed.")
@@ -142,6 +146,7 @@ def load_extensions(bot):
         bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
     bot.logger.info(f"loaded {extensioncount} extensions successfully ({errorcount} extension{'s' if errorcount != 1 else ''} not loaded), waiting for ready")
 
+#wrap the main on_message event in a function for prettiness
 async def wrap_event(bot):
     @bot.event
     async def on_message(message):
@@ -166,18 +171,18 @@ async def run(logger):
     #set up some important stuff
     bot.database = database
     bot.logger = logger
-    #on_message is wrapped so it looks better
+    #see the comment in core.py at around line 137 for an explanation of this
+    bot.errors = errors
     await wrap_event(bot)
     #show version information
     bot.logger.warning(f" Starting maximilian-{ver} v0.6.2{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
-    #this will exit if no token is found (also logs to INFO with filename)
+    #get the token, this will exit if no token is found (also logs to INFO with filename)
     token = common.token().get(tokenfilename)
     #parse additional arguments (ip, enablejsk, noload)
     bot.noload = []
     bot.logger.debug("Parsing command line arguments...")
     parse_arguments(bot, sys.argv)
     bot.logger.debug("Done parsing command line arguments.")
-    #this really shouldn't be here
     bot.guildlist = []
     bot.prefixes = {}
     bot.responses = []
@@ -215,6 +220,6 @@ try:
 except KeyboardInterrupt:
     logger.error("KeyboardInterrupt detected. Exiting.")
 except:
-    logger.error("Uncaught exception!")
+    logger.error("Uncaught exception! Exiting.")
     logger.error(traceback.format_exc())
 

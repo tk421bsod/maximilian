@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maximilian (bootstrap edition)</title>
+    <meta content="Maximilian - A Discord Bot" property="og:title" />
+    <meta content="A discord bot with some cool features that does some cool stuff." property="og:description" />
+    <meta content="https://tk421bsod.github.io/maximilian" property="og:url" />
+    <meta content="#36393f" data-react-helmet="true" name="theme-color" />
+    <title>Maximilian - A Discord Bot</title>
     <!-- <link rel="stylesheet" href="common.css"> -->
     <link href="./deps/bootstrap.min.css" rel="stylesheet">
     <script src="./deps/bootstrap.bundle.min.js"></script>
@@ -20,7 +24,6 @@
     </style>
 </head>
 <body>
-<!-- Taking a look at this and notice something that could be improved? Want to help out with development? Join the support server and/or make a PR on GitHub! -->
     <nav class="navbar navbar-expand-sm navbar-dark sticky-top" style="background-color: #36393f;" id="navbar" role="navigation">
         <div class="container-fluid justify-content-left text-left">
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,10 +43,12 @@
     <div class="container-fluid justify-content-center text-center align-items-center" id="main-content">
     <h1 style="font-size: 50pt; padding-bottom:20px; padding-top:30px;" id="header">Maximilian</h1>
     <h1 style="font-size:16pt;" class="mb-4" id="header-desc">A Discord bot with some cool features that does some cool stuff.</h1>
-    <a class="btn btn-secondary d-inline mx-auto" style="max-width:10rem" href="https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268814336&scope=bot" target="_blank">Invite Maximilian</a>
-    <a class="btn btn-secondary d-inline mx-auto" style="max-width:10rem" href="https://discord.gg/Ugpx8R8" target="_blank">Support Server</a>
+    <div class="btn-group">
+        <a class="btn btn-block btn-outline-light mr-5 pr-5" style="max-width:10rem" href="https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268814336&scope=bot" target="_blank">Invite Maximilian</a>
+        <a class="btn btn-block btn-outline-light ml-5 pl-5" style="max-width:10rem" href="https://discord.gg/Ugpx8R8" target="_blank">Support Server</a>
+    </div>
     <hr>
-        <h1 class="mb-5 mt-1" id="featurelist-header"><b>Features</b></h1>
+        <h1 class="mb-5 mt-2" id="header">Features</h1>
     <!-- this row had trouble stacking on mobile for a while, no clue why -->
     <div class="row mb-4 align-items-center justify-content-center w-100">
         <div class="col">
@@ -64,15 +69,19 @@
             <h2>Reaction Roles</h2>
         </div>
         <div class="col">
-            <p class="feature-desc">You can give users roles (certain sets of permissions) when they react to a message.</p>
+            <p class="feature-desc">You can give users a role when they react to a message.</p>
         </div>
     </div>
     </div>
     <footer class="footer text-center">Made with ♥️ by tk421 (<a style="color:white" href="https://github.com/tk421bsod" target="_blank">TK421bsod</a> on GitHub)</footer>
 <script>
+//sometimes the page will scroll a bit too far when using the 'Skip to content' link
+//this is an attempt to fix that
 if(window.location.href.includes('#main-content')){
-   setTimeout(function(){window.scrollTo(0,0);}, 50)
-}    
+    setTimeout(function(){window.scrollTo(0,0);}, 50)
+}
+
+function changebutton()
 </script>
 </body>
 </html>

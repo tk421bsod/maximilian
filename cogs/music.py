@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import functools
+import inspect
 import logging
 import time
 import traceback
@@ -12,6 +13,7 @@ import discord
 import ffmpeg
 import youtube_dl
 from discord.ext import commands
+
 #import lavalink
 #warning: this uses ffmpeg-python, not ffmpeg (the python module) or python-ffmpeg
 
@@ -26,9 +28,8 @@ class NoSearchResultsError(discord.ext.commands.CommandError):
 class FileTooLargeError(discord.ext.commands.CommandError):
     pass
 
-
 class Metadata():
-    '''An object that stores metadata about a song that's being searched for.'''
+    '''An object that stores metadata about a song that's being searched for. This is quite volatile, never access this unless you absolutely have to. (perhaps use current_song?)'''
     def __init__(self):
         self.duration = None
         self.filename = None
@@ -37,6 +38,15 @@ class Metadata():
         self.thumbnail = None
         self.info = None
 
+class CurrentSong(Metadata):
+    '''A subclass of Metadata that stores information about the current song. This is a lot less volatile than metadata; use this whenever possible'''
+    def __init__(self):
+        super().__init__()
+        self.volume = 0.5
+        self.paused_at = 0
+        self.start_time = 0
+        self.time_paused = 0
+
 class Player():
     '''An object that stores the queue and current song for a specific guild.'''
     def __init__(self, ctx, logger):
@@ -44,9 +54,9 @@ class Player():
         self.current_song = []
         self.guild = ctx.guild
         self.owner=ctx.author
-        logger.info(f"Created player for guild id {self.guild.id}")
         self.lock = asyncio.Lock()
         self.metadata = Metadata()
+        logger.info(f"Created player for guild id {self.guild.id}")
     
 
 class music(commands.Cog):
@@ -57,12 +67,6 @@ class music(commands.Cog):
         self.lock = asyncio.Lock()
         self.bot = bot
         self.players = {}
-        #lavalink stuff
-        #if not hasattr(bot, 'lavalink'): 
-        #    bot.lavalink = lavalink.Client(bot.user.id)
-        #    bot.lavalink.add_node('127.0.0.1', 2333, 'password', 'us', 'default-node')  # Host, Port, Password, Region, Name
-        #    bot.add_listener(bot.lavalink.voice_update_handler, 'on_socket_response')
-        #lavalink.add_event_hook(track_hook)
 
     async def _get_player(self, ctx):
         '''Gets a player if it exists, creates one if it doesn't exist'''
@@ -81,7 +85,7 @@ class music(commands.Cog):
         self.logger.info(f"Destroyed the player for guild {ctx.guild.id}")
 
     async def _check_player(self, ctx):
-        '''Checks if a player exists, returns False if it doesn't and True if it does'''
+        '''Returns whether a player exists'''
         try:
             self.players[ctx.guild.id]
         except KeyError:
@@ -89,7 +93,7 @@ class music(commands.Cog):
         return True
 
     async def _join_voice(self, ctx, channel):
-        '''Helper function that handles joining a voice channel'''
+        '''Joins a voice channel'''
         joiningmessage = await ctx.send("Joining your voice channel...")
         vc = ctx.voice_client
         if vc:
@@ -321,7 +325,7 @@ class music(commands.Cog):
                 async with aiohttp.ClientSession() as cs:
                     await cs.get(url)
             except Exception:
-                #if not, search youtube
+                #if not...
                 with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                     #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
                     self.logger.info("looking for song in db...")
@@ -390,7 +394,7 @@ class music(commands.Cog):
             return
         await self._join_voice(ctx, channel)
         #after connecting, download audio from youtube (try to get it from cache first to speed things up and save bandwidth)
-            #if locked, don't do anything until unlocked
+        #a lock is used to stop metadata from being overwritten until it's no longer needed
         async with player.lock:
             try:
                 async with ctx.typing():
