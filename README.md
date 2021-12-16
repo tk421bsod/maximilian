@@ -1,21 +1,7 @@
 # maximilian
 
 An easy to use Discord bot written in Python.
-May or may not have a website in the future.
+This branch will be used for active development of Maximilian 1.0, starting after the next release.
 
 # selfhosting
-See HOSTING.md.
-
-# features
-
-- Reaction roles
-- Plays music from Youtube
-- Customizable prefix
-- Tagging text for later use
-- Reminders
-- Todo lists
-
-
-# obligatory support server link
-
-https://discord.gg/Ugpx8R8
+If you really want to use this buggy af version of Maximilian, you need to host it yourself. See HOSTING.md for instructions.
