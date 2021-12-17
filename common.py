@@ -7,14 +7,17 @@ import pymysql
 class db:
     dbobj = ""
     dbc = ""
-    def __init__(self, bot=None):
+    def __init__(self, bot=None, password=None):
         self.error=""
         try:
-            bot.logger.debug("Getting database password from dbp.txt.")
-            with open("dbp.txt", "r") as dbpfile:
-                self.databasepassword = dbpfile.readline().strip()
+            if not password:
+                bot.logger.debug("Getting database password from dbp.txt.")
+                with open("dbp.txt", "r") as dbpfile:
+                    self.databasepassword = dbpfile.readline().strip()
+            else:
+                self.databasepassword = password
         except FileNotFoundError:
-            print("Couldn't find a file containing the database password. It needs to be named 'dbp.txt'. \nIf you haven't run setup.sh yet, run it.")
+            print("Couldn't find a file containing the database password. \nIf you haven't run setup.sh yet, run it.")
             os._exit(14)
         if bot:
             self.ip = bot.dbip
@@ -34,7 +37,7 @@ class db:
                 self.dbc.execute(f'select * from {table}')
             except pymysql.err.ProgrammingError:
                 self.logger.warning(f'Table {self.database}.{table} doesn\'t exist. Creating it...')
-                self.logger.debug(schema)
+                self.logger.debug(f"Schema for this table is {schema}")
                 self.dbc.execute(f'create table {table}({schema})')
                 if not self.failed:
                     self.failed = True
@@ -54,11 +57,9 @@ class db:
         self.dbc=self.dbobj.cursor()
         return self.dbc
 
-    #TODO: remove these old shitty methods (insert, delete, retrieve, exec_query)
+    #TODO: remove these really old methods (insert, delete, retrieve, exec_query)
 
     def insert(self, database, table, valuesdict, valuenodupe, debug=False, valueallnum=None, valueallnumenabled=False, extraparam=None, extraparamenabled=False):
-        #this might be vulnerable to sql injection, it depends on whether pymysql escapes stuff passed to execute as a positional argument after the query. i've heard it does, but i'm still skeptical.
-        #valuesdict's values are the only things that are passed by the user
         #self.logger.warning(f"DeprecationWarning: This function is deprecated. Use 'exec_safe_query' instead. \n{inspect.getsource(inspect.stack()[1][0])}")
         if debug == False:
             self.dbc = self.connect(database)
