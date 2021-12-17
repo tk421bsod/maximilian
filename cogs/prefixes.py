@@ -58,7 +58,7 @@ class prefixes(commands.Cog):
             self.bot.dbinst.exec_safe_query(self.bot.database, "update prefixes set prefix = %s where guild_id = %s", (newprefix, ctx.guild.id))
         else:
             self.bot.dbinst.exec_safe_query(self.bot.database, "insert into prefixes values(%s, %s)", (ctx.guild.id, newprefix))
-        await self.update_prefix_cache(ctx.guild.id)
+        await self.update_prefix_cache()
         await ctx.send(f"Set my prefix to `{newprefix}`.")
               
             
