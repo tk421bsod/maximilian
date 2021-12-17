@@ -52,7 +52,7 @@ class prefixes(commands.Cog):
         if not ctx.guild:
             return await ctx.send("You can't change my prefix in a DM.")
         if _is_prefix_same(ctx.guild, newprefix):
-            return await ctx.send(f"My prefix in this server is already set to `{newprefix}`!"
+            return await ctx.send(f"My prefix in this server is already set to `{newprefix}`!")
         await ctx.send(f"Ok. Changing prefix to {newprefix}...")
         if _get_prefix_if_exists(ctx.guild):
             self.bot.dbinst.exec_safe_query("update prefixes set prefix = %s where guild_id = %s", (newprefix, ctx.guild.id))
