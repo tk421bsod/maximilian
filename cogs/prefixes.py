@@ -20,7 +20,7 @@ class prefixes(commands.Cog):
             return None
         
     def _is_prefix_same(self, guild, prefix):
-        return _get_prefix_if_exists(guild) == prefix
+        return self._get_prefix_if_exists(guild) == prefix
         
     async def _fetch_prefix(self, guild_id):
         '''Fetches a prefix corresponding to a guild id from the database'''
