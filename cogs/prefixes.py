@@ -54,7 +54,8 @@ class prefixes(commands.Cog):
         if self._is_prefix_same(ctx.guild, newprefix):
             return await ctx.send(f"My prefix in this server is already set to `{newprefix}`!")
         await ctx.send(f"Ok. Changing prefix to {newprefix}...")
-        if self._get_prefix_if_exists(ctx.guild):
+        oldprefix = self._get_prefix_if_exists(ctx.guild)
+        if oldprefix and self.bot.dbinst.exec_safe_query(self.bot.database, "select * from prefixes where guild_id = %s", (ctx.guild.id)):
             self.bot.dbinst.exec_safe_query(self.bot.database, "update prefixes set prefix = %s where guild_id = %s", (newprefix, ctx.guild.id))
         else:
             self.bot.dbinst.exec_safe_query(self.bot.database, "insert into prefixes values(%s, %s)", (ctx.guild.id, newprefix))
