@@ -3,83 +3,18 @@ import logging
 import traceback
 
 import discord
-import pytz
 from discord.ext import commands
-
-
-import discord
-import pytz
-from discord.ext import commands
-
-
-class tz_setup_request():
-    def __init__(self):
-        self.waiting = False
-
-    async def validate_tz(self, message):
-        try:
-            if "GMT" in message.content or "UTC" in message.content:
-                self.tz = f"Etc/{message.content.strip().replace('UTC', 'GMT')}"
-                pytz.timezone(self.tz)
-            else:
-                self.tz = message.content.strip().replace(" ", "_")
-                pytz.timezone(self.tz)
-            return True
-        except pytz.exceptions.UnknownTimeZoneError:
-            traceback.print_exc()
-            return False
-
-    async def confirm(self, ctx, message):
-        originaltimezone = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from timezones where user_id=%s", (ctx.author.id,))
-        if originaltimezone:
-            desc = f"Your timezone was set to `{originaltimezone['timezone']}`, and you're changing it to `{self.tz}`. \n**Do you want to change it?**\nReact with \U00002705 to change your timezone or react with <:red_x:813135049083191307> to cancel."
-        else:
-            desc = f"You've said that your timezone is `{message.content.strip()}`. \n**Is this the correct timezone?** \nReact with \U00002705 to set your timezone or react with <:red_x:813135049083191307> to cancel."
-        confirmationmessage = await ctx.send(embed=discord.Embed(title="Confirm timezone change", description=f"{desc}").set_footer(text="You can always change this later using the tzsetup command."))
-        await confirmationmessage.add_reaction("\U00002705")
-        await confirmationmessage.add_reaction("<:red_x:813135049083191307>")
-        await asyncio.sleep(0.5)
-        self.waiting = True
-        try:
-            while self.waiting:
-                reaction = await self.bot.wait_for('reaction_add', timeout=60.0)
-                async for each in reaction[0].users():
-                    if ctx.message.author == each:
-                        if self.bot.dbinst.exec_safe_query(self.bot.database, "select * from timezones where user_id=%s", (ctx.author.id,)):
-                            self.bot.dbinst.exec_safe_query(self.bot.database, "delete from timezones where user_id=%s", (ctx.author.id,))
-                        self.waiting_for_reaction = False
-                        self.bot.dbinst.exec_safe_query(self.bot.database, "insert into timezones values(%s, %s)", (ctx.author.id, self.tz))
-                        self.bot.timezones[ctx.author.id] = self.tz
-                        return await ctx.send(embed=discord.Embed(title=f"\U00002705 {'Changed' if originaltimezone else 'Set'} your timezone to `{self.tz}`!"))
-        except asyncio.TimeoutError:
-            await ctx.send("You took too long to react. Run `tzsetup` again if you want to set your timezone.")
-
-    async def handle_tz_change(self, bot, ctx):
-        self.waiting = True
-        self.bot = bot
-        try:
-            while self.waiting:
-                message = await bot.wait_for('message', timeout=120.0)
-                if message.author == ctx.author:
-                    if await self.validate_tz(message):
-                        self.waiting = False
-                        return await self.confirm(ctx, message)
-                    await ctx.send("That's not a valid timezone!")
-        except asyncio.TimeoutError:
-            self.waiting = False
-            await ctx.send("You took too long. Run `tzsetup` again if you want to set your timezone.")
-            return
 
 class settings(commands.Cog):
-    '''Change Maximilian\'s settings (changes only apply to you or your server)'''
+    '''Change Maximilian\'s settings'''
     def __init__(self, bot, load=False):
         self.bot = bot
-        #timezone cache when
-        self.bot.timezones = {}
         self.bot.settings = {}
         #mapping of setting name to description
-        self.settingdescmapping = {'deadchat':'automatic replies to *dead chat*'}
+        self.settingdescmapping = {"deadchat":"Automatic replies to **dead chat**."}
+        self.unusablewithmapping = {"deadchat":None}
         self.logger = logging.getLogger(name="cogs.config")
+        self.unusablewithmessage = ""
         if load:
             bot.loop.create_task(self.fill_settings_cache())
             self.logger.debug("Created a task for filling the setting cache")
@@ -90,85 +25,100 @@ class settings(commands.Cog):
         try:
             data = self.bot.dbinst.exec_safe_query(self.bot.database, 'select * from config', (), fetchall=True)
         except:
-            self.logger.debug('An error occurred while filling the setting cache, falling back to every setting disabled')
+            traceback.print_exc()
+            self.logger.warning('An error occurred while filling the setting cache, falling back to every setting disabled')
             data = []
-            #if something went wrong, fall back to everything off
-            #TODO: make all caches do this (also make design of caches somewhat consistent)
+            #if something went wrong, fall back to everything off to prevent console spam
             for name in list(self.settingdescmapping.keys()):
                 for guild in self.bot.guilds:
                     data.append({'setting':name, 'guild_id':guild.id, 'enabled':False})
         else:
             if not data:
-                self.logger.info("No settings are in the database for some reason. Creating the row and falling back to every setting disabled")
+                self.logger.info("No settings are in the database for some reason. Creating an entry for each setting and falling back to every setting disabled")
                 data = []
                 for name in list(self.settingdescmapping.keys()):
                     self.bot.dbinst.exec_safe_query(self.bot.database, 'insert into config values(%s, %s, %s)', (self.bot.guilds[0].id, name, False))
                     for guild in self.bot.guilds:
                         data.append({'setting':name, 'guild_id':guild.id, 'enabled':False})
         tempsettings = {}
-        #one design flaw of this is that there needs to be at least one entry in the database for each setting
-        #probably could just make one row null idk
         for setting in data:
+            #initialize settings to blank dicts to prevent keyerrors
             tempsettings[setting['setting']] = {}
         for setting in data:
             for guild in self.bot.guilds:
                 if setting['guild_id'] == guild.id:
                     if setting['enabled'] is not None:
-                        tempsettings[setting['setting']][guild.id] = bool(setting['enabled']) 
+                        tempsettings[setting['setting']][guild.id] = bool(setting['enabled'])
                     else:
                         tempsettings[setting['setting']][guild.id] = False
         self.bot.settings = tempsettings
         self.logger.info("Done filling settings cache.")
         
-    
-    async def timezone_setup(self, ctx):
-        await ctx.send(embed=discord.Embed(title="Timezone Setup", description="To choose a timezone, enter the name or the GMT/UTC offset of your timezone."))
-        await tz_setup_request().handle_tz_change(self.bot, ctx)
+    async def update_setting(self, ctx, setting):
+        if not self.bot.dbinst.exec_safe_query(self.bot.database, "select * from config where guild_id=%s", (ctx.guild.id)):
+                self.bot.dbinst.exec_safe_query(self.bot.database, "insert into config values(%s, %s, %s)", (ctx.guild.id, setting, True))
+        else:
+            self.bot.dbinst.exec_safe_query(self.bot.database, "update config set enabled=%s where guild_id=%s and setting=%s", (not self.bot.settings[setting][ctx.guild.id], ctx.guild.id, setting))
 
-    @commands.command(help="Set or change your timezone.", aliases=["timezonesetup"], hidden=True)
-    async def tzsetup(self, ctx):
-        await self.timezone_setup(ctx)
-    
+    async def prepare_conflict_string(self, conflicts):
+        q = "'"
+        if not isinstance(conflicts, list):
+            return f"{q}*{conflicts}*{q}"
+        return f"{', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]])} and '*{conflicts[-1]}*'"
+
+    async def resolve_conflicts(self, ctx, setting):
+        if isinstance(self.unusablewithmapping[setting], list):
+            resolved = []
+            for conflict in self.unusablewithmapping[setting]:
+                if self.bot.settings[conflict][ctx.guild.id]:
+                    await self.update_setting(ctx, conflict)
+                    resolved.append(conflict)
+        else:
+            if self.unusablewithmapping[setting] and self.bot.settings[self.unusablewithmapping[setting]][ctx.guild.id]:
+                await self.update_setting(ctx, self.unusablewithmapping[setting])
+                resolved = self.unusablewithmapping[setting]
+            else:
+                self.unusablewithmessage = ""
+                return
+        if len(resolved) == 1:
+            resolved = resolved[0]
+        if not resolved:
+            self.unusablewithmessage = ""
+            return
+        self.unusablewithmessage = f"**Automatically disabled** {await self.prepare_conflict_string(resolved)} due to a conflict."
+
     #customizable permissions when
     @commands.command()
-    async def config(self, ctx, setting=None):
+    async def config(self, ctx, *, setting=None):
         '''Toggles the specified setting. Settings are off by default.'''
         if not setting:
-            embed = discord.Embed(title="Settings for this server")
+            embed = discord.Embed(title="Settings", color=0xFDFE00)
             for key, value in list(self.bot.settings.items()):
                 if ctx.guild.id in list(value.keys()):
-                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}", inline=True)
-            embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses.")
+                    unusablewith = self.unusablewithmapping[key]
+                    if unusablewith:
+                        unusablewithwarning = f"Cannot be enabled at the same time as {await self.prepare_conflict_string(unusablewith)}"
+                    else:
+                        unusablewithwarning = ""
+                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning} ", inline=True)
+            embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings only apply to your server.")
             return await ctx.send(embed=embed)
         try:
             self.bot.settings[setting]
         except KeyError:
             return await ctx.send("That setting doesn't exist. Check the spelling.")
         try:
-            #does this setting already exist?
-            if not self.bot.dbinst.exec_safe_query(self.bot.database, "select * from config where guild_id=%s", (ctx.guild.id)):
-                self.bot.dbinst.exec_safe_query(self.bot.database, "insert into config values(%s, %s, %s)", (ctx.guild.id, setting, False))
-            else:
-                self.bot.dbinst.exec_safe_query(self.bot.database, "update config set enabled=%s where guild_id=%s and setting=%s", (not self.bot.settings[setting][ctx.guild.id], ctx.guild.id, setting))
-        #probably should be more explicit
+            #update setting state
+            await self.update_setting(ctx, setting)
+            #check for conflicts and resolve them
+            await self.resolve_conflicts(ctx, setting)
         except:
             await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
-            return await ctx.send(f"<:blobpain:822921526629236797> Something went wrong while changing that setting. Try again in a moment. If this keeps happening, tell tk421#2016. \n<:blobpeek:846768868738596924> I've also reported this error to tk421.")
+            return await ctx.send(f"<:blobpain:822921526629236797> Something went wrong while changing that setting. Try again in a moment. \n<:blobpeek:846768868738596924> I've reported this error to tk421.")
         #probably should manually add to cache instead
         #(this is because manually adding one entry to cache is O(1) while running update_settings_cache is O(n^2) where n is len(bot.guilds))
         await self.fill_settings_cache()
-        await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"{'Disabled' if not self.bot.settings[setting][ctx.guild.id] else 'Enabled'} {self.settingdescmapping[setting]}.").set_footer(text=f"Send this command again to turn this back {'off' if self.bot.settings[setting][ctx.guild.id] else 'on'}."))
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        try:
-            self.bot.settings['deadchat'][message.guild.id]
-        #keyerrors here should not happen
-        except KeyError:
-            #default to on
-            self.bot.settings['deadchat'][message.guild.id] = False
-        if self.bot.settings['deadchat'][message.guild.id] and "dead chat" in message.content.lower():
-            await message.reply(content="https://media.discordapp.net/attachments/768537268452851754/874832974275809290/QRLi7Hv.png")
+        await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"**{'Disabled' if not self.bot.settings[setting][ctx.guild.id] else 'Enabled'}** *{self.settingdescmapping[setting]}*.\n{self.unusablewithmessage}", color=0xFDFE00).set_footer(text=f"Send this command again to turn this back {'off' if self.bot.settings[setting][ctx.guild.id] else 'on'}."))
 
 def setup(bot):
     bot.add_cog(settings(bot, True))
