@@ -17,7 +17,7 @@ class prefixes(commands.Cog):
         try:
             return self.bot.prefixes[guild.id]
         except KeyError:
-            return None
+            return "!"
         
     def _is_prefix_same(self, guild, prefix):
         return self._get_prefix_if_exists(guild) == prefix
@@ -48,19 +48,18 @@ class prefixes(commands.Cog):
         
     @commands.has_permissions(manage_guild=True)
     @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission. ", aliases=['prefixes'])
-    async def prefix(self, ctx, newprefix):
+    async def prefix(self, ctx, new_prefix):
         if not ctx.guild:
             return await ctx.send("You can't change my prefix in a DM.")
-        if self._is_prefix_same(ctx.guild, newprefix):
-            return await ctx.send(f"My prefix in this server is already set to `{newprefix}`!")
-        await ctx.send(f"Ok. Changing prefix to {newprefix}...")
-        oldprefix = self._get_prefix_if_exists(ctx.guild)
-        if oldprefix and self.bot.dbinst.exec_safe_query(self.bot.database, "select * from prefixes where guild_id = %s", (ctx.guild.id)):
-            self.bot.dbinst.exec_safe_query(self.bot.database, "update prefixes set prefix = %s where guild_id = %s", (newprefix, ctx.guild.id))
+        if self._is_prefix_same(ctx.guild, new_prefix):
+            return await ctx.send(f"My prefix in this server is already set to `{new_prefix}`!")
+        await ctx.send(f"Ok. Changing prefix to {new_prefix}...")
+        if self.bot.dbinst.exec_safe_query(self.bot.database, "select * from prefixes where guild_id = %s", (ctx.guild.id, )):
+            self.bot.dbinst.exec_safe_query(self.bot.database, "update prefixes set prefix = %s where guild_id = %s", (new_prefix, ctx.guild.id))
         else:
-            self.bot.dbinst.exec_safe_query(self.bot.database, "insert into prefixes values(%s, %s)", (ctx.guild.id, newprefix))
-        await self.update_prefix_cache()
-        await ctx.send(f"Set my prefix to `{newprefix}`.")
+            self.bot.dbinst.exec_safe_query(self.bot.database, "insert into prefixes values(%s, %s)", (ctx.guild.id, new_prefix))
+        await self.update_prefix_cache(ctx.guild.id)
+        await ctx.send(f"Set my prefix to `{new_prefix}`.")
               
             
 
@@ -69,3 +68,4 @@ def setup(bot):
 
 def teardown(bot):
     bot.remove_cog(prefixes(bot))
+
