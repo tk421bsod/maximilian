@@ -34,7 +34,7 @@ def get_latest_commit():
 
 def load_config():
     config = {}
-    #Uncomment the following line to suppress KeyErrors. This may break stuff.
+    #Uncomment the following line to suppress KeyErrors that can happen when trying to access config. This may break stuff.
     #import collections; config = collections.defaultdict(lambda: None)
     with open('config', 'r') as configfile:
         for i in configfile.readlines():
@@ -63,7 +63,11 @@ def initialize_i18n(bot):
 def config_logging(args):
     #mapping of argument to logging level and status message
     levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e ":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
-    _handlers = [logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"), logging.StreamHandler(sys.stdout)]
+    _handlers = [logging.StreamHandler(sys.stdout)]
+    if os.path.isdir('logs'):
+        _handlers.append(logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"))
+    else:
+        print("The 'logs' directory doesn't exist! Not logging to a file.")
     for key, value in levelmapping.items():
         if key not in args:
             pass
@@ -209,6 +213,10 @@ async def run(logger):
     bot.database = database
     bot.logger = logger
     try:
+        bot.USE_CUSTOM_EMOJI = config['custom_emoji']
+    except KeyError:
+        bot.USE_CUSTOM_EMOJI = False
+    try:
         #experimental i18n, not used at the moment
         #initialize_i18n(bot)
         pass
@@ -217,11 +225,11 @@ async def run(logger):
             traceback.print_exc()
         logger.critical('i18n initialization failed! Does the translation file exist?')
         os._exit(53)
-    #see the comment in core.py at around line 137 for an explanation of this
+    #see the comment in core.py at around line 137 for an explanation of the following line
     bot.errors = errors
     await wrap_event(bot)
     #show version information
-    bot.logger.warning(f"Starting maximilian-{ver} v0.6.2{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
+    bot.logger.warning(f"Starting maximilian-{ver} v1.0.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
     #parse additional arguments (ip, enablejsk, noload)
     bot.noload = []
     bot.logger.debug("Parsing command line arguments...")
@@ -254,9 +262,8 @@ async def run(logger):
     if not "--nologin" in sys.argv:
         await bot.start(token)
 
-print("starting...")
-if "--verbose" in sys.argv or "--debug" in sys.argv or "-v" in sys.argv:
-    print("DEBUG:maximilian:Setting up logging...")
+print("starting... \n")
+print("Setting up logging...")
 #set a logging level
 config_logging(sys.argv)
 logger = logging.getLogger(f'maximilian')
