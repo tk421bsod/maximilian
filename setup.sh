@@ -35,6 +35,7 @@ then
     echo "Deleted old data."
     echo ""
 fi
+
 if [ -f config ];
 then
     echo "It looks like you've already run setup.sh."
