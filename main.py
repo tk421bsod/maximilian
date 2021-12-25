@@ -280,8 +280,8 @@ async def run(logger):
     if not "--nologin" in sys.argv:
         await bot.start(token)
 
-print("starting... \n")
-print("Setting up logging...")
+print("starting...")
+print("setting up logging...")
 #set a logging level
 config_logging(sys.argv)
 logger = logging.getLogger(f'maximilian')
