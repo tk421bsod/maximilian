@@ -17,6 +17,17 @@ import common
 import core
 import errors
 
+class Version:
+    def __init__(self):
+        self.major = 0
+        self.minor = 0
+        self.patch = 0
+
+def parse_version(versionstring):
+    version = Version()
+    version.major, version.minor, version.patch = [int(i) for i in versionstring.replace('a','').split('.')]
+    return version
+
 def get_latest_commit():
     try:
         commit = ""
@@ -196,6 +207,13 @@ async def run(logger):
     intents = discord.Intents.default()
     intents.members=True
     logger.debug("Getting version information...")
+    if parse_version(discord.__version__).major < 2:
+        bot.logger.debug("using dpy 1.x")
+        bot.IS_DPY_2 = False
+    else:
+        bot.IS_DPY_2 = True
+        bot.logger.debug("using dpy 2.x")
+        bot.logger.warning("It looks like Maximilian is using discord.py 2.x. Use of dpy2 is not recommended for now due to some serious bugs.")
     #figure out what we're logging in as
     tokenfilename, database, ver = get_release_level()
     logger.debug(f"Logging in as '{ver}'")
