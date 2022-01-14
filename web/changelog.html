@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="Maximilian - A Discord Bot" property="og:title" />
+    <meta content="A discord bot with some cool features that does some cool stuff." property="og:description" />
+    <meta content="https://tk421bsod.github.io/maximilian" property="og:url" />
+    <meta content="#36393f" data-react-helmet="true" name="theme-color" />
+    <title>Maximilian - Changelog</title>
+    <!-- <link rel="stylesheet" href="common.css"> -->
+    <link href="./deps/bootstrap.min.css" rel="stylesheet">
+    <!-- TODO: selfhost this -->
+    <script src="https://kit.fontawesome.com/8fc545e587.js" crossorigin="anonymous"></script>
+    <script src="./deps/bootstrap.bundle.min.js"></script>
+    <style>
+        body, a{
+            background-color: #36393f;
+            color:white;
+            font-smooth:always;
+            -webkit-font-smoothing:subpixel-antialiased;
+        }
+        #header{
+            font-weight:400;
+        }
+        .release-date{
+            font-size: 9pt;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-sm navbar-dark sticky-top" style="background-color: #36393f;" id="navbar" role="navigation">
+        <div class="container-fluid justify-content-left text-left">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-center text-center" id="navbarSupportedContent">
+                <ul class="navbar-nav w-100 nav-justified">
+                    <li class="visually-hidden-focusable nav-item"><a href="#main-content" class="visually-hidden-focusable nav-link" onclick="setTimeout(function(){window.scrollTo(0,0)}, 50);">Skip to content</a></li>
+                    <li class="nav-item"><a class="nav-link" href="./index.html">Home</a></li>
+                    <li class="nav-item"><a id="active" class="nav-link active" href=".">Changelog</a></li>
+                    <li class="nav-item"><a class="nav-link" href="https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268814336&scope=bot" target="_blank"><i class="fas fa-external-link-alt"></i> Invite</a></li>
+                    <li class="nav-item"><a class="nav-link" href="https://github.com/tk421bsod/maximilian" target="_blank"><i class="fas fa-external-link-alt"></i> Source Code</a></li>
+                    <li class="nav-item"><a class="nav-link" href="https://discord.gg/Ugpx8R8" target="_blank"><i class="fas fa-external-link-alt"></i> Support Server</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid justify-content-center text-center align-items-center" id="main-content">
+        <h1 style="font-size: 50pt; padding-bottom:5px; padding-top:30px;">Changelog</h1>
+        <h5>This is a collection of release notes.</h5>
+        <p style="font-size: 9pt;">*A quick disclaimer: While I try to include every change in a release, these changelogs may omit a few small changes. Look through Maximilian's commit history to get even greater detail on changes.</p>
+        <hr>
+        <br>
+        <h3 class="pb-0 mb-0">v0.6.0</h3>
+        <p class="mt-0 release-date">released on 20 April 2021</p>
+        <ul class="mx-auto" style="background-color:#36393f; max-width:40rem;">
+            <li class="">Lots of changes to the startup process</li>
+            <li class="">Bug fixes and performance improvements for the music extension</li>
+            <li class="">A complete rework of todo lists</li>
+            <li class="">discord.py 1.7.1</li>
+            <li class="">Improvements to selfhosting</li>
+        </ul>
+        <br>
+        <h3 class="pb-0 mb-0">v0.5.2</h3>
+        <p class="mt-0 release-date">released on 18 March 2021</p>
+        <ul class="mx-auto" style="background-color:#36393f; max-width:40rem;">
+            <li class="">You can now specify a logging level through command line arguments</li>
+            <li class="">'Added to queue' messages look better</li>
+            <li class="">Major restructuring of core code for easier maintenance</li>
+            <li class="">New command that removes items from the song queue</li>
+            <li class="">Total duration now shows hours</li>
+        </ul>
+        <br>
+        <h3 class="pb-0 mb-0">v0.5.0</h3>
+        <p class="mt-0 release-date">released on 28 February 2021</p>
+        <ul class="mx-auto" style="background-color:#36393f; max-width:40rem;">
+            <li class="">New `images` extension, with a set of commands that apply effects to avatars</li>
+            <li class="">Better error handling for missing permissions</li>
+            <li class="">Bug fixes for the music extension</li>
+            <li>Performance improvements for the music extension, allowing for playback without gaps</li>
+            <li class="">Improvements to todo addition/deletion messages</li>
+            <li class="">New `rolemembers` command that shows people with the specified role</li>
+            <li>Added the ability to delete your entire todo list (`todo deleteall`)</li>
+            <li>New `source` command that shows source code for the specified command</li>
+            <li>New `stop` command that stops music</li>
+        </ul>
+        <br>
+        <h3 class="pb-0 mb-0">v0.4.0</h3>
+        <p class="mt-0 release-date">released on 10 February 2021</p>
+        <ul class="mx-auto" style="background-color:#36393f; max-width:40rem;">
+            <li class="">Many new features for the music extension</li>
+            <li class="">A few minor internal improvements to custom commands</li>
+        </ul>
+        <br>
+        <h3 class="pb-0 mb-0">v0.3.0</h3>
+        <p class="mt-0 release-date">released on 23 January 2021</p>
+        <ul class="mx-auto" style="background-color:#36393f; max-width:40rem;">
+            <li>New extension -- music!</li>
+            <li>Added support for playing music from Youtube</li>
+            <li>Songs are added to a queue if you try to play songs while one's already playing</li>
+        </ul>
+        <h3 class="pb-0 mb-0">v0.1.0</h3>
+        <p class="mt-0 release-date">released on 21 November 2020</p>
+        <ul class="mx-auto" style="background-color:#36393f; max-width:40rem;">
+            <li>Misc. bug fixes</li>
+            <li>Added version to status</li>
+            <li>Made Maximilian public</li>
+            <li>New help command</li>
+            <li>Organized code into modules</li>
+        </ul>
+        <br>
+        <h3 class="pb-0 mb-0">pre-rewrite</h3>
+        <p class="mt-0 release-date">before september 2020</p>
+        <div class="mx-auto" style="background-color:#36393f; max-width:40rem;">
+            <p>No releases are documented before this point. Maximilian was first brought online on 7 September 2019 and was completely rewritten from <a href="https://github.com/TK421bsod/maximilian/commit/a47f5d5a8eed1a5048704cd6c16d42217689be5a" target="_blank"><i class="fas fa-external-link-alt fa-sm"></i> 16 April 2020</a> to early September 2020.</p>
+        </div>
+        <br>
+    </div>
+    <footer class="footer text-center" style="color:#898f9c">Made with ♥️ by tk421 (<a style="color:#898f9c" href="https://github.com/tk421bsod" target="_blank">TK421bsod</a> on GitHub)</footer>
+<script>
+//sometimes the page will scroll a bit too far when using the 'Skip to content' link
+//this is an attempt to fix that
+if(window.location.href.includes('#main-content')){
+    setTimeout(function(){window.scrollTo(0,0);}, 50)
+}
+</script>
+</body>
+</html>
