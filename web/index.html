@@ -10,7 +10,6 @@
     <title>Maximilian - A Discord Bot</title>
     <!-- <link rel="stylesheet" href="common.css"> -->
     <link href="./deps/bootstrap.min.css" rel="stylesheet">
-    <!-- TODO: selfhost this -->
     <script src="https://kit.fontawesome.com/8fc545e587.js" crossorigin="anonymous"></script>
     <script src="./deps/bootstrap.bundle.min.js"></script>
     <style>
@@ -36,7 +35,7 @@
                 <ul class="navbar-nav w-100 nav-justified">
                     <li class="visually-hidden-focusable nav-item"><a href="#main-content" class="visually-hidden-focusable nav-link" onclick="setTimeout(function(){window.scrollTo(0,0)}, 50);">Skip to content</a></li>
                     <li class="nav-item"><a id="active" class="nav-link active" href=".">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="./changelog.html">Changelog</a></li>
+                    <!-- <li class="nav-item"><a class="nav-link" href="./changelog.html">Changelog</a></li> -->
                     <li class="nav-item"><a class="nav-link" href="https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=268814336&scope=bot" target="_blank"><i class="fas fa-external-link-alt"></i> Invite</a></li>
                     <li class="nav-item"><a class="nav-link" href="https://github.com/tk421bsod/maximilian" target="_blank"><i class="fas fa-external-link-alt"></i> Source Code</a></li>
                     <li class="nav-item"><a class="nav-link" href="https://discord.gg/Ugpx8R8" target="_blank"><i class="fas fa-external-link-alt"></i> Support Server</a></li>
@@ -52,7 +51,7 @@
         <a class="btn btn-block btn-outline-light" style="" href="https://discord.gg/Ugpx8R8" target="_blank">Support Server</a>
     </div>
     <hr>
-        <h1 class="mb-5 mt-2">Why Maximilian?</h1>
+        <h1 class="mb-5 mt-2">Features</h1>
     <!-- this row had trouble stacking on mobile for a while, no clue why -->
     <div class="row mb-4 align-items-center justify-content-center w-100">
         <div class="col">
@@ -62,7 +61,7 @@
             <h2>Feature-rich</h2>
         </div>
         <div class="col">
-            <p>Say goodbye to using a multitude of bots.<br>Maximilian has a ton of features that improve your Discord server, like reaction roles, music, reminders, todo lists, and moderation.</p>
+            <p>Play music from Youtube (other sources coming soon), with support for streams, adjustable volume, and a queue.</p>
         </div>
     </div>
    <!-- 
@@ -86,35 +85,22 @@
             <h2>Completely Free</h2>
         </div>
         <div class="col">
-            <p>Wondering how much the premium version costs? There's no such thing. None of Maximilian's features are locked behind paywalls.</p>
+            <p class="feature-desc">Give users a role when they react to a message.</p>
         </div>
     </div>
-
-    <div class="row mb-4 align-items-center justify-content-center w-100">
-        <div class="col">
-            <img src="./img/placeholder.jpg" style="width:25rem; height:auto;" alt="Placeholder image">
-        </div>
-        <div class="col">
-            <h2>Forever Open-Source</h2>
-        </div>
-        <div class="col">
-            <p>Concerned about Maximilian giving you a virus/stealing your data/spamming you with Nitro scams/logging your IP?<br>To help answer questions like this, Maximilian's source code is available at <a class='link-light' href="https://github.com/tk421bsod/maximilian" target="_blank"><i class="fas fa-external-link-alt fa-sm"></i> github.com/tk421bsod/maximilian</a>.</p>
-        </div>
-    </div>
-
     <div class="row mt-4 align-items-center justify-content-center w-100">
-        <div class="col">
-            <img src="./img/customizability.png" style="width:25rem; height:auto;" alt="Image showing Maximilian's extensibility">
-        </div> 
+        <!-- <div class="col">
+            <img src="./img/reactionroleassign.png" id="reactionroleimage" alt="Image showing someone recieving a role by reacting to a message">
+        </div> -->
         <div class="col">
             <h2>Customizable</h2>
         </div>
         <div class="col">
-            <p class="feature-desc">Easy setup, an easy-to-use extension API, and a modular design make Maximilian the most customizable Discord bot out there.</p>
+            <p class="feature-desc">Easy setup, an easy-to-use extension API, and a modular design make Maximilian the most customizable bot out there.</p>
         </div>
     </div>
     </div>
-    <footer class="footer text-center" style="color:#898f9c">Made with ♥️ by tk421 (<a style="color:#898f9c" href="https://github.com/tk421bsod" target="_blank">TK421bsod</a> on GitHub)</footer>
+    <footer class="footer text-center">Made with ♥️ by tk421 (<a style="color:white" href="https://github.com/tk421bsod" target="_blank">TK421bsod</a> on GitHub)</footer>
 <script>
 //sometimes the page will scroll a bit too far when using the 'Skip to content' link
 //this is an attempt to fix that
