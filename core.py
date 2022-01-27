@@ -10,7 +10,6 @@ import typing
 import discord
 from discord.ext import commands
 
-import errors
 import helpcommand
 
 try:
@@ -34,6 +33,9 @@ def get_prefix(bot, message):
     except KeyError:
         bot.prefixes[message.guild.id] = "!"
         return "!"
+
+class DeletionRequestAlreadyActive(BaseException):
+    pass
 
 class confirmation:
     def __init__(self, bot, message, ctx, callback, *additional_callback_args):
@@ -305,15 +307,12 @@ class core(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         self.logger.info("joined guild, adding guild id to list of guilds and resetting prefixes")
-        self.bot.guildlist.append(str(guild.id))
-        await self.bot.prefixesinst.update_prefix_cache(guild.id)
-        #await guild.system_channel.send("Hi! I'm Maximilian, a constantly evolving bot with many useful features, like music, image effects (beta), and reaction roles! \n\U000026a0 This is a version of Maximilian that's under active development (and used for testing by the developer). This allows you to have access to the latest features before they come out on Maximilian Beta or Stable (regular Maximilian), but it comes at a cost of usablity. Uptime might not be consistent, and features may have a lot of bugs or be unfinished. If you want to switch to using the most stable version of Maximilian, use the `about` command, and you'll see an invite link.")
+        await self.bot.prefixinst.update_prefix_cache(guild.id)
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         self.logger.info("removed from guild, removing that guild from list of guilds and resetting prefixes")
-        self.bot.guildlist.remove(str(guild.id))
-        await self.bot.prefixesinst.update_prefix_cache(guild.id)
+        await self.bot.prefixinst.update_prefix_cache(guild.id)
     
     async def cog_command_error(self, ctx, error):
         error = getattr(error, "original", error)
