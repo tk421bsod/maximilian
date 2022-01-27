@@ -15,7 +15,6 @@ import pymysql
 from discord.ext import commands
 import common
 import core
-import errors
 
 class Version:
     def __init__(self):
@@ -294,6 +293,8 @@ except KeyboardInterrupt:
 except KeyError:
     logger.error("The configuration file is missing something. Try pulling changes and re-running setup.sh.")
     logger.info(traceback.format_exc())
+except FileNotFoundError:
+    logger.error("No configuration file found. Pull changes and run setup.sh.")
 except:
     logger.error("Uncaught exception! Exiting.")
     logger.error(traceback.format_exc())
