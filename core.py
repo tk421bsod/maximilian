@@ -124,7 +124,7 @@ class deletion_request:
             self.bot.dbinst.exec_safe_query(self.bot.database, "insert into active_requests values(%s)", (id,))
             await self._handle_request(id, requesttype, ctx)
         elif result:
-            raise errors.DeletionRequestAlreadyActive()
+            raise DeletionRequestAlreadyActive()
 
     async def delete_all(self, ctx):
         self.bot.dbinst.exec_safe_query(self.bot.database, "delete from roles where guild_id = %s", (ctx.guild.id,))
