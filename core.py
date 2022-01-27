@@ -144,6 +144,7 @@ class core(commands.Cog):
         #none of these classes should be used before extensions are loaded anyways as they require the bot to be ready
         self.bot.confirmation = confirmation
         self.bot.deletion_request = deletion_request
+        self.bot.DeletionRequestAlreadyActive = DeletionRequestAlreadyActive
         self.waiting = []
         self.bot.blocklist = []
         self.logger = logging.getLogger(f'maximilian.{__name__}')
