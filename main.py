@@ -15,7 +15,6 @@ import pymysql
 from discord.ext import commands
 import common
 import core
-import errors
 
 class Version:
     def __init__(self):
@@ -208,7 +207,7 @@ async def run(logger):
     token = config['token']
     intents = discord.Intents.default()
     intents.members=True
-    logger.debug("Checking version...")
+    logger.debug("Getting version information...")
     #figure out what we're logging in as
     tokenfilename, database, ver = get_release_level()
     logger.debug(f"Logging in as '{ver}'")
@@ -253,8 +252,6 @@ async def run(logger):
             traceback.print_exc()
         logger.critical('i18n initialization failed! Does the translation file exist?')
         os._exit(53)
-    #see the comment in core.py at around line 137 for an explanation of the following line
-    bot.errors = errors
     await wrap_event(bot)
     #show version information
     bot.logger.warning(f"Starting maximilian-{ver} v1.0.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
@@ -302,6 +299,8 @@ except KeyboardInterrupt:
 except KeyError:
     logger.error("The configuration file is missing something. Try pulling changes and re-running setup.sh.")
     logger.info(traceback.format_exc())
+except FileNotFoundError:
+    logger.error("No configuration file found. Pull changes and run setup.sh.")
 except:
     logger.error("Uncaught exception! Exiting.")
     logger.error(traceback.format_exc())
