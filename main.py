@@ -244,8 +244,6 @@ async def run(logger):
             traceback.print_exc()
         logger.critical('i18n initialization failed! Does the translation file exist?')
         os._exit(53)
-    #see the comment in core.py at around line 137 for an explanation of this
-    bot.errors = errors
     await wrap_event(bot)
     #show version information
     bot.logger.warning(f"Starting maximilian-{ver} v0.6.2{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
