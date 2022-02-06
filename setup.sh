@@ -27,6 +27,29 @@ else
     nodb='false'
 fi
 
+if [ "$1" == "reset" ];
+then
+    echo ""
+    echo "You've chosen to ${bold}reset${normal} the database. Before resetting it, please read through this thoroughly."
+    echo "This will ${bold}irreversibly remove all data Maximilian has stored${normal} (reaction roles, song metadata, reminders, configuration data, custom commands, etc.) and ${bold}render Maximilian inoperable${normal} until you run setup.sh again."
+    echo "Only use this as a last resort."
+    echo "${bold}To continue, enter 'RESET!' exactly as shown. To exit, press Ctrl-C or Ctrl-Z now. Once you continue, THIS CANNOT BE REVERSED."
+    read reset
+    if [ "$reset" == "RESET!" ]
+    then
+        sudo service mysql start
+        sudo mysql -Be "drop database maximilian;"
+        sudo mysql -Be "drop database maximilian_test;"
+        sudo mysql -Be "drop user 'maximilianbot'@'$ip';"
+        rm config
+        echo ""
+        echo "Reset the database. Run this again and follow the prompts to set it up."
+        exit
+    else
+        echo "You need to enter 'RESET!' exactly as it's shown."
+        exit
+    fi
+fi
 sleep 0.5
 
 if [ -f token.txt ];
@@ -187,7 +210,7 @@ if [ $nodb == 'false' ];
 then
     echo "Setting up the database..."
     sudo service mysql start
-    sudo mysql -Be "CREATE DATABASE maximilian; CREATE DATABASE maximilian_test; CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE on maximilian_test.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
+    sudo mysql -Be "CREATE DATABASE maximilian; CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE on maximilian_test.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
 else
     echo "Not setting up the database."
 fi
