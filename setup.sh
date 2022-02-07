@@ -27,16 +27,55 @@ else
     nodb='false'
 fi
 
+sleep 0.5
+
+if [ "$1" == "fix" -o "$2" == "fix" ];
+then
+    echo ""
+    echo "You've chosen to automatically fix the database. Before continuing, read through the following."
+    echo "This will attempt to fix problems with the database by backing up data, reinstalling the database, and restoring from the backup."
+    echo "This may take a while. Make sure you have a stable Internet connection and at least 1gb of free space before continuing."
+    echo "Do you want to continue? Y/N"
+    read continue
+    if [ ${continue^^} == "Y" ]
+    then
+        echo "Ok."
+        echo "Backing up data..."
+        sudo service mysql start
+        sudo mysqldump --databases maximilian > backup.sql
+        echo "Reinstalling the database..."
+        sudo mysql -Be "drop user 'maximilianbot'@'$ip'; drop database maximilian;"
+        sudo apt -y remove --purge mariadb-server > /dev/null 2>&1
+        sudo apt -y autoremove --purge
+        sudo apt -y install mariadb-server > /dev/null 2>&1
+        echo "Restoring the backup..."
+        sudo service mysql start
+        sudo mysql -Be "create database maximilian;"
+        sudo mysql maximilian < backup.sql
+        if [ $? != 0 ]
+        then
+            echo "Something went wrong while restoring the backup. Tell tk421 about this."
+            exit
+        fi
+        echo "Done. Run setup.sh again to set a password."
+    else
+        echo "Ok. Exiting."
+        exit
+    fi
+fi
+
 if [ "$1" == "reset" ];
 then
     echo ""
-    echo "You've chosen to ${bold}reset${normal} the database. Before resetting it, please read through this thoroughly."
-    echo "This will ${bold}irreversibly remove all data Maximilian has stored${normal} (reaction roles, song metadata, reminders, configuration data, custom commands, etc.) and ${bold}render Maximilian inoperable${normal} until you run setup.sh again."
-    echo "Only use this as a last resort."
-    echo "${bold}To continue, enter 'RESET!' exactly as shown. To exit, press Ctrl-C or Ctrl-Z now. Once you continue, THIS CANNOT BE REVERSED."
+    echo "You've chosen to ${bold}reset${normal} the database. Before continuing, please read through this thoroughly."
+    echo "This will ${bold}irreversibly remove all data Maximilian has stored${normal} (reaction roles, song metadata, reminders, configuration data, custom commands, etc.) and ${bold}RENDER MAXIMILIAN INOPERABLE${normal} until you run setup.sh again."
+    echo "Only continue if either you've already tried 'bash setup.sh fix' or you've been instructed to by tk421."
+    echo "${bold}To continue, enter 'RESET!' exactly as shown. To exit, press Ctrl-C or Ctrl-Z now. Once you continue, THIS CANNOT BE REVERSED.${normal}"
     read reset
     if [ "$reset" == "RESET!" ]
     then
+        echo ""
+        echo "Ok. Resetting the database."
         sudo service mysql start
         sudo mysql -Be "drop database maximilian;"
         sudo mysql -Be "drop database maximilian_test;"
@@ -50,7 +89,6 @@ then
         exit
     fi
 fi
-sleep 0.5
 
 if [ -f token.txt ];
 then
@@ -210,7 +248,8 @@ if [ $nodb == 'false' ];
 then
     echo "Setting up the database..."
     sudo service mysql start
-    sudo mysql -Be "CREATE DATABASE maximilian; CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE on maximilian_test.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
+    sudo mysql -Be "CREATE DATABASE maximilian;"
+    sudo mysql -Be "CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
 else
     echo "Not setting up the database."
 fi
