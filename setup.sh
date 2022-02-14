@@ -29,6 +29,48 @@ fi
 
 sleep 0.5
 
+if [ "$1" == "backup" -o "$2" == "backup" ];
+then
+    echo "Backing up the database..."
+    sudo service mysql start
+    sudo mysqldump --databases maximilian > backup.sql
+    echo ""
+    echo "Saved the backup to 'backup.sql'. Run 'bash setup.sh restore' to restore it."
+    exit
+fi
+
+if [ "$1" == "restore" -o "$2" == "restore" ];
+then
+    if [ ! -f backup.sql ]
+    then
+        echo "Couldn't find a backup. Make sure it's named 'backup.sql'."
+        exit
+    fi
+    echo "You've chosen to restore data from a backup. Before continuing, please read the following."
+    echo "Continuing will overwrite all data in the database. Depending on when you made the backup, you might lose some data."
+    echo "Do you want to continue? Y/N"
+    read continue
+    if [ ${continue^^} == "Y" ]
+    then
+        echo ""
+        echo "Ok. Restoring from the backup..."
+        sudo service mysql start
+        sudo mysql -Be "drop database maximilian"
+        sudo mysql -Be "create database maximilian;"
+        sudo mysql maximilian < backup.sql
+        if [ $? != 0 ]
+        then
+            echo "Something went wrong while restoring the backup. Tell tk421 about this."
+            exit
+        fi
+        echo "Done restoring data."
+        exit
+    else
+        echo "Exiting."
+        exit
+    fi
+fi
+
 if [ "$1" == "fix" -o "$2" == "fix" ];
 then
     echo ""
@@ -43,10 +85,13 @@ then
         echo "Backing up data..."
         sudo service mysql start
         sudo mysqldump --databases maximilian > backup.sql
-        echo "Reinstalling the database..."
-        sudo mysql -Be "drop user 'maximilianbot'@'$ip'; drop database maximilian;"
-        sudo apt -y remove --purge mariadb-server > /dev/null 2>&1
-        sudo apt -y autoremove --purge
+        echo "Reinstalling the database... Step 1 of 3"
+        sudo mysql -Be "drop user 'maximilianbot'@'$ip';" 
+        sudo mysql -Be "drop database maximilian;"
+        sudo apt -y remove mariadb-server > /dev/null 2>&1
+        echo "Reinstalling the database... Step 2 of 3"
+        sudo apt -y autoremove > /dev/null 2>&1
+        echo "Reinstalling the database... Step 3 of 3"
         sudo apt -y install mariadb-server > /dev/null 2>&1
         echo "Restoring the backup..."
         sudo service mysql start
@@ -58,6 +103,7 @@ then
             exit
         fi
         echo "Done. Run setup.sh again to set a password."
+        exit
     else
         echo "Ok. Exiting."
         exit
@@ -249,7 +295,8 @@ then
     echo "Setting up the database..."
     sudo service mysql start
     sudo mysql -Be "CREATE DATABASE maximilian;"
-    sudo mysql -Be "CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
+    sudo mysql -Be "CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password';"
+    sudo mysql -Be "GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
 else
     echo "Not setting up the database."
 fi
