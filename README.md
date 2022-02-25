@@ -7,4 +7,5 @@ https://tk421bsod.github.io/maximilian
 
 
 **This branch will not be updated until 1.0 releases. Use the development branch until then.**
+
 After the release of 1.0, this branch will be kept on a snapshot of the current release.
