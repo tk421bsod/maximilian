@@ -5,4 +5,7 @@ This branch will be used for active development of Maximilian 1.0, starting afte
 
 https://tk421bsod.github.io/maximilian
 
-This is the active development branch. If you're looking to use a more stable version of Maximilian, clone from the `release` branch.
+
+This branch is currently used for bug fixes and small changes to 0.6.2. 
+
+It will become the main development branch after the release of 1.0.
