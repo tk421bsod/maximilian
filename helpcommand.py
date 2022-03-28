@@ -3,9 +3,9 @@ from discord.ext import commands
 
 
 class HelpCommand(commands.HelpCommand):
-    color = discord.Colour.blurple()
+    color = discord.Color.blurple()
     def get_ending_note(self):
-        return 'Use {0}{1} [command] for more info on a command.'.format(self.clean_prefix, self.invoked_with)
+        return 'Use {0}{1} [command] for more info on a command.'.format(self.context.clean_prefix, self.invoked_with)
 
     def get_command_signature(self, command):
         parent = command.full_parent_name
@@ -18,7 +18,7 @@ class HelpCommand(commands.HelpCommand):
         else:
             alias = command.name if not parent else parent + ' ' + command.name
 
-        return '%s%s %s' % (self.clean_prefix, alias, command.signature)
+        return '%s%s %s' % (self.context.clean_prefix, alias, command.signature)
 
     async def send_bot_help(self, mapping):
         embed = discord.Embed(title='Commands', colour=self.color)
@@ -31,7 +31,7 @@ class HelpCommand(commands.HelpCommand):
                 name = cog.qualified_name
                 filtered = await self.filter_commands(commands, sort=True)
                 if filtered:
-                    value = '\u2002 '.join([f'`{self.clean_prefix}' + c.name + '`' for c in commands if not c.hidden])
+                    value = '\u2002 '.join([f'`{self.context.clean_prefix}' + c.name + '`' for c in commands if not c.hidden])
                     if cog and cog.description:
                         value = '{0}\n{1}'.format(cog.description, value)
 
@@ -39,7 +39,7 @@ class HelpCommand(commands.HelpCommand):
         if self.context.guild is not None:
             #TODO: use the existing cache (not sure why I didn't think of it before writing this)
             #im too lazy to change it rn as it's 1 am
-            responseslist = self.context.bot.dbinst.exec_safe_query(self.context.bot.database, "select * from responses where guild_id = %s", (self.context.guild.id), fetchall=True)
+            responseslist = self.context.bot.dbinst.exec_safe_query("select * from responses where guild_id = %s", (self.context.guild.id), fetchall=True)
             responsestring = "A list of custom commands for this server. These don't have help entries. \n"
             if responseslist is not None and str(responseslist)!="()":
                 for i in responseslist:
