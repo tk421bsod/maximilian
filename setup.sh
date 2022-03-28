@@ -13,12 +13,7 @@ function ctrl-c () {
     
 }
 
-if [ "$1" == "remote" ];
-then
-    ip="%"
-else
-    ip="localhost"
-fi
+ip="%"
 
 if [ "$1" == "nodb" ];
 then
@@ -28,6 +23,52 @@ else
 fi
 
 sleep 0.5
+
+if [ "$1" == "help" ];
+then
+    echo "Usage: bash setup.sh [OPTION]"
+    echo ""
+    echo "setup.sh handles setting up and repairing different Maximilian components."
+    echo "You can perform specific tasks through the use of the following options."
+    echo ""
+    echo "Options:"
+    echo "${bold}start${normal} - Attempts to start the database through 'sudo service mysql start'."
+    echo "${bold}backup${normal} - Starts the database and backs up its data to './backup.sql'."
+    echo "${bold}restore${normal} - Restores the database from a previously created backup. The backup must be named 'backup.sql'."
+    echo "${bold}fix${normal} - Attempts to fix the database by backing up the data, reinstalling the database, and restoring from the backup."
+    echo "${bold}reset${normal} - Resets the database. This deletes all data."
+    echo "${bold}delete-old${normal} - Deletes any old configuration files."
+    echo "${bold}nodb${normal} - Sets up Maximilian without the database. Only use this if you've already set up the database on a different computer."
+    echo "None - Sets up Maximilian."
+    exit
+fi
+
+if [ "$1" == "delete-old" ];
+then
+    if [ ! -f token.txt -a ! -f dbp.txt ];
+    then
+        echo "It doesn't look like you have any old configuration data."
+        exit
+    fi
+    echo "Deleting old configuration files..."
+    rm token.txt > /dev/null 2>&1
+    rm dbp.txt > /dev/null 2>&1
+    echo "Done."
+    exit
+fi
+
+if [ "$1" == "start" ];
+then
+    echo "Trying to start the database..."
+    sudo service mysql start
+    if [ $? != 0 ];
+    then
+        echo "Couldn't start the database."
+        exit
+    fi
+    echo "Started the database."
+    exit
+fi
 
 if [ "$1" == "backup" -o "$2" == "backup" ];
 then
@@ -229,7 +270,7 @@ else
 fi
 echo ""
 grep -qs token ./config
-if [ $? != 0 -a ! $ip == '%' ];
+if [ $? != 0 ];
 then
     echo "Enter the token you want Maximiian to use. If you don't know what this is, create an application in Discord's Developer Portal, create a bot account for that application, and copy the account's token. Then paste it here."
     echo "Your input will be hidden to keep the token secret."
@@ -300,7 +341,8 @@ then
 else
     echo "Not setting up the database."
 fi
-if [ ! $ip == '%' ];
+echo "$1"
+if [ ! $1 == 'remote' ];
 then
     echo "dbp:$password" >> config
     echo "Saved the password to 'config'"
