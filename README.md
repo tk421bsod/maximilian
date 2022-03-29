@@ -10,3 +10,4 @@ This branch is currently used for bug fixes and small changes to 0.6.2.
 
 It will become the main development branch after the release of 1.0.
 1.0 is scheduled to be released in late April 2022.
+ 
