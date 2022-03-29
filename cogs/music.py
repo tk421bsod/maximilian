@@ -225,14 +225,12 @@ class music(commands.Cog):
                 video = url 
             open(f"songcache/{video}.mp3", "r")
             #check if video id is in database, add it if it isn't
-            name = await self.bot.loop.run_in_executor(None, self.bot.dbinst.retrieve, self.bot.database, "songs", "name", "id", f"{video}", False)
-            duration = await self.bot.loop.run_in_executor(None, self.bot.dbinst.retrieve, self.bot.database, "songs", "duration", "id", f"{video}", False)
-            thumbnail = await self.bot.loop.run_in_executor(None, self.bot.dbinst.retrieve, self.bot.database, "songs", "thumbnail", "id", f"{video}", False)
-            if name != None and duration != None and thumbnail != None:
-                player.metadata.name = name
+            data = self.bot.dbinst.exec_safe_query("select * from songs where id = %s limit 1", (video))
+            if data:
+                player.metadata.name = data['name']
                 player.metadata.filename = f"songcache/{video}.mp3"
-                player.metadata.duration = duration
-                player.metadata.thumbnail = thumbnail
+                player.metadata.duration = data['duration']
+                player.metadata.thumbnail = data['thumbnail']
                 player.metadata.url = f"https://youtube.com/watch?v={video}"
             else:
                 with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
@@ -241,7 +239,7 @@ class music(commands.Cog):
                     player.metadata.name = info["title"]
                     player.metadata.filename = f"songcache/{video}.mp3"
                     player.metadata.thumbnail = info["thumbnail"]
-                    if info['duration'] == 0.0:
+                    if info['duration'] == 0.0 or info['duration'] == "No duration available (this is a stream)":
                         self.logger.info("this video is a stream")
                         self.filename = info["url"]
                         self.duration = "No duration available (this is a stream)"
@@ -250,9 +248,7 @@ class music(commands.Cog):
                         self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                         if m > 60:
                             raise DurationLimitError()
-                        if await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":player.metadata.name, "id":video, "duration":player.metadata.duration, "thumbnail":player.metadata.thumbnail}, "id") != "success":
-                            await self.bot.loop.run_in_executor(None, self.bot.dbinst.delete, self.bot.database, "songs", video, "id")
-                            await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":player.metadata.name, "id":video, "duration":player.metadata.duration, "thumbnail":player.metadata.thumbnail}, "id")
+                    self.bot.dbinst.exec_safe_query("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
             self.logger.info("got song from cache!")
         except FileNotFoundError:
             self.logger.info("song isn't in cache")
@@ -278,7 +274,12 @@ class music(commands.Cog):
                         if m > 60:
                             raise DurationLimitError()
                         player.metadata.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
-                        await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":player.metadata.name, "id":video, "duration":player.metadata.duration, "thumbnail":player.metadata.thumbnail}, "id")
+                        try:
+                            self.bot.dbinst.exec_safe_query("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
+                        except pymysql.errors.IntegrityError:
+                            pass
+        except:
+            traceback.print_exc()
         return
 
     async def search_youtube_for_song(self, ydl, ctx, url, num, player):
@@ -329,7 +330,7 @@ class music(commands.Cog):
                 with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                     #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
                     self.logger.info("looking for song in db...")
-                    info = self.bot.dbinst.exec_safe_query(self.bot.database, "select * from songs where name like %s", (f"%{url}%"))
+                    info = self.bot.dbinst.exec_safe_query("select * from songs where name like %s", (f"%{url}%", ))
                     if info != None:
                         self.logger.info("found song in db! trying to get from cache...")
                         player.metadata.id = info["id"]
@@ -410,6 +411,7 @@ class music(commands.Cog):
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(player.metadata.filename), volume=0.5)
             except Exception:
                 #TODO: rewrite error handling for this command, it sucks in its current state
+                traceback.print_exc()
                 await ctx.send("I've encountered an error. Either something went seriously wrong, you provided an invalid URL, or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term or a URL you're sure is valid), contact tk421#7244. ")
                 return
             try:
@@ -689,18 +691,18 @@ class music(commands.Cog):
                             #parse total seconds from duration value 
                             s = 60*int(player.metadata.duration.split(":")[0])+int(player.metadata.duration.split(":")[1])
                             #for each bitrate value from 128kbps to 64kbps (64 possible values) from highest to lowest
-                            for i in range(64, 0, -1):
+                            for i in range(256, 1, -1):
                                 #check if the output file size (bitrate*seconds) in kilobytes (8 bits = 1 byte, so divide by 8)
                                 #is less than the upload limit (8mb or 8000kb)
-                                if ((i+64)*s)/8 <= 7900:
-                                    self.logger.info(f"Suitable bitrate found. Transcoding to {i+64} kbps...")
+                                if ((i)*s)/8 <= 7500:
+                                    self.logger.info(f"Suitable bitrate found. Transcoding to {i} kbps...")
                                     #if so, transcode to that bitrate
                                     inputfile = ffmpeg.input(player.metadata.filename)
-                                    output = functools.partial(ffmpeg.output, inputfile, f"{player.metadata.filename[:-4]}temp.mp3", audio_bitrate=f"{i+64}k")
+                                    output = functools.partial(ffmpeg.output, inputfile, f"{player.metadata.filename[:-4]}temp.mp3", audio_bitrate=f"{i}k")
                                     stream = await self.bot.loop.run_in_executor(None, output)
                                     run = functools.partial(ffmpeg.run, stream, quiet=True, overwrite_output=True)
                                     await self.bot.loop.run_in_executor(None, run)
-                                    await ctx.send(f"Here's the file (at {i+64} kbps):", file=discord.File(f"{player.metadata.filename[:-4]}temp.mp3"))
+                                    await ctx.send(f"Here's the file (at {i} kbps):", file=discord.File(f"{player.metadata.filename[:-4]}temp.mp3"))
                                     self.logger.info("Done getting song, unlocked.")
                                     return
                             #if we didn't return yet, the file's too large 
@@ -718,8 +720,8 @@ class music(commands.Cog):
         except AttributeError:
             await ctx.send("You're not in a voice channel. Join one, then run this command again.")
 
-def setup(bot):
-    bot.add_cog(music(bot))
+async def setup(bot):
+    await bot.add_cog(music(bot))
 
-def teardown(bot):
-    bot.remove_cog(music(bot))
+async def teardown(bot):
+    await bot.remove_cog(music(bot))
