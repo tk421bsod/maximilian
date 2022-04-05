@@ -15,7 +15,7 @@ class db:
     -------
 
     ensure_tables() - Ensures that all required tables exist. Called by main.run().
-    exec_safe_query(query, params, *, fetchall) - Executes 'query' with 'params'. Uses pymysql's parameterized queries.
+    exec_safe_query(query, params, *,  fetchall) - Executes 'query' with 'params'. Uses pymysql's parameterized queries. 'params' can be empty.
     exec_query(query, *, fetchall) - Executes 'query'. DEPRECATED due to the potential for SQL injection. Will show a warning if used.
     """
 
@@ -32,8 +32,6 @@ class db:
         database : str, optional
             The name of the database to connect to. Optional if `bot` has a `database` attribute. 
         """
-
-
         try:
             with open("dbp.txt", "r") as dbpfile:
                 print("It looks like you still have some files left over from the configuration data format change. Run `bash setup.sh delete-old` to get rid of them.")
@@ -55,6 +53,22 @@ class db:
         self.conn = self.attempt_connection()
         self.logger.info("Connected to database.")
 
+    def requires_connection(func):
+        def requires_connection_inner(self, *args, **kwargs):
+            """Reconnects to the database if the function raises an OperationalError"""
+            try:
+                self.logger.info(f"Calling {func.__name__} with {args}")
+                return func(self, *args, **kwargs)
+            except pymysql.err.OperationalError as e:
+                if e.args[0] == 2013:
+                    self.logger.info("db connection lost, reconnecting")
+                    self.reconnect()
+                    return func(self, *args, **kwargs)
+                else:
+                    raise
+        return requires_connection_inner
+
+    @requires_connection
     def ensure_tables(self):
         self.logger.info("Making sure all required tables exist...")
         for table, schema in self.TABLES.items():
@@ -73,11 +87,7 @@ class db:
 
     def attempt_connection(self):
         self.logger.info(f"Attempting to connect to database '{self.database}' on '{self.ip}'...")
-        try:
-            return self.connect()
-        except:
-            self.logger.error("Couldn't connect! Try running 'bash setup.sh fix'.")
-            raise
+        return self.connect()
 
     def reconnect(self):
         self.conn = self.connect()
@@ -93,6 +103,7 @@ class db:
         return conn
 
     #maybe make this an alias to exec_safe_query or rename exec_safe query to this?
+    @requires_connection
     def exec_query(self, querytoexecute, debug=False, fetchall=False):
         self.connect(self.database)
         previous_frame = inspect.getframeinfo(inspect.currentframe().f_back)
@@ -104,16 +115,22 @@ class db:
             row = self.conn.fetchone()
         return row if row != () and row != "()" else None
 
+    @requires_connection
     def exec_safe_query(self, query, params, *, debug=False, fetchall=False):
-        try:
-            self.conn.execute(str(query), params)
-        except pymysql.err.OperationalError as e:
-            if e[0] == 2013:
-                self.logger.info("db connection lost, reconnecting")
-                reconnect()
-                self.conn.execute(str(query), params)
-            else:
-                raise
+        """Executes 'query' with 'params'. Uses pymysql's parameterized queries.
+
+        Parameters
+        ----------
+        query : str
+            The SQL query to execute. 
+        password : str, optional
+            The database password in plain text. TODO: why is this optional
+        ip : str, optional
+            The IP address to use for the database. Defaults to 'localhost'. Optional if `bot` has a `dbip` attribute.
+        database : str, optional
+            The name of the database to connect to. Optional if `bot` has a `database` attribute. 
+        """
+        self.conn.execute(str(query), params)
         row = self.conn.fetchall()
         if len(row) == 1:
             row = row[0]
