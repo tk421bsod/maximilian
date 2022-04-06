@@ -14,6 +14,27 @@ function ctrl-c () {
 }
 
 ip="%"
+sleep 0.5
+
+if [ "$1" == "help" ];
+then
+    echo "Usage: bash setup.sh [OPTION]"
+    echo ""
+    echo "setup.sh handles setting up and repairing different Maximilian components."
+    echo "You can perform specific tasks through the use of the following options."
+    echo ""
+    echo "Options:"
+    echo "${bold}update${normal} - Updates Maximilian and its components. Doesn't set up Maximilian."
+    echo "${bold}start${normal} - Attempts to start the database through 'sudo service mysql start'."
+    echo "${bold}backup${normal} - Starts the database and backs up its data to './backup.sql'."
+    echo "${bold}restore${normal} - Restores the database from a previously created backup. The backup must be named 'backup.sql'."
+    echo "${bold}fix${normal} - Attempts to fix the database by backing up the data, reinstalling the database, and restoring from the backup."
+    echo "${bold}reset${normal} - Resets the database. This deletes all data."
+    echo "${bold}delete-old${normal} - Deletes any old configuration files."
+    echo "${bold}nodb${normal} - Sets up Maximilian without the database. Only use this if you've already set up the database on a different computer."
+    echo "None - Sets up Maximilian."
+    exit
+fi
 
 echo "Checking for updates..."
 initial="$(git rev-parse --short HEAD)"
@@ -65,27 +86,6 @@ then
     nodb='true'
 else
     nodb='false'
-fi
-
-sleep 0.5
-
-if [ "$1" == "help" ];
-then
-    echo "Usage: bash setup.sh [OPTION]"
-    echo ""
-    echo "setup.sh handles setting up and repairing different Maximilian components."
-    echo "You can perform specific tasks through the use of the following options."
-    echo ""
-    echo "Options:"
-    echo "${bold}start${normal} - Attempts to start the database through 'sudo service mysql start'."
-    echo "${bold}backup${normal} - Starts the database and backs up its data to './backup.sql'."
-    echo "${bold}restore${normal} - Restores the database from a previously created backup. The backup must be named 'backup.sql'."
-    echo "${bold}fix${normal} - Attempts to fix the database by backing up the data, reinstalling the database, and restoring from the backup."
-    echo "${bold}reset${normal} - Resets the database. This deletes all data."
-    echo "${bold}delete-old${normal} - Deletes any old configuration files."
-    echo "${bold}nodb${normal} - Sets up Maximilian without the database. Only use this if you've already set up the database on a different computer."
-    echo "None - Sets up Maximilian."
-    exit
 fi
 
 if [ "$1" == "delete-old" ];
