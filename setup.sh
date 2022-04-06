@@ -43,6 +43,11 @@ then
     sleep 1
     bash setup.sh "$1"
     exit
+elif [ "$1" == "update" ];
+then
+    echo ""
+    echo "No updates available. Exiting."
+    exit
 else
     echo ""
     echo "No updates available. Starting setup."
