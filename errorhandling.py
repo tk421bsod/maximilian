@@ -1,3 +1,5 @@
+#errorhandling.py: handles most errors. old and needs to be updated
+
 import traceback
 
 import discord
@@ -72,8 +74,8 @@ class errorhandling(commands.Cog):
         await ctx.send("There was an error. Please try again later.")
         await ctx.send(f"`{error}`")
 
-def setup(bot):
-    bot.add_cog(errorhandling(bot))
+async def setup(bot):
+    await bot.add_cog(errorhandling(bot))
 
-def teardown(bot):
-    bot.remove_cog(errorhandling(bot))
+async def teardown(bot):
+    await bot.remove_cog(errorhandling(bot))
