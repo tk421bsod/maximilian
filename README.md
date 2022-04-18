@@ -1,6 +1,6 @@
 # maximilian
 
-An easy to use Discord bot with a web interface. 
+An easy to use Discord bot. 
 
 # Features
 
