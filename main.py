@@ -20,7 +20,7 @@ import core
 import db
 from rich.logging import RichHandler
 from rich.traceback import install
-install(suppress=[discord,pymysql])
+import settings
 
 def parse_version(versionstring):
     version = common.Version()
@@ -34,21 +34,6 @@ def check_version():
         print("If you choose to use an old version of Maximilian, you're on your own - those versions lack support from tk421 and compatibility with discord.py 2. Old versions may also stop working without notice.")
         print("See https://gist.github.com/Rapptz/c4324f17a80c94776832430007ad40e6 for more information about this.")
         quit()
-
-def get_latest_commit():
-    try:
-        commit = ""
-        p = subprocess.Popen(['git', 'rev-list', '--count', 'HEAD'],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.communicate()
-        if out:
-            commit = out.decode('utf-8').strip()
-        p = subprocess.Popen(['git', 'rev-parse', '--short', 'HEAD'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.communicate()
-        if out:
-            commit = out.decode('utf-8').strip()
-        return commit
-    except Exception:
-        pass
 
 def initialize_i18n(bot):
     bot.logger.info('Initializing i18n...')
@@ -226,7 +211,7 @@ async def run(logger):
     else:
         token = common.token().get(tokenfilename)
         logger.debug("Getting latest commit hash...")
-        commit = get_latest_commit()
+        commit = common.get_latest_commit()
         logger.debug("Done getting latest commit hash.")
     logger.debug("Setting up some stuff")
     bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.0.0{f'-{commit}' if commit else ''} ({ver})"))
@@ -259,7 +244,8 @@ async def run(logger):
     bot.prefixes = {}
     bot.responses = []
     bot.start_time = time.time()
-    bot.logger.debug("Done setting up stuff.")
+    bot.settings = settings
+    bot.logger.debug("Setting up the database...")
     #try to connect to database, exit if it fails
     try:
         #constructing an instance of db calls db.db.attempt_connection
@@ -282,16 +268,20 @@ async def run(logger):
     #monkeypatch setup_hook
     #TODO: choose your fighter: subclass or context manager
     bot.setup_hook = functools.partial(load_extensions_async, bot)
-    #and log in
+    bot.logger.debug("running load_extensions_async after login")
     print("Logging in...")
     if not "--nologin" in sys.argv:
         await bot.start(token)
 
 print("starting... \n")
+#check for updates before continuing
+common.update()
 print("setting up logging...")
 #set a logging level
 config_logging(sys.argv)
 logger = logging.getLogger(f'maximilian')
+#set up rich tracebacks
+install(suppress=[discord,pymysql])
 try:
     asyncio.run(run(logger))
 except KeyboardInterrupt:
@@ -301,9 +291,9 @@ except KeyError:
     logger.info(traceback.format_exc())
 except FileNotFoundError:
     logger.error("No configuration file found. Run setup.sh.")
-except SystemExit:
+except SystemExit: #raised on quit()
     pass
 except:
-    logger.error("Uncaught exception! Exiting.")
+    logger.error("Unhandled exception! Exiting.")
     logger.error(traceback.format_exc())
 
