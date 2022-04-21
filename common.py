@@ -71,7 +71,8 @@ def update():
     Python implementation of the setup.sh updater.
     This method must be called *outside* of any async context due to its blocking input and subprocess.run calls.
     '''
-    print("Checking for updates...")
+    #no logger yet :(
+    print("initializing updater\n")
     initial = get_latest_commit()
     #get current remote
     remote = run_command(['git', 'remote'])['output'][0]
@@ -80,9 +81,13 @@ def update():
     time.sleep(0.5)
     print(f"You're currently on the '{branch}' branch.")
     if branch != 'release':
-        print("Warning: updates on this branch may be broken.")
+        print("Warning: updates on this branch may be unstable.")
         print("You can switch back to the 'release' branch at any time using 'git checkout release'.")
+    else:
+        print("You can switch to other branches at any time using 'git checkout <branch>'.")
+        print("Use 'git branch' to view a list of branches.")
     time.sleep(0.5)
+    print("Checking for updates...")
     try:
         subprocess.run(['git', 'fetch', remote], check=True)
     except subprocess.CalledProcessError:
