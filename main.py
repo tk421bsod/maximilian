@@ -18,9 +18,15 @@ from discord.ext import commands
 import common
 import core
 import db
-from rich.logging import RichHandler
-from rich.traceback import install
 import settings
+if not "--no-rich" in sys.argv:
+    try:
+        from rich.logging import RichHandler
+        from rich.traceback import install
+    except ImportError:
+        print("Not enabling rich text - import failed")
+else:
+    print("Not enabling rich text - user requested")
 
 def parse_version(versionstring):
     version = common.Version()
@@ -56,7 +62,10 @@ def config_logging(args):
     '''Sets logging level and file to write to'''
     #mapping of argument to logging level and status message
     levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
-    _handlers = [RichHandler(rich_tracebacks=True, tracebacks_suppress=[discord, pymysql])]
+    try:
+        _handlers = [RichHandler(rich_tracebacks=True, tracebacks_suppress=[discord, pymysql])]
+    except NameError: #rich wasn't imported, use stdout instead
+        _handlers = [logging.StreamHandler(sys.stdout)]
     if os.path.isdir('logs'):
         _handlers.append(logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"))
     else:
@@ -73,7 +82,11 @@ def config_logging(args):
             logging.disable()
             print(value[1])
             return
-    logging.basicConfig(level=logging.WARN, handlers=_handlers, format="%(message)s", datefmt="[%X]")
+    try:
+        RichHandler()
+        logging.basicConfig(level=logging.WARN, handlers=_handlers, format="%(message)s", datefmt="[%X]")
+    except:
+        logging.basicConfig(level=logging.WARN, handlers=_handlers)
     print("No logging level specified, falling back to WARN.")
     logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
 
@@ -184,7 +197,6 @@ async def wrap_event(bot):
     pass
 
 #wrap everything in a function to prevent conflicting event loops
-
 async def run(logger):
     logger.debug("Loading settings from file...")
     config = common.load_config()
@@ -264,28 +276,33 @@ async def run(logger):
     try:
         bot.dbinst.ensure_tables()
     except pymysql.OperationalError:
+        bot.logger.debug(traceback.format_exc())
         bot.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
     #monkeypatch setup_hook
     #TODO: choose your fighter: subclass or context manager
+    #if "--with-setup-hook" in sys.argv:
     bot.setup_hook = functools.partial(load_extensions_async, bot)
     bot.logger.debug("running load_extensions_async after login")
     print("Logging in...")
     if not "--nologin" in sys.argv:
         await bot.start(token)
 
-print("starting... \n")
-#check for updates before continuing
-common.update()
-print("setting up logging...")
-#set a logging level
-config_logging(sys.argv)
-logger = logging.getLogger(f'maximilian')
-#set up rich tracebacks
-install(suppress=[discord,pymysql])
+print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
 try:
+    #check for updates
+    common.update()
+    print("setting up logging...")
+    #set a logging level
+    config_logging(sys.argv)
+    logger = logging.getLogger(f'maximilian')
+    try:
+        #set up rich tracebacks
+        install(suppress=[discord,pymysql])
+    except NameError:
+        pass
     asyncio.run(run(logger))
 except KeyboardInterrupt:
-    logger.error("KeyboardInterrupt detected. Exiting.")
+    print("\nKeyboardInterrupt detected. Exiting.")
 except KeyError:
     logger.error("The configuration file is missing something. Try pulling changes and re-running setup.sh.")
     logger.info(traceback.format_exc())
