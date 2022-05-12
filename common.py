@@ -99,7 +99,7 @@ def update():
         if resp == "y":
             print("\nApplying update...")
             pull = run_command(['git', 'pull'])
-            output = "\n".join([i for i in pull['output']])
+            output = "\n".join(pull['output'])
             print("\nGit output:")
             print(output)
             if pull['returncode']:
