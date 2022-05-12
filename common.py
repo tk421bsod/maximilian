@@ -75,7 +75,7 @@ def update():
     print("initializing updater\n")
     initial = get_latest_commit()
     #get current remote
-    remote = run_command(['git', 'remote'])['output'][0]
+    remote = run_command(['git', 'remote'])['output']
     #get current branch
     branch = run_command(['git', 'branch', '--show-current'])['output']
     time.sleep(0.5)
