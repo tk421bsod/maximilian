@@ -147,6 +147,7 @@ class core(commands.Cog):
         self.bot.DeletionRequestAlreadyActive = DeletionRequestAlreadyActive
         self.waiting = []
         self.bot.blocklist = []
+        self.reload_enabled = True
         self.logger = logging.getLogger(f'maximilian.{__name__}')
         self.bot.ready = False
         if load:
@@ -159,7 +160,7 @@ class core(commands.Cog):
         try:
             import git
         except (ImportError, ModuleNotFoundError):
-            self.bot.get_command("utils reload").enabled = False
+            self.reload_enabled = False
             self.logger.info("Disabled reload command as gitpython isn't installed.")
 
     @commands.group(invoke_without_command=False, hidden=True)
@@ -176,6 +177,9 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def reload(self, ctx, *targetextensions):
+        #TODO: don't rely on an external package for this (maybe use 1.0's common.run_command instead?)
+        if not self.reload_enabled:
+            return await ctx.send("`utils reload` is disabled :(\nInstall `gitpython` to fix this.")
         await ctx.trigger_typing()
         try:
             if "--nofetch" in targetextensions:
