@@ -275,7 +275,7 @@ class music(commands.Cog):
                         info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
                         m, s = divmod(info["duration"], 60)
                         player.metadata.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
-                        if m > 60:
+                        if m > 60 and ctx.author.id != self.bot.owner_id:
                             raise DurationLimitError()
                         player.metadata.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
                         await self.bot.loop.run_in_executor(None, self.bot.dbinst.insert, self.bot.database, "songs", {"name":player.metadata.name, "id":video, "duration":player.metadata.duration, "thumbnail":player.metadata.thumbnail}, "id")
