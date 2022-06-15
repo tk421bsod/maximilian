@@ -29,7 +29,7 @@ class FileTooLargeError(discord.ext.commands.CommandError):
     pass
 
 class Metadata():
-    '''An object that stores metadata about a song that's being searched for. This is quite volatile, never access this unless you absolutely have to. (perhaps use current_song?)'''
+    '''An object that stores metadata about a song that's being searched for.'''
     def __init__(self):
         self.duration = None
         self.filename = None
@@ -39,7 +39,7 @@ class Metadata():
         self.info = None
 
 class CurrentSong(Metadata):
-    '''A subclass of Metadata that stores information about the current song. This is a lot less volatile than metadata; use this whenever possible'''
+    '''A subclass of Metadata that stores information about the current song.'''
     def __init__(self):
         super().__init__()
         self.volume = 0.5
@@ -680,7 +680,7 @@ class music(commands.Cog):
                 self.logger.info("Uploading file...")
                 try:
                     await ctx.send("Here's the file:", file=discord.File(player.metadata.filename))
-                except discord.HTTPException:
+                except (discord.HTTPException, TimeoutError):
                     traceback.print_exc()
                     await ctx.send("I couldn't upload that file because it's too large. I'll reduce the quality (reduction in quality varies with song length) and try to send it again.")
                     try:
