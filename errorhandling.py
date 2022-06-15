@@ -16,15 +16,14 @@ class errorhandling(commands.Cog):
         lines = traceback.format_exception(etype, error, trace)
         traceback.print_exc()
         traceback_text = ''.join(lines)
+        error = getattr(error, "original", error)
         # it would probably be best to wrap this in a codeblock via e.g. a Paginator
-        owner = self.bot.get_user(538193752913608704)
+        owner = self.bot.get_user(self.bot.owner_id)
         try:
             await owner.send(f"An error occurred in {ctx.guild.name} ({ctx.guild.id}): ")
-            await owner.send(f"`{traceback_text}`")
+            await owner.send(f"`{traceback_text}` {'\nSend this to tk421 if this happens frequently.' if self.bot.owner_id != 538193752913608704 and not isinstance(error, commands.errors.CommandNotFound)}")
         except:
             pass
-        #get the original error so isinstance works
-        error = getattr(error, "original", error)
         cog = ctx.cog
         if cog:
             if cog._get_overridden_method(cog.cog_command_error) is not None:
