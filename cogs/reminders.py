@@ -123,8 +123,9 @@ class reminders(commands.Cog):
             except IndexError:
                 pass
             try:
-                self.bot.dbinst.exec_safe_query(self.bot.database, "insert into todo values(%s, %s, %s)", (ctx.author.id, entry, datetime.datetime.now()))
-                await self.update_todo_cache()
+                id, text, timestamp = ctx.author.id, entry, datetime.datetime.now
+                self.bot.dbinst.exec_safe_query(self.bot.database, "insert into todo values(%s, %s, %s)", (id, text, timestamp))
+                self.bot.todo_entries[id].append({'user_id':id, 'entry':text, 'timestamp':timestamp})
                 entrycount = self.bot.dbinst.exec_safe_query(self.bot.database, f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully added that to your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=discord.Color.blurple()))
             except:
@@ -143,7 +144,7 @@ class reminders(commands.Cog):
                     return await ctx.send("You need to specify the number of the entry you want to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.")
                 self.bot.dbinst.exec_safe_query(self.bot.database, "delete from todo where entry=%s and user_id=%s", (self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
                 entrycount = self.bot.dbinst.exec_safe_query(self.bot.database, f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
-                await self.update_todo_cache()
+                del self.bot.todo_entries[ctx.author.id][int(entry)-1]
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=discord.Color.blurple()))
             except IndexError:
                 return await ctx.send("I couldn't find the entry you're trying to delete. Does it exist?")
