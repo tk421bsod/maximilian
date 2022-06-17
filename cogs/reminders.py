@@ -123,7 +123,7 @@ class reminders(commands.Cog):
             except IndexError:
                 pass
             try:
-                id, text, timestamp = ctx.author.id, entry, datetime.datetime.now
+                id, text, timestamp = ctx.author.id, entry, datetime.datetime.now()
                 self.bot.dbinst.exec_safe_query(self.bot.database, "insert into todo values(%s, %s, %s)", (id, text, timestamp))
                 self.bot.todo_entries[id].append({'user_id':id, 'entry':text, 'timestamp':timestamp})
                 entrycount = self.bot.dbinst.exec_safe_query(self.bot.database, f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
