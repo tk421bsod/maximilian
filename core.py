@@ -43,8 +43,6 @@ class confirmation:
         self.bot = bot
         self.GREEN_CHECK = '\U00002705'
         self.RED_X = '<:red_x:813135049083191307>'
-        if not bot.ready:
-            return bot.loop.create_task(ctx.send("This command isn't ready yet. Try again in a moment."))
         if not inspect.iscoroutinefunction(callback):
             raise TypeError("callback must be a coroutine!!!")
         #call handle_confirmation to prevent weird syntax like
