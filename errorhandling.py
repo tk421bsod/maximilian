@@ -21,7 +21,7 @@ class errorhandling(commands.Cog):
         owner = self.bot.get_user(self.bot.owner_id)
         try:
             await owner.send(f"An error occurred in {ctx.guild.name} ({ctx.guild.id}): ")
-            await owner.send(f"`{traceback_text}` {'\nSend this to tk421 if this happens frequently.' if self.bot.owner_id != 538193752913608704 and not isinstance(error, commands.errors.CommandNotFound)}")
+            await owner.send(f"`{traceback_text}`")
         except:
             pass
         cog = ctx.cog

@@ -145,6 +145,8 @@ class music(commands.Cog):
                 if ctx.guild.me.voice:
                     await self.leave_voice(ctx, True)
                     await ctx.send("I've left the voice channel too.")
+        with contextlib.suppress(AttributeError, IndexError, ValueError):
+            self.channels_playing_audio.remove(ctx.voice_client.channel.id)
 
     async def leave_voice(self, ctx, silent=False):
         try:
@@ -293,7 +295,6 @@ class music(commands.Cog):
             player.metadata.thumbnail = player.metadata.info["entries"][num]["thumbnail"]
         #if we've gone through 5 search results already or there weren't any, raise NoSearchResultsError
         except IndexError:
-            self.logger.info(player.metadata.info["entries"])
             raise NoSearchResultsError()
         except:
             traceback.print_exc()

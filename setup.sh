@@ -171,7 +171,6 @@ then
         rm config
         echo "Deleted old data."
         echo ""
-        nodb='true'
     else
         echo "You need to enter either 'yes' or 'no'."
         exit 1
