@@ -8,7 +8,6 @@ normal=$(tput sgr0)
 function ctrl-c () {
     echo ""
     echo "Exiting."
-    rm config > /dev/null 2>&1
     exit 39
     
 }
@@ -225,18 +224,20 @@ fi
 
 if [ -f token.txt ];
 then
-    echo "It looks like you've been using an older version of setup.sh. The configuration data format has changed, so you'll need to re-enter the token and database password."
-    echo "Quit setup now (using either Ctrl-C or Ctrl-Z) if you want to keep (or copy) the old data."
-    echo "Maximilian will not work until this finishes."
-    echo "Press Enter if you want to continue. THIS WILL DELETE THE OLD DATA."
+    echo "It looks like you've been using an older version of Maximilian."
+    echo "Your data will need to be migrated as the configuration data format has changed."
+    echo "Press Enter to continue."
     read -s
-    nodb='true'
     echo ""
-    echo "Ok, starting setup."
     sleep 1
+    echo "token:$(cat token.txt)" >> config
+    echo "dbp:$(cat dbp.txt)" >> config
     rm token.txt
     rm dbp.txt
-    echo "Deleted old data."
+    echo "Migrated old data."
+    echo "Press Enter to continue with setup, or press Ctrl-C to quit."
+    read -s
+    echo "Continuing with setup."
     echo ""
 fi
 
@@ -287,7 +288,7 @@ else
     echo "${bold}You didn't pass any arguments, so the database will only be configured for local access.${normal} Maximilian will still be set up."
 fi
 echo "This script installs several packages so ${bold}you'll need a stable Internet connection${normal} and around 1 gigabyte of free space."
-echo "You can press ${bold}Ctrl-C${normal} to quit at any time. ${bold}However, exiting before setup finishes will delete any saved configuration data.${normal}"
+echo "You can press ${bold}Ctrl-C${normal} to quit at any time."
 echo ""
 sleep 1
 echo ""
