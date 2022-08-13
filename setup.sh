@@ -32,6 +32,7 @@ then
     echo "${bold}reset${normal} - Resets the database. This deletes all data."
     echo "${bold}delete-old${normal} - Deletes any old configuration files."
     echo "${bold}nodb${normal} - Sets up Maximilian without the database. Only use this if you've already set up the database on a different computer."
+    echo "${bold}onlydb${normal} - Only sets up the database."
     echo "None - Sets up Maximilian."
     exit
 fi
@@ -275,9 +276,9 @@ echo ""
 
 echo "${bold}----------------Maximilian Setup----------------${normal}"
 echo "This script automates most parts of setting up Maximilian. You'll still need to do a few things, like getting the token and choosing a password for the database."
-if [ "$1" == "remote" ];
+if [ "$1" == "onlydb" ];
 then
-    echo "${bold}You've chosen to configure the database for remote access.${normal} This will not set up Maximilian on this computer. To set up Maximilian on this computer, run this with `nodb`."
+    echo "${bold}You've chosen to only set up the database.${normal} This will not set up Maximilian on this computer. To set up Maximilian on this computer, run this with `nodb`."
 elif [ "$1" == "nodb" ];
 then
     echo "${bold}You've chosen to not set up the database on this computer.${normal} If you've set up the database on a different computer, run main.py with '--ip <ip>', <ip> being the ip address of that other computer."
@@ -297,7 +298,7 @@ then
     echo "${bold}Take a moment to read through the above information. Setup will start in a few seconds.${normal}"
     sleep 5
 else
-    echo "${bold}Read the README.md (and HOSTING.md) for Maximilian if you haven't already, because a README isn't any good if you don't read it.${normal}"
+    echo "${bold}Read the README.md (and HOSTING.md) for Maximilian if you haven't already.${normal}"
     echo ""
     read -p "Have you read the README? Y/N  " readme
     if [ ${readme^^} == 'N' ];
@@ -315,7 +316,7 @@ else
 fi
 echo ""
 grep -qs token ./config
-if [ $? != 0 ];
+if [ $? != 0 -a $1 != "onlydb" ];
 then
     echo "Enter the token you want Maximiian to use. If you don't know what this is, create an application in Discord's Developer Portal, create a bot account for that application, and copy the account's token. Then paste it here."
     echo "Your input will be hidden to keep the token secret."
@@ -359,11 +360,14 @@ if [ ! $ip == '%' ];
 then
     echo "It'll be saved to 'config' after setting up the database."
 fi
-echo "One more thing before setup starts..."
-echo "Enter your Discord account's ID. This lets you use certain features like the 'utils' commands and Jishaku. It also makes Maximilian DM you with any errors it experiences."
-read owner_id
-echo "owner_id:$owner_id" >> config
-echo ""
+if [ $1 != "onlydb" ];
+then
+    echo "One more thing before setup starts..."
+    echo "Enter your Discord account's ID. This lets you use certain features like the 'utils' commands and Jishaku. It also makes Maximilian DM you with any errors it experiences."
+    read owner_id
+    echo "owner_id:$owner_id" >> config
+    echo ""
+fi
 echo "Getting latest packages..."
 sudo apt update
 echo ""
@@ -383,14 +387,13 @@ then
     sudo mysql -Be "CREATE DATABASE maximilian;"
     sudo mysql -Be "CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password';"
     sudo mysql -Be "GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
+    echo "dbp:$password" >> config
+    echo "Saved the password to 'config'"
 else
     echo "Not setting up the database."
 fi
-echo "$1"
-if [ ! $1 == 'remote' ];
+if [ ! $1 == 'onlydb' ];
 then
-    echo "dbp:$password" >> config
-    echo "Saved the password to 'config'"
     echo ""
     echo "Installing dependencies..."
     pip3 install -r requirements.txt
