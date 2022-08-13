@@ -32,16 +32,6 @@ def load_config():
                 config[i[0]] = i[1]
     return config
 
-def convert_list(arg):
-    '''
-    Turns lists with only one element into just that element. Lists with more than one element stay the same.
-
-    Example:
-        convert_list([1]) -> 1
-        convert_list([1, 2, 3]) -> [1, 2, 3]
-    '''
-    return arg[0] if len(arg) == 1 else arg
-
 def list_in_str(list, string):
     '''
     Tests if any elements in 'list' are in 'string'.
@@ -58,7 +48,7 @@ def list_in_str(list, string):
 def run_command(args):
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
-    return {"output":convert_list(out.decode('utf-8').strip().split("\n")), "returncode":p.returncode}
+    return {"output":out.decode('utf-8').strip().split("\n"), "returncode":p.returncode}
 
 def get_latest_commit():
     try:
@@ -75,9 +65,9 @@ def update():
     print("initializing updater\n")
     initial = get_latest_commit()
     #get current remote
-    remote = run_command(['git', 'remote'])['output']
+    remote = run_command(['git', 'remote'])['output'][0]
     #get current branch
-    branch = run_command(['git', 'branch', '--show-current'])['output']
+    branch = run_command(['git', 'branch', '--show-current'])['output'][0]
     time.sleep(0.5)
     print(f"You're currently on the '{branch}' branch.")
     if branch != 'release':
@@ -93,7 +83,7 @@ def update():
     except subprocess.CalledProcessError:
         print("Something went wrong while checking for updates.")
         return
-    after = run_command(['git', 'rev-parse', '--short', f'{remote}/{branch}'])
+    after = run_command(['git', 'rev-parse', '--short', f'{remote}/{branch}'])['output']
     if initial != after:
         resp = input("Update available. Would you like to apply it? Y/N\n").lower().strip()
         if resp == "y":
