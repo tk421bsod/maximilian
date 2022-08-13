@@ -289,31 +289,10 @@ fi
 echo "This script installs several packages so ${bold}you'll need a stable Internet connection${normal} and around 1 gigabyte of free space."
 echo "You can press ${bold}Ctrl-C${normal} to quit at any time. ${bold}However, exiting before setup finishes will delete any saved configuration data.${normal}"
 echo ""
-
 sleep 1
-
-if [ "$1" == "jmmith" ];
-then
-    echo ""
-    echo "${bold}Take a moment to read through the above information. Setup will start in a few seconds.${normal}"
-    sleep 5
-else
-    echo "${bold}Read the README.md (and HOSTING.md) for Maximilian if you haven't already.${normal}"
-    echo ""
-    read -p "Have you read the README? Y/N  " readme
-    if [ ${readme^^} == 'N' ];
-    then
-        echo "Go read the README!"
-        exit 1
-    elif [ ${readme^^} == 'Y' ];
-    then
-        echo "Great. Continuing with setup in a few seconds..."
-        sleep 5
-    else
-        echo "what?"
-        exit 1
-    fi
-fi
+echo ""
+echo "${bold}Take a moment to read through the above information. Setup will start in a few seconds.${normal}"
+sleep 5
 echo ""
 grep -qs token ./config
 if [ $? != 0 -a $1 != "onlydb" ];
