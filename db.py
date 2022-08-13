@@ -77,7 +77,7 @@ class db:
             except pymysql.err.ProgrammingError:
                 self.logger.warning(f'Table {self.database}.{table} doesn\'t exist. Creating it...')
                 self.logger.debug(f"Schema for this table is {schema}")
-                self.dbc.execute(f'create table {table}({schema})')
+                self.conn.execute(f'create table {table}({schema})')
                 if not self.failed:
                     self.failed = True
         if not self.failed:
@@ -93,14 +93,7 @@ class db:
         self.conn = self.connect()
 
     def connect(self):
-        conn = pymysql.connect(host=self.ip,
-                    user="maximilianbot",
-                    password=self.databasepassword,
-                    db=self.database,
-                    charset='utf8mb4',
-                    cursorclass=pymysql.cursors.DictCursor,
-                    autocommit=True).cursor()
-        return conn
+        return pymysql.connect(host=self.ip, user="maximilianbot", password=self.databasepassword, db=self.database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, autocommit=True).cursor()
 
     #maybe make this an alias to exec_safe_query or rename exec_safe query to this?
     @requires_connection
