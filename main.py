@@ -202,7 +202,6 @@ async def run(logger):
     config = common.load_config()
     logger.debug("Loaded settings from file!")
     token = config['token']
-    check_version()
     intents = discord.Intents.default()
     intents.members=True
     intents.message_content = True
@@ -261,7 +260,7 @@ async def run(logger):
     #try to connect to database, exit if it fails
     try:
         #constructing an instance of db calls db.db.attempt_connection
-        bot.dbinst = db.db(bot, config['dbp'])
+        bot.db = db.db(bot, config['dbp'])
     except pymysql.err.OperationalError:
         bot.logger.error("Couldn't connect to database. Trying to start it...")
         #TODO: figure out a better way to do this as some linux systems use different commands
