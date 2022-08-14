@@ -689,19 +689,19 @@ class music(commands.Cog):
                             await ctx.send("Reducing quality...")
                             #parse total seconds from duration value 
                             s = 60*int(player.metadata.duration.split(":")[0])+int(player.metadata.duration.split(":")[1])
-                            #for each bitrate value from 128kbps to 64kbps (64 possible values) from highest to lowest
-                            for i in range(64, 0, -1):
+                            #for each bitrate value from 320kbps to 64kbps (256 possible values) from highest to lowest
+                            for i in range(320, 1, -1):
                                 #check if the output file size (bitrate*seconds) in kilobytes (8 bits = 1 byte, so divide by 8)
                                 #is less than the upload limit (8mb or 8000kb)
-                                if ((i+64)*s)/8 <= 7900:
-                                    self.logger.info(f"Suitable bitrate found. Transcoding to {i+64} kbps...")
+                                if ((i)*s)/8 <= 7500:
+                                    self.logger.info(f"Suitable bitrate found. Transcoding to {i} kbps...")
                                     #if so, transcode to that bitrate
                                     inputfile = ffmpeg.input(player.metadata.filename)
-                                    output = functools.partial(ffmpeg.output, inputfile, f"{player.metadata.filename[:-4]}temp.mp3", audio_bitrate=f"{i+64}k")
+                                    output = functools.partial(ffmpeg.output, inputfile, f"{player.metadata.filename[:-4]}temp.mp3", audio_bitrate=f"{i}k")
                                     stream = await self.bot.loop.run_in_executor(None, output)
                                     run = functools.partial(ffmpeg.run, stream, quiet=True, overwrite_output=True)
                                     await self.bot.loop.run_in_executor(None, run)
-                                    await ctx.send(f"Here's the file (at {i+64} kbps):", file=discord.File(f"{player.metadata.filename[:-4]}temp.mp3"))
+                                    await ctx.send(f"Here's the file (at {i} kbps):", file=discord.File(f"{player.metadata.filename[:-4]}temp.mp3"))
                                     self.logger.info("Done getting song, unlocked.")
                                     return
                             #if we didn't return yet, the file's too large 
