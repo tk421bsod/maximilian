@@ -55,17 +55,14 @@ class db:
 
     def requires_connection(func):
         def requires_connection_inner(self, *args, **kwargs):
-            """Reconnects to the database if the function raises an OperationalError"""
+            """Attempts a reconnect if OperationalError is raised"""
             try:
                 self.logger.info(f"Calling {func.__name__} with {args}")
                 return func(self, *args, **kwargs)
-            except pymysql.err.OperationalError as e:
-                if e.args[0] == 2013:
-                    self.logger.info("db connection lost, reconnecting")
-                    self.reconnect()
-                    return func(self, *args, **kwargs)
-                else:
-                    raise
+            except (pymysql.err.OperationalError, pymysql.err.InterfaceError) as e:
+                self.logger.info("db connection lost, reconnecting")
+                self.reconnect()
+                return func(self, *args, **kwargs)
         return requires_connection_inner
 
     @requires_connection
