@@ -82,7 +82,7 @@ class misc(commands.Cog):
         """Displays my full source code or the source code for the specified command.
         """
         source_url = "https://github.com/TK421bsod/maximilian"
-        branch = self.bot.common.run_command(['git', 'branch', '--show-current'])['output'][0]
+        branch = "maximilian-dev"
         if command is None:
             await ctx.send(source_url)
             return
