@@ -12,7 +12,6 @@ class misc(commands.Cog):
     '''Some commands that don\'t really fit into other categories'''
     def __init__(self, bot):
         self.bot = bot
-        self.bot.waiting_for_reaction = False
 
     @commands.command(aliases=["owner"])
     async def hi(self, ctx):
@@ -41,13 +40,6 @@ class misc(commands.Cog):
         print("sent some info about me")
         await ctx.send(embed=embed)
 
-    @commands.is_owner()
-    @commands.command(hidden=True)
-    async def listguildnames(self, ctx):
-        guildstring = ""
-        for each in self.bot.guilds:
-            guildstring = guildstring + each.name + "(" + str(len(list(each.members))) + " members), "
-        await ctx.send("Guilds: " + guildstring[:-2])
 
     @commands.command(help="View information about what data Maximilian accesses and stores.")
     async def privacy(self, ctx):
@@ -82,7 +74,7 @@ class misc(commands.Cog):
         """Displays my full source code or the source code for the specified command.
         """
         source_url = "https://github.com/TK421bsod/maximilian"
-        branch = "maximilian-dev"
+        branch = self.bot.common.run_command(['git', 'branch', '--show-current'])['output'][0]
         if command is None:
             await ctx.send(source_url)
             return
@@ -98,12 +90,6 @@ class misc(commands.Cog):
             source_url = "https://github.com/Rapptz/discord.py"
             branch = "master"
         await ctx.send(f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>')
-
-    @commands.command(aliases=["owoify", "uwu", "uwuize"])
-    async def owo(self, ctx, *, text:str):
-        '''Uwuify text. I can\'t uwuify text over 2000 characters.'''
-        text += " uwu"
-        await ctx.send(text.replace("r", "w").replace("l", "w").replace("a", "aw"))
     
     @commands.command(aliases=["rm"])
     async def rolemembers(self, ctx, *, role:discord.Role):
