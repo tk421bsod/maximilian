@@ -6,19 +6,20 @@ import functools
 import json
 import logging
 import os
-import subprocess
 import sys
 import time
 import traceback
 
 import discord
-from discord.ext.commands.errors import NoEntryPointError
 import pymysql
 from discord.ext import commands
+from discord.ext.commands.errors import NoEntryPointError
+
 import common
 import core
 import db
 import settings
+
 if not "--no-rich" in sys.argv:
     try:
         from rich.logging import RichHandler
@@ -192,16 +193,15 @@ async def load_extensions_async(bot):
 async def wrap_event(bot):
     @bot.event
     async def on_message(message):
-        if await bot.coreinst.prepare(message):
+        if await bot.core.prepare(message):
             await bot.process_commands(message)
     pass
 
 #wrap everything in a function to prevent conflicting event loops
 async def run(logger):
-    logger.debug("Loading settings from file...")
     config = common.load_config()
-    logger.debug("Loaded settings from file!")
     token = config['token']
+    check_version()
     intents = discord.Intents.default()
     intents.members=True
     intents.message_content = True
@@ -210,14 +210,6 @@ async def run(logger):
     tokenfilename, database, ver = get_release_level()
     logger.debug(f"Logging in as '{ver}'")
     if ver == 'stable':
-        if config['owner_id'] == "538193752913608704" and (os.path.exists('devtoken.txt') or os.path.exists('betatoken.txt')) and not "--nologin" in sys.argv:
-            print("You're attempting to start the production version of Maximilian when you have other versions available.\nAre you sure you want to do this? \nIf you're certain this won't break anything, enter 'Yes, do as I say!' below.\n")
-            if input() == "Yes, do as I say!":
-                print("\nOk, starting Maximilian.\n")
-                await asyncio.sleep(1)
-            else:
-                print("You need to type 'Yes, do as I say!' exactly as shown.")
-                os._exit(5)
         commit = ''
     else:
         token = common.token().get(tokenfilename)
@@ -229,7 +221,7 @@ async def run(logger):
     #set up some important stuff
     bot.database = database
     bot.logger = logger
-    check_version()
+    bot.common = common
     try:
         bot.USE_CUSTOM_EMOJI = config['custom_emoji']
     except KeyError:
@@ -264,7 +256,7 @@ async def run(logger):
     except pymysql.err.OperationalError:
         bot.logger.error("Couldn't connect to database. Trying to start it...")
         #TODO: figure out a better way to do this as some linux systems use different commands
-        os.system("sudo service mysql start")
+        os.system("bash setup.sh start")
         try:
             bot.dbinst = db.db(bot, config['dbp'])
         except pymysql.err.OperationalError:
