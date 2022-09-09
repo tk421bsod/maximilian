@@ -10,30 +10,48 @@
     <title>Maximilian - A Discord Bot</title>
     <!-- <link rel="stylesheet" href="common.css"> -->
     <link href="./deps/bootstrap.min.css" rel="stylesheet">
-    <!-- TODO: selfhost this -->
-    <script src="https://kit.fontawesome.com/8fc545e587.js" crossorigin="anonymous"></script>
-    <script src="./deps/bootstrap.bundle.min.js"></script>
+    <script async src="./deps/bootstrap.bundle.min.js"></script>
+    <script async src="./deps/theming.js"></script>
+    <script async src="./deps/fa/solid.min.js"></script>
+    <script async src="./deps/fa/fontawesome.min.js"></script>
     <style>
         body{
             background-color: #36393f;   
-            color:white;
+            color: white;
             font-smooth:always;
             -webkit-font-smoothing:subpixel-antialiased;
             scroll-behavior:smooth;
         }
+
+        .fixed-center{
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1030;
+        }
+
+        #navbar{
+            background-color: #36393f;
+        }
+
         #header{
             font-weight:400;
+        }
+
+        #theme-notif, #toggle-notif{
+            overflow:hidden;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm navbar-dark sticky-top" style="background-color: #36393f;" id="navbar" role="navigation">
+    <nav class="navbar navbar-expand-sm navbar-dark sticky-top" id="navbar" role="navigation">
         <div class="container-fluid justify-content-left text-left">
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse justify-content-center text-center" id="navbarSupportedContent">
-                <ul class="navbar-nav w-100 nav-justified">
+                <ul class="navbar-nav w-100 nav-justified" id="navbar-links">
                     <li class="visually-hidden-focusable nav-item"><a href="#main-content" class="visually-hidden-focusable nav-link" onclick="setTimeout(function(){window.scrollTo(0,0)}, 50);">Skip to content</a></li>
                     <li class="nav-item"><a id="active" class="nav-link active" href=".">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="./changelog.html">Changelog</a></li>
@@ -98,7 +116,7 @@
             <h2>Forever Open-Source</h2>
         </div>
         <div class="col">
-            <p>Concerned about Maximilian giving you a virus/stealing your data/spamming you with Nitro scams/logging your IP?<br>To help answer questions like this, Maximilian's source code is available at <a class='link-light' href="https://github.com/tk421bsod/maximilian" target="_blank"><i class="fas fa-external-link-alt fa-sm"></i> github.com/tk421bsod/maximilian</a>.</p>
+            <p>Concerned about Maximilian giving you a virus/stealing your data/spamming you with Nitro scams/logging your IP?<br>To help answer questions like this, Maximilian's source code is available at <a class='link-light' href="https://github.com/tk421bsod/maximilian" style="" target="_blank"><i class="fas fa-external-link-alt fa-sm"></i> github.com/tk421bsod/maximilian</a>.</p>
         </div>
     </div>
 
@@ -113,14 +131,24 @@
             <p class="feature-desc">Easy setup, an easy-to-use extension API, and a modular design make Maximilian the most customizable Discord bot out there.</p>
         </div>
     </div>
+    <div class="toast align-items-center fixed-center mx-auto" role="alert" aria-live="assertive" aria-atomic="true" id="theme-notif" data-bs-autohide="false" style="width: 425px; transition: width 0.5s ease-out, padding 1s ease-in-out, margin 1.75s ease-out, opacity .3s linear;">
+        <div class="d-flex" id="theme-notif-main" style="">
+            <div class="toast-body" id="theme-set" style="color:black">
+                 <div class="toast-subsection text-muted" style="font-size:8pt">
+                    Use the button at the bottom to change the theme later.
+                </div>   
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close" style="padding-right: 0; transition: opacity 0.5s ease, transform 0.5s ease; transform: scale(0.01, 0.01); left: 420px; top:35%; position:absolute;" id="theme-notif-close"></button>
+        </div>
     </div>
-    <footer class="footer text-center" style="color:#898f9c">Made with ♥️ by tk421 (<a style="color:#898f9c" href="https://github.com/tk421bsod" target="_blank">TK421bsod</a> on GitHub)</footer>
-<script>
-//sometimes the page will scroll a bit too far when using the 'Skip to content' link
-//this is an attempt to fix that
-if(window.location.href.includes('#main-content')){
-    setTimeout(function(){window.scrollTo(0,0);}, 50)
-}
-</script>
+    <div class="toast align-items-center fixed-center mx-auto" role="alert" aria-live="assertive" aria-atomic="true" id="toggle-notif" data-bs-autohide="false" style="width: 179px; transition: width 0.5s ease-out, padding 1s ease-in-out, margin 0.8s ease-out, opacity .3s linear;">
+        <div class="d-flex" id="toggle-notif-main" style="">
+            <div class="toast-body" id="toggle-set" style="color:black">
+            </div>
+        </div>
+    </div>
+    </div>
+    <footer class="footer text-center" style="color:#898f9c">Made with ♥️ by tk421 (<a style="color:#898f9c" href="https://github.com/tk421bsod" target="_blank">TK421bsod</a> on GitHub)  <button class="btn btn-outline-light" style="overflow:hidden;" id="theme-button"><p id="theme-toggle"></p></button></footer>
 </body>
 </html>
+
