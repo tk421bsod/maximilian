@@ -279,7 +279,7 @@ echo "${bold}----------------Maximilian Setup----------------${normal}"
 echo "This script automates most parts of setting up Maximilian. You'll still need to do a few things, like getting the token and choosing a password for the database."
 if [ "$1" == "onlydb" ];
 then
-    echo "${bold}You've chosen to only set up the database.${normal} This will not set up Maximilian on this computer. To set up Maximilian on this computer, run this with `nodb`."
+    echo "${bold}You've chosen to only set up the database.${normal} This will not set up Maximilian on this computer. To set up Maximilian on this computer, run this with 'nodb'."
 elif [ "$1" == "nodb" ];
 then
     echo "${bold}You've chosen to not set up the database on this computer.${normal} If you've set up the database on a different computer, run main.py with '--ip <ip>', <ip> being the ip address of that other computer."
