@@ -19,6 +19,7 @@ import common
 import core
 import db
 import settings
+from updater import update
 
 if not "--no-rich" in sys.argv:
     try:
@@ -199,8 +200,10 @@ async def wrap_event(bot):
 
 #wrap everything in a function to prevent conflicting event loops
 async def run(logger):
+    logger.debug("Loading config...")
     config = common.load_config()
     token = config['token']
+    logger.debug("Checking discord.py version...")
     check_version()
     intents = discord.Intents.default()
     intents.members=True
@@ -222,19 +225,6 @@ async def run(logger):
     bot.database = database
     bot.logger = logger
     bot.common = common
-    try:
-        bot.USE_CUSTOM_EMOJI = config['custom_emoji']
-    except KeyError:
-        bot.USE_CUSTOM_EMOJI = False
-    try:
-        #experimental i18n, not used at the moment
-        #initialize_i18n(bot)
-        pass
-    except:
-        if '--i18n-errors' in sys.argv:
-            traceback.print_exc()
-        logger.critical('i18n initialization failed! Does the translation file exist?')
-        os._exit(53)
     await wrap_event(bot)
     #show version information
     bot.logger.warning(f"Starting maximilian-{ver} v1.0.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
@@ -280,17 +270,21 @@ async def run(logger):
 
 print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
 try:
-    #check for updates
-    common.update()
     print("setting up logging...")
     #set a logging level
     config_logging(sys.argv)
     logger = logging.getLogger(f'maximilian')
+    #check for updates
+    try:
+        update()
+    except KeyboardInterrupt:
+        print("Updater canceled. Maximilian will start in a moment.")
     try:
         #set up rich tracebacks
         install(suppress=[discord,pymysql])
     except NameError:
         pass
+    #then start the event loop
     asyncio.run(run(logger))
 except KeyboardInterrupt:
     print("\nKeyboardInterrupt detected. Exiting.")
@@ -302,6 +296,8 @@ except FileNotFoundError:
 except SystemExit: #raised on quit()
     pass
 except:
-    logger.error("Unhandled exception! Exiting.")
-    logger.error(traceback.format_exc())
-
+    try:
+        logger.error("Unhandled exception! Exiting.")
+        logger.error(traceback.format_exc())
+    except:
+        pass
