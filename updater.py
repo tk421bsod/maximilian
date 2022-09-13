@@ -24,7 +24,7 @@ def update():
     '''
     #loggers aren't used here as we want all this to show regardless of logging level
     print("initializing updater\n")
-    initial = common.get_latest_commit()
+    initial = common.get_latest_commit()[0]
     #get current remote
     remote = common.run_command(['git', 'remote'])['output'][0]
     #get current branch
