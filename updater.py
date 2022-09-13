@@ -22,7 +22,7 @@ def update():
     '''
     Python implementation of the setup.sh updater with some slight changes.
     '''
-    #no logger yet :(
+    #loggers aren't used here as we want all this to show regardless of logging level
     print("initializing updater\n")
     initial = common.get_latest_commit()
     #get current remote
@@ -34,7 +34,7 @@ def update():
     if branch != 'release':
         print("Updates on this branch may be unstable.")
         print("You can switch back to the 'release' branch at any time using 'git checkout release'.")
-        print("If an update breaks something, reset to the previous commit using `git ")
+        print("If an update breaks something, reset to the previous commit using 'git reset HEAD~1'.")
     else:
         print("You can switch to other branches at any time using 'git checkout <branch>'.")
         print("Use 'git branch' to view a list of branches.")
