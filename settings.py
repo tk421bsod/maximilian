@@ -9,7 +9,6 @@ from discord.ext import commands
 class Setting():
     """
     An object that represents a setting and its state.
-    While it's possible to instantiate this outside of a Category, doing so isn't recommended.
 
     Methods
     -------
@@ -88,7 +87,6 @@ class Category():
 
     fill_settings_cache
         Fills the category's cache with new setting data. 
-        Need to update the cache yourself for some reason??? Consider using `update_cached_state`.
 
     update_setting
         Updates a setting's state in the database, then calls `update_cached_state`.
