@@ -32,6 +32,7 @@ then
     echo "${bold}delete-old${normal} - Deletes any old configuration files."
     echo "${bold}nodb${normal} - Sets up Maximilian without the database. Only use this if you've already set up the database on a different computer."
     echo "${bold}onlydb${normal} - Only sets up the database."
+    echo "${bold}help${normal} - Shows this message."
     echo "None - Sets up Maximilian."
     exit
 fi
