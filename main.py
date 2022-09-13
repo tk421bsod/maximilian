@@ -1,4 +1,21 @@
 #main.py: loads core libraries and everything in the cogs folder, then starts Maximilian
+
+import sys
+
+if "--help" in sys.argv:
+    print("main.py usage: python3 main.py [OPTIONS]\n")
+    print("main.py handles loading modules, checking requirements, and launching Maximilian.\n")
+    print("You can enable/disable features and modify Maximilian's behavior through the use of the following options.\nYou can use more than one option at a time.\n")
+    print("Options:")
+    print("--enablejsk - Enables Jishaku, an extension used for debugging and code evaluation.")
+    print("--noupdate - Skips update check on startup.")
+    print("--noload <extensions> - Skips loading the specified extensions.")
+    print("--no-rich - Disables rich text.")
+    print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level.")
+    print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
+    print("--help - Shows this message and exits.")
+    quit()
+
 print("Loading libraries...")
 import asyncio
 import datetime
@@ -6,7 +23,6 @@ import functools
 import json
 import logging
 import os
-import sys
 import time
 import traceback
 
@@ -211,7 +227,7 @@ async def run(logger):
     logger.debug("Getting version information...")
     #figure out what we're logging in as
     tokenfilename, database, ver = get_release_level()
-    logger.debug(f"Logging in as '{ver}'")
+    logger.debug(f"version is '{ver}'")
     if ver == 'stable':
         commit = ''
     else:
@@ -232,7 +248,6 @@ async def run(logger):
     bot.noload = []
     bot.logger.debug("Parsing command line arguments...")
     parse_arguments(bot, sys.argv)
-    bot.logger.debug("Done parsing command line arguments.")
     bot.guildlist = []
     bot.prefixes = {}
     bot.responses = []
@@ -248,14 +263,14 @@ async def run(logger):
         #TODO: figure out a better way to do this as some linux systems use different commands
         os.system("bash setup.sh start")
         try:
-            bot.dbinst = db.db(bot, config['dbp'])
+            bot.db = db.db(bot, config['dbp'])
         except pymysql.err.OperationalError:
             bot.logger.debug(traceback.format_exc())
             bot.logger.critical(f"Couldn't connect to database! \nTry running 'bash setup.sh fix'.")
             os._exit(96)
     #make sure all tables exist
     try:
-        bot.dbinst.ensure_tables()
+        bot.db.ensure_tables()
     except pymysql.OperationalError:
         bot.logger.debug(traceback.format_exc())
         bot.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
@@ -276,9 +291,10 @@ try:
     logger = logging.getLogger(f'maximilian')
     #check for updates
     try:
-        update()
+        if "--noupdate" not in sys.argv:
+            update()
     except KeyboardInterrupt:
-        print("Updater canceled. Maximilian will start in a moment.")
+        print("Updater interrupted. Maximilian will start in a moment.")
     try:
         #set up rich tracebacks
         install(suppress=[discord,pymysql])
