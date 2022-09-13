@@ -22,7 +22,7 @@ except (ImportError, ModuleNotFoundError):
 def get_prefix(bot, message):
     if not bot.prefixes:
         try:
-            bot.loop.create_task(bot.prefixinst.update_prefix_cache())
+            bot.loop.create_task(bot.prefixes.update_prefix_cache())
         #fall back if something goes wrong
         except:
             bot.logger.error("Something went wrong while updating the prefix cache. Falling back to '!'.")
@@ -131,8 +131,8 @@ class deletion_request:
         self.bot.dbinst.exec_safe_query("delete from responses where guild_id = %s", (ctx.guild.id,))
         self.bot.dbinst.exec_safe_query("delete from prefixes where guild_id = %s", (ctx.guild.id,))
         await ctx.guild.me.edit(nick=f"[!] Maximilian")
-        await self.bot.responsesinst.get_responses()
-        await self.bot.prefixesinst.update_prefix_cache()
+        await self.bot.responses.get_responses()
+        await self.bot.prefixes.update_prefix_cache()
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
@@ -140,8 +140,6 @@ class core(commands.Cog):
         self.bot = bot
         #we can't easily import this file from files in the cogs folder
         #provide references to other classes in the file to prevent this
-        #this class is referenced by bot.coreinst after extensions are loaded
-        #none of these classes should be used before extensions are loaded anyways as they require the bot to be ready
         self.bot.confirmation = confirmation
         self.bot.deletion_request = deletion_request
         self.bot.DeletionRequestAlreadyActive = DeletionRequestAlreadyActive
@@ -205,9 +203,8 @@ class core(commands.Cog):
                      extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
             for each in targetextensions:
                 self.bot.reload_extension(each)
-            self.bot.prefixesinst = self.bot.get_cog('prefixes')
-            self.bot.responsesinst = self.bot.get_cog('Custom Commands')
-            self.bot.miscinst = self.bot.get_cog('misc')
+            self.bot.prefixes = self.bot.get_cog('prefixes')
+            self.bot.responses = self.bot.get_cog('Custom Commands')
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
             embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
         except:
@@ -309,12 +306,12 @@ class core(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         self.logger.info("joined guild, adding guild id to list of guilds and resetting prefixes")
-        await self.bot.prefixinst.update_prefix_cache(guild.id)
+        await self.bot.prefixes.update_prefix_cache(guild.id)
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         self.logger.info("removed from guild, removing that guild from list of guilds and resetting prefixes")
-        await self.bot.prefixinst.update_prefix_cache(guild.id)
+        await self.bot.prefixes.update_prefix_cache(guild.id)
     
     async def cog_command_error(self, ctx, error):
         error = getattr(error, "original", error)

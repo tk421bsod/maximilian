@@ -108,24 +108,6 @@ def config_logging(args):
     print("No logging level specified, falling back to WARN.")
     logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
 
-def get_release_level():
-    '''Determines what file to get the token from, among other stuff, depending on the version passed via arguments'''
-    if "--beta" in sys.argv:
-        filename = "betatoken.txt"
-        sys.argv.pop(sys.argv.index("--beta"))
-        database = "maximilian_test"
-        ver = 'beta'
-    elif "--dev" in sys.argv:
-        filename = "devtoken.txt"
-        sys.argv.pop(sys.argv.index("--dev"))
-        database = "maximilian"
-        ver = 'dev'
-    else:
-        filename = "token.txt"
-        database = "maximilian"
-        ver = 'stable'
-    return filename, database, ver
-
 def parse_arguments(bot, args):
     if len(args) > 1:
         if "--ip" in args:
@@ -178,9 +160,6 @@ async def load_extensions_async(bot):
                 await bot.load_extension(f"cogs.{cleanname}")
                 extensioncount += 1
                 bot.logger.debug(f"Loaded cogs.{cleanname}.")
-            #extensions (besides cogs.prefixes) should never be already loaded when this runs.
-            #if this runs again after startup something has gone terribly wrong.
-            #catch the error so we can continue anyways
             except commands.ExtensionAlreadyLoaded:
                 bot.logger.debug(f"{cleanname} is already loaded, skipping")
             except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
@@ -193,13 +172,9 @@ async def load_extensions_async(bot):
                     bot.logger.error(f"The {error.original.name} module isn't installed. Consider installing the packages in requirements_extra.txt.")
                 else:
                     pass#bot.logger.error(traceback.format_exc())
-    #get cogs as some extensions refer to each other
-    #TODO: get rid of this ugliness
     try:
-        bot.coreinst = bot.get_cog('core')
-        if not bot.dbdisabled:
-            bot.prefixesinst = bot.get_cog('prefixes')
-        bot.responsesinst = bot.get_cog('Custom Commands')
+        bot.prefixes = bot.get_cog('prefixes')
+        bot.responses = bot.get_cog('Custom Commands')
         bot.miscinst = bot.get_cog('misc')
         bot.reactionrolesinst = bot.get_cog('reaction roles')
     except:
@@ -225,16 +200,14 @@ async def run(logger):
     intents.members=True
     intents.message_content = True
     logger.debug("Getting version information...")
-    #figure out what we're logging in as
-    tokenfilename, database, ver = get_release_level()
-    logger.debug(f"version is '{ver}'")
-    if ver == 'stable':
-        commit = ''
-    else:
-        token = common.token().get(tokenfilename)
+    if "--alt" in sys.argv:
+        token = input("Enter a token to use: \n").strip()
+        database = "maximilian_test"
         logger.debug("Getting latest commit hash...")
         commit = common.get_latest_commit()
         logger.debug("Done getting latest commit hash.")
+    else:
+        commit = ""
     logger.debug("Setting up some stuff")
     bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.0.0{f'-{commit}' if commit else ''} ({ver})"))
     #set up some important stuff
@@ -243,7 +216,7 @@ async def run(logger):
     bot.common = common
     await wrap_event(bot)
     #show version information
-    bot.logger.warning(f"Starting maximilian-{ver} v1.0.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
+    bot.logger.warning(f"Starting maximilian v1.0.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
     #parse additional arguments (ip, enablejsk, noload)
     bot.noload = []
     bot.logger.debug("Parsing command line arguments...")
@@ -260,7 +233,6 @@ async def run(logger):
         bot.db = db.db(bot, config['dbp'])
     except pymysql.err.OperationalError:
         bot.logger.error("Couldn't connect to database. Trying to start it...")
-        #TODO: figure out a better way to do this as some linux systems use different commands
         os.system("bash setup.sh start")
         try:
             bot.db = db.db(bot, config['dbp'])
@@ -278,7 +250,6 @@ async def run(logger):
     #TODO: choose your fighter: subclass or context manager
     #if "--with-setup-hook" in sys.argv:
     bot.setup_hook = functools.partial(load_extensions_async, bot)
-    bot.logger.debug("running load_extensions_async after login")
     print("Logging in...")
     if not "--nologin" in sys.argv:
         await bot.start(token)
