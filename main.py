@@ -14,6 +14,7 @@ if "--help" in sys.argv:
     print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level.")
     print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
     print("--help - Shows this message and exits.")
+    print("--alt <token> - Runs Maximilian with the specified token.")
     quit()
 
 print("Loading libraries...")
