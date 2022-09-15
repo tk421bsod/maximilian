@@ -117,12 +117,25 @@ class Category():
         self.logger = constructor.logger
         self.bot = constructor.bot
 
-    def default_false(self):
-        return False
-
     @property
     def ready(self):
         return self._ready
+
+    def default_false(self):
+        return False
+
+    def get_initial_state(self, setting):
+        """
+        Gets the initial state of a setting.
+        """
+        state = collections.defaultdict(self.default_false)
+        for guild in self.bot.guilds:
+            if setting['guild_id'] == guild.id:
+                if setting['enabled'] is not None:
+                    state[guild.id] = bool(setting['enabled'])
+                else:
+                    state[guild.id] = False
+        return state
 
     async def fill_settings_cache(self):
         """
@@ -157,15 +170,9 @@ class Category():
         if not isinstance(data, list):
             data = [data]
         for setting in data:
-            states = collections.defaultdict(self.default_false)
-            for guild in self.bot.guilds:
-                if setting['guild_id'] == guild.id:
-                    if setting['enabled'] is not None:
-                        states[guild.id] = bool(setting['enabled'])
-                    else:
-                        states[guild.id] = False
+            state = self.get_initial_state()
             #create new setting, it automatically sets itself as an attr of this category
-            Setting(self, setting['setting'], states)
+            Setting(self, setting['setting'], state)
         self.logger.info("Done filling settings cache.")
         self._ready = True
         self.filling = False
@@ -245,10 +252,6 @@ class Category():
             else:
                 title = "Global settings"
             embed = discord.Embed(title=title, color=0xFDFE00)
-            #writing this down so i can figure out something to do without having to restructure caches etc.
-            #goals of this are to:
-            #1. go through every setting
-            #2. fetch setting states and conflicts
             for setting in [self.get_setting(i) for i in list(self.settingdescmapping.keys())]:
                 if setting.unusablewith:
                     unusablewithwarning = f"Cannot be enabled at the same time as {await self.prepare_conflict_string(setting.unusablewith)}"
