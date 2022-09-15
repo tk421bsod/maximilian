@@ -30,7 +30,7 @@ class FileTooLargeError(discord.ext.commands.CommandError):
     pass
 
 class Metadata():
-    '''An object that stores metadata about a song that's being searched for. This is quite volatile, never access this unless you absolutely have to. (perhaps use current_song?)'''
+    '''An object that stores metadata about a song that's being searched for.'''
     def __init__(self):
         self.duration = None
         self.filename = None
@@ -40,9 +40,9 @@ class Metadata():
         self.info = None
 
 class CurrentSong(Metadata):
-    '''A subclass of Metadata that stores information about the current song. This is a lot less volatile than metadata; use this whenever possible'''
+    '''A subclass of Metadata that stores information about the current song.'''
     def __init__(self):
-        super().__init__()
+        super().__init__() #add Metadata attrs to this
         self.volume = 0.5
         self.paused_at = 0
         self.start_time = 0

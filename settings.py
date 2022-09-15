@@ -208,6 +208,7 @@ class Category():
         """
         Changes a setting's state in the database. Calls update_cached_state to change a setting's state in cache.
         """
+        #TODO: replace with upsert?
         if not self.bot.dbinst.exec_safe_query("select * from config where guild_id=%s and category=%s", (ctx.guild.id, self.name)):
                 self.bot.dbinst.exec_safe_query("insert into config values(%s, %s, %s, %s)", (ctx.guild.id, self.name, setting.name, True))
         else:
@@ -221,7 +222,6 @@ class Category():
         return f"{', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]])} and '*{conflicts[-1]}*'"
 
     async def _resolve_conflicts(self, ctx, setting):
-        #multiple conflicts, so iterate over them
         if isinstance(setting.unusablewith, list):
             resolved = []
             for conflict in setting.unusablewith:
@@ -231,7 +231,6 @@ class Category():
                     await self.update_setting(ctx, conflict)
                     resolved.append(conflict)
         else:
-            #only one conflict, update that setting
             if setting.unusablewith:
                 if self.get_setting(setting.unusablewith).enabled():
                     await self.update_setting(ctx, self.unusablewithmapping[setting])
