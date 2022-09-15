@@ -154,6 +154,19 @@ class core(commands.Cog):
             #this is done in a task to make sure it's done after commands have been registered
             self.bot.loop.create_task(self.check_for_git())
 
+    async def get_named_logger(name):
+        return logging.getLogger(f'maximilian.{name}')
+
+    async def send_traceback(self):
+        paginator = commands.Paginator()
+        for line in traceback.format_exc().split("\n"):
+            paginator.add_line(line)
+        owner = self.bot.get_user(self.bot.owner_id)
+        if owner == None:
+            return
+        for page in paginator.pages:
+            await owner.send(page)
+
     async def check_for_git(self):
         try:
             import git

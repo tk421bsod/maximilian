@@ -45,7 +45,7 @@ def update():
     except subprocess.CalledProcessError:
         print("Something went wrong while checking for updates.")
         return
-    after = common.run_command(['git', 'rev-parse', '--short', f'{remote}/{branch}'])['output']
+    after = common.run_command(['git', 'rev-parse', '--short', f'{remote}/{branch}'])['output'][0]
     if initial != after:
         resp = input("Update available. Would you like to apply it? Y/N\n").lower().strip()
         if resp == "y":

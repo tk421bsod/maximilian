@@ -68,6 +68,19 @@ class music(commands.Cog):
         self.lock = asyncio.Lock()
         self.bot = bot
         self.players = {}
+        self.ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': 'songcache/%(id)s.%(ext)s',
+        'quiet': True,
+        'ignoreerrors': False,
+        'logtostderr': False,
+        'no_warnings': True,
+        'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192'
+        }]
+        }
 
     async def _get_player(self, ctx):
         '''Gets a player if it exists, creates one if it doesn't exist'''
@@ -134,11 +147,7 @@ class music(commands.Cog):
             await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.")
         else:
             try:
-                #TODO: implement this for other things
-                paginator = commands.Paginator()
-                for line in traceback.format_exc().split("\n"):
-                    paginator.add_line(line)
-                [await self.bot.get_user(self.bot.owner_id).send(page) for page in paginator.pages]
+                await self.bot.core.send_traceback()
             except discord.HTTPException:
                 pass
             await ctx.send(f"Hmm, something went wrong. Try that again. If this keeps happening, tell tk421#2016. \n<:meowcoffee:849518622140530698> I've also reported this error to tk421.")
@@ -234,7 +243,7 @@ class music(commands.Cog):
                 player.metadata.thumbnail = data['thumbnail']
                 player.metadata.url = f"https://youtube.com/watch?v={video}"
             else:
-                with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
+                with youtube_dl.YoutubeDL(self.ydl_opts) as youtubedl:
                     info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
                     player.metadata.url = f"https://youtube.com/watch?v={video}"
                     player.metadata.name = info["title"]
@@ -254,7 +263,7 @@ class music(commands.Cog):
         except FileNotFoundError:
             self.logger.info("song isn't in cache")
             async with ctx.typing():
-                with youtube_dl.YoutubeDL(ydl_opts) as youtubedl:
+                with youtube_dl.YoutubeDL(self.ydl_opts) as youtubedl:
                     #the self.bot.loop.run_in_executor is to prevent the extract_info call from blocking other stuff
                     info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
                     #get name of file we're going to play, for some reason prepare_filename
@@ -308,19 +317,6 @@ class music(commands.Cog):
     async def get_song(self, ctx, url, player):
         '''Gets the filename, id, and other metadata of a song. This tries to look up a song in the database first, then it searches Youtube if that fails.'''
         self.logger.info("Locked execution.")
-        ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': 'songcache/%(id)s.%(ext)s',
-        'quiet': True,
-        'ignoreerrors': False,
-        'logtostderr': False,
-        'no_warnings': True,
-        'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192'
-        }]
-        }
         async with ctx.typing():
             try:
                 #check if we've been provided a valid url
@@ -328,7 +324,7 @@ class music(commands.Cog):
                     await cs.get(url)
             except Exception:
                 #if not...
-                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                with youtube_dl.YoutubeDL(self.ydl_opts) as ydl:
                     #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
                     self.logger.info("looking for song in db...")
                     info = self.bot.dbinst.exec_safe_query("select * from songs where name like %s", (f"%{url}%", ))
@@ -341,10 +337,10 @@ class music(commands.Cog):
                     else:
                         self.logger.info("song wasn't found in db. searching youtube...")
                         await self.search_youtube_for_song(ydl, ctx, url, 0, player)
-                    await self.get_song_from_cache(ctx, player.metadata.id, ydl_opts, player)
+                    await self.get_song_from_cache(ctx, player.metadata.id, self.ydl_opts, player)
             else:
                 #if the url is valid, don't try to search youtube, just get it from cache
-                await self.get_song_from_cache(ctx, url, ydl_opts, player)
+                await self.get_song_from_cache(ctx, url,self.ydl_opts, player)
 
     
     #executes when someone sends a message with the prefix followed by 'play'
