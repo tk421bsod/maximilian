@@ -94,7 +94,7 @@ class db:
 
     #maybe make this an alias to exec_safe_query or rename exec_safe query to this?
     @requires_connection
-    def exec_query(self, querytoexecute, debug=False, fetchall=False):
+    def exec_query(self, querytoexecute, fetchall=False):
         self.connect(self.database)
         previous_frame = inspect.getframeinfo(inspect.currentframe().f_back)
         self.logger.error(f"db.exec_query was called! Consider using exec_safe_query instead. Called in file '{previous_frame[0]}' at line {previous_frame[1]} in function {previous_frame[2]}")
@@ -106,22 +106,19 @@ class db:
         return row if row != () and row != "()" else None
 
     @requires_connection
-    def exec_safe_query(self, query, params, *, debug=False, fetchall=False):
+    def exec_safe_query(self, query, params, *, fetchall=False):
         """Executes 'query' with 'params'. Uses pymysql's parameterized queries.
 
         Parameters
         ----------
         query : str
             The SQL query to execute. 
-        password : str, optional
-            The database password in plain text. TODO: why is this optional
-        ip : str, optional
-            The IP address to use for the database. Defaults to 'localhost'. Optional if `bot` has a `dbip` attribute.
-        database : str, optional
-            The name of the database to connect to. Optional if `bot` has a `database` attribute. 
+        params : str
+            The parameters for the query.
         """
         self.conn.execute(str(query), params)
         row = self.conn.fetchall()
         if len(row) == 1:
             row = row[0]
         return row if row != () and row != "()" else None
+	
