@@ -210,9 +210,9 @@ async def run(logger):
     else:
         commit = ""
     logger.debug("Setting up some stuff")
-    bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.0.0{f'-{commit}' if commit else ''} ({ver})"))
+    bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.0.0{f'-{commit}' if commit else ''}"))
     #set up some important stuff
-    bot.database = database
+    bot.database = "maximilian" #TODO: remove this
     bot.logger = logger
     bot.common = common
     await wrap_event(bot)
