@@ -16,12 +16,12 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         await self.bot.wait_until_ready()
         #then for each guild in the list, check if the guild has any responses in the database
         for guild in self.bot.guilds:
-            count = self.bot.dbinst.exec_query("select count(*) from responses where guild_id={}".format(str(guild.id)), False, False)
+            count = self.bot.db.exec_query("select count(*) from responses where guild_id={}".format(str(guild.id)), False, False)
             if count is not None:
                 #if there are responses, check if there's one or more
                 if int(count['count(*)']) >= 1:
                     #if so, get a list of responses and iterate over that, adding each one to the list
-                    response = self.bot.dbinst.exec_query("select * from responses where guild_id={}".format(str(guild.id)), False, True)
+                    response = self.bot.db.exec_query("select * from responses where guild_id={}".format(str(guild.id)), False, True)
                     for each in range(int(count['count(*)'])):
                         tempresponses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
         self.bot.responses = tempresponses
@@ -56,7 +56,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
             if command_trigger.lower() == each.name.lower() or command_trigger.lower() == "jishaku" or command_trigger.lower() == "jsk":
                 await ctx.send("You can't create a custom command with the same name as one of my commands.")
                 return
-        if self.bot.dbinst.insert("responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True) == "success":
+        if self.bot.db.insert("responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True) == "success":
             await self.get_responses()
             print("added response")
             await ctx.send("Added a custom command.")
@@ -65,7 +65,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
 
     @commands.command(help="Delete a custom command, takes the command trigger as a parameter")
     async def delete(self, ctx, command_trigger : str):
-        if self.bot.dbinst.delete("responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
+        if self.bot.db.delete("responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
             await self.get_responses()
             print("deleted response")
             await ctx.send("Deleted a custom command.")

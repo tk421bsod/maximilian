@@ -14,19 +14,19 @@ class reactionroles(commands.Cog, name="reaction roles"):
     async def reactionroles(self, ctx, action, role : typing.Optional[discord.Role]=None, messageid : typing.Optional[int]=None, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
         if role != None and messageid != None:
             if action == "add":
-                if self.bot.dbinst.insert("roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(role.id), "message_id" : str(messageid), "emoji" : str(emoji)}, "role_id", False, "", False, "", False) == "success":
+                if self.bot.db.insert("roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(role.id), "message_id" : str(messageid), "emoji" : str(emoji)}, "role_id", False, "", False, "", False) == "success":
                     print("added a reaction role")
                     await ctx.send("Added a reaction role.")
                 else: 
                     await ctx.send("Failed to add a reaction role, there might be a duplicate. Try deleting the reaction role you just tried to add.")
             if action == "delete":
                 print("deleted a reaction role")
-                if self.bot.dbinst.delete("roles", str(role.id), "role_id", "", "", False) == "successful":
+                if self.bot.db.delete("roles", str(role.id), "role_id", "", "", False) == "successful":
                     await ctx.send("Deleted a reaction role.")
                 else:
                     await ctx.send(f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(role.id)}'? Try using '{str(await self.bot.get_prefix(ctx.message))}'reactionroles list all all' to see if you have any reaction roles set up.")
         elif action == "list":
-            roles = self.bot.dbinst.exec_query("select * from roles where guild_id={}".format(ctx.guild.id), False, True)
+            roles = self.bot.db.exec_query("select * from roles where guild_id={}".format(ctx.guild.id), False, True)
             reactionrolestring = ""
             if roles != "()":
                 for each in roles: 
@@ -40,17 +40,17 @@ class reactionroles(commands.Cog, name="reaction roles"):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         #when a reaction is added, check if guild has any reaction roles set up
-        if self.bot.dbinst.retrieve("roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
+        if self.bot.db.retrieve("roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
             #if it does, check if there's a role associated with the emoji user reacted with
-            if self.bot.dbinst.retrieve("roles", "role_id", "emoji", str(payload.emoji), False) is not None:
+            if self.bot.db.retrieve("roles", "role_id", "emoji", str(payload.emoji), False) is not None:
                 #if so, get the role id associated with the emoji
-                roleid = self.bot.dbinst.retrieve("roles", "role_id", "emoji", str(payload.emoji), False)
+                roleid = self.bot.db.retrieve("roles", "role_id", "emoji", str(payload.emoji), False)
             else:
                 #otherwise, get the role id associated with the message
-                roleid = self.bot.dbinst.retrieve("roles", "role_id", "message_id", str(payload.message_id), False)
+                roleid = self.bot.db.retrieve("roles", "role_id", "message_id", str(payload.message_id), False)
             #if the role is associated with the message/emoji, get the emoji and check if it matches the emoji the user reacted with (this might be redundant) 
             if roleid is not None:
-                emoji = self.bot.dbinst.retrieve("roles", "emoji", "role_id", str(roleid), False)
+                emoji = self.bot.db.retrieve("roles", "emoji", "role_id", str(roleid), False)
                 print(str(emoji))
                 print(str(payload.emoji))
                 if emoji == str(payload.emoji) or emoji == "None" or emoji == None:
@@ -68,15 +68,15 @@ class reactionroles(commands.Cog, name="reaction roles"):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if self.bot.dbinst.retrieve("roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
+        if self.bot.db.retrieve("roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
-            if self.bot.dbinst.retrieve("roles", "role_id", "emoji", str(payload.emoji), False) is not None:
-                roleid = self.bot.dbinst.retrieve("roles", "role_id", "emoji", str(payload.emoji), False)
+            if self.bot.db.retrieve("roles", "role_id", "emoji", str(payload.emoji), False) is not None:
+                roleid = self.bot.db.retrieve("roles", "role_id", "emoji", str(payload.emoji), False)
             else:
-                roleid = self.bot.dbinst.retrieve("roles", "role_id", "message_id", str(payload.message_id), False)
+                roleid = self.bot.db.retrieve("roles", "role_id", "message_id", str(payload.message_id), False)
             if roleid is not None:
-                emoji = self.bot.dbinst.retrieve("roles", "emoji", "role_id", str(roleid), False)
+                emoji = self.bot.db.retrieve("roles", "emoji", "role_id", str(roleid), False)
                 ctx = self.bot.get_channel(payload.channel_id)
                 role = discord.utils.get(guild.roles, id=int(roleid))
                 if emoji == str(payload.emoji) or emoji == "None" or emoji == None:

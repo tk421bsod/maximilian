@@ -15,6 +15,21 @@ function ctrl-c () {
 ip="%"
 sleep 0.5
 
+#we might have been invoked by main.py to start the database.
+#to avoid unnecessary waiting, just check for this arg  before updating
+if [ "$1" == "start" ];
+then
+    echo "Trying to start the database..."
+    sudo service mysql start
+    if [ $? != 0 ];
+    then
+        echo "Couldn't start the database."
+        exit
+    fi
+    echo "Started the database."
+    exit
+fi
+
 if [ "$1" == "help" ];
 then
     echo "Usage: bash setup.sh [OPTION]"
@@ -100,19 +115,6 @@ then
     rm token.txt > /dev/null 2>&1
     rm dbp.txt > /dev/null 2>&1
     echo "Done."
-    exit
-fi
-
-if [ "$1" == "start" ];
-then
-    echo "Trying to start the database..."
-    sudo service mysql start
-    if [ $? != 0 ];
-    then
-        echo "Couldn't start the database."
-        exit
-    fi
-    echo "Started the database."
     exit
 fi
 

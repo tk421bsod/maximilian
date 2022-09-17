@@ -24,7 +24,7 @@ class prefixes(commands.Cog):
         
     async def _fetch_prefix(self, guild_id):
         '''Fetches a prefix corresponding to a guild id from the database'''
-        prefix = self.bot.dbinst.exec_safe_query("select prefix from prefixes where guild_id = %s", (guild_id))
+        prefix = self.bot.db.exec_safe_query("select prefix from prefixes where guild_id = %s", (guild_id))
         if not prefix and prefix != () and prefix != "()":
             self.bot.prefixes[guild_id] = '!'
         else:
@@ -54,10 +54,10 @@ class prefixes(commands.Cog):
         if self._is_prefix_same(ctx.guild, new_prefix):
             return await ctx.send(f"My prefix in this server is already set to `{new_prefix}`!")
         await ctx.send(f"Ok. Changing prefix to {new_prefix}...")
-        if self.bot.dbinst.exec_safe_query("select * from prefixes where guild_id = %s", (ctx.guild.id, )):
-            self.bot.dbinst.exec_safe_query("update prefixes set prefix = %s where guild_id = %s", (new_prefix, ctx.guild.id))
+        if self.bot.db.exec_safe_query("select * from prefixes where guild_id = %s", (ctx.guild.id, )):
+            self.bot.db.exec_safe_query("update prefixes set prefix = %s where guild_id = %s", (new_prefix, ctx.guild.id))
         else:
-            self.bot.dbinst.exec_safe_query("insert into prefixes values(%s, %s)", (ctx.guild.id, new_prefix))
+            self.bot.db.exec_safe_query("insert into prefixes values(%s, %s)", (ctx.guild.id, new_prefix))
         await self.update_prefix_cache(ctx.guild.id)
         await ctx.send(f"Set my prefix to `{new_prefix}`.")
               

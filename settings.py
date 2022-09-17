@@ -149,7 +149,7 @@ class Category():
         #2. at least 1 setting is in the database
         #at least one setting won't be present in cache
         try:
-            data = self.bot.dbinst.exec_safe_query('select * from config where category=%s', (self.name), fetchall=True)
+            data = self.bot.db.exec_safe_query('select * from config where category=%s', (self.name), fetchall=True)
         except:
             traceback.print_exc()
             self.logger.warning('An error occurred while filling the setting cache, falling back to every setting disabled')
@@ -163,7 +163,7 @@ class Category():
                 self.logger.info("No settings are in the database for some reason. Creating an entry for each setting and falling back to every setting disabled")
                 data = []
                 for name in list(self.settingdescmapping.keys()):
-                    self.bot.dbinst.exec_safe_query('insert into config values(%s, %s, %s, %s)', (self.bot.guilds[0].id, self.name, name, False))
+                    self.bot.db.exec_safe_query('insert into config values(%s, %s, %s, %s)', (self.bot.guilds[0].id, self.name, name, False))
                     for guild in self.bot.guilds:
                         data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
         print(data)
@@ -209,10 +209,10 @@ class Category():
         Changes a setting's state in the database. Calls update_cached_state to change a setting's state in cache.
         """
         #TODO: replace with upsert?
-        if not self.bot.dbinst.exec_safe_query("select * from config where guild_id=%s and category=%s", (ctx.guild.id, self.name)):
-                self.bot.dbinst.exec_safe_query("insert into config values(%s, %s, %s, %s)", (ctx.guild.id, self.name, setting.name, True))
+        if not self.bot.db.exec_safe_query("select * from config where guild_id=%s and category=%s", (ctx.guild.id, self.name)):
+                self.bot.db.exec_safe_query("insert into config values(%s, %s, %s, %s)", (ctx.guild.id, self.name, setting.name, True))
         else:
-            self.bot.dbinst.exec_safe_query("update config set enabled=%s where guild_id=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, setting.name))
+            self.bot.db.exec_safe_query("update config set enabled=%s where guild_id=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, setting.name))
         await self.update_cached_state(ctx, setting)
 
     async def _prepare_conflict_string(self, conflicts):

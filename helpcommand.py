@@ -39,7 +39,7 @@ class HelpCommand(commands.HelpCommand):
         if self.context.guild is not None:
             #TODO: use the existing cache (not sure why I didn't think of it before writing this)
             #im too lazy to change it rn as it's 1 am
-            responseslist = self.context.bot.dbinst.exec_safe_query("select * from responses where guild_id = %s", (self.context.guild.id), fetchall=True)
+            responseslist = self.context.bot.db.exec_safe_query("select * from responses where guild_id = %s", (self.context.guild.id), fetchall=True)
             responsestring = "A list of custom commands for this server. These don't have help entries. \n"
             if responseslist is not None and str(responseslist)!="()":
                 for i in responseslist:
