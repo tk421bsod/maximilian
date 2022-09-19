@@ -10,12 +10,13 @@ class prefixes(commands.Cog):
     def __init__(self, bot, load=False):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
+
         if load:
             self.bot.loop.create_task(self.update_prefix_cache())
-        
+
     def _get_prefix_if_exists(self, guild):
         try:
-            return self.bot.prefixes[guild.id]
+            return self.bot.prefix[guild.id]
         except KeyError:
             return "!"
         
@@ -26,9 +27,9 @@ class prefixes(commands.Cog):
         '''Fetches a prefix corresponding to a guild id from the database'''
         prefix = self.bot.db.exec_safe_query("select prefix from prefixes where guild_id = %s", (guild_id))
         if not prefix and prefix != () and prefix != "()":
-            self.bot.prefixes[guild_id] = '!'
+            self.bot.prefix[guild_id] = '!'
         else:
-            self.bot.prefixes[guild_id] = prefix['prefix']
+            self.bot.prefix[guild_id] = prefix['prefix']
 
     async def update_prefix_cache(self, guild_id=None):
         '''Builds/updates cache of prefixes'''
@@ -40,11 +41,10 @@ class prefixes(commands.Cog):
             for id in [guild.id for guild in self.bot.guilds]:
                 await self._fetch_prefix(id)
                 try:
-                    self.bot.prefixes[id]
+                    self.bot.prefix[id]
                 except KeyError:
-                    self.bot.prefixes[id] = "!"
+                    self.bot.prefix[id] = "!"
         self.logger.info("cache has been updated!")
-        print(self.bot.prefixes)
         
     @commands.has_permissions(manage_guild=True)
     @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission. ", aliases=['prefixes'])
@@ -58,10 +58,8 @@ class prefixes(commands.Cog):
             self.bot.db.exec_safe_query("update prefixes set prefix = %s where guild_id = %s", (new_prefix, ctx.guild.id))
         else:
             self.bot.db.exec_safe_query("insert into prefixes values(%s, %s)", (ctx.guild.id, new_prefix))
-        await self.update_prefix_cache(ctx.guild.id)
+        self.bot.prefix[ctx.guild.id] = new_prefix
         await ctx.send(f"Set my prefix to `{new_prefix}`.")
-              
-            
 
 async def setup(bot):
     await bot.add_cog(prefixes(bot, True))

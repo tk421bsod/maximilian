@@ -31,9 +31,9 @@ def get_prefix(bot, message):
     if not message.guild:
         return "!"
     try:
-        return bot.prefixes[message.guild.id]
+        return bot.prefix[message.guild.id]
     except KeyError:
-        bot.prefixes[message.guild.id] = "!"
+        bot.prefix[message.guild.id] = "!"
         return "!"
 
 class DeletionRequestAlreadyActive(BaseException):
