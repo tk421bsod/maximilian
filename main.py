@@ -9,6 +9,7 @@ if "--help" in sys.argv:
     print("Options:")
     print("--enablejsk - Enables Jishaku, an extension used for debugging and code evaluation.")
     print("--noupdate - Skips update check on startup.")
+    print("--update - Updates Maximilian and exits.")
     print("--noload <extensions> - Skips loading the specified extensions.")
     print("--no-rich - Disables rich text.")
     print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level.")
@@ -265,7 +266,12 @@ try:
     try:
         if "--noupdate" not in sys.argv:
             update()
+        if "--update" in sys.argv:
+            quit()
     except KeyboardInterrupt:
+        if "--update" in sys.argv:
+            print("Updater interrupted. Exiting.")
+            quit()
         print("Updater interrupted. Maximilian will start in a moment.")
     try:
         #set up rich tracebacks

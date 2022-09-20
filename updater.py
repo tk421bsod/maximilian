@@ -66,3 +66,8 @@ def update():
     else:
         print("No updates available.")
     time.sleep(1)
+
+if __name__ == "__main__":
+    print("It looks like you're trying to run the updater directly.")
+    print("Use 'python3 main.py --update'.")
+
