@@ -26,6 +26,21 @@ def update():
     '''
     #loggers aren't used here as we want all this to show regardless of logging level
     print("initializing updater\n")
+    initial = common.get_latest_commit()[0]
+    #get current remote
+    remote = common.run_command(['git', 'remote'])['output'][0]
+    #get current branch
+    branch = common.run_command(['git', 'branch', '--show-current'])['output'][0]
+    time.sleep(0.5)
+    print(f"You're currently on the '{branch}' branch.")
+    if branch != 'release':
+        print("Updates on this branch may be unstable.")
+        print("You can switch back to the 'release' branch at any time using 'git checkout release'.")
+        print("If an update breaks something, reset to the previous commit using 'git reset HEAD~1'.")
+    else:
+        print("You can switch to other branches at any time using 'git checkout <branch>'.")
+        print("Use 'git branch' to view a list of branches.")
+    time.sleep(0.5)
     try:
         config = common.load_config()
         last_update = common.load_config()['last_update']
@@ -48,21 +63,7 @@ def update():
                 return
     except KeyError:
         pass #updater hasn't checked for updates yet
-    initial = common.get_latest_commit()[0]
-    #get current remote
-    remote = common.run_command(['git', 'remote'])['output'][0]
-    #get current branch
-    branch = common.run_command(['git', 'branch', '--show-current'])['output'][0]
-    time.sleep(0.5)
-    print(f"You're currently on the '{branch}' branch.")
-    if branch != 'release':
-        print("Updates on this branch may be unstable.")
-        print("You can switch back to the 'release' branch at any time using 'git checkout release'.")
-        print("If an update breaks something, reset to the previous commit using 'git reset HEAD~1'.")
-    else:
-        print("You can switch to other branches at any time using 'git checkout <branch>'.")
-        print("Use 'git branch' to view a list of branches.")
-    time.sleep(0.5)
+    time.sleep(1)
     try:
         subprocess.run(['git', 'fetch', remote], check=True)
     except subprocess.CalledProcessError:
