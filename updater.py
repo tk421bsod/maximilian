@@ -2,6 +2,8 @@ import logging
 import os
 import subprocess
 import time
+import datetime
+import sys
 
 import common
 
@@ -20,10 +22,32 @@ def list_in_str(list, string):
 
 def update():
     '''
-    Python implementation of the setup.sh updater with some slight changes.
+    Python implementation of the old setup.sh updater with some slight changes.
     '''
     #loggers aren't used here as we want all this to show regardless of logging level
     print("initializing updater\n")
+    try:
+        config = common.load_config()
+        last_update = common.load_config()['last_update']
+        if not last_update:
+            print("Updater was interrupted, checking for updates now")
+        elif "--force-update" in sys.argv:
+            print("main.py was invoked with --force-update. Checking for updates now.")
+        else:
+            last = datetime.datetime.fromtimestamp(last_update)
+            print(f"Last check for updates was {last.strftime('at %-I:%M %p on %B %d, %Y.')}")
+            elapsed = datetime.datetime.timedelta(datetime.datetime.now-last).days
+            if not bool(config['automatic_updates']):
+                print("Automatic updates aren't enabled. Would you like to attempt an update? Y/N\n")
+                if input().strip().lower() == "y":
+                    print("Ok, attempting an update...")
+            elif elapsed > 14:
+                print("It's been more than 14 days since the last update. Updating now.")
+            else:
+                print(f"It's been {elapsed} days since the last update. To force an update, run main.py with --force-update.")
+                return
+    except KeyError:
+        pass #updater hasn't checked for updates yet
     initial = common.get_latest_commit()[0]
     #get current remote
     remote = common.run_command(['git', 'remote'])['output'][0]
@@ -39,11 +63,10 @@ def update():
         print("You can switch to other branches at any time using 'git checkout <branch>'.")
         print("Use 'git branch' to view a list of branches.")
     time.sleep(0.5)
-    print("Checking for updates...")
     try:
         subprocess.run(['git', 'fetch', remote], check=True)
     except subprocess.CalledProcessError:
-        print("Something went wrong while checking for updates.")
+        print("Update check failed. See the above output for details.")
         return
     after = common.run_command(['git', 'rev-parse', '--short', f'{remote}/{branch}'])['output'][0]
     if initial != after:
