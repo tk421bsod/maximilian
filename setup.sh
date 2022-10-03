@@ -51,48 +51,11 @@ then
     echo "None - Sets up Maximilian."
     exit
 fi
-
 echo "Checking for updates..."
-initial="$(git rev-parse --short HEAD)"
-git pull > /dev/null 2>&1
-ret=$?
-#try https if the initial pull failed (e.g ssh blocked)
-if [ $ret != 0 ]
-then
-    git pull https://github.com/tk421bsod/maximilian development > /dev/null 2>&1
-    ret=$?
-fi
-after="$(git rev-parse --short HEAD)"
-if [ $ret != 0 ]
-then
-    echo ""
-    echo "Something went wrong while checking for updates. If you've made local changes, use 'git status' to view what files need to be committed. If you haven't done anything, check your Internet connection."
-    sleep 1
-fi
 
-#initial commit different than commit after pulling?
-#then an update was applied!
-#restart setup as it may have been affected
-if [ "$initial" != "$after" ];
-then
-    echo ""
-    echo "Update applied. Restarting setup..."
-    sleep 1
-    bash setup.sh "$1"
-    exit
-elif [ "$1" == "update" ];
-then
-    echo ""
-    echo "No updates available. Exiting."
-    exit
-else
-    echo ""
-    echo "No updates available. Starting setup."
-    sleep 1
-    echo ""
-fi
+python3 main.py --update
 
-if [ "$1" == "update" ];
+if [ "$1" == "update" -o $? != 0 ];
 then
     exit
 fi
@@ -381,6 +344,19 @@ then
     echo "Installing dependencies..."
     pip3 install -r requirements.txt
     echo ""
+
+    echo "last_update:" >> config
+
+    echo "One last thing..."
+    echo "Would you like to enable ${bold}automatic updates${normal}? Y/N"
+    echo "If enabled, Maximilian will attempt to update itself on startup once every 14 days."
+    read autoupdate
+    if [ ${autoupdate^^} == 'Y' ];
+    then
+        echo "automatic_updates:True" >> config
+    else
+        echo "automatic_updates:False" >> config
+
     echo "Alrighty, Maximilian should be (almost) fully installed now. Try running it using 'python3 main.py --enablejsk -i'. If you want cogs.images and cogs.misc's bottomify command to work, use 'pip install -r requirements-extra.txt'."
 else
     echo "Finished setting up the database."

@@ -22,10 +22,11 @@ def list_in_str(list, string):
 
 def update():
     '''
-    Python implementation of the old setup.sh updater with some slight changes.
+    Checks for updates if needed. Applies update if one is found.
     '''
     #loggers aren't used here as we want all this to show regardless of logging level
     print("initializing updater\n")
+    #step 1: get info & display current branch
     initial = common.get_latest_commit()[0]
     #get current remote
     remote = common.run_command(['git', 'remote'])['output'][0]
@@ -45,13 +46,13 @@ def update():
         config = common.load_config()
         last_update = common.load_config()['last_update']
         if not last_update:
-            print("Updater was interrupted, checking for updates now")
+            print("Updater was interrupted or last update failed, checking for updates now")
         elif "--force-update" in sys.argv:
             print("main.py was invoked with --force-update. Checking for updates now.")
         else:
-            last = datetime.datetime.fromtimestamp(last_update)
-            print(f"Last check for updates was {last.strftime('at %-I:%M %p on %B %d, %Y.')}")
-            elapsed = datetime.datetime.timedelta(datetime.datetime.now-last).days
+            last = datetime.datetime.fromtimestamp(int(last_update))
+            print(f"\nLast check for updates was {last.strftime('at %-I:%M %p on %B %d, %Y.')}")
+            elapsed = (datetime.datetime.now()-last).days
             if not bool(config['automatic_updates']):
                 print("Automatic updates aren't enabled. Would you like to attempt an update? Y/N\n")
                 if input().strip().lower() == "y":
@@ -64,14 +65,22 @@ def update():
     except KeyError:
         pass #updater hasn't checked for updates yet
     time.sleep(1)
+    common.run_command(["sed", "-i", "\"s/last_update:.*/last_update:0/\"", "config"])
+    #step 3: if one of the three conditions above was met, fetch changes
     try:
         subprocess.run(['git', 'fetch', remote], check=True)
     except subprocess.CalledProcessError:
         print("Update check failed. See the above output for details.")
         return
     after = common.run_command(['git', 'rev-parse', '--short', f'{remote}/{branch}'])['output'][0]
+    print(initial)
+    print(after)
+    subprocess.run(f"sed -i \"s/last_update:.*/last_update:{round(time.time())}/\" config", shell=True)
     if initial != after:
-        resp = input("Update available. Would you like to apply it? Y/N\n").lower().strip()
+        #HEAD commit changed during the fetch?
+        #then an update was applied!
+        #step 4: ask for confirmation, then apply changes if yes
+        resp = input(f"Update available. \nTake a moment to review the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.\nWould you like to apply the update? Y/N\n").lower().strip()
         if resp == "y":
             print("\nApplying update...")
             pull = common.run_command(['git', 'pull'])
