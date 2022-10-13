@@ -68,7 +68,7 @@ def initialize_i18n(bot):
         supported = [i.split('.')[0] for i in os.listdir('languages') if i.endswith('.txt')]
         if language not in supported:
             bot.logger.error(f"That language isn't supported right now. The only supported languages are {supported}")
-            os._exit(25)
+            sys.exit(25)
     else:
         bot.logger.info("No language specified, defaulting to en")
         language = 'en'
@@ -79,7 +79,7 @@ def initialize_i18n(bot):
 
 
 def config_logging(args):
-    '''Sets logging level and file to write to'''
+    """Sets logging level and file to write to"""
     #mapping of argument to logging level and status message
     levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
     try:
@@ -105,7 +105,7 @@ def config_logging(args):
     try:
         RichHandler()
         logging.basicConfig(level=logging.WARN, handlers=_handlers, format="%(message)s", datefmt="[%X]")
-    except:
+    except NameError: #rich not imported
         logging.basicConfig(level=logging.WARN, handlers=_handlers)
     print("No logging level specified, falling back to WARN.")
     logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
@@ -134,10 +134,12 @@ def parse_arguments(bot, args):
         bot.dbip = "localhost"
 
 async def load_extensions_async(bot):
-    '''New non-blocking method for loading extensions. Same functionality as load_extensions but compatible with dpy2.'''
+    """New non-blocking method for loading extensions. Same functionality as load_extensions but compatible with dpy2."""
     bot.logger.info("Loading extensions...")
     extensioncount, errorcount = 0, 0
     print("Loading required extensions...")
+    #we use a catch-all as we don't want anything going wrong with this
+    # noinspection PyBroadException
     try:
         #bot.load_extension("cogs.prefixes")
         await bot.load_extension("core")
@@ -179,7 +181,7 @@ async def load_extensions_async(bot):
         bot.responses = bot.get_cog('Custom Commands')
         bot.miscinst = bot.get_cog('misc')
         bot.reactionrolesinst = bot.get_cog('reaction roles')
-    except:
+    except: #TODO: pls delet i hate this
         bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
     bot.logger.info(f"loaded {extensioncount} extensions successfully ({errorcount} extension{'s' if errorcount != 1 else ''} not loaded), waiting for ready")
 
@@ -241,7 +243,7 @@ async def run(logger):
         except pymysql.err.OperationalError:
             bot.logger.debug(traceback.format_exc())
             bot.logger.critical(f"Couldn't connect to database! \nTry running 'bash setup.sh fix'.")
-            os._exit(96)
+            sys.exit(96)
     #make sure all tables exist
     try:
         bot.db.ensure_tables()
@@ -257,12 +259,15 @@ async def run(logger):
         await bot.start(token)
 
 print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
+print("setting up logging...")
+# set a logging level
+config_logging(sys.argv)
+outer_logger = logging.getLogger(f'maximilian') #different name than inside run to prevent shadowing
+# we want a catch-all in case something weird happens here and we weren't expecting that
+# you probably already figured that out but i'm putting this here to appease pycharm
+# noinspection PyBroadException
 try:
-    print("setting up logging...")
-    #set a logging level
-    config_logging(sys.argv)
-    logger = logging.getLogger(f'maximilian')
-    #check for updates
+    #run updater
     try:
         if "--noupdate" not in sys.argv:
             update()
@@ -273,8 +278,9 @@ try:
             print("Updater interrupted. Exiting.")
             quit()
         print("Updater interrupted. Maximilian will start in a moment.")
+        time.sleep(1)
     try:
-        #set up rich tracebacks
+        #set up rich tracebacks if applicable
         install(suppress=[discord,pymysql])
     except NameError:
         pass
@@ -283,13 +289,16 @@ try:
 except KeyboardInterrupt:
     print("\nKeyboardInterrupt detected. Exiting.")
 except KeyError:
-    logger.error("The configuration file is missing something. Try pulling changes and re-running setup.sh.")
-    logger.info(traceback.format_exc())
+    outer_logger.error("The configuration file is missing something. Try pulling changes and re-running setup.sh.")
+    outer_logger.info(traceback.format_exc())
 except FileNotFoundError:
-    logger.error("No configuration file found. Run setup.sh.")
+    outer_logger.error("No configuration file found. Run setup.sh.")
 except SystemExit: #raised on quit()
     pass
 except:
+    #Unsure why this exists, maybe some errors get re-raised here??
+    #still appease pycharm
+    # noinspection PyBroadException
     try:
         logger.error("Unhandled exception! Exiting.")
         logger.error(traceback.format_exc())

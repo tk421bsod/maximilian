@@ -89,11 +89,11 @@ def update():
             print(output)
             if pull['returncode']:
                 print("Something went wrong while applying the update. Take a look at the above output for details.")
-                os._exit(124)
+                sys.exit(124)
             print(f"Update applied. \nView the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.")
             if list_in_str(['main.py', 'common.py', 'db.py', 'settings.py'], output):
                 print("This update changed some important files. Run main.py again.")
-                os._exit(111)
+                sys.exit(111)
         else:
             print("\nNot applying the update.")
     else:
