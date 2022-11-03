@@ -1,94 +1,135 @@
+import asyncio
 import typing
+
 
 import discord
 from discord.ext import commands
 
+class reaction_role:
+    def __init__(self, id, guild_id, message_id, emoji):
+        self.id = id
+        self.guild_id = guild_id
+        self.message_id = message_id
+        self.emoji = emoji
 
-class reactionroles(commands.Cog, name="reaction roles"):
+class reaction_roles(commands.Cog, name="reaction roles"):
     '''Reaction role commands'''
     def __init__(self, bot):
         self.bot = bot
+        self.roles = {}
+        asyncio.create_task(self.fill_cache())
+        #TODO: maybe create some sort of standardized cache object?
 
-    @commands.command(help="Add, remove, or list reaction roles, only works if you have the 'Manage Roles' permission. This command takes 4 arguments (1 optional), action (the action to perform, either `add`, `delete`, or `list`), role (a role, you can either mention it or provide the id), messageid (the id of the message you want people to react to), and emoji (the emoji you want people to react with, it must be in a server Maximilian is in or a default emoji, this can be blank if you want people to react with any emoji)", aliases=['reactionrole'])
+    async def fill_cache(self):
+        await self.bot.wait_until_ready()
+        for guild in self.bot.guilds:
+            self.roles[guild.id] = {}
+            for role in self.bot.db.exec_safe_query("select * from roles where guild_id = %s", (guild.id, )):
+                #{guild_id : {role_id : reaction_role}}
+                self.roles[guild.id].update({int(role['role_id']):reaction_role(id=int(role['role_id']), guild_id=int(role['guild_id'], message_id=int(role['message_id']), emoji=role['emoji'])})
+
+    def detect_changes(self, original, changed):
+        changes = ""
+        if original.emoji != changed.emoji:
+            changes += f"**Emoji**: {original.emoji} -> {changed.emoji}\n"
+        if original.message_id != changed.message_id:
+            changes += f"**Message**: {original.message_id} -> {original.message_id}\n"
+        return changes
+
+    async def role_confirmation_callback(self, reaction, message, ctx, confirmed, roleid, messageid, emoji):
+        if confirmed:
+            await ctx.send("Ok, updating that reaction role.")
+            self.bot.db.exec_safe_query("replace into roles values(%s, %s, %s, %s)", (ctx.guild.id, roleid, messageid, emoji))
+            self.roles[ctx.guild.id][roleid] = reaction_role(roleid, ctx.guild.id, messageid, emoji)
+            await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role updated."))
+        else:
+            await ctx.send("Alright, not updating that reaction role.")
+
+    async def add_role(self, ctx, role, messageid, emoji):
+        if role.id in [i for i in list(self.roles[ctx.guild.id].keys())]:
+            changes = detect_changes(Role(role.id, ctx.guild.id, messageid, emoji), self.roles[ctx.guild.id][role.id])
+            if !changes:
+                return await ctx.send("That reaction role already exists.")
+            warning = await ctx.send(embed=discord.Embed(title="Update existing reaction role?", description="It looks like a reaction role with the same ID already exists.\nYou've made the following changes to it:\n{changes}\nReact with \U00002705 to update the existing role or \U0000274e to keep the existing role."))
+            self.bot.core.confirmation(self.bot, warning, ctx, role_confirmation_callback, role.id, messageid, emoji)
+            return
+        self.bot.db.exec_safe_query("insert into roles values(%s, %s, %s, %s)", (ctx.guild.id, role.id, messageid, emoji))
+        self.bot.roles
+        await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role added."))
+
+    async def delete_role(self, ctx, role):
+        self.bot.db.exec_safe_query("delete from roles where guild_id=%s and role_id=%s", (ctx.guild.id, role.id))
+        del self.roles[ctx.guild.id][role.id]
+
+    @commands.command(help="Add, remove, or list reaction roles, only works if you have the 'Manage Roles' permission. This command takes 4 arguments (1 optional), action (the action to perform, either `add`, `delete`, or `list`), role (a role, you can either mention it or provide the id), messageid (the id of the message you want people to react to), and emoji (the emoji you want people to react with, it must be in a server Maximilian is in or a default emoji, this can be blank if you want people to react with any emoji)", aliases=['reaction_role'])
     @commands.has_guild_permissions(manage_roles=True)
-    async def reactionroles(self, ctx, action, role : typing.Optional[discord.Role]=None, messageid : typing.Optional[int]=None, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
+    async def reaction_roles(self, ctx, action, role : typing.Optional[discord.Role]=None, messageid : typing.Optional[int]=None, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
         if role != None and messageid != None:
             if action == "add":
-                if self.bot.db.insert("roles", {"guild_id" : str(ctx.guild.id), "role_id" : str(role.id), "message_id" : str(messageid), "emoji" : str(emoji)}, "role_id", False, "", False, "", False) == "success":
-                    print("added a reaction role")
-                    await ctx.send("Added a reaction role.")
-                else: 
-                    await ctx.send("Failed to add a reaction role, there might be a duplicate. Try deleting the reaction role you just tried to add.")
+                if len(list(roles[ctx.guild.id].values())) >= 24:
+                    return await ctx.send("You can't have more than 24 reaction roles in one server for now.")
+                add_role(ctx, role, messageid, emoji)
             if action == "delete":
-                print("deleted a reaction role")
-                if self.bot.db.delete("roles", str(role.id), "role_id", "", "", False) == "successful":
-                    await ctx.send("Deleted a reaction role.")
-                else:
-                    await ctx.send(f"Failed to delete a reaction role, are there any reaction roles set up for role id '{str(role.id)}'? Try using '{str(await self.bot.get_prefix(ctx.message))}'reactionroles list all all' to see if you have any reaction roles set up.")
+                if len(list(roles[ctx.guild.id].values())) == 0:
+                    return await ctx.send("You don't have any reaction roles set up.")
+                try:
+                    roles[ctx.guild.id][role.id]
+                except KeyError:
+                    return await ctx.send("That reaction role doesn't exist.")
+                delete_role(ctx, role)
         elif action == "list":
-            roles = self.bot.db.exec_query("select * from roles where guild_id={}".format(ctx.guild.id), False, True)
-            reactionrolestring = ""
-            if roles != "()":
-                for each in roles: 
-                    reactionrolestring = f"{reactionrolestring} message id:  {str(each['message_id'])}  role id:  {str(each['role_id'])}  role name:  {discord.utils.get(ctx.guild.roles, id=int(each['role_id'])).name}  emoji:  {str(each['emoji'])}, "        
-                print("listed reaction roles")
-                await ctx.send("reaction roles: " + str(reactionrolestring[:-2]))
+            desc = ""
+            discord.Embed(title="Reaction roles in this server:")
+            for role in list(roles[ctx.guild.id].values()):
+                if not role.emoji:
+                    emoji = "Any"
+                else:
+                    emoji = role.emoji
+                desc += f"<@&{role.id}>\nMessage ID: {role.message_id} \nEmoji: {emoji}\n\n"
+            await ctx.send(embed=discord.Embed(title="Reaction roles in this server:", description=desc))
         elif role == None or messageid == None:
             await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{await self.bot.get_prefix(ctx.message)}help reactionroles` for more details.")
             return
 
+    def lookup_role_by_message(self, guildid, messageid):
+        for role in list(self.roles[guildid].values()):
+            if role.message_id == messageid:
+                return role
+        return None
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        #when a reaction is added, check if guild has any reaction roles set up
-        if self.bot.db.retrieve("roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
-            #if it does, check if there's a role associated with the emoji user reacted with
-            if self.bot.db.retrieve("roles", "role_id", "emoji", str(payload.emoji), False) is not None:
-                #if so, get the role id associated with the emoji
-                roleid = self.bot.db.retrieve("roles", "role_id", "emoji", str(payload.emoji), False)
-            else:
-                #otherwise, get the role id associated with the message
-                roleid = self.bot.db.retrieve("roles", "role_id", "message_id", str(payload.message_id), False)
-            #if the role is associated with the message/emoji, get the emoji and check if it matches the emoji the user reacted with (this might be redundant) 
-            if roleid is not None:
-                emoji = self.bot.db.retrieve("roles", "emoji", "role_id", str(roleid), False)
-                print(str(emoji))
-                print(str(payload.emoji))
-                if emoji == str(payload.emoji) or emoji == "None" or emoji == None:
-                    #if it matches or is None, get the channel and role, then check if the person who reacted already had the role
+        if self.roles[payload.guild_id]:
+            role = lookup_role_by_message(payload.guild_id, payload.message_id)
+            if role:
+                if role.emoji == str(payload.emoji) or role.emoji == "None" or role.emoji == None:
                     ctx = self.bot.get_channel(payload.channel_id)
-                    role = discord.utils.get(payload.member.guild.roles, id=int(roleid))
-                    if role in payload.member.roles:
-                        #if so, notify them
-                        await ctx.send(f" <@!{payload.member.id}>, you already have the '{role.name}' role.", delete_after=5)
+                    roletoadd = discord.utils.get(payload.member.guild.roles, id=int(role.id))
+                    if roletoadd in payload.member.roles:
+                        await ctx.send(f" <@!{payload.member.id}>, you already have the '{roletoadd.name}' role.", delete_after=5)
                         return
-                    #otherwise, give them the role and notify them that they've recieved it
-                    await payload.member.add_roles(role)
+                    await payload.member.add_roles(roletoadd)
                     print("added role to user")
-                    await ctx.send(f"Gave <@!{payload.member.id}> the '{role.name}' role.", delete_after=5)
+                    await ctx.send(f"Gave <@!{payload.member.id}> the '{roletoadd.name}' role.", delete_after=5)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if self.bot.db.retrieve("roles", "guild_id", "guild_id", str(payload.guild_id), False) is not None:
+        if self.roles[payload.guild_id]:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
-            if self.bot.db.retrieve("roles", "role_id", "emoji", str(payload.emoji), False) is not None:
-                roleid = self.bot.db.retrieve("roles", "role_id", "emoji", str(payload.emoji), False)
-            else:
-                roleid = self.bot.db.retrieve("roles", "role_id", "message_id", str(payload.message_id), False)
-            if roleid is not None:
-                emoji = self.bot.db.retrieve("roles", "emoji", "role_id", str(roleid), False)
+            role = self.lookup_role_by_message(payload.guild_id, payload.message_id)
+            if role:
                 ctx = self.bot.get_channel(payload.channel_id)
-                role = discord.utils.get(guild.roles, id=int(roleid))
-                if emoji == str(payload.emoji) or emoji == "None" or emoji == None:
-                    if role in member.roles:
-                        await member.remove_roles(role)
-                        print("removed role from user")
+                roletoadd = discord.utils.get(guild.roles, id=role.id)
+                if role.emoji == str(payload.emoji) or role.emoji == "None" or !role.emoji:
+                    if roletoadd in member.roles:
+                        await member.remove_roles(roletoadd)
                         await ctx.send(f"Removed the '{role.name}' role from <@!{member.id}>.", delete_after=5)
                         return
                     await ctx.send(f"<@!{member.id}> For some reason, you don't have the '{role.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again. If this keeps happening, notify tk421#7244.", delete_after=15)
 
 def setup(bot):
-    bot.add_cog(reactionroles(bot))
+    bot.add_cog(reaction_roles(bot))
 
 def teardown(bot):
-    bot.remove_cog(reactionroles(bot))
+    bot.remove_cog(reaction_roles(bot))
