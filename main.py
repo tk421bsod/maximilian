@@ -8,14 +8,15 @@ if "--help" in sys.argv:
     print("You can enable/disable features and modify Maximilian's behavior through the use of the following options.\nYou can use more than one option at a time.\n")
     print("Options:")
     print("--enablejsk - Enables Jishaku, an extension used for debugging and code evaluation.")
-    print("--noupdate - Skips update check on startup.")
-    print("--update - Updates Maximilian and exits.")
+    print("--noupdate - Skips update check on startup. Takes precendence over --update.")
+    print("--update - Updates Maximilian and exits. Implicitly enables --force-update.")
+    print("--force-update - Forces update check on startup regardless of the time since last update.")
     print("--noload <extensions> - Skips loading the specified extensions.")
     print("--no-rich - Disables rich text.")
     print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level.")
     print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
     print("--help - Shows this message and exits.")
-    print("--alt <token> - Runs Maximilian with the specified token.")
+    print("--alt <token> - Runs Maximilian with the specified token. Adds the latest commit hash to the default status.")
     quit()
 
 print("Loading libraries...")
@@ -135,9 +136,9 @@ def parse_arguments(bot, args):
 
 async def load_extensions_async(bot):
     """New non-blocking method for loading extensions. Same functionality as load_extensions but compatible with dpy2."""
-    bot.logger.info("Loading extensions...")
+    bot.logger.info("Loading modules...")
     extensioncount, errorcount = 0, 0
-    print("Loading required extensions...")
+    print("Loading required modules...")
     #we use a catch-all as we don't want anything going wrong with this
     # noinspection PyBroadException
     try:
@@ -145,10 +146,10 @@ async def load_extensions_async(bot):
         await bot.load_extension("core")
         await bot.load_extension("errorhandling")
     except:
-        bot.logger.critical("Failed to load required extensions.")
+        bot.logger.critical("Failed to load required modules.")
         traceback.print_exc()
         quit()
-    print("Loaded required extensions successfully. Loading other extensions...")
+    print("Loading other modules...")
     for each in os.listdir("./cogs"):
         #strip file extension out of filename
         cleanname = each[:-3]
@@ -156,14 +157,14 @@ async def load_extensions_async(bot):
         if each.endswith(".py"):
             #check if we're not loading this extension
             if cleanname in bot.noload or f"cogs.{cleanname}" in bot.noload:
-                bot.logger.info(f"Not loading cogs.{cleanname}.")
+                bot.logger.info(f"Not loading module cogs.{cleanname}.")
                 errorcount += 1
                 continue
             #actually load the extension
             try:
                 await bot.load_extension(f"cogs.{cleanname}")
                 extensioncount += 1
-                bot.logger.debug(f"Loaded cogs.{cleanname}.")
+                bot.logger.debug(f"Loaded module cogs.{cleanname}.")
             except commands.ExtensionAlreadyLoaded:
                 bot.logger.debug(f"{cleanname} is already loaded, skipping")
             except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
@@ -171,11 +172,11 @@ async def load_extensions_async(bot):
                 if not hasattr(error, 'original'):
                     #only NoEntryPointError doesn't have original
                     error.original = commands.errors.NoEntryPointError('')
-                bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This extension won't be loaded.")
+                bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This module won't be loaded.")
                 if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
-                    bot.logger.error(f"The {error.original.name} module isn't installed. Consider installing the packages in requirements_extra.txt.")
+                    bot.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -r requirements_extra.txt.'")
                 else:
-                    pass#bot.logger.error(traceback.format_exc())
+                    bot.logger.error(traceback.format_exc())
     try:
         bot.prefixes = bot.get_cog('prefixes')
         bot.responses = bot.get_cog('Custom Commands')
@@ -229,7 +230,7 @@ async def run(logger):
     bot.prefixes = {}
     bot.responses = []
     bot.start_time = time.time()
-    bot.settings = settings
+    bot.settings = settings.settings(bot)
     bot.logger.debug("Setting up the database...")
     #try to connect to database, exit if it fails
     try:
@@ -262,9 +263,7 @@ print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
 print("setting up logging...")
 # set a logging level
 config_logging(sys.argv)
-outer_logger = logging.getLogger(f'maximilian') #different name than inside run to prevent shadowing
-# we want a catch-all in case something weird happens here and we weren't expecting that
-# you probably already figured that out but i'm putting this here to appease pycharm
+outer_logger = logging.getLogger(f'maximilian') #different name than inside run for readability
 # noinspection PyBroadException
 try:
     #run updater
@@ -272,6 +271,7 @@ try:
         if "--noupdate" not in sys.argv:
             update()
         if "--update" in sys.argv:
+            print("Updater exited. Exiting.")
             quit()
     except KeyboardInterrupt:
         if "--update" in sys.argv:
@@ -285,7 +285,7 @@ try:
     except NameError:
         pass
     #then start the event loop
-    asyncio.run(run(logger))
+    asyncio.run(run(outer_logger))
 except KeyboardInterrupt:
     print("\nKeyboardInterrupt detected. Exiting.")
 except KeyError:
@@ -300,7 +300,8 @@ except:
     #still appease pycharm
     # noinspection PyBroadException
     try:
-        logger.error("Unhandled exception! Exiting.")
-        logger.error(traceback.format_exc())
+        outer_logger.error("Unhandled exception! Exiting.")
+        outer_logger.error(traceback.format_exc())
     except:
+        print("Unhandled exception while handling unhandled exception")
         pass
