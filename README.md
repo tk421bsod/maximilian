@@ -1,6 +1,9 @@
 # maximilian
 
-An easy to use Discord bot written in Python.
+A Discord bot with some cool features that does some cool stuff.
+Currently in active development.
+
+This branch is used for development of the next major version, 1.0.
 
 ## why do most commits say they're from 2020?
 
