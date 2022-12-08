@@ -47,37 +47,48 @@ def update():
         last_update = common.load_config()['last_update']
         if not last_update:
             print("Updater was interrupted or last update failed, checking for updates now")
-        elif "--force-update" in sys.argv:
+        elif "--force-update" in sys.argv or "--update" in sys.argv:
             print("main.py was invoked with --force-update. Checking for updates now.")
         else:
             last = datetime.datetime.fromtimestamp(int(last_update))
             print(f"\nLast check for updates was {last.strftime('at %-I:%M %p on %B %d, %Y.')}")
             elapsed = (datetime.datetime.now()-last).days
-            if not bool(config['automatic_updates']):
+            try:
+                automatic_updates = bool(config['automatic_updates'])
+            except KeyError:
+                common.run_command(["echo", "\"automatic_updates:True\"", ">>", "config"])
+                automatic_updates = False
+            if not automatic_updates:
                 print("Automatic updates aren't enabled. Would you like to attempt an update? Y/N\n")
                 if input().strip().lower() == "y":
                     print("Ok, attempting an update...")
+                else:
+                    print("Not attempting an update.")
+                    return
             elif elapsed > 14:
                 print("It's been more than 14 days since the last update. Updating now.")
             else:
                 print(f"It's been {elapsed} days since the last update. To force an update, run main.py with --force-update.")
+                time.sleep(1)
                 return
     except KeyError:
+        #append timestamp to config if it doesn't exist
+        common.run_command(["echo", "\"last_update:0\"", ">>", "config"])
         pass #updater hasn't checked for updates yet
     time.sleep(1)
+    #step 2.5: if a condition above was met, reset last update timestamp
     common.run_command(["sed", "-i", "\"s/last_update:.*/last_update:0/\"", "config"])
-    #step 3: if one of the three conditions above was met, fetch changes
+    #step 3: fetch changes from remote, don't merge until user confirms though
     try:
         subprocess.run(['git', 'fetch', remote], check=True)
     except subprocess.CalledProcessError:
         print("Update check failed. See the above output for details.")
         return
     after = common.run_command(['git', 'rev-parse', '--short', f'{remote}/{branch}'])['output'][0]
-    print(initial)
-    print(after)
+    #now that we can check if an update exists, set last update timestamp
     subprocess.run(f"sed -i \"s/last_update:.*/last_update:{round(time.time())}/\" config", shell=True)
     if initial != after:
-        #HEAD commit changed during the fetch?
+        #HEAD commit different after the fetch?
         #then an update was applied!
         #step 4: ask for confirmation, then apply changes if yes
         resp = input(f"Update available. \nTake a moment to review the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.\nWould you like to apply the update? Y/N\n").lower().strip()

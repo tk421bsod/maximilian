@@ -36,7 +36,7 @@ class Setting():
         self.category = category
         #add this setting as an attr of category
         #one can access it via 'bot.settings.<category>.<setting>'
-        setattr(category, name, self)
+        setattr(category, name.strip().replace(" ", "_"), self)
 
 #the following shouldn't be used,,,,
 #    def __getattribute__(self, attr):
@@ -109,7 +109,7 @@ class Category():
         self.unusablewithmapping = unusablewithmapping
         #more setattr shenanigans
         #make category accessible through 'bot.settings.<category>'
-        setattr(constructor, name, self)
+        setattr(constructor, name.strip().replace(" ", "_"), self)
         self.name = name
         #can't fill the settings cache here because of dpy asyncio changes...
         #we'll just wait until !config is used
@@ -177,27 +177,6 @@ class Category():
         self._ready = True
         self.filling = False
 
-    def get_setting(self, name:str):
-        """
-        Gets a setting by name. The name must be an exact match.
-
-        Parameters
-        ----------
-
-        name : str
-            The name of the setting. Must exactly match the name provided in both 'settingdescmapping' and 'unusablewithmapping'.
-
-        Returns
-        -------
-
-        Setting
-            A Setting instance matching the specified name.
-
-        None
-            Setting not found.
-        """
-        return getattr(self, name, None)
-
     async def update_cached_state(self, ctx:commands.Context, setting:Setting):
         """
         Changes a setting's state in cache. Doesn't affect the database.
@@ -208,11 +187,7 @@ class Category():
         """
         Changes a setting's state in the database. Calls update_cached_state to change a setting's state in cache.
         """
-        #TODO: replace with upsert?
-        if not self.bot.db.exec_safe_query("select * from config where guild_id=%s and category=%s", (ctx.guild.id, self.name)):
-                self.bot.db.exec_safe_query("insert into config values(%s, %s, %s, %s)", (ctx.guild.id, self.name, setting.name, True))
-        else:
-            self.bot.db.exec_safe_query("update config set enabled=%s where guild_id=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, setting.name))
+        self.bot.db.exec_safe_query("replace into config values(%s, %s, %s, %s)", (ctx.guild.id, self.name, setting.name, True))
         await self.update_cached_state(ctx, setting)
 
     async def _prepare_conflict_string(self, conflicts):
@@ -222,7 +197,9 @@ class Category():
         return f"{', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]])} and '*{conflicts[-1]}*'"
 
     async def _resolve_conflicts(self, ctx, setting):
+        #step 1: determine the number of conflicts
         if isinstance(setting.unusablewith, list):
+            #step 2: multiple? iterate over them, flip setting states if necessary
             resolved = []
             for conflict in setting.unusablewith:
                 #unusablewith only has setting names, so get the Setting
@@ -232,16 +209,19 @@ class Category():
                     resolved.append(conflict)
         else:
             if setting.unusablewith:
+                #step 2: only one? flip setting state if necessary
                 if self.get_setting(setting.unusablewith).enabled():
                     await self.update_setting(ctx, self.unusablewithmapping[setting])
                     resolved = self.unusablewithmapping[setting]
             else:
+                #step 2: no conflict? do nothing
                 return ""
         if len(resolved) == 1:
             resolved = resolved[0]
         if not resolved:
             return ""
-        return f"**Automatically disabled** {await self._prepare_conflict_string(resolved)} due to a conflict."
+        #then prepare a message notifying user of resolved conflicts
+        return f"**Automatically disabled** {await self._prepare_conflict_string(resolved)} due to {'a conflict' if len(resolved) == 1 else 'conflicts'}."
 
     async def config(self, ctx, name=None):
         '''Toggles the specified setting. Settings are off by default.'''
@@ -285,7 +265,7 @@ class settings():
         """
         self.bot = bot
         self.settings = {}
-        self.logger = logging.getLogger(name=f"maximilian.settings")
+        self.logger = logging.getLogger("settings")
         self.logger.info(f"Settings module initialized.")
         self.unusablewithmessage = ""
 
@@ -331,7 +311,7 @@ class settings():
         """
         self.logger.info(f"Registering category '{category}`...")
         Category(self, category, settingdescmapping, unusablewithmapping)
-        self.logger.info(f"Category '{category}' has been registered.")
+        self.logger.info(f"Category '{category}' registered. Access it at {self.__name__}.{category.strip().replace(' ', '_')}.")
 
     async def config(self, ctx, category:str, *, setting:str=None):
         """

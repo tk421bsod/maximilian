@@ -9,7 +9,6 @@ function ctrl-c () {
     echo ""
     echo "Exiting."
     exit 39
-    
 }
 
 ip="%"
@@ -262,7 +261,7 @@ echo "${bold}Take a moment to read through the above information. Setup will sta
 sleep 5
 echo ""
 grep -qs token ./config
-if [ $? != 0 -a $1 != "onlydb" ];
+if [ $? != 0 -a "$1" != "onlydb" ];
 then
     echo "Enter the token you want Maximiian to use. If you don't know what this is, create an application in Discord's Developer Portal, create a bot account for that application, and copy the account's token. Then paste it here."
     echo "Your input will be hidden to keep the token secret."
@@ -306,7 +305,7 @@ if [ ! $ip == '%' ];
 then
     echo "It'll be saved to 'config' after setting up the database."
 fi
-if [ $1 != "onlydb" ];
+if [ "$1" != "onlydb" ];
 then
     echo "One more thing before setup starts..."
     echo "Enter your Discord account's ID. This lets you use certain features like the 'utils' commands and Jishaku. It also makes Maximilian DM you with any errors it experiences."
@@ -356,6 +355,7 @@ then
         echo "automatic_updates:True" >> config
     else
         echo "automatic_updates:False" >> config
+    fi
 
     echo "Alrighty, Maximilian should be (almost) fully installed now. Try running it using 'python3 main.py --enablejsk -i'. If you want cogs.images and cogs.misc's bottomify command to work, use 'pip install -r requirements-extra.txt'."
 else

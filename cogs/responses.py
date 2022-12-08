@@ -6,6 +6,7 @@ import discord
 class responses(discord.ext.commands.Cog, name='Custom Commands'):
     def __init__(self, bot, teardown=False):
         self.bot = bot
+        self.bot.responses = []
         if not teardown:
             self.bot.loop.create_task(self.get_responses())
     
@@ -16,12 +17,12 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         await self.bot.wait_until_ready()
         #then for each guild in the list, check if the guild has any responses in the database
         for guild in self.bot.guilds:
-            count = self.bot.db.exec_safe_query("select count(*) from responses where guild_id={}".format(str(guild.id)))
+            count = self.bot.db.exec_safe_query("select count(*) from responses where guild_id=%s", (guild.id, ))
             if count is not None:
                 #if there are responses, check if there's one or more
                 if int(count['count(*)']) >= 1:
                     #if so, get a list of responses and iterate over that, adding each one to the list
-                    response = self.bot.db.exec_safe_query("select * from responses where guild_id={}".format(str(guild.id)))
+                    response = self.bot.db.exec_safe_query("select * from responses where guild_id=%s", (guild.id, ))
                     for each in range(int(count['count(*)'])):
                         tempresponses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
         self.bot.responses = tempresponses

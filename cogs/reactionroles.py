@@ -44,7 +44,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             self.roles[ctx.guild.id][roleid] = reaction_role(roleid, ctx.guild.id, messageid, emoji)
             await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role updated."))
         else:
-            await ctx.send("Alright, not updating that reaction role.")
+            await ctx.send("Not updating that reaction role.")
 
     async def add_role(self, ctx, role, messageid, emoji):
         if role.id in [i for i in list(self.roles[ctx.guild.id].keys())]:
@@ -130,8 +130,8 @@ class reaction_roles(commands.Cog, name="reaction roles"):
                         return
                     await ctx.send(f"<@!{member.id}> For some reason, you don't have the '{role.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again. If this keeps happening, notify tk421#7244.", delete_after=15)
 
-def setup(bot):
-    bot.add_cog(reaction_roles(bot))
+async def setup(bot):
+    await bot.add_cog(reaction_roles(bot))
 
-def teardown(bot):
-    bot.remove_cog(reaction_roles(bot))
+async def teardown(bot):
+    await bot.remove_cog(reaction_roles(bot))

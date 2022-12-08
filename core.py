@@ -1,5 +1,7 @@
 #core.py: deletion/confirmation handlers, event listeners, helpers, owner-only commands
 
+#note that this module is loaded during early startup. the 'core' class defined below is loaded in load_extensions_async.
+
 import asyncio
 import datetime
 import inspect
@@ -36,20 +38,26 @@ def get_prefix(bot, message):
         bot.prefix[message.guild.id] = "!"
         return "!"
 
+def get_named_logger(name):
+    logging.getLogger("maximilian.core").debug(f"Getting named logger 'maximilian.{name}'")
+    if name:
+        return logging.getLogger(f'maximilian.{name}')
+    return logging.getLogger(f'maximilian')
+
 class DeletionRequestAlreadyActive(BaseException):
     pass
 
 class confirmation:
     def __init__(self, bot, message, ctx, callback, *additional_callback_args):
-        '''A class that handles a bit of confirmation logic for you. You\'ll need to provide a callback coroutine that takes: (reaction:discord.RawReactionActionEvent, message:discord.Message, ctx:discord.ext.commands.Context, confirmed:bool) and whatever other arguments you pass to additional_callback_args.'''
+        '''A class that handles a bit of confirmation logic for you. You\'ll need to provide a callback coroutine that takes at least (reaction:discord.RawReactionActionEvent, message:discord.Message, ctx:discord.ext.commands.Context, confirmed:bool). Obviously it should also take anything else passed to additional_callback_args.'''
         self.bot = bot
         self.GREEN_CHECK = '\U00002705'
-        self.RED_X = '<:red_x:813135049083191307>'
+        self.RED_X = '\U0000274e'
         if not inspect.iscoroutinefunction(callback):
             raise TypeError("callback must be a coroutine!!!")
         #call handle_confirmation to prevent weird syntax like
         #await confirmation()._handle_confirmation()
-        bot.loop.create_task(self._handle_confirmation(message, ctx, callback, *additional_callback_args))
+        asyncio.create_task(self._handle_confirmation(message, ctx, callback, *additional_callback_args))
 
     async def _check_confirmed(self, ctx, message, reaction):
         '''Check if the user confirmed the action by reacting with GREEN_CHECK. '''
@@ -145,17 +153,15 @@ class core(commands.Cog):
         self.bot.DeletionRequestAlreadyActive = DeletionRequestAlreadyActive
         self.bot.core = self
         self.waiting = []
+        self.get_named_logger = get_named_logger #see comments above; this also needs to be called before extension load
         self.bot.blocklist = []
-        self.logger = logging.getLogger(f'maximilian.{__name__}')
+        self.logger = logging.getLogger(__name__)
         self.bot.ready = False
         if load:
             self.bot.loop.create_task(self.update_blocklist())
             #disable reload command if gitpython isn't installed
             #this is done in a task to make sure it's done after commands have been registered
             self.bot.loop.create_task(self.check_for_git())
-
-    async def get_named_logger(name):
-        return logging.getLogger(f'maximilian.{name}')
 
     async def send_traceback(self):
         paginator = commands.Paginator()

@@ -1,5 +1,6 @@
 #common.py: a shared library containing a bunch of useful stuff
 import logging
+import core
 import os
 import subprocess
 
@@ -11,7 +12,7 @@ class Version:
 
 class token:
     def get(self, filename):
-        self.logger = logging.getLogger(name=f'maximilian.{__name__}')
+        self.logger = logging.getLogger(__name__)
         self.logger.info(f"Getting token from {filename}.")
         try:
             with open(filename, "r") as tokenfile:
