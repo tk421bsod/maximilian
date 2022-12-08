@@ -97,7 +97,7 @@ def config_logging(args):
         elif key != "-q" and key != "--quiet":
             logging.basicConfig(level=value[0], handlers=_handlers)
             print(value[1])
-            logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
+            logging.getLogger("maximilian.config_logging").warning(f"\nLogging started at {datetime.datetime.now()}")
             return
         else:
             logging.disable()
@@ -109,7 +109,7 @@ def config_logging(args):
     except NameError: #rich not imported
         logging.basicConfig(level=logging.WARN, handlers=_handlers)
     print("No logging level specified, falling back to WARN.")
-    logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
+    logging.getLogger("maximilian.config_logging").warning(f"\nLogging started at {datetime.datetime.now()}")
 
 def parse_arguments(bot, args):
     if len(args) > 1:
@@ -305,3 +305,6 @@ except:
     except:
         print("Unhandled exception while handling unhandled exception")
         pass
+
+outer_logger.warning("Logging stopped at " + str(datetime.datetime.now()) + ".")
+logging.shutdown()
