@@ -111,11 +111,10 @@ class Category():
         #make category accessible through 'bot.settings.<category>'
         setattr(constructor, name.strip().replace(" ", "_"), self)
         self.name = name
-        #can't fill the settings cache here because of dpy asyncio changes...
-        #we'll just wait until !config is used
         self.filling = False
         self.logger = constructor.logger
         self.bot = constructor.bot
+        asyncio.create_task(self.fill_settings_cache())
 
     @property
     def ready(self):
@@ -141,6 +140,7 @@ class Category():
         """
         Fills a Category's settings cache with data.
         """
+        await self.bot.wait_until_ready()
         self.logger.info(f"Filling cache for category {self.name}...")
         self.filling = True
         #TODO: fix design flaw described below...
@@ -170,7 +170,7 @@ class Category():
         if not isinstance(data, list):
             data = [data]
         for setting in data:
-            state = self.get_initial_state()
+            state = self.get_initial_state(setting)
             #create new setting, it automatically sets itself as an attr of this category
             Setting(self, setting['setting'], state)
         self.logger.info("Done filling settings cache.")
@@ -268,6 +268,7 @@ class settings():
         self.logger = logging.getLogger("settings")
         self.logger.info(f"Settings module initialized.")
         self.unusablewithmessage = ""
+        self.categorynames = []
 
     def add_category(self, category, settingdescmapping, unusablewithmapping):
         """
@@ -310,15 +311,24 @@ class settings():
 
         """
         self.logger.info(f"Registering category '{category}`...")
+        if getattr(self, category.replace(' ', '_'), None) != None:
+            self.logger.warn(f"add_category was called twice for category '{category}'!!")
+            self.logger.warn("Trying to update a category after creation? Don't.")
         Category(self, category, settingdescmapping, unusablewithmapping)
         self.logger.info(f"Category '{category}' registered. Access it at {self.__name__}.{category.strip().replace(' ', '_')}.")
 
-    async def config(self, ctx, category:str, *, setting:str=None):
+    async def config(self, ctx, category:str=None, *, setting:str=None):
         """
         A command that changes settings. 
         """
+        if not category:
+            if self.categorynames:
+                available = "\n".join([f"`{i}`" for i in self.categorynames])
+            else:
+                available = "None"
+            return await ctx.send(f"You need to specify a setting category.\nYou can choose from one of the following:\n{available}\nLooking for global settings? Use `config global`.")
         try:
-            category = getattr(self, category) #
+            category = getattr(self, category) 
         except AttributeError:
             return await ctx.send("That category doesn't exist. Check the spelling.")
         try:
