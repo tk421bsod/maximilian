@@ -163,15 +163,23 @@ class core(commands.Cog):
             #this is done in a task to make sure it's done after commands have been registered
             self.bot.loop.create_task(self.check_for_git())
 
-    async def send_traceback(self):
+    async def send_debug(ctx):
+        if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
+            if self.bot.settings.general.debug.enabled(ctx.guild.id):
+                await ctx.send("Here's some additional error info:")
+                await self.send_traceback(ctx.channel)
+                await ctx.send("*This behavior can be disabled through the command `<prefix> config general debug`.*")
+
+    async def send_traceback(self, target=None):
         paginator = commands.Paginator()
         for line in traceback.format_exc().split("\n"):
             paginator.add_line(line)
-        owner = self.bot.get_user(self.bot.owner_id)
-        if owner == None:
+        if not target:
+            target = self.bot.get_user(self.bot.owner_id)
+        if not target:
             return
         for page in paginator.pages:
-            await owner.send(page)
+            await target.send(page)
 
     async def check_for_git(self):
         try:
@@ -229,17 +237,15 @@ class core(commands.Cog):
         except:
             embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
             embed.add_field(name="Error:", value=traceback.format_exc())
-        await ctx.send(embed=embed) 
+        await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_ready(self):
         if not self.bot.ready:
             self.bot.ready = True
             self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
-            self.logger.info("finishing startup...")
             self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
             self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
-            self.logger.info(f"full startup took {time.time()-self.bot.start_time} seconds")
             return print("Ready")
 
     async def prepare(self, message):
