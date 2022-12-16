@@ -330,14 +330,14 @@ class core(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        self.logger.info("joined guild, adding guild id to list of guilds and resetting prefixes")
         await self.bot.prefixes.update_prefix_cache(guild.id)
+        for name in self.bot.settings.categorynames:
+            getattr(self.bot.settings, name).fill_settings_cache()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        self.logger.info("removed from guild, removing that guild from list of guilds and resetting prefixes")
         await self.bot.prefixes.update_prefix_cache(guild.id)
-    
+
     async def cog_command_error(self, ctx, error):
         error = getattr(error, "original", error)
         if isinstance(error, commands.errors.CheckFailure):

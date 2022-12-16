@@ -27,6 +27,9 @@ class Setting():
 
     unusablewith : Union[str, list]
         Settings this setting conflicts with. Provided by the Category's unusablewithmapping. 
+
+    permission : str
+        The permission this setting requires. 
     """
     def __init__(self, category, name, states, permission):
         self.states = states
@@ -60,7 +63,7 @@ class Setting():
         Raises
         ------
 
-        AttributeError
+        AttributeError, KeyError
             The Category the setting belongs to hasn't been fully initialized yet.
         """
         try:
@@ -125,7 +128,10 @@ class Category():
 
     async def add_to_db(self, name):
         for guild in self.bot.guilds:
-            self.bot.db.exec_safe_query('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
+            try:
+                self.bot.db.exec_safe_query('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
+            except IntegrityError:
+                continue
             self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
 
     async def fill_settings_cache(self):
@@ -164,9 +170,9 @@ class Category():
             else:
                 permission = None
             states[setting['guild_id']] = self.get_initial_state(setting)
-            #if we've finished populating list of states...
+            #if we've finished populating list of states for a setting...
             if len(list(states.keys())) >= len(self.bot.guilds):
-                #create new setting, it automatically sets itself as an attr of this category
+                #create new Setting, it automatically sets itself as an attr of this category
                 Setting(self, setting['setting'], states, permission)
                 states = {}
         self.logger.info("Done filling settings cache.")
@@ -252,8 +258,7 @@ class Category():
         except:
             await self.bot.core.send_traceback()
             await ctx.send(f"Something went wrong while changing that setting. Try again in a moment. \nI've reported this error to my owner. If this keeps happening, consider opening an issue at https://github.com/tk421bsod/maximilian/issues.")
-            if self.bot.settings.general.debug.enabled(ctx.guild.id):
-                await self.bot.core.send_traceback(ctx.channel)
+            return await self.bot.core.send_debug(ctx)
         await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"**{'Disabled' if not setting.enabled(ctx.guild.id) else 'Enabled'}** *{setting.description}*.\n{unusablewithmessage}", color=0x3498db).set_footer(text=f"Send this command again to turn this back {'off' if setting.enabled(ctx.guild.id) else 'on'}."))
 
 
