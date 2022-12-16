@@ -1,3 +1,5 @@
+from pymysql.err import IntegrityError
+
 import asyncio
 import collections
 import logging
