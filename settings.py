@@ -145,7 +145,7 @@ class Category():
         self.filling = True
         #step 1: get data for each setting, add settings to db if needed
         try:
-            self.data = self.bot.db.exec_safe_query('select * from config where category=%s', (self.name), fetchall=True)
+            self.data = self.bot.db.exec_safe_query('select * from config where category=%s order by setting', (self.name), fetchall=True)
             if not isinstance(self.data, list):
                 self.data = [self.data]
         except:
@@ -167,6 +167,7 @@ class Category():
         #step 3: for each setting, get initial state and register it
         states = {}
         for setting in self.data:
+            print(setting)
             if self.permissionmapping:
                 permission = self.permissionmapping[setting['setting']]
             else:
