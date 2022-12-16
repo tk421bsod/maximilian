@@ -46,7 +46,7 @@ class db:
                 ip = "localhost"
             self.ip = ip
             self.database = database
-        self.TABLES = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'songs':'name text, id text, duration varchar(8), thumbnail text', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned, constraint users primary key (user_id)'}
+        self.TABLES = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting, category)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'songs':'name text, id text, duration varchar(8), thumbnail text', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned, constraint users primary key (user_id)'}
         self.logger = logging.getLogger(__name__)
         self.failed = False
         #try to open a connection to the database
@@ -57,10 +57,10 @@ class db:
         def requires_connection_inner(self, *args, **kwargs):
             """Attempts a reconnect if OperationalError is raised"""
             try:
-                self.logger.info(f"Calling {func.__name__} with {args}")
+                self.logger.debug(f"Calling {func.__name__} with {args}")
                 return func(self, *args, **kwargs)
             except (pymysql.err.OperationalError, pymysql.err.InterfaceError) as e:
-                self.logger.info("unknown database error, attempting a reconnect")
+                self.logger.warn("unknown database error, attempting a reconnect")
                 self.reconnect()
                 return func(self, *args, **kwargs)
         return requires_connection_inner
