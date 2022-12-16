@@ -3,6 +3,7 @@ import contextlib
 import functools
 import inspect
 import logging
+from random import randint
 import time
 import traceback
 import typing
@@ -15,7 +16,6 @@ import pymysql
 import youtube_dl
 from discord.ext import commands
 
-#import lavalink
 #warning: this uses ffmpeg-python, not ffmpeg (the python module) or python-ffmpeg
 
 class DurationLimitError(discord.ext.commands.CommandError):
@@ -365,6 +365,11 @@ class music(commands.Cog):
         if not url:
             await ctx.send("You need to specify a url or something to search for.")
             return
+        if self.bot.settings.music.performance.enabled(ctx.guild.id):
+            await ctx.send(f"\U000026a0 Performance mode is enabled. Songs will load faster, but you may experience reduced audio quality.\nTo disable this, run `{await self.bot.get_prefix(ctx.message)}config music performance`.")
+        elif randint(1, 30) == 3:
+            await ctx.send("*Songs taking forever to start playing?*\nTry the new performance mode by using `{await self.bot.get_prefix(ctx.message)}config music performance`.\nThis may reduce audio quality.\n")
+            await asyncio.sleep(0.2)
         #init player for this guild if it doesn't exist
         player = await self._get_player(ctx)
         #attempt to join the vc that the command's invoker is in...
@@ -382,8 +387,6 @@ class music(commands.Cog):
                         await ctx.send(f"\U000026a0 I'm repeating a song right now. I'll still add this song to your queue, but I won't play it until you run `{await self.bot.get_prefix(ctx.message)}loop` again (and wait for the current song to finish) or skip the current song using `{await self.bot.get_prefix(ctx.message)}skip`.")
                     elif player.current_song[2] == "No duration available (this is a stream)":
                         await ctx.send(f"\U000026a0 I'm playing a stream right now. I'll still add this song to your queue, but I won't play it until you run `{await self.bot.get_prefix(ctx.message)}skip` or the stream ends.")
-                    if self.bot.settings.music.performance.enabled(ctx.guild.id):
-                        await ctx.send(f"\U000026a0 Performance mode is enabled. Songs will add faster, but you may experience reduced audio quality.\nTo disable this mode, run `{await self.bot.get_prefix(ctx.message)}config music performance`.")
                 except (KeyError, IndexError):
                     #if there's a keyerror or indexerror, nothing's playing. this is normal if someone adds stuff to queue rapidly, so ignore it
                     pass
