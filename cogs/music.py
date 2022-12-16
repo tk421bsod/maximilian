@@ -30,7 +30,7 @@ class FileTooLargeError(discord.ext.commands.CommandError):
     pass
 
 class Metadata():
-    '''An object that stores metadata about a song that's being searched for.'''
+    '''An object that stores metadata about a song.'''
     def __init__(self):
         self.duration = None
         self.filename = None
@@ -54,7 +54,7 @@ class Player():
         self.queue = []
         self.current_song = []
         self.guild = ctx.guild
-        self.owner=ctx.author
+        self.owner = ctx.author
         self.lock = asyncio.Lock()
         self.metadata = Metadata()
         logger.info(f"Created player for guild id {self.guild.id}")
@@ -81,6 +81,14 @@ class music(commands.Cog):
         'preferredquality': '192'
         }]
         }
+        self.bot.settings.add_category("music", {'toggle':'music commands', 'performance':'Better performance at the cost of audio quality'}, {'toggle':None, 'performance':None}, {'toggle':"manage_guild", 'performance':None})
+
+    async def check_enabled(self, ctx):
+        if not self.bot.settings.music.ready:
+            await ctx.send("Give me a second to prepare...")
+        while not self.bot.settings.music.ready:
+            await asyncio.sleep(0.3)
+        return self.bot.settings.music.toggle.enabled(ctx.guild.id)
 
     async def _get_player(self, ctx):
         '''Gets a player if it exists, creates one if it doesn't exist'''
@@ -277,17 +285,23 @@ class music(commands.Cog):
                         player.metadata.filename = info["url"]
                         player.metadata.duration = "No duration available (this is a stream)"
                     else:
-                        #now that we're sure it isn't a stream, download the video
-                        info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
+                        performance = self.bot.settings.music.performance.enabled(ctx.guild.id)
+                        if performance:
+                            info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
+                        else:
+                            info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
                         m, s = divmod(info["duration"], 60)
                         player.metadata.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                         if m > 60:
                             raise DurationLimitError()
-                        player.metadata.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
-                        try:
-                            self.bot.db.exec_safe_query("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
-                        except pymysql.errors.IntegrityError:
-                            pass
+                        if performance:
+                            player.metadata.filename = info["formats"][0]["url"]
+                        else:
+                            player.metadata.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
+                            try:
+                                self.bot.db.exec_safe_query("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
+                            except pymysql.errors.IntegrityError:
+                                pass
         except:
             traceback.print_exc()
         return
@@ -346,6 +360,8 @@ class music(commands.Cog):
     #executes when someone sends a message with the prefix followed by 'play'
     @commands.command(aliases=["p"], help=f"Play something from youtube. You need to provide a valid Youtube URL or a search term for this to work. For example, you can use `<prefix>play never gonna give you up` to search youtube for a song named 'never gonna give you up' and rickroll all of your friends in the voice channel.")
     async def play(self, ctx, *, url=None):
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         if not url:
             await ctx.send("You need to specify a url or something to search for.")
             return
@@ -366,6 +382,8 @@ class music(commands.Cog):
                         await ctx.send(f"\U000026a0 I'm repeating a song right now. I'll still add this song to your queue, but I won't play it until you run `{await self.bot.get_prefix(ctx.message)}loop` again (and wait for the current song to finish) or skip the current song using `{await self.bot.get_prefix(ctx.message)}skip`.")
                     elif player.current_song[2] == "No duration available (this is a stream)":
                         await ctx.send(f"\U000026a0 I'm playing a stream right now. I'll still add this song to your queue, but I won't play it until you run `{await self.bot.get_prefix(ctx.message)}skip` or the stream ends.")
+                    if self.bot.settings.music.performance.enabled(ctx.guild.id):
+                        await ctx.send(f"\U000026a0 Performance mode is enabled. Songs will add faster, but you may experience reduced audio quality.\nTo disable this mode, run `{await self.bot.get_prefix(ctx.message)}config music performance`.")
                 except (KeyError, IndexError):
                     #if there's a keyerror or indexerror, nothing's playing. this is normal if someone adds stuff to queue rapidly, so ignore it
                     pass
@@ -407,10 +425,9 @@ class music(commands.Cog):
             try:
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(player.metadata.filename), volume=0.5)
             except Exception:
-                #TODO: rewrite error handling for this command, it sucks in its current state
-                traceback.print_exc()
-                await ctx.send("I've encountered an error. Either something went seriously wrong, you provided an invalid URL, or you entered a search term with no results. Try running the command again. If you see this message again (after entering a more broad search term or a URL you're sure is valid), contact tk421#7244. ")
-                return
+                await self.leave_voice(ctx)
+                await ctx.send("Sorry, something went wrong while trying to play that song. Try again in a moment.\nIf you see this message again, please contact tk421#2016.*")
+                await self.bot.core.send_debug(ctx)
             try:
                 ctx.voice_client.stop()
             except:
@@ -450,6 +467,8 @@ class music(commands.Cog):
     @commands.command(aliases=["q"])
     async def queue(self, ctx):
         '''View what's in your queue.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try:
             queuelength = len(player.queue)
@@ -484,6 +503,8 @@ class music(commands.Cog):
     @commands.command(aliases=["s"])
     async def skip(self, ctx):
         '''Skip the current song.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try:
             assert player.queue != []
@@ -503,6 +524,8 @@ class music(commands.Cog):
     @commands.command()
     async def pause(self, ctx):
         '''Pause the current song.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try:
             assert ctx.guild.me.voice != None
@@ -521,6 +544,8 @@ class music(commands.Cog):
     @commands.command(aliases=["unpause"])
     async def resume(self, ctx):
         '''Resume the current song.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try:
             assert ctx.guild.me.voice != None
@@ -540,6 +565,8 @@ class music(commands.Cog):
     @commands.command(aliases=["v"])
     async def volume(self, ctx, newvolume : typing.Optional[str]=None):
         '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try:
             ctx.voice_client.source
@@ -570,6 +597,8 @@ class music(commands.Cog):
     @commands.command(aliases=["c"])
     async def clear(self, ctx):
         '''Clear the queue.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try:
             assert player.queue != []
@@ -583,6 +612,8 @@ class music(commands.Cog):
     @commands.command(aliases=["loop", "lo"])
     async def repeat(self, ctx):
         '''Toggle repeating the current song.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try: 
             if ctx.voice_client.is_playing() and player.current_song[2] != "No duration available (this is a stream)":
@@ -604,6 +635,8 @@ class music(commands.Cog):
     @commands.command(aliases=["cs", "np", "song", "currentsong", "currentlyplaying", "cp"])
     async def nowplaying(self, ctx):
         '''Show the song that's currently playing.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try:
             if ctx.voice_client.is_playing():
@@ -627,6 +660,8 @@ class music(commands.Cog):
     @commands.command(aliases=["quit"])
     async def stop(self, ctx):
         '''Stop playing music. Clears your queue if you have anything in it. '''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         if not await self._check_player(ctx):
             return await ctx.send("It doesn't look like I'm in a voice channel.")
         if not ctx.voice_client.is_playing():
@@ -650,6 +685,8 @@ class music(commands.Cog):
     @commands.command(aliases=["r"])
     async def remove(self, ctx, item:int):
         '''Remove the specified thing from the queue. If you want to clear your queue, use the `clear` command.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try:
             del player.queue[item-1]
@@ -664,6 +701,8 @@ class music(commands.Cog):
     @commands.command(aliases=["d"])
     async def download(self, ctx, *, url=None):
         '''Very similar to `play`, but sends the mp3 file in chat instead of playing it in a voice channel.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         if not url:
             return await ctx.send(f"Run this command again and specify something you want to search for. For example, running `{await self.bot.get_prefix(ctx.message)}download never gonna give you up` will download and send Never Gonna Give You Up in the channel you sent the command in.")
         player = await self._get_player(ctx)
@@ -711,6 +750,8 @@ class music(commands.Cog):
     @commands.command(aliases=["j"])
     async def join(self, ctx):
         '''Make Maximilian join the voice channel you're in.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
         player = await self._get_player(ctx)
         try:
             await self._join_voice(ctx, ctx.author.voice.channel)
