@@ -4,7 +4,7 @@ import sys
 
 if "--help" in sys.argv:
     print("main.py usage: python3 main.py [OPTIONS]\n")
-    print("main.py handles loading modules, checking requirements, and launching Maximilian.\n")
+    print("main.py handles initializing core components, checking requirements, and launching Maximilian.\n")
     print("You can enable/disable features and modify Maximilian's behavior through the use of the following options.\nYou can use more than one option at a time.\n")
     print("Options:")
     print("--enablejsk - Enables Jishaku, an extension used for debugging and code evaluation.")
@@ -16,10 +16,10 @@ if "--help" in sys.argv:
     print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level.")
     print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
     print("--help - Shows this message and exits.")
-    print("--alt <token> - Runs Maximilian with the specified token. Adds the latest commit hash to the default status.")
+    print("--alt - Prompts for a token to use. Also adds the latest commit hash to the default status.")
     quit()
 
-print("Loading libraries...")
+print("Loading components...")
 import asyncio
 import datetime
 import functools
@@ -123,9 +123,6 @@ def parse_arguments(bot, args):
         else:
             bot.logger.warning("No database IP address provided. Falling back to localhost.")
             bot.dbip = "localhost"
-        if "--enablejsk" in args:
-            bot.load_extension("jishaku")
-            bot.logger.info("Loaded Jishaku.")
         if "--noload" in args:
             bot.noload = [i for i in args[args.index('--noload')+1:] if not i.startswith('-')]
         else:
@@ -136,6 +133,9 @@ def parse_arguments(bot, args):
 
 async def load_extensions_async(bot):
     """New non-blocking method for loading extensions. Same functionality as load_extensions but compatible with dpy2."""
+    if "--enablejsk" in sys.argv:
+        asyncio.create_task(bot.load_extension("jishaku"))
+        bot.logger.info("Loaded Jishaku.")
     bot.logger.info("Loading modules...")
     extensioncount, errorcount = 0, 0
     print("Loading required modules...")
@@ -207,7 +207,6 @@ async def run(logger):
     logger.debug("Getting version information...")
     if "--alt" in sys.argv:
         token = input("Enter a token to use: \n").strip()
-        database = "maximilian_test"
         logger.debug("Getting latest commit hash...")
         commit = common.get_latest_commit()
         logger.debug("Done getting latest commit hash.")
@@ -251,6 +250,7 @@ async def run(logger):
     except pymysql.OperationalError:
         bot.logger.debug(traceback.format_exc())
         bot.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
+    bot.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
     #monkeypatch setup_hook
     #TODO: choose your fighter: subclass or context manager
     #if "--with-setup-hook" in sys.argv:
