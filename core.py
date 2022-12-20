@@ -163,7 +163,7 @@ class core(commands.Cog):
             #this is done in a task to make sure it's done after commands have been registered
             self.bot.loop.create_task(self.check_for_git())
 
-    async def send_debug(ctx):
+    async def send_debug(self, ctx):
         if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
             if self.bot.settings.general.debug.enabled(ctx.guild.id):
                 await ctx.send("Here's some additional error info:")

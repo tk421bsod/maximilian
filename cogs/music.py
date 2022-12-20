@@ -158,11 +158,12 @@ class music(commands.Cog):
                 await self.bot.core.send_traceback()
             except discord.HTTPException:
                 pass
-            await ctx.send(f"Hmm, something went wrong. Try that again. If this keeps happening, tell tk421#2016. \n<:meowcoffee:849518622140530698> I've also reported this error to tk421.")
+            await ctx.send(f"Hmm, something went wrong. Try that again. I've reported this error to my owner.")
             with contextlib.suppress(AttributeError):
                 if ctx.guild.me.voice:
                     await self.leave_voice(ctx, True)
                     await ctx.send("I've left the voice channel too.")
+            await self.bot.core.send_debug(ctx)
 
     async def leave_voice(self, ctx, silent=False):
         try:
