@@ -10,7 +10,8 @@ First, ensure your system meets these requirements:
 - WSL (if on Windows)
 
 Start by downloading the source code in this repository.  I recommend cloning the repository using `git clone https://github.com/tk421bsod/maximilian`.
-Then, run setup.sh and follow the prompts it gives you.
+
+Then, run the setup script (`bash setup.sh`) and follow the prompts it gives you.
 It'll install almost everything Maximilian needs (python, mariadb, pip, python packages, etc) and set them up.
 
 Now you're ready to run Maximilian. Just run `python3 main.py`.
@@ -19,9 +20,16 @@ On some older versions of Linux you might need to compile a newer version of Pyt
 
 If you get some weird output and can't see it anymore, check the log file. It's located in `./logs/maximilian-<date>.log`.
 
+# optional packages
+Want to enable the "images" extension and/or get prettier output in the console?
+Run `pip3 install -r requirements-extra.txt`.
+You may need to install a Rust compiler.
+
+Just want prettier output? Run `pip3 install rich`.
+
 # additional command line arguments 
 
-To enable eval commands through an extension called `jishaku` (https://github.com/Gorialis/jishaku), run `main.py` with `--enablejsk`.
+To enable special commands through an extension called `jishaku` (https://github.com/Gorialis/jishaku), run `main.py` with `--enablejsk`.
 
 If you're hosting the database on another computer, you'll need to run `main.py` with `--ip <database_ip>`, replacing `<database_ip>` with the IP address of your database.
 
