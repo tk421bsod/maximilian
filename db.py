@@ -67,20 +67,20 @@ class db:
 
     @requires_connection
     def ensure_tables(self):
-        self.logger.info("Making sure all required tables exist...")
+        self.logger.info("Finishing database setup...")
         for table, schema in self.TABLES.items():
             try:
                 self.conn.execute(f'select * from {table}')
             except pymysql.err.ProgrammingError:
-                self.logger.warning(f'Table {self.database}.{table} doesn\'t exist. Creating it.')
+                self.logger.debug(f'Table {self.database}.{table} doesn\'t exist. Creating it.')
                 self.logger.debug(f"Schema for this table is {schema}")
                 self.conn.execute(f'create table {table}({schema})')
                 if not self.failed:
                     self.failed = True
         if not self.failed:
-            self.logger.info('All required tables exist.')
+            self.logger.info('Database setup was already finished, nothing to do')
         else:
-            self.logger.warning('Done creating tables.')
+            self.logger.warning('Database setup finished.')
 
     def attempt_connection(self):
         self.logger.info(f"Attempting to connect to database '{self.database}' on '{self.ip}'...")
