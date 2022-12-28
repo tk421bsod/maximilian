@@ -327,13 +327,14 @@ pip3 install -U pip
 echo ""
 if [ $nodb == 'false' ];
 then
-    echo "Setting up the database..."
+    echo "Performing initial database setup..."
     sudo service mysql start
     sudo mysql -Be "CREATE DATABASE maximilian;"
     sudo mysql -Be "CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password';"
     sudo mysql -Be "GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
     echo "dbp:$password" >> config
     echo "Saved the password to 'config'"
+    echo "Finished initial database setup."
 else
     echo "Not setting up the database."
 fi
@@ -343,21 +344,24 @@ then
     echo "Installing dependencies..."
     pip3 install -r requirements.txt
     echo ""
-
     echo "last_update:" >> config
-
-    echo "One last thing..."
+    echo "Setup is almost finished. There's just one more thing..."
     echo "Would you like to enable ${bold}automatic updates${normal}? Y/N"
     echo "If enabled, Maximilian will attempt to update itself on startup once every 14 days."
     read autoupdate
-    if [ ${autoupdate^^} == 'Y' ];
+    echo ""
+    if [ ${autoupdate^^} == 'Y' || ${autoupdate^^} == 'YES' ];
     then
+        echo "Automatic updates enabled!"
         echo "automatic_updates:True" >> config
     else
+        echo "Automatic updates disabled."
+        echo "You'll be asked about updating on every startup unless you use '--noupdate' or '--force-update'."
+        echo "To change this later, change 'automatic_updates:False' to 'automatic_updates:True' in 'config'."
         echo "automatic_updates:False" >> config
     fi
-
-    echo "Alrighty, Maximilian should be (almost) fully installed now. Try running it using 'python3 main.py --enablejsk -i'. If you want cogs.images and cogs.misc's bottomify command to work, use 'pip install -r requirements-extra.txt'."
+    sleep 1
+    echo "Alrighty, Maximilian is fully installed now. Try running it using 'python3 main.py --enablejsk'. If you want the images module or pretty console output, use 'pip3 install -r requirements-extra.txt'."
 else
     echo "Finished setting up the database."
 fi
