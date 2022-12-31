@@ -134,7 +134,7 @@ class music(commands.Cog):
                 await joiningmessage.edit(content='Connecting to the `{channel}` voice channel timed out.')
                 return
         self.logger.info("connected to vc")
-        await ctx.send(embed=discord.Embed(title=f"\U00002705 Connected to `{channel}`. {'Getting audio... (this may take a while for long songs)' if ctx.command.name == 'play' else 'Use the `play` command to start playing stuff.'}", color=discord.Color.blurple()))
+        await ctx.send(embed=discord.Embed(title=f"\U00002705 Connected to `{channel}`. {'Getting audio... (this may take a while for long songs)' if ctx.command.name == 'play' else 'Use the `play` command to start playing stuff.'}", color=self.bot.config['theme_color']))
 
     async def _fade_audio(self, newvolume, ctx):
         '''Smoothly transitions between volume levels'''
@@ -173,7 +173,7 @@ class music(commands.Cog):
             await ctx.guild.voice_client.disconnect()
             self.logger.info("left vc, reset queue and destroyed player")
             if not silent:
-                await ctx.send(embed=discord.Embed(title="\U00002705 Left the voice channel.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="\U00002705 Left the voice channel.", color=self.bot.config['theme_color']))
         except AssertionError:
             if not silent:
                 return await ctx.send("I'm not in a voice channel.")
@@ -208,7 +208,7 @@ class music(commands.Cog):
                 player.current_song = [False, newsong[0], newsong[3], newsong[1], newsong[4], newsong[2], time.time(), 0, 0, volume]
                 player.queue.remove(player.queue[0])
                 #build now playing embed, send it
-                embed = discord.Embed(title="Now playing:", description=f"`{newsong[1]}`", color=discord.Color.blurple())
+                embed = discord.Embed(title="Now playing:", description=f"`{newsong[1]}`", color=self.bot.config['theme_color'])
                 embed.add_field(name="Video URL", value=f"<{newsong[2]}>", inline=True)
                 embed.add_field(name="Duration", value=f"{newsong[3]}")
                 embed.set_footer(text=f"You have {queuelength} {'song' if queuelength == 1 else 'songs'} in your queue. \nUse the play command to add { 'more songs or use the clear command to clear it.' if queuelength != 0 else 'songs to it.'}")
@@ -404,7 +404,7 @@ class music(commands.Cog):
                         return
                     #actually add that stuff to queue
                     player.queue.append([player.metadata.filename, player.metadata.name, player.metadata.url, player.metadata.duration, player.metadata.thumbnail])
-                    await ctx.send(embed=discord.Embed(title=f"Added a song to your queue!", color=discord.Color.blurple()).add_field(name="Song Name:", value=f"`{player.metadata.name}`", inline=False).add_field(name="Video URL:", value=f"<{player.metadata.url}>", inline=True).set_footer(text=f"Currently, you have {len(player.queue)} {'songs' if len(player.queue) != 1 else 'song'} in your queue. \nUse {await self.bot.get_prefix(ctx.message)}queue to view your queue.").add_field(name="Duration:", value=player.metadata.duration, inline=True).set_image(url=player.metadata.thumbnail))
+                    await ctx.send(embed=discord.Embed(title=f"Added a song to your queue!", color=self.bot.config['theme_color']).add_field(name="Song Name:", value=f"`{player.metadata.name}`", inline=False).add_field(name="Video URL:", value=f"<{player.metadata.url}>", inline=True).set_footer(text=f"Currently, you have {len(player.queue)} {'songs' if len(player.queue) != 1 else 'song'} in your queue. \nUse {await self.bot.get_prefix(ctx.message)}queue to view your queue.").add_field(name="Duration:", value=player.metadata.duration, inline=True).set_image(url=player.metadata.thumbnail))
                     #unlock after sending message
                     self.logger.info("Added song to queue, unlocked.")
                     return
@@ -444,7 +444,7 @@ class music(commands.Cog):
             #that information in order:
             #0: Is this song supposed to repeat?, 1: Filename, 2: Duration (already in the m:s format), 3: Video title,  4: Thumbnail URL, 5: Video URL, 6: time the song started (now), 7: Time when paused, 8: Total time paused, 9: Volume
             player.current_song = [False, player.metadata.filename, player.metadata.duration, player.metadata.name, player.metadata.thumbnail, player.metadata.url, time.time(), 0, 0, 0.5]
-            embed = discord.Embed(title="Now playing:", description=f"`{player.metadata.name}`", color=discord.Color.blurple())
+            embed = discord.Embed(title="Now playing:", description=f"`{player.metadata.name}`", color=self.bot.config['theme_color'])
             embed.add_field(name="Video URL", value=f"<{player.metadata.url}>", inline=True)
             embed.add_field(name="Total Duration", value=f"{player.metadata.duration}")
             queuelength = len(player.queue)
@@ -512,7 +512,7 @@ class music(commands.Cog):
         player = await self._get_player(ctx)
         try:
             assert player.queue != []
-            await ctx.send(embed=discord.Embed(title="\U000023e9 Skipping to the next song in the queue... ", color=discord.Color.blurple()))
+            await ctx.send(embed=discord.Embed(title="\U000023e9 Skipping to the next song in the queue... ", color=self.bot.config['theme_color']))
             player.current_song[0] = False
             #fade audio out
             await self._fade_audio(0, ctx)
@@ -536,11 +536,11 @@ class music(commands.Cog):
             if ctx.voice_client.is_playing():
                 ctx.voice_client.pause()
                 player.current_song[7] = time.time()
-                await ctx.send(embed=discord.Embed(title=f"\U000023f8 Paused. Run `{await self.bot.get_prefix(ctx.message)}resume` to resume audio, or run `{await self.bot.get_prefix(ctx.message)}leave` to make me leave the voice channel.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title=f"\U000023f8 Paused. Run `{await self.bot.get_prefix(ctx.message)}resume` to resume audio, or run `{await self.bot.get_prefix(ctx.message)}leave` to make me leave the voice channel.", color=self.bot.config['theme_color']))
             elif ctx.voice_client.is_paused():
-                await ctx.send(embed=discord.Embed(title=f"<:red_x:813135049083191307> I'm already paused. Use `{await self.bot.get_prefix(ctx.message)}resume` to resume.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title=f"<:red_x:813135049083191307> I'm already paused. Use `{await self.bot.get_prefix(ctx.message)}resume` to resume.", color=self.bot.config['theme_color']))
             else:
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything.", color=self.bot.config['theme_color']))
         except Exception:
             traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
@@ -555,13 +555,13 @@ class music(commands.Cog):
             assert ctx.guild.me.voice != None
             if ctx.voice_client.is_paused():
                 player.current_song[8] += round(time.time() - player.current_song[7])
-                await ctx.send(embed=discord.Embed(title="\U000025b6 Resuming...", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="\U000025b6 Resuming...", color=self.bot.config['theme_color']))
                 ctx.voice_client.resume()
                 return
             elif ctx.voice_client.is_playing():
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm already playing something.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm already playing something.", color=self.bot.config['theme_color']))
             else:
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything.", color=self.bot.config['theme_color']))
         except Exception:
             traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
@@ -585,7 +585,7 @@ class music(commands.Cog):
             else:
                 await self._fade_audio(newvolume, ctx)
                 player.current_song[9] = newvolume/100
-                await ctx.send(embed=discord.Embed(title=f"\U00002705 Set volume to {newvolume}%.{' Warning: Music may sound distorted at this volume level.' if newvolume >= 90 else ''}", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title=f"\U00002705 Set volume to {newvolume}%.{' Warning: Music may sound distorted at this volume level.' if newvolume >= 90 else ''}", color=self.bot.config['theme_color']))
         except ValueError:
             try:
                 float(newvolume)
@@ -607,7 +607,7 @@ class music(commands.Cog):
         try:
             assert player.queue != []
             player.queue = []
-            await ctx.send(embed=discord.Embed(title="\U00002705 Cleared your queue!", color=discord.Color.blurple()))
+            await ctx.send(embed=discord.Embed(title="\U00002705 Cleared your queue!", color=self.bot.config['theme_color']))
         except AssertionError:
             await ctx.send("You don't have anything in your queue.")
         except Exception:
@@ -623,16 +623,16 @@ class music(commands.Cog):
             if ctx.voice_client.is_playing() and player.current_song[2] != "No duration available (this is a stream)":
                 if player.current_song[0]:
                     player.current_song[0] = False
-                    await ctx.send(embed=discord.Embed(title="I won't repeat the current song anymore.", color=discord.Color.blurple()))
+                    await ctx.send(embed=discord.Embed(title="I won't repeat the current song anymore.", color=self.bot.config['theme_color']))
                 else:
                     player.current_song[0] = True
-                    await ctx.send(embed=discord.Embed(title="\U0001f501 I'll repeat the current song after it finishes. Run this command again to stop repeating the current song.", color=discord.Color.blurple()))
+                    await ctx.send(embed=discord.Embed(title="\U0001f501 I'll repeat the current song after it finishes. Run this command again to stop repeating the current song.", color=self.bot.config['theme_color']))
             elif player.current_song[2] == "No duration available (this is a stream)":
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I can't repeat streams.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I can't repeat streams.", color=self.bot.config['theme_color']))
             else:
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=discord.Color.blurple()))
+                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=self.bot.config['theme_color']))
         except AttributeError:
-            await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=discord.Color.blurple()))
+            await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=self.bot.config['theme_color']))
         except IndexError:
             await ctx.send("I'm not in a voice channel.")
 
@@ -649,8 +649,8 @@ class music(commands.Cog):
             elif ctx.voice_client.is_paused():
                 m, s = divmod(round((player.current_song[7] - player.current_song[6]) - player.current_song[8]), 60)
             else:
-                return await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=discord.Color.blurple()))
-            embed = discord.Embed(title="Currently playing:", description=f"`{player.current_song[3]}`", color=discord.Color.blurple())
+                return await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=self.bot.config['theme_color']))
+            embed = discord.Embed(title="Currently playing:", description=f"`{player.current_song[3]}`", color=self.bot.config['theme_color'])
             embed.add_field(name="Video URL", value=f"<{player.current_song[5]}>", inline=True)
             if player.current_song[2] == "No duration available (this is a stream)":
                 embed.add_field(name="Duration (Elapsed/Total)", value=f"You've been listening to this stream for {m} minutes and {s} seconds.")
@@ -659,7 +659,7 @@ class music(commands.Cog):
             embed.set_image(url=player.current_song[4])
             await ctx.send(embed=embed)
         except AttributeError:
-            await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not in a voice channel.", color=discord.Color.blurple()))
+            await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not in a voice channel.", color=self.bot.config['theme_color']))
 
     @commands.command(aliases=["quit"])
     async def stop(self, ctx):
@@ -682,7 +682,7 @@ class music(commands.Cog):
             await self.destroy_player(ctx)
             self.logger.info("reset queue")
             ctx.voice_client.stop()
-            await ctx.send(embed=discord.Embed(title=f"\U000023f9 Stopped playing music{'.' if queuelength == 0 else ' and cleared your queue.'}", color=discord.Color.blurple()))
+            await ctx.send(embed=discord.Embed(title=f"\U000023f9 Stopped playing music{'.' if queuelength == 0 else ' and cleared your queue.'}", color=self.bot.config['theme_color']))
         except AttributeError:
             await ctx.send("I'm not in a voice channel.")
 

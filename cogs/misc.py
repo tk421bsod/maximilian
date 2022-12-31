@@ -15,8 +15,7 @@ class misc(commands.Cog):
 
     @commands.command(aliases=["owner"])
     async def hi(self, ctx):
-        print("said hi")
-        await ctx.send("Hello! I'm a robot. tk421#7244 made me!")
+        await ctx.send("Hello! I'm a Discord bot created by tk421#2016.")
 
     @commands.command(help="Get an image of a cat.", aliases=["thiscatdoesntexist"])
     async def cats(self, ctx):
@@ -24,26 +23,21 @@ class misc(commands.Cog):
         async with aiohttp.ClientSession() as cs:
             async with cs.get('https://thiscatdoesnotexist.com') as r:
                 buffer = io.BytesIO(await r.read())
-                print("got a cat image")
                 await ctx.send(file=discord.File(buffer, filename="cat.jpeg"))
 
-    @commands.command(aliases=['pong'])
     async def ping(self, ctx):
-        print("sent latency")
-        await ctx.send(f"Pong! My latency is {str(round(self.bot.latency*1000, 1))} ms.")
+        await ctx.send(f"Latency: {str(round(self.bot.latency*1000, 1))} ms.")
 
     @commands.command(help="Get some info about the bot and commands")
     async def about(self, ctx):
-        embed = discord.Embed(title="About", color=discord.Color.blurple())
-        embed.add_field(name="Useful links", value=f"Use `{str(await self.bot.get_prefix(ctx.message))}help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=335923264&scope=bot). \nIf you want to contribute to my development, visit my Github repository, at https://github.com/tk421bsod/maximilian.", inline=False)
+        embed = discord.Embed(title="About", color=self.bot.config['theme_color'])
+        embed.add_field(name="Useful stuff", value=f"Use `{str(await self.bot.get_prefix(ctx.message))}help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=335923264&scope=bot). \nIf you want to contribute to my development, visit my Github repository at https://github.com/tk421bsod/maximilian.", inline=False)
         embed.add_field(name="Commands", value=f" ".join(f'`{i.name}`' for i in self.bot.commands if not i.hidden and not i.parent and i.name != 'jishaku'))
-        print("sent some info about me")
         await ctx.send(embed=embed)
-
 
     @commands.command(help="View information about what data Maximilian accesses and stores.")
     async def privacy(self, ctx):
-        embed = discord.Embed(title="Maximilian Privacy Policy", color=discord.Color.blurple())
+        embed = discord.Embed(title="Maximilian Privacy Policy", color=self.bot.config['theme_color'])
         embed.add_field(name="Why Maximilian collects data", value="Maximilian accesses/stores certain information that is necessary for certain functions. It doesn't collect any sort of personally identifiable information. (types of data collected are described below)", inline=False)
         embed.add_field(name="Data that Maximilian stores", value="**-Server IDs**\nMaximilian stores server IDs when you create a custom command, add a reaction role, or change its prefix to distinguish between different servers.", inline=False)
         embed.add_field(name="-Role IDs", value="Maximilian stores role IDs whenever you add a reaction role so it can give people the correct role.")
@@ -63,7 +57,6 @@ class misc(commands.Cog):
 
     @commands.command(hidden=True)
     async def emojiinfo(self, ctx, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
-        print(str(emoji))
         if isinstance(emoji, discord.PartialEmoji):
             await ctx.send(f"`<{emoji.name}:{emoji.id}>`")
             return
@@ -117,8 +110,8 @@ class misc(commands.Cog):
     async def say(self, ctx, *, thing):
         return await ctx.send(thing, allowed_mentions=discord.AllowedMentions.none())
 
-def setup(bot):
-    bot.add_cog(misc(bot))
+async def setup(bot):
+    await bot.add_cog(misc(bot))
 
-def teardown(bot):
-    bot.remove_cog(misc(bot))
+async def teardown(bot):
+    await bot.remove_cog(misc(bot))

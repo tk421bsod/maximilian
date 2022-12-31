@@ -185,6 +185,7 @@ async def load_extensions_async(bot):
     except: #TODO: pls delet i hate this
         bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
     bot.logger.info(f"loaded {extensioncount} extensions successfully ({errorcount} extension{'s' if errorcount != 1 else ''} not loaded), waiting for ready")
+    print("Done loading modules. Finishing startup...")
 
 #wrap the main on_message event in a function for prettiness
 async def wrap_event(bot):
@@ -198,6 +199,8 @@ async def wrap_event(bot):
 async def run(logger):
     logger.debug("Loading config...")
     config = common.load_config()
+    #convert hex color to int
+    config['theme_color'] = int(config['theme_color'], 16)
     token = config['token']
     logger.debug("Checking discord.py version...")
     check_version()
@@ -218,6 +221,7 @@ async def run(logger):
     bot.database = "maximilian" #TODO: remove this
     bot.logger = logger
     bot.common = common
+    bot.config = config
     await wrap_event(bot)
     #show version information
     bot.logger.warning(f"Starting maximilian v1.0.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
@@ -302,6 +306,7 @@ except:
     try:
         outer_logger.error("Unhandled exception! Exiting.")
         outer_logger.error(traceback.format_exc())
+        outer_logger.error("Need more information on Maximilian's state at the time of the error? Run main.py with -i or even -v.")
     except:
         print("Unhandled exception while handling unhandled exception")
         pass

@@ -49,7 +49,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             await ctx.send("Ok, updating that reaction role.")
             self.bot.db.exec_safe_query("replace into roles values(%s, %s, %s, %s)", (ctx.guild.id, roleid, messageid, emoji))
             self.roles[ctx.guild.id][roleid] = reaction_role(roleid, ctx.guild.id, messageid, emoji)
-            await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role updated."))
+            await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role updated.", color=self.bot.config['theme_color']))
         else:
             await ctx.send("Not updating that reaction role.")
 
@@ -58,17 +58,17 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             changes = self.detect_changes(self.roles[ctx.guild.id][role.id], reaction_role(role.id, ctx.guild.id, messageid, emoji))
             if not changes:
                 return await ctx.send("That reaction role already exists.")
-            warning = await ctx.send(embed=discord.Embed(title="Update existing reaction role?", description=f"It looks like a reaction role with the same ID already exists.\nYou've made the following changes to it:\n{changes}\nReact with \U00002705 to update the existing role or \U0000274e to keep the existing role."))
+            warning = await ctx.send(embed=discord.Embed(title="Update existing reaction role?", description=f"It looks like a reaction role with the same ID already exists.\nYou've made the following changes to it:\n{changes}\nReact with \U00002705 to update the existing role or \U0000274e to keep the existing role.", color=discord.Color.yellow()))
             self.bot.confirmation(self.bot, warning, ctx, self.role_confirmation_callback, role.id, messageid, emoji)
             return
         self.bot.db.exec_safe_query("insert into roles values(%s, %s, %s, %s)", (ctx.guild.id, role.id, messageid, emoji))
         self.roles[ctx.guild.id][role.id] = reaction_role(role.id, ctx.guild.id, messageid, emoji)
-        await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role added."))
+        await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role added.", color=self.bot.config['theme_color']))
 
     async def delete_role(self, ctx, role):
         self.bot.db.exec_safe_query("delete from roles where guild_id=%s and role_id=%s", (ctx.guild.id, role.id))
         del self.roles[ctx.guild.id][role.id]
-        await ctx.send(embed=discord.Embed("\U00002705 Reaction role deleted."))
+        await ctx.send(embed=discord.Embed("\U00002705 Reaction role deleted.", color=self.bot.config['theme_color']))
 
     @commands.command(help="Add, remove, or list reaction roles, only works if you have the 'Manage Roles' permission. This command takes 4 arguments (1 optional), action (the action to perform, either `add`, `delete`, or `list`), role (a role, you can either mention it or provide the id), messageid (the id of the message you want people to react to), and emoji (the emoji you want people to react with, it must be in a server Maximilian is in or a default emoji, this can be blank if you want people to react with any emoji)", aliases=['reaction_role'])
     @commands.has_guild_permissions(manage_roles=True)
@@ -94,14 +94,13 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             if len(list(self.roles[ctx.guild.id].values())) == 0:
                 return await ctx.send("You don't have any reaction roles set up.")
             desc = ""
-            discord.Embed(title="Reaction roles in this server:")
             for role in list(self.roles[ctx.guild.id].values()):
                 if not role.emoji:
                     emoji = "Any"
                 else:
                     emoji = role.emoji
                 desc += f"<@&{role.id}>\nMessage ID: {role.message_id} \nEmoji: {emoji}\n\n"
-            await ctx.send(embed=discord.Embed(title="Reaction roles in this server:", description=desc))
+            await ctx.send(embed=discord.Embed(title="Reaction roles in this server:", description=desc, color=self.bot.config['theme_color']))
         elif not messageid or not role:
             await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{await self.bot.get_prefix(ctx.message)}help reactionroles` for more details.")
             return

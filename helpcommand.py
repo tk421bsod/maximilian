@@ -3,7 +3,7 @@ from discord.ext import commands
 
 
 class HelpCommand(commands.HelpCommand):
-    color = discord.Color.blurple()
+
     def get_ending_note(self):
         return 'Use {0}{1} [command] for more info on a command.'.format(self.context.clean_prefix, self.invoked_with)
 
@@ -21,7 +21,7 @@ class HelpCommand(commands.HelpCommand):
         return '%s%s %s' % (self.context.clean_prefix, alias, command.signature)
 
     async def send_bot_help(self, mapping):
-        embed = discord.Embed(title='Commands', colour=self.color)
+        embed = discord.Embed(title='Commands', color=self.context.bot.config['theme_color'])
         description = self.context.bot.description
         if description:
             embed.description = description
@@ -49,7 +49,7 @@ class HelpCommand(commands.HelpCommand):
         await self.get_destination().send(embed=embed)
 
     async def send_cog_help(self, cog):
-        embed = discord.Embed(title='{0.qualified_name} Commands'.format(cog), colour=self.color)
+        embed = discord.Embed(title='{0.qualified_name} Commands'.format(cog), color=self.context.bot.config['theme_color'])
         if cog.description:
             embed.description = cog.description
 
@@ -61,7 +61,7 @@ class HelpCommand(commands.HelpCommand):
         await self.get_destination().send(embed=embed)
 
     async def send_group_help(self, group):
-        embed = discord.Embed(title=group.qualified_name, colour=self.color)
+        embed = discord.Embed(title=group.qualified_name, color=self.context.bot.config['theme_color'])
         if group.help:
             embed.description = group.help
 

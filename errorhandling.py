@@ -28,16 +28,16 @@ class errorhandling(commands.Cog):
                 return
         #check for database errors first, these should almost never happen
         if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError):
-            embed = discord.Embed(title="Fatal Error",description="\U0000274c You shouldn't see this message. If you do, an unexpected database error has occurred. \nContact my developer (tk421#2016) if you see this again.", color=discord.Color.blurple())
+            embed = discord.Embed(title="Fatal Error",description="\U0000274c You shouldn't see this message. If you do, an unexpected database error has occurred. \nContact my developer (tk421#2016) if you see this again.", color=self.bot.config['theme_color'])
             if ctx.guild.me.guild_permissions.embed_links:
                 await ctx.send(embed=embed)
             else:
                 await ctx.send("\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
         if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
             try:
-                embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up or giving me the `{error.missing_perms[0]}` permission.", color=discord.Color.blurple())
+                embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up or giving me the `{error.missing_perms[0]}` permission.", color=self.bot.config['theme_color'])
             except AttributeError:
-                embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up.", color=discord.Color.blurple())
+                embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up.", color=self.bot.config['theme_color'])
             if ctx.guild.me.guild_permissions.embed_links:
                 await ctx.send(embed=embed)
             else:

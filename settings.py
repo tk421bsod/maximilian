@@ -31,7 +31,7 @@ class Setting():
         Settings this setting conflicts with. Provided by the Category's unusablewithmapping. 
 
     permission : str
-        The permission this setting requires. 
+        The permission this setting requires, as a string. Must be a valid discord.Permission e.g manage_guild.
     """
     def __init__(self, category, name, states, permission):
         self.states = states
@@ -42,8 +42,9 @@ class Setting():
         self.permission = permission
         #add this setting as an attr of category
         #one can access it via 'bot.settings.<category>.<setting>'
-        print(f"Registering setting '{name}'")
         setattr(category, name.strip().replace(" ", "_"), self)
+        #TODO: could we maybe not do this bs
+        category.bot.settings.logger.info(f"Registered setting {name}")
 
     def enabled(self, guild_id):
         """
@@ -167,7 +168,7 @@ class Category():
         #step 3: for each setting, get initial state and register it
         states = {}
         for setting in self.data:
-            print(setting)
+            self.logger.debug(f"{setting}")
             if self.permissionmapping:
                 permission = self.permissionmapping[setting['setting']]
             else:
@@ -235,7 +236,7 @@ class Category():
                 title = f"Settings for category '{self.name}'"
             else:
                 title = "General settings"
-            embed = discord.Embed(title=title, color=0x3498db) 
+            embed = discord.Embed(title=title, color=self.bot.config['theme_color'])
             for setting in [self.get_setting(i) for i in list(self.settingdescmapping.keys())]:
                 if setting.unusablewith:
                     unusablewithwarning = f"Cannot be enabled at the same time as {await self.prepare_conflict_string(setting.unusablewith)}."
@@ -262,7 +263,7 @@ class Category():
             await self.bot.core.send_traceback()
             await ctx.send(f"Something went wrong while changing that setting. Try again in a moment. \nI've reported this error to my owner. If this keeps happening, consider opening an issue at https://github.com/tk421bsod/maximilian/issues.")
             return await self.bot.core.send_debug(ctx)
-        await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"**{'Disabled' if not setting.enabled(ctx.guild.id) else 'Enabled'}** *{setting.description}*.\n{unusablewithmessage}", color=0x3498db).set_footer(text=f"Send this command again to turn this back {'off' if setting.enabled(ctx.guild.id) else 'on'}."))
+        await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"**{'Disabled' if not setting.enabled(ctx.guild.id) else 'Enabled'}** *{setting.description}*.\n{unusablewithmessage}", color=self.bot.config['theme_color']).set_footer(text=f"Send this command again to turn this back {'off' if setting.enabled(ctx.guild.id) else 'on'}."))
 
 
 class settings():

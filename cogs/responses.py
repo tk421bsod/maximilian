@@ -1,3 +1,4 @@
+import asyncio
 import typing
 
 import discord
@@ -8,23 +9,18 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         self.bot = bot
         self.bot.responses = []
         if not teardown:
-            self.bot.loop.create_task(self.get_responses())
-    
-    async def get_responses(self):
-        '''Builds cache of custom commands (internally called responses)'''
+            self.bot.loop.create_task(self.fill_cache())
+
+    async def fill_cache(self):
+        '''Builds cache of custom commands'''
         tempresponses = []
-        #make sure cache is ready before we try to iterate over bot.guilds (if we don't wait, bot.guilds may be incomplete)
         await self.bot.wait_until_ready()
-        #then for each guild in the list, check if the guild has any responses in the database
         for guild in self.bot.guilds:
-            count = self.bot.db.exec_safe_query("select count(*) from responses where guild_id=%s", (guild.id, ))
-            if count is not None:
-                #if there are responses, check if there's one or more
-                if int(count['count(*)']) >= 1:
-                    #if so, get a list of responses and iterate over that, adding each one to the list
-                    response = self.bot.db.exec_safe_query("select * from responses where guild_id=%s", (guild.id, ))
-                    for each in range(int(count['count(*)'])):
-                        tempresponses.append([str(response[each]['guild_id']), response[each]['response_trigger'], response[each]['response_text']])
+            response = self.bot.db.exec_safe_query("select * from responses where guild_id=%s", (guild.id, ))
+            if not response:
+                continue
+            for each in response:
+                tempresponses.append([each['guild_id'], each['response_trigger'], each['response_text']])
         self.bot.responses = tempresponses
         return
 
@@ -36,45 +32,48 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
     @commands.command(help="List all of the custom commands you've set up in your server")
     async def list(self, ctx):
         responsestring = ""
-        await self.get_responses()
-        for each in range(len(self.bot.responses)):
-            if int(self.bot.responses[each][0]) == int(ctx.guild.id):
-                if len(self.bot.responses[each][2]) >= 200:
-                    responsetext = self.bot.responses[each][2][:200] + "..."
+        for response in self.bot.responses:
+            if response[0] == ctx.guild.id:
+                if len(response[2]) >= 200:
+                    responsetext = response[2][:200] + "..."
                 else:
-                    responsetext = self.bot.responses[each][2]
-                responsestring = responsestring + " \n command trigger: `" + self.bot.responses[each][1] + "` response: `" + responsetext + "`"
+                    responsetext = response[2]
+                responsestring += f"Command trigger: `{self.bot.responses[each][1]}` Response: `{responsetext}`\n\n"
         if responsestring == "":
-            responsestring = "I can't find any custom commands in this server."
-        else: 
-            await ctx.send(responsestring)
+            await ctx.send("I can't find any custom commands in this server.")
+        else:
+            await ctx.send(embed=discord.Embed(title="Custom commands in this server", description=responsestring))
     
     @commands.command(help="Add a custom command, takes the command trigger and response as parameters")
     async def add(self, ctx, command_trigger : str, command_response : str):
         command_response.replace("*", r"\*")
         command_trigger.replace("*", r"\*")
-        for each in self.bot.commands:
+        for each in self.bot.responses:
             if command_trigger.lower() == each.name.lower() or command_trigger.lower() == "jishaku" or command_trigger.lower() == "jsk":
                 await ctx.send("You can't create a custom command with the same name as one of my commands.")
                 return
-        if self.bot.db.insert("responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True) == "success":
+        try:
+            self.bot.db.exec_safe_query("responses", {"guild_id" : str(ctx.guild.id), "response_trigger" : str(command_trigger), "response_text" : str(command_response)}, "response_trigger", False, "", False, "guild_id", True)
             await self.get_responses()
-            print("added response")
-            await ctx.send("Added a custom command.")
-        else: 
-            raise discord.ext.commands.CommandError(message="Failed to add a command, there might be a duplicate. Try deleting the command you just tried to add.")
+            await ctx.send("Added that custom command.")
+        except:
+            await self.bot.core.send_traceback()
+            await ctx.send("Sorry, something went wrong when adding that custom command. I've reported this error to my owner.\nIf this happens again, consider opening an issue at <https://github.com/tk421bsod/maximilian>.")
+            await self.bot.core.send_debug(ctx)
 
     @commands.command(help="Delete a custom command, takes the command trigger as a parameter")
     async def delete(self, ctx, command_trigger : str):
-        if self.bot.db.delete("responses", str(command_trigger), "response_trigger", "guild_id", str(ctx.guild.id), True) == "successful":
-            await self.get_responses()
-            print("deleted response")
-            await ctx.send("Deleted a custom command.")
-        else:
-            raise discord.ext.commands.CommandError(message="Failed to delete a custom command, are there any custom commands set up that use the command trigger '" + str(command_trigger) + "'?")
-        
-def setup(bot):
-    bot.add_cog(responses(bot))
+        try:
+            self.bot.db.exec_safe_query("delete from responses where response_trigger=%s and guild_id=%s", (command_trigger, ctx.guild.id))
+            await self.fill_cache()
+            await ctx.send(embed=discord.Embed(title="Deleted that custom command."))
+        except:
+            await self.bot.core.send_traceback()
+            await ctx.send("Sorry, something went wrong when deleting that custom command. I've reported this error to my owner.\nIf this happens again, consider opening an issue at <https://github.com/tk421bsod/maximilian>.")
+            await self.bot.core.send_debug()
 
-def teardown(bot):
-    bot.remove_cog(responses(bot, True))
+async def setup(bot):
+    await bot.add_cog(responses(bot))
+
+async def teardown(bot):
+    await bot.remove_cog(responses(bot, True))
