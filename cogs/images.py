@@ -12,10 +12,10 @@ class images(commands.Cog):
 
     async def _get_avatar(self, ctx, user):
         if not user:
-            avatar_bytes = await ctx.author.avatar_url_as(static_format="png").read()
+            avatar_bytes = await ctx.author.avatar.replace(static_format="png").read()
             id = ctx.author.id
         else:
-            avatar_bytes = await user.avatar_url_as(static_format="png").read()
+            avatar_bytes = await user.avatar.replace(static_format="png").read()
             id = user.id
         return avatar_bytes, id
         
@@ -24,9 +24,9 @@ class images(commands.Cog):
     async def avatar(self, ctx, *, user:typing.Optional[discord.Member]=None):
         '''View another user's avatar, or yours if you don't specify anyone'''
         if not user:
-            await ctx.send(embed=discord.Embed(title=f"{ctx.author}'s avatar", color=discord.Color.blurple()).set_image(url=str(ctx.author.avatar_url)))
+            await ctx.send(embed=discord.Embed(title=f"{ctx.author}'s avatar", color=self.bot.config['theme_color']).set_image(url=str(ctx.author.avatar.url)))
             return
-        await ctx.send(embed=discord.Embed(title=f"{user}'s avatar", color=discord.Color.blurple()).set_image(url=str(user.avatar_url)))
+        await ctx.send(embed=discord.Embed(title=f"{user}'s avatar", color=self.bot.config['theme_color']).set_image(url=str(user.avatar.url)))
 
     @commands.command()
     async def invert(self, ctx, user:typing.Optional[discord.Member]=None):
@@ -89,8 +89,8 @@ class images(commands.Cog):
         im.save(f"imgcache/{id}.png")
         await ctx.send(file=discord.File(f"imgcache/{id}.png"))
 
-def setup(bot):
-    bot.add_cog(images(bot))
+async def setup(bot):
+    await bot.add_cog(images(bot))
 
-def teardown(bot):
-    bot.remove_cog(images(bot))
+async def teardown(bot):
+    await bot.remove_cog(images(bot))
