@@ -31,8 +31,7 @@ class userinfo(commands.Cog):
         try:
             embed.add_field(name="Date joined:", value=requested_user.joined_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
             embed.add_field(name="Date created:", value=requested_user.created_at.strftime("%B %d, %Y at %-I:%M %p UTC"), inline=False)
-        except Exception:
-            self.bot.logger.warning("Timestamp formatting failed. (Is Maximilian running on Windows?) Falling back to zero-padded hour values.")
+        except:
             embed.add_field(name="Date joined:", value=requested_user.joined_at.strftime("%B %d, %Y at %I:%M %p UTC"), inline=False)
             embed.add_field(name="Date created:", value=requested_user.created_at.strftime("%B %d, %Y at %I:%M %p UTC"), inline=False)
         #should probably use .join instead of this
@@ -51,14 +50,13 @@ class userinfo(commands.Cog):
         embed.add_field(name="Roles:", value=rolestring, inline=False)
         embed.add_field(name="Permissions:", value=permissionstring, inline=False)
         embed.set_footer(text=f"Requested by {str(ctx.author)}.")
-        embed.set_thumbnail(url=requested_user.avatar_url)
+        embed.set_thumbnail(url=requested_user.avatar.url)
         await ctx.send(embed=embed)
     
 
-def setup(bot):
-    bot.add_cog(userinfo(bot))
+async def setup(bot):
+    await bot.add_cog(userinfo(bot))
 
-def teardown(bot):
-    bot.remove_cog(userinfo(bot))
+async def teardown(bot):
+    await bot.remove_cog(userinfo(bot))
 
-    
