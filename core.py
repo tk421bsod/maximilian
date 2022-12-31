@@ -76,6 +76,7 @@ class confirmation:
         '''Handles a confirmation, transferring control to a callback if _check_confirmed returns a non-None value'''
         await message.add_reaction(self.GREEN_CHECK)
         await message.add_reaction(self.RED_X)
+        await asyncio.sleep(0.4)
         while True:
             reaction = await self.bot.wait_for('reaction_add', timeout=60.0)
             confirmed = await self._check_confirmed(ctx, message, reaction)
@@ -233,7 +234,7 @@ class core(commands.Cog):
             self.bot.prefixes = self.bot.get_cog('prefixes')
             self.bot.responses = self.bot.get_cog('Custom Commands')
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
-            embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=discord.Color.blurple())
+            embed = discord.Embed(title=f"\U00002705 {extensionsreloaded}", color=self.bot.config['theme_color'])
         except:
             embed = discord.Embed(title=f"\U0000274c Error while reloading extensions.")
             embed.add_field(name="Error:", value=traceback.format_exc())
@@ -253,11 +254,15 @@ class core(commands.Cog):
             if message.author.id in self.bot.blocklist:
                 return False
             if message.guild is not None:
-                for each in range(len(self.bot.responses)):
-                    if int(self.bot.responses[each][0]) == int(message.guild.id):
-                        if await self.bot.get_prefix(message) + self.bot.responses[each][1].lower() == message.content.lower().strip():
-                            await message.channel.send(self.bot.responses[each][2])
-                            return False
+                if self.bot.responses:
+                    try:
+                        for each in range(len(self.bot.responses)):
+                            if int(self.bot.responses[each][0]) == int(message.guild.id):
+                                if await self.bot.get_prefix(message) + self.bot.responses[each][1].lower() == message.content.lower().strip():
+                                    await message.channel.send(self.bot.responses[each][2])
+                                    return False
+                    except:
+                        return True
             return True
         else:
             return False
