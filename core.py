@@ -203,7 +203,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def reload(self, ctx, *targetextensions):
-        await ctx.trigger_typing()
+        await ctx.typing()
         try:
             if "--nofetch" in targetextensions:
                 #couldn't I just use targetextensions.remove for this
@@ -346,7 +346,7 @@ class core(commands.Cog):
     async def cog_command_error(self, ctx, error):
         error = getattr(error, "original", error)
         if isinstance(error, commands.errors.CheckFailure):
-            await ctx.send("How did you find these commands? These aren't supposed to be used by anyone but the owner. \nIf you're selfhosting and want to make yourself the owner to prevent this from happening, replace the id after `owner_id=` and before the comma on line 25 of main.py with your user id.")
+            await ctx.send("How did you find these commands? These aren't supposed to be used by anyone but the owner. \nHosting this instance yourself? Change owner_id in config.")
         else:
             await self.bot.get_user(self.bot.owner_id).send("oh :blobpaiN; here's an error" + traceback.format_exc())
 

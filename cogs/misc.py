@@ -19,7 +19,7 @@ class misc(commands.Cog):
 
     @commands.command(help="Get an image of a cat.", aliases=["thiscatdoesntexist"])
     async def cats(self, ctx):
-        await ctx.trigger_typing()
+        await ctx.typing()
         async with aiohttp.ClientSession() as cs:
             async with cs.get('https://thiscatdoesnotexist.com') as r:
                 buffer = io.BytesIO(await r.read())
