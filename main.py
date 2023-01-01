@@ -20,25 +20,30 @@ if "--help" in sys.argv:
     quit()
 
 print("Loading components...")
-import asyncio
-import datetime
-import functools
-import json
-import logging
-import os
-import time
-import traceback
 
-import discord
-import pymysql
-from discord.ext import commands
-from discord.ext.commands.errors import NoEntryPointError
+try:
+    import asyncio
+    import datetime
+    import functools
+    import json
+    import logging
+    import os
+    import time
+    import traceback
 
-import common
-import core
-import db
-import settings
-from updater import update
+    import discord
+    import pymysql
+    from discord.ext import commands
+    from discord.ext.commands.errors import NoEntryPointError
+
+    import common
+    import core
+    import db
+    import settings
+    from updater import update
+except ImportError as e:
+    print("Maximilian cannot start because a required component failed to load.\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
+    print(e)
 
 if not "--no-rich" in sys.argv:
     try:
