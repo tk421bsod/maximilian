@@ -1,7 +1,7 @@
 import asyncio
 import typing
 import traceback
-
+from random import randint
 
 import discord
 from discord.ext import commands
@@ -32,7 +32,6 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             if isinstance(guild_roles, dict): #dicts by themselves don't play nicely with the loop below, so wrap them in a list
                 guild_roles = [guild_roles]
             for role in guild_roles:
-                print(role)
                 #{guild_id : {role_id : reaction_role}}
                 self.roles[guild.id].update({int(role['role_id']):reaction_role(id=int(role['role_id']), guild_id=int(role['guild_id']), message_id=int(role['message_id']), emoji=role['emoji'])})
 
@@ -44,6 +43,14 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             changes += f"**Message**: {original.message_id} -> {changed.message_id}\n"
         return changes
 
+    async def complete_hook(self, ctx):
+        if randint(1, 10) == 5:
+            if self.bot.settings.reactionroles.ready:
+                if self.bot.settings.reactionroles.notify.enabled(ctx.guild.id):
+                    await ctx.send(f"Just so you know, I've been set up to notify users when adding/removing a role. To disable this, run `{await self.bot.get_prefix(ctx.message)}config reactionroles notify.`")
+                else:
+                    await ctx.send(f"Just so you know, I've been set up to not notify users when adding/removing a role. To start notifying users, run `{await self.bot.get_prefix(ctx.message)}config reactionroles notify.`")
+
     async def role_confirmation_callback(self, reaction, message, ctx, confirmed, roleid, messageid, emoji):
         if confirmed:
             await ctx.send("Ok, updating that reaction role.")
@@ -52,6 +59,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role updated.", color=self.bot.config['theme_color']))
         else:
             await ctx.send("Not updating that reaction role.")
+        await complete_hook(ctx)
 
     async def add_role(self, ctx, role, messageid, emoji):
         if role.id in [i for i in list(self.roles[ctx.guild.id].keys())]:
@@ -64,6 +72,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
         self.bot.db.exec_safe_query("insert into roles values(%s, %s, %s, %s)", (ctx.guild.id, role.id, messageid, emoji))
         self.roles[ctx.guild.id][role.id] = reaction_role(role.id, ctx.guild.id, messageid, emoji)
         await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role added.", color=self.bot.config['theme_color']))
+        await complete_hook(ctx)
 
     async def delete_role(self, ctx, role):
         self.bot.db.exec_safe_query("delete from roles where guild_id=%s and role_id=%s", (ctx.guild.id, role.id))
