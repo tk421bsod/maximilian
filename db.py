@@ -92,19 +92,6 @@ class db:
     def connect(self):
         return pymysql.connect(host=self.ip, user="maximilianbot", password=self.databasepassword, db=self.database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, autocommit=True).cursor()
 
-    #maybe make this an alias to exec_safe_query or rename exec_safe query to this?
-    @requires_connection
-    def exec_query(self, querytoexecute, fetchall=False):
-        self.connect(self.database)
-        previous_frame = inspect.getframeinfo(inspect.currentframe().f_back)
-        self.logger.error(f"db.exec_query was called! Consider using exec_safe_query instead. Called in file '{previous_frame[0]}' at line {previous_frame[1]} in function {previous_frame[2]}")
-        self.conn.execute(str(querytoexecute))
-        if fetchall:
-            row = self.conn.fetchall()
-        else:
-            row = self.conn.fetchone()
-        return row if row != () and row != "()" else None
-
     @requires_connection
     def exec_safe_query(self, query, params, *, fetchall=False):
         """Executes 'query' with 'params'. Uses pymysql's parameterized queries.
