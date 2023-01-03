@@ -39,6 +39,7 @@ def update():
         print("You can switch back to the 'release' branch at any time using 'git checkout release'.")
         print("If an update breaks something, reset to the previous commit using 'git reset HEAD~1'.")
     else:
+        print("Updates on this branch are infrequent but stable.")
         print("You can switch to other branches at any time using 'git checkout <branch>'.")
         print("Use 'git branch' to view a list of branches.")
     time.sleep(0.5)
@@ -51,13 +52,13 @@ def update():
             print("main.py was invoked with --force-update. Checking for updates now.")
         else:
             last = datetime.datetime.fromtimestamp(int(last_update))
-            print(f"\nLast check for updates was {last.strftime('at %-I:%M %p on %B %d, %Y.')}")
+            print(f"\nLast check for updates was at {last.strftime('%-I:%M %p on %B %d, %Y.')}")
             elapsed = (datetime.datetime.now()-last).days
             try:
                 automatic_updates = bool(config['automatic_updates'])
             except KeyError:
                 common.run_command(["echo", "\"automatic_updates:True\"", ">>", "config"])
-                automatic_updates = False
+                automatic_updates = True
             if not automatic_updates:
                 print("Automatic updates aren't enabled. Would you like to attempt an update? Y/N\n")
                 if input().strip().lower() == "y":
@@ -74,11 +75,12 @@ def update():
     except KeyError:
         #append timestamp to config if it doesn't exist
         common.run_command(["echo", "\"last_update:0\"", ">>", "config"])
-        pass #updater hasn't checked for updates yet
+        print("Couldn't determine the time since last update. Updating now.")
     time.sleep(1)
     #step 2.5: if a condition above was met, reset last update timestamp
     common.run_command(["sed", "-i", "\"s/last_update:.*/last_update:0/\"", "config"])
     #step 3: fetch changes from remote, don't merge until user confirms though
+    print("\n")
     try:
         subprocess.run(['git', 'fetch', remote], check=True)
     except subprocess.CalledProcessError:
@@ -91,7 +93,7 @@ def update():
         #HEAD commit different after the fetch?
         #then an update was applied!
         #step 4: ask for confirmation, then apply changes if yes
-        resp = input(f"Update available. \nTake a moment to review the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.\nWould you like to apply the update? Y/N\n").lower().strip()
+        resp = input(f"\nUpdate available. \nTake a moment to review the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.\nWould you like to apply the update? Y/N\n").lower().strip()
         if resp == "y":
             print("\nApplying update...")
             pull = common.run_command(['git', 'pull'])
@@ -101,7 +103,7 @@ def update():
             if pull['returncode']:
                 print("Something went wrong while applying the update. Take a look at the above output for details.")
                 sys.exit(124)
-            print(f"Update applied. \nView the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.")
+            print(f"\nUpdate applied. \nView the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.")
             if list_in_str(['main.py', 'common.py', 'db.py', 'settings.py'], output):
                 print("This update changed some important files. Run main.py again.")
                 sys.exit(111)
