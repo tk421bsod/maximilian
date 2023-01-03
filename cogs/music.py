@@ -730,8 +730,7 @@ class music(commands.Cog):
                             await ctx.send("Reducing quality...")
                             #parse total seconds from duration value 
                             s = 60*int(player.metadata.duration.split(":")[0])+int(player.metadata.duration.split(":")[1])
-                            #for each bitrate value from 128kbps to 64kbps (64 possible values) from highest to lowest
-                            for i in range(256, 1, -1):
+                            for i in range(320, 1, -1):
                                 #check if the output file size (bitrate*seconds) in kilobytes (8 bits = 1 byte, so divide by 8)
                                 #is less than the upload limit (8mb or 8000kb)
                                 if ((i)*s)/8 <= 7500:
