@@ -265,7 +265,7 @@ class music(commands.Cog):
                     else:
                         m, s = divmod(info["duration"], 60)
                         self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
-                        if m > 60:
+                        if m > 60 and and ctx.author.id != self.bot.owner_id:
                             raise DurationLimitError()
                     self.bot.db.exec_safe_query("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
             self.logger.info("got song from cache!")
@@ -293,7 +293,7 @@ class music(commands.Cog):
                             info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
                         m, s = divmod(info["duration"], 60)
                         player.metadata.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
-                        if m > 60:
+                        if m > 60 and ctx.author.id != self.bot.owner_id:
                             raise DurationLimitError()
                         if performance:
                             player.metadata.filename = info["formats"][0]["url"]
@@ -722,7 +722,7 @@ class music(commands.Cog):
                 self.logger.info("Uploading file...")
                 try:
                     await ctx.send("Here's the file:", file=discord.File(player.metadata.filename))
-                except discord.HTTPException:
+                except (discord.HTTPException, TimeoutError):
                     traceback.print_exc()
                     await ctx.send("I couldn't upload that file because it's too large. I'll reduce the quality (reduction in quality varies with song length) and try to send it again.")
                     try:
