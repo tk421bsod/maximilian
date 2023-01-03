@@ -158,11 +158,12 @@ class core(commands.Cog):
         self.bot.blocklist = []
         self.logger = logging.getLogger(__name__)
         self.bot.ready = False
+        self.reload_enabled = True
         if load:
-            self.bot.loop.create_task(self.update_blocklist())
+            asyncio.create_task(self.update_blocklist())
             #disable reload command if gitpython isn't installed
             #this is done in a task to make sure it's done after commands have been registered
-            self.bot.loop.create_task(self.check_for_git())
+            asyncio.create_task(self.check_for_git())
 
     async def send_debug(self, ctx):
         if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
@@ -186,7 +187,7 @@ class core(commands.Cog):
         try:
             import git
         except (ImportError, ModuleNotFoundError):
-            self.bot.get_command("utils reload").enabled = False
+            self.reload_enabled = False
             self.logger.info("Disabled reload command as gitpython isn't installed.")
 
     @commands.group(invoke_without_command=False, hidden=True)
@@ -203,6 +204,8 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def reload(self, ctx, *targetextensions):
+        if not self.reload_enabled:
+            return await ctx.send("Sorry, this command is disabled. Install `gitpython` to enable it.")
         await ctx.typing()
         try:
             if "--nofetch" in targetextensions:
