@@ -67,7 +67,7 @@ class reminders(commands.Cog):
         self.logger.info("Updating todo cache...")
         new_todo_entries = {}
         try:
-            todolists = self.bot.db.exec_safe_query("select * from todo order by timestamp desc", ())
+            todolists = self.bot.db.exec("select * from todo order by timestamp desc", ())
             if not isinstance(todolists, list):
                 todolists = [todolists]
             for item in todolists:
@@ -87,7 +87,7 @@ class reminders(commands.Cog):
         #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
         await self.bot.get_channel(channel_id).send(f"<@{user_id}> {hrtimedelta} ago: '{remindertext}'")
         #and delete it from the database
-        self.bot.db.exec_safe_query(f"delete from reminders where uuid=%s", (uuid))
+        self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
 
 
@@ -101,7 +101,7 @@ class reminders(commands.Cog):
             #generate uuid
             uuid = str(uuid_generator.uuid4())
             #add the reminder to the database
-            self.bot.db.exec_safe_query(f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder, uuid))
+            self.bot.db.exec(f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder, uuid))
             await self.update_reminder_cache()
             await ctx.send(f"Ok, in {humanize.precisedelta(remindertime-currenttime, format='%0.0f')}: '{reminder}'")
             await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder, uuid)
@@ -118,9 +118,9 @@ class reminders(commands.Cog):
             except IndexError:
                 pass
             try:
-                self.bot.db.exec_safe_query("insert into todo values(%s, %s, %s)", (ctx.author.id, entry, datetime.datetime.now()))
+                self.bot.db.exec("insert into todo values(%s, %s, %s)", (ctx.author.id, entry, datetime.datetime.now()))
                 await self.update_todo_cache()
-                entrycount = self.bot.db.exec_safe_query(f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
+                entrycount = self.bot.db.exec(f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully added that to your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=self.bot.config['theme_color']))
             except:
                 #dm traceback
@@ -136,8 +136,8 @@ class reminders(commands.Cog):
                     int(entry)
                 except (TypeError, ValueError):
                     return await ctx.send("You need to specify the number of the entry you want to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.")
-                self.bot.db.exec_safe_query("delete from todo where entry=%s and user_id=%s", (self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
-                entrycount = self.bot.db.exec_safe_query(f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
+                self.bot.db.exec("delete from todo where entry=%s and user_id=%s", (self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
+                entrycount = self.bot.db.exec(f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
                 await self.update_todo_cache()
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=self.bot.config['theme_color']))
             except IndexError:

@@ -244,7 +244,7 @@ class music(commands.Cog):
                 video = url 
             open(f"songcache/{video}.mp3", "r")
             #check if video id is in database, add it if it isn't
-            data = self.bot.db.exec_safe_query("select * from songs where id = %s limit 1", (video))
+            data = self.bot.db.exec("select * from songs where id = %s limit 1", (video))
             if data:
                 player.metadata.name = data['name']
                 player.metadata.filename = f"songcache/{video}.mp3"
@@ -267,7 +267,7 @@ class music(commands.Cog):
                         self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                         if m > 60 and and ctx.author.id != self.bot.owner_id:
                             raise DurationLimitError()
-                    self.bot.db.exec_safe_query("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
+                    self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
             self.logger.info("got song from cache!")
         except FileNotFoundError:
             self.logger.info("song isn't in cache")
@@ -300,7 +300,7 @@ class music(commands.Cog):
                         else:
                             player.metadata.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
                             try:
-                                self.bot.db.exec_safe_query("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
+                                self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
                             except pymysql.errors.IntegrityError:
                                 pass
         except:
@@ -342,7 +342,7 @@ class music(commands.Cog):
                 with youtube_dl.YoutubeDL(self.ydl_opts) as ydl:
                     #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
                     self.logger.info("looking for song in db...")
-                    info = self.bot.db.exec_safe_query("select * from songs where name like %s", (f"%{url}%", ))
+                    info = self.bot.db.exec("select * from songs where name like %s", (f"%{url}%", ))
                     if info != None:
                         self.logger.info("found song in db! trying to get from cache...")
                         player.metadata.id = info["id"]

@@ -17,7 +17,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         tempresponses = []
         await self.bot.wait_until_ready()
         for guild in self.bot.guilds:
-            response = self.bot.db.exec_safe_query("select * from responses where guild_id=%s", (guild.id, ))
+            response = self.bot.db.exec("select * from responses where guild_id=%s", (guild.id, ))
             if not response:
                 continue
             print(response)
@@ -57,7 +57,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
                 await ctx.send("You can't create a custom command with the same name as one of my commands.")
                 return
         try:
-            self.bot.db.exec_safe_query("insert into responses values(%s, %s, %s)", (ctx.guild.id, command_trigger, command_response))
+            self.bot.db.exec("insert into responses values(%s, %s, %s)", (ctx.guild.id, command_trigger, command_response))
             await self.fill_cache()
             await ctx.send(embed=discord.Embed(title="Added that custom command.", color=self.bot.config['theme_color']))
         except IntegrityError:
@@ -70,7 +70,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
     @commands.command(help="Delete a custom command, takes the command trigger as a parameter")
     async def delete(self, ctx, command_trigger : str):
         try:
-            self.bot.db.exec_safe_query("delete from responses where response_trigger=%s and guild_id=%s", (command_trigger, ctx.guild.id))
+            self.bot.db.exec("delete from responses where response_trigger=%s and guild_id=%s", (command_trigger, ctx.guild.id))
             await self.fill_cache()
             await ctx.send(embed=discord.Embed(title="Deleted that custom command.", color=self.bot.config['theme_color']))
         except IntegrityError:

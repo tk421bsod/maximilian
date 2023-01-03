@@ -132,7 +132,7 @@ class Category():
     async def add_to_db(self, name):
         for guild in self.bot.guilds:
             try:
-                self.bot.db.exec_safe_query('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
+                self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
                 continue
             self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
@@ -146,7 +146,7 @@ class Category():
         self.filling = True
         #step 1: get data for each setting, add settings to db if needed
         try:
-            self.data = self.bot.db.exec_safe_query('select * from config where category=%s order by setting', (self.name), fetchall=True)
+            self.data = self.bot.db.exec('select * from config where category=%s order by setting', (self.name), fetchall=True)
             if not isinstance(self.data, list):
                 self.data = [self.data]
         except:
@@ -193,7 +193,7 @@ class Category():
         """
         Changes a setting's state in the database. Calls update_cached_state to change a setting's state in cache.
         """
-        self.bot.db.exec_safe_query("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, self.name, setting.name))
+        self.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, self.name, setting.name))
         await self.update_cached_state(ctx, setting)
 
     async def _prepare_conflict_string(self, conflicts):

@@ -97,20 +97,20 @@ class deletion_request:
         try:
             if confirmed:
                 if requesttype == "todo":
-                    self.bot.db.exec_safe_query("delete from todo where user_id = %s", (ctx.author.id,))
+                    self.bot.db.exec("delete from todo where user_id = %s", (ctx.author.id,))
                     await self.bot.get_cog('reminders').update_todo_cache()
                 elif requesttype == "all":
                     await self.delete_all(ctx)
-                self.bot.db.exec_safe_query("delete from active_requests where id = %s", (id,))
+                self.bot.db.exec("delete from active_requests where id = %s", (id,))
                 await ctx.send(embed=discord.Embed.from_dict(self.clearedembeds[requesttype]))
                 return True
             if not confirmed:
                 await ctx.send("Ok. I won't delete anything.")
-                self.bot.db.exec_safe_query("delete from active_requests where id = %s", (id,))
+                self.bot.db.exec("delete from active_requests where id = %s", (id,))
                 return True
         except Exception as e:
             #clean up
-            self.bot.db.exec_safe_query("delete from active_requests where id = %s", (id,))
+            self.bot.db.exec("delete from active_requests where id = %s", (id,))
             #then re-raise the error
             #this **will** cancel the confirmation
             raise e
@@ -121,24 +121,24 @@ class deletion_request:
         try:
             confirmation(self.bot, deletionmessage, ctx, self.confirmation_callback, requesttype, id)
         except asyncio.TimeoutError:
-            self.bot.db.exec_safe_query("delete from active_requests where id = %s", (id,))
+            self.bot.db.exec("delete from active_requests where id = %s", (id,))
             await ctx.send("Deletion request timed out. I won't delete anything.")
             return
 
     async def create_request(self, requesttype, ctx):
         '''Attempts to create a deletion request, raises errors.DeletionRequestAlreadyActive if one's active'''
         id = ctx.guild.id if requesttype == 'all' else ctx.author.id
-        result = self.bot.db.exec_safe_query("select id from active_requests where id=%s", (id,))
+        result = self.bot.db.exec("select id from active_requests where id=%s", (id,))
         if not result:
-            self.bot.db.exec_safe_query("insert into active_requests values(%s)", (id,))
+            self.bot.db.exec("insert into active_requests values(%s)", (id,))
             await self._handle_request(id, requesttype, ctx)
         elif result:
             raise DeletionRequestAlreadyActive()
 
     async def delete_all(self, ctx):
-        self.bot.db.exec_safe_query("delete from roles where guild_id = %s", (ctx.guild.id,))
-        self.bot.db.exec_safe_query("delete from responses where guild_id = %s", (ctx.guild.id,))
-        self.bot.db.exec_safe_query("delete from prefixes where guild_id = %s", (ctx.guild.id,))
+        self.bot.db.exec("delete from roles where guild_id = %s", (ctx.guild.id,))
+        self.bot.db.exec("delete from responses where guild_id = %s", (ctx.guild.id,))
+        self.bot.db.exec("delete from prefixes where guild_id = %s", (ctx.guild.id,))
         await ctx.guild.me.edit(nick=f"[!] Maximilian")
         await self.bot.responses.get_responses()
         await self.bot.prefixes.update_prefix_cache()
@@ -290,7 +290,7 @@ class core(commands.Cog):
     @utils.command(hidden=True)
     async def sql(self, ctx, *, query):
         try:
-            result=self.bot.db.exec_safe_query(query, (), fetchall=True)
+            result=self.bot.db.exec(query, (), fetchall=True)
         except:
             await ctx.message.add_reaction("\U00002757")
             return await ctx.send(f"{traceback.format_exc()}")
@@ -309,7 +309,7 @@ class core(commands.Cog):
         self.logger.info("Updating blocklist...")
         newblocklist = []
         try:
-            newblocklist = [i['user_id'] for i in self.bot.db.exec_safe_query("select * from blocked", fetchall=True)]
+            newblocklist = [i['user_id'] for i in self.bot.db.exec("select * from blocked", fetchall=True)]
             self.bot.blocklist = newblocklist
         except TypeError:
             return self.logger.info("Failed to update blocklist, is there anything in the database?")
@@ -320,7 +320,7 @@ class core(commands.Cog):
     async def block(self, ctx, member:typing.Union[discord.Member, discord.User]):
         if member.id in self.bot.blocklist:
             return await ctx.send(f"I already have {member} blocked.")
-        self.bot.db.exec_safe_query(f"insert into blocked values(%s)", (member.id,))
+        self.bot.db.exec(f"insert into blocked values(%s)", (member.id,))
         await self.update_blocklist()
         await ctx.send(f"Added {member} to the blocklist.")
 
@@ -329,7 +329,7 @@ class core(commands.Cog):
     async def unblock(self, ctx, member:typing.Union[discord.Member, discord.User]):
         if member.id not in self.bot.blocklist:
             return await ctx.send(f"{member} isn't blocked.")
-        self.bot.db.exec_safe_query(f"delete from blocked where user_id = %s", (member.id,))
+        self.bot.db.exec(f"delete from blocked where user_id = %s", (member.id,))
         await self.update_blocklist()
         await ctx.send(f"Removed {member} from the blocklist.")
 

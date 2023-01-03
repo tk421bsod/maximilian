@@ -15,7 +15,7 @@ class db:
     -------
 
     ensure_tables() - Ensures that all required tables exist. Called by main.run().
-    exec_safe_query(query, params, *,  fetchall) - Executes 'query' with 'params'. Uses pymysql's parameterized queries. 'params' can be empty.
+    exec(query, params, *,  fetchall) - Executes 'query' with 'params'. Uses pymysql's parameterized queries. 'params' can be empty.
     exec_query(query, *, fetchall) - Executes 'query'. DEPRECATED due to the potential for SQL injection. Will show a warning if used.
     """
 
@@ -93,7 +93,7 @@ class db:
         return pymysql.connect(host=self.ip, user="maximilianbot", password=self.databasepassword, db=self.database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, autocommit=True).cursor()
 
     @requires_connection
-    def exec_safe_query(self, query, params, *, fetchall=False):
+    def exec(self, query, params, *, fetchall=False):
         """Executes 'query' with 'params'. Uses pymysql's parameterized queries.
 
         Parameters

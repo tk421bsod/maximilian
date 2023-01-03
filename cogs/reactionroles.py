@@ -26,7 +26,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
         await self.bot.wait_until_ready()
         for guild in self.bot.guilds:
             self.roles[guild.id] = {}
-            guild_roles = self.bot.db.exec_safe_query("select * from roles where guild_id = %s", (guild.id, ))
+            guild_roles = self.bot.db.exec("select * from roles where guild_id = %s", (guild.id, ))
             if not guild_roles:
                 continue
             if isinstance(guild_roles, dict): #dicts by themselves don't play nicely with the loop below, so wrap them in a list
@@ -54,7 +54,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
     async def role_confirmation_callback(self, reaction, message, ctx, confirmed, roleid, messageid, emoji):
         if confirmed:
             await ctx.send("Ok, updating that reaction role.")
-            self.bot.db.exec_safe_query("replace into roles values(%s, %s, %s, %s)", (ctx.guild.id, roleid, messageid, emoji))
+            self.bot.db.exec("replace into roles values(%s, %s, %s, %s)", (ctx.guild.id, roleid, messageid, emoji))
             self.roles[ctx.guild.id][roleid] = reaction_role(roleid, ctx.guild.id, messageid, emoji)
             await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role updated.", color=self.bot.config['theme_color']))
         else:
@@ -69,13 +69,13 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             warning = await ctx.send(embed=discord.Embed(title="Update existing reaction role?", description=f"It looks like a reaction role with the same ID already exists.\nYou've made the following changes to it:\n{changes}\nReact with \U00002705 to update the existing role or \U0000274e to keep the existing role.", color=discord.Color.yellow()))
             self.bot.confirmation(self.bot, warning, ctx, self.role_confirmation_callback, role.id, messageid, emoji)
             return
-        self.bot.db.exec_safe_query("insert into roles values(%s, %s, %s, %s)", (ctx.guild.id, role.id, messageid, emoji))
+        self.bot.db.exec("insert into roles values(%s, %s, %s, %s)", (ctx.guild.id, role.id, messageid, emoji))
         self.roles[ctx.guild.id][role.id] = reaction_role(role.id, ctx.guild.id, messageid, emoji)
         await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role added.", color=self.bot.config['theme_color']))
         await complete_hook(ctx)
 
     async def delete_role(self, ctx, role):
-        self.bot.db.exec_safe_query("delete from roles where guild_id=%s and role_id=%s", (ctx.guild.id, role.id))
+        self.bot.db.exec("delete from roles where guild_id=%s and role_id=%s", (ctx.guild.id, role.id))
         del self.roles[ctx.guild.id][role.id]
         await ctx.send(embed=discord.Embed("\U00002705 Reaction role deleted.", color=self.bot.config['theme_color']))
 
