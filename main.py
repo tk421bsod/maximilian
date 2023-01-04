@@ -16,6 +16,12 @@ from discord.ext import commands
 import common
 import core
 
+print("Just so you know, this version of Maximilian (0.6.3) is no longer supported and will stop working soon.")
+print("To continue using Maximilian past mid-2023, you'll need to update to version 1.0.")
+print("Move to the 'release' branch and run 'git pull --all --rebase' to update.")
+print("Startup will continue in 5 seconds.")
+time.sleep(5)
+
 class Version:
     def __init__(self):
         self.major = 0

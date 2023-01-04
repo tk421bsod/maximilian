@@ -5,9 +5,9 @@ This branch will be used for active development of Maximilian 1.0, starting afte
 
 https://tk421bsod.github.io/maximilian
 
+This branch is a snapshot of 0.6.3.
+It probably won't change.
 
-This branch is currently used for bug fixes and small changes to 0.6.3. 
+This version may stop working soon as it requires an old version of discord.py to function.
+If you're using this, consider switching to 1.0. 
 
-It will become the main development branch after the release of 1.0.
-1.0 is scheduled to be released sometime in late 2022. 
- 
