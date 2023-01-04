@@ -59,7 +59,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role updated.", color=self.bot.config['theme_color']))
         else:
             await ctx.send("Not updating that reaction role.")
-        await complete_hook(ctx)
+        await self.complete_hook(ctx)
 
     async def add_role(self, ctx, role, messageid, emoji):
         if role.id in [i for i in list(self.roles[ctx.guild.id].keys())]:
@@ -72,7 +72,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
         self.bot.db.exec("insert into roles values(%s, %s, %s, %s)", (ctx.guild.id, role.id, messageid, emoji))
         self.roles[ctx.guild.id][role.id] = reaction_role(role.id, ctx.guild.id, messageid, emoji)
         await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role added.", color=self.bot.config['theme_color']))
-        await complete_hook(ctx)
+        await self.complete_hook(ctx)
 
     async def delete_role(self, ctx, role):
         self.bot.db.exec("delete from roles where guild_id=%s and role_id=%s", (ctx.guild.id, role.id))
