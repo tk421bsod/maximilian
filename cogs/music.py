@@ -265,7 +265,7 @@ class music(commands.Cog):
                     else:
                         m, s = divmod(info["duration"], 60)
                         self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
-                        if m > 60 and and ctx.author.id != self.bot.owner_id:
+                        if m > 60 and ctx.author.id != self.bot.owner_id:
                             raise DurationLimitError()
                     self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
             self.logger.info("got song from cache!")
