@@ -44,6 +44,7 @@ try:
 except ImportError as e:
     print("Maximilian cannot start because a required component failed to load.\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
     print(e)
+    sys.exit(2)
 
 if not "--no-rich" in sys.argv:
     try:
@@ -140,7 +141,14 @@ async def load_extensions_async(bot):
     """New non-blocking method for loading extensions. Same functionality as load_extensions but compatible with dpy2."""
     if "--enablejsk" in sys.argv:
         asyncio.create_task(bot.load_extension("jishaku"))
-        bot.logger.info("Loaded Jishaku.")
+        if not bot.config['jsk_used']:
+            bot.logger.info("Loaded Jishaku.")
+            bot.logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's extremely powerful, but can be quite dangerous in the wrong hands.")
+            bot.logger.warning(f"If your account (or the account with the ID {bot.owner_id}) gets compromised, the attacker will have direct access to your computer.")
+            bot.logger.warning("Don't want to use Jishaku? Stop Maximilian now with CTRL-C and run main.py WITHOUT --enablejsk.")
+            bot.logger.warning("If you keep using Jishaku, I recommend that you enable 2FA and/or run Maximilian in a VM.")
+            bot.logger.warning("Startup will continue in 10 seconds.")
+            time.sleep(10)
     bot.logger.info("Loading modules...")
     extensioncount, errorcount = 0, 0
     print("Loading required modules...")
@@ -206,6 +214,12 @@ async def run(logger):
     config = common.load_config()
     #convert hex color to int
     config['theme_color'] = int(config['theme_color'], 16)
+    try:
+        config['jsk_used']
+        config['jsk_used'] = True
+    except:
+        config['jsk_used'] = False
+        common.run_command(["echo", "\"jsk_used:1\"", ">>", "config"])
     token = config['token']
     logger.debug("Checking discord.py version...")
     check_version()
