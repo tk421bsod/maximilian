@@ -19,7 +19,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
         self.bot = bot
         self.roles = {}
         asyncio.create_task(self.fill_cache())
-        bot.settings.add_category("reactionroles", {"notify":"Notify users when their roles are updated"}, {"notify":"manage_guild"})
+        bot.settings.add_category("reactionroles", {"notify":"Notify users when their roles are updated"}, {"notify":None}, {"notify":"manage_guild"})
         #TODO: maybe create some sort of standardized cache object?
 
     async def fill_cache(self):
