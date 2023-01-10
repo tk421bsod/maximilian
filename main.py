@@ -30,6 +30,7 @@ try:
     import os
     import time
     import traceback
+    import subprocess
 
     import discord
     import pymysql
@@ -219,7 +220,7 @@ async def run(logger):
         config['jsk_used'] = True
     except:
         config['jsk_used'] = False
-        common.run_command(["echo", "\"jsk_used:1\"", ">>", "config"])
+        subprocess.run("echo \"jsk_used:1\" >> config", shell=True)
     token = config['token']
     logger.debug("Checking discord.py version...")
     check_version()
@@ -274,10 +275,9 @@ async def run(logger):
         bot.logger.debug(traceback.format_exc())
         bot.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
     bot.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
-    #monkeypatch setup_hook
     #TODO: choose your fighter: subclass or context manager
     #if "--with-setup-hook" in sys.argv:
-    bot.setup_hook = functools.partial(load_extensions_async, bot)
+    asyncio.create_task(load_extensions_async(bot))
     print("Logging in...")
     if not "--nologin" in sys.argv:
         await bot.start(token)
