@@ -239,7 +239,7 @@ class Category():
             embed = discord.Embed(title=title, color=self.bot.config['theme_color'])
             for setting in [self.get_setting(i) for i in list(self.settingdescmapping.keys())]:
                 if setting.unusablewith:
-                    unusablewithwarning = f"Cannot be enabled at the same time as {await self.prepare_conflict_string(setting.unusablewith)}."
+                    unusablewithwarning = f"Cannot be enabled at the same time as {await self._prepare_conflict_string(setting.unusablewith)}."
                 else:
                     unusablewithwarning = ""
                 if setting.permission:
