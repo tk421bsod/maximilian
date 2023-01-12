@@ -287,18 +287,21 @@ class music(commands.Cog):
                         player.metadata.duration = "No duration available (this is a stream)"
                     else:
                         performance = self.bot.settings.music.performance.enabled(ctx.guild.id)
+                        info = None
                         if performance and ctx.command:
                             if ctx.command.name != "download":
                                 info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
-                        else:
+                        if not info:
                             info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
                         m, s = divmod(info["duration"], 60)
                         player.metadata.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                         if m > 60 and ctx.author.id != self.bot.owner_id:
                             raise DurationLimitError()
-                        if performance:
-                            player.metadata.filename = info["formats"][0]["url"]
-                        else:
+                        player.metadata.filename = None
+                        if performance and ctx.command:
+                            if ctx.command.name != "download":
+                                player.metadata.filename = info["formats"][0]["url"]
+                        if not player.metadata.filename:
                             player.metadata.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
                             try:
                                 self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
