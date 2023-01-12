@@ -287,8 +287,9 @@ class music(commands.Cog):
                         player.metadata.duration = "No duration available (this is a stream)"
                     else:
                         performance = self.bot.settings.music.performance.enabled(ctx.guild.id)
-                        if performance:
-                            info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
+                        if performance and ctx.command:
+                            if ctx.command.name != "download":
+                                info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
                         else:
                             info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
                         m, s = divmod(info["duration"], 60)
