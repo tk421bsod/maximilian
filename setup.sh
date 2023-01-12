@@ -22,8 +22,24 @@ then
     sudo service mysql start
     if [ $? != 0 ];
     then
-        echo "Couldn't start the database."
-        exit
+        sudo mysqld_safe &
+        if [ $? != 0 ];
+        then
+            sudo mysql &
+            if [ $? != 0 ];
+            then
+                sudo /etc/init.d/mysqld start &
+                if [ $? != 0 ];
+                then
+                    sudo systemctl start mysql
+                    if [ $? != 0 ];
+                    then
+                        echo "Sorry, couldn't start the database."
+                        exit
+                    fi
+                fi
+            fi
+        fi
     fi
     echo "Started the database."
     exit
@@ -37,8 +53,7 @@ then
     echo "You can perform specific tasks through the use of the following options."
     echo ""
     echo "Options:"
-    echo "${bold}update${normal} - Updates Maximilian and its components. Doesn't set up Maximilian."
-    echo "${bold}start${normal} - Attempts to start the database through 'sudo service mysql start'."
+    echo "${bold}start${normal} - Attempts to start the database with 5 different commands."
     echo "${bold}backup${normal} - Starts the database and backs up its data to './backup.sql'."
     echo "${bold}restore${normal} - Restores the database from a previously created backup. The backup must be named 'backup.sql'."
     echo "${bold}fix${normal} - Attempts to fix the database by backing up the data, reinstalling the database, and restoring from the backup."
@@ -48,14 +63,6 @@ then
     echo "${bold}onlydb${normal} - Only sets up the database."
     echo "${bold}help${normal} - Shows this message."
     echo "None - Sets up Maximilian."
-    exit
-fi
-echo "Checking for updates..."
-
-python3 main.py --update
-
-if [ "$1" == "update" -o $? != 0 ];
-then
     exit
 fi
 
@@ -83,7 +90,7 @@ fi
 if [ "$1" == "backup" -o "$2" == "backup" ];
 then
     echo "Backing up the database..."
-    sudo service mysql start
+    bash setup.sh start
     sudo mysqldump --databases maximilian > backup.sql
     echo ""
     echo "Saved the backup to 'backup.sql'. Run 'bash setup.sh restore' to restore it."
@@ -105,7 +112,7 @@ then
     then
         echo ""
         echo "Ok. Restoring from the backup..."
-        sudo service mysql start
+        bash setup.sh start
         sudo mysql -Be "drop database maximilian"
         sudo mysql -Be "create database maximilian;"
         sudo mysql maximilian < backup.sql
@@ -134,7 +141,7 @@ then
     then
         echo "Ok."
         echo "Backing up data..."
-        sudo service mysql start
+        bash setup.sh start
         sudo mysqldump --databases maximilian > backup.sql
         echo "Reinstalling the database... Step 1 of 3"
         sudo mysql -Be "drop user 'maximilianbot'@'$ip';" 
@@ -145,7 +152,7 @@ then
         echo "Reinstalling the database... Step 3 of 3"
         sudo apt -y install mariadb-server > /dev/null 2>&1
         echo "Restoring the backup..."
-        sudo service mysql start
+        bash setup.sh start
         sudo mysql -Be "create database maximilian;"
         sudo mysql maximilian < backup.sql
         if [ $? != 0 ]
@@ -173,7 +180,7 @@ then
     then
         echo ""
         echo "Ok. Resetting the database."
-        sudo service mysql start
+        bash setup.sh start
         sudo mysql -Be "drop database maximilian;"
         sudo mysql -Be "drop database maximilian_test;"
         sudo mysql -Be "drop user 'maximilianbot'@'$ip';"
@@ -329,7 +336,7 @@ echo ""
 if [ $nodb == 'false' ];
 then
     echo "Performing initial database setup..."
-    sudo service mysql start
+    bash setup.sh start
     sudo mysql -Be "CREATE DATABASE maximilian;"
     sudo mysql -Be "CREATE USER 'maximilianbot'@'$ip' IDENTIFIED BY '$password';"
     sudo mysql -Be "GRANT INSERT, SELECT, UPDATE, CREATE, DELETE ON maximilian.* TO 'maximilianbot'@'$ip' IDENTIFIED BY '$password'; FLUSH PRIVILEGES;"
@@ -339,7 +346,8 @@ then
 else
     echo "Not setting up the database."
 fi
-if [ ! $1 == 'onlydb' ];
+
+if [ "$1" != 'onlydb' ];
 then
     echo ""
     echo "Installing dependencies..."
@@ -351,7 +359,7 @@ then
     echo "If enabled, Maximilian will attempt to update itself on startup once every 14 days."
     read autoupdate
     echo ""
-    if [ ${autoupdate^^} == 'Y' || ${autoupdate^^} == 'YES' ];
+    if [ "${autoupdate^^}" == 'Y' -o "${autoupdate^^}" == 'YES' ];
     then
         echo "Automatic updates enabled!"
         echo "automatic_updates:True" >> config
