@@ -81,7 +81,7 @@ class music(commands.Cog):
         'preferredquality': '192'
         }]
         }
-        self.bot.settings.add_category("music", {'toggle':'music commands', 'performance':'Better performance at the cost of audio quality'}, {'toggle':None, 'performance':None}, {'toggle':"manage_guild", 'performance':None})
+        self.bot.settings.add_category("music", {'toggle':'music commands', 'performance':'better performance at the cost of audio quality'}, {'toggle':None, 'performance':None}, {'toggle':"manage_guild", 'performance':None})
 
     async def check_enabled(self, ctx):
         if not self.bot.settings.music.ready:
@@ -373,7 +373,7 @@ class music(commands.Cog):
         if self.bot.settings.music.performance.enabled(ctx.guild.id):
             await ctx.send(f"\U000026a0 Performance mode is enabled. Songs will load faster, but you may experience reduced audio quality.\nTo disable this, run `{await self.bot.get_prefix(ctx.message)}config music performance`.")
         elif randint(1, 30) == 3:
-            await ctx.send("*Songs taking forever to start playing?*\nTry the new performance mode by using `{await self.bot.get_prefix(ctx.message)}config music performance`.\nThis may reduce audio quality.\n")
+            await ctx.send(f"*Songs taking forever to start playing?*\nTry the new performance mode by using `{await self.bot.get_prefix(ctx.message)}config music performance`.\nThis may reduce audio quality.\n")
             await asyncio.sleep(0.2)
         #init player for this guild if it doesn't exist
         player = await self._get_player(ctx)
