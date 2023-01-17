@@ -16,7 +16,6 @@ class db:
 
     ensure_tables() - Ensures that all required tables exist. Called by main.run().
     exec(query, params, *,  fetchall) - Executes 'query' with 'params'. Uses pymysql's parameterized queries. 'params' can be empty.
-    exec_query(query, *, fetchall) - Executes 'query'. DEPRECATED due to the potential for SQL injection. Will show a warning if used.
     """
 
     def __init__(self, bot=None, password=None, ip=None, database=None):
