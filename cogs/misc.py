@@ -31,6 +31,8 @@ class misc(commands.Cog):
     @commands.command(help="Get some info about the bot and commands")
     async def about(self, ctx):
         embed = discord.Embed(title="About", color=self.bot.config['theme_color'])
+        embed.add_field(name="What's Maximilian?", value="Quite a few things. In short, it's a versatile, multi-purpose bot.")
+        embed.add_field(name="Latest update - v1.0.2 (Jan 17, 2023)", value="Fixes for bugs introduced in 1.0. Also a cool `news` command.\nWant to see changes from the last few updates? Use the `news` command.")
         embed.add_field(name="Useful stuff", value=f"Use `{str(await self.bot.get_prefix(ctx.message))}help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=335923264&scope=bot). \nIf you want to contribute to my development, visit my Github repository at https://github.com/tk421bsod/maximilian.", inline=False)
         embed.add_field(name="Commands", value=f" ".join(f'`{i.name}`' for i in self.bot.commands if not i.hidden and not i.parent and i.name != 'jishaku'))
         await ctx.send(embed=embed)
@@ -105,6 +107,10 @@ class misc(commands.Cog):
                     async with cs.get(imagename) as img:
                         buffer = io.BytesIO(await img.read())
                     await ctx.send(file=discord.File(buffer, filename=f"dog.{imagename[-3:]}"))
+
+    @commands.command(help="View patch notes for recent updates.", aliases=["updates", "patchnotes"])
+    async def news(self, ctx):
+        return await ctx.send(embed=discord.Embed(title="News", description="**Jan 17, 2023 - 1.0.2**\n[Bug fixes, `news` command](https://gist.github.com/TK421bsod/95663a2f5bde64e5fcb4bda9c8b82c05)\n\n**Jan 12, 2023 - 1.0.1**\n[Fixes for some critical bugs, some small tweaks](https://gist.github.com/TK421bsod/b8f88adfaf2d4adbe249ba9d9190e213)\n\n**Jan 4, 2023 - 1.0.0**\n[The first major release since April 2021. Lots of changes.](https://gist.github.com/TK421bsod/2980fa67a9a5f925e7cdfb9f083a5c3b)", color=self.bot.config['theme_color']))
 
     @commands.command(help="Repeats what you say. For example, `!say hi` would make Maximiilian say 'hi'. This command automatically prevents user, role, everyone, and here mentions from working.")
     async def say(self, ctx, *, thing):
