@@ -208,7 +208,7 @@ class Category():
             for conflict in setting.unusablewith:
                 #get the Setting matching the name
                 conflict = self.get_setting(conflict)
-                if conflict.enabled():
+                if conflict.enabled(ctx.guild.id):
                     await self.update_setting(ctx, conflict)
                     resolved.append(conflict)
         else:
@@ -216,7 +216,7 @@ class Category():
             if not setting.unusablewith:
                 return ""
             #conflicting setting enabled? disable it
-            if self.get_setting(setting.unusablewith).enabled():
+            if self.get_setting(setting.unusablewith).enabled(ctx.guild.id):
                 await self.update_setting(ctx, setting.unusablewith)
                 resolved = setting.unusablewith
         if len(resolved) == 1:
