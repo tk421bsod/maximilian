@@ -5,13 +5,17 @@ import os
 import sys
 import datetime
 
-if not "--no-rich" in sys.argv:
+def check_config(config):
+    #convert hex color to int
+    config['theme_color'] = int(config['theme_color'], 16)
     try:
-        from rich.logging import RichHandler
-    except ImportError:
-        print("Not enabling rich text - import failed")
-else:
-    print("Not enabling rich text - user requested")
+        config['jsk_used']
+        config['jsk_used'] = True
+    except:
+        config['jsk_used'] = False
+        if "--enablejsk" in sys.argv:
+            subprocess.run("echo \"jsk_used:1\" >> config", shell=True)
+    return config
 
 def parse_version(versionstring):
     version = common.Version()
@@ -32,38 +36,6 @@ def check_version():
         print("You may experience some bugs as new code is only tested with the latest version.")
         print("Some functions may not work at all.")
         print("I recommend updating as soon as you can, through something like 'pip3 install -U -r requirements.txt'.")
-
-def config_logging(args):
-    """Sets logging level and file to write to"""
-    #mapping of argument to logging level and status message
-    levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
-    try:
-        _handlers = [RichHandler(rich_tracebacks=True, tracebacks_suppress=[discord, pymysql])]
-    except NameError: #rich wasn't imported, use stdout instead
-        _handlers = [logging.StreamHandler(sys.stdout)]
-    if os.path.isdir('logs'):
-        _handlers.append(logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"))
-    else:
-        print("The 'logs' directory doesn't exist! Not logging to a file.")
-    for key, value in levelmapping.items():
-        if key not in args:
-            pass
-        elif key != "-q" and key != "--quiet":
-            logging.basicConfig(level=value[0], handlers=_handlers)
-            print(value[1])
-            logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
-            return
-        else:
-            logging.disable()
-            print(value[1])
-            return
-    try:
-        RichHandler()
-        logging.basicConfig(level=logging.WARN, handlers=_handlers, format="%(message)s", datefmt="[%X]")
-    except NameError: #rich not imported
-        logging.basicConfig(level=logging.WARN, handlers=_handlers)
-    print("No logging level specified, falling back to WARN.")
-    logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
 
 def parse_arguments(bot, args):
     if len(args) > 1:
