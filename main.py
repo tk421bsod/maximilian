@@ -211,7 +211,7 @@ async def run(logger):
     bot.logger.debug("Parsing command line arguments...")
     startup.parse_arguments(bot, sys.argv)
     bot.guildlist = []
-    bot.prefixes = {}
+    bot.prefix = {}
     bot.responses = []
     bot.start_time = time.time()
     bot.settings = settings.settings(bot)

@@ -9,6 +9,7 @@ class prefixes(commands.Cog):
     '''Change Maximilian's prefix'''
     def __init__(self, bot, load=False):
         bot.prefix = {}
+        bot.prefixes = self
         self.bot = bot
         self.logger = logging.getLogger(__name__)
         if load:
