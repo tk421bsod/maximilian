@@ -13,6 +13,18 @@ if not "--no-rich" in sys.argv:
 else:
     print("Not enabling rich text - user requested")
 
+def check_config(config):
+    #convert hex color to int
+    config['theme_color'] = int(config['theme_color'], 16)
+    try:
+        config['jsk_used']
+        config['jsk_used'] = True
+    except:
+        config['jsk_used'] = False
+        if "--enablejsk" in sys.argv:
+            subprocess.run("echo \"jsk_used:1\" >> config", shell=True)
+    return config
+
 def parse_version(versionstring):
     version = common.Version()
     version.major, version.minor, version.micro = [int(i) for i in versionstring.replace('a','').split('.')[:3]]

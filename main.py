@@ -1,6 +1,15 @@
 #main.py: loads core libraries and everything in the cogs folder, then starts Maximilian
 import sys
 
+if __name__ != "__main__":
+    print("It looks like you're trying to import main.py as a module.")
+    print("Please don't do that. Some code here relies on being ran directly through a command such as python3 main.py.")
+    print("Need to access some Maximilian API? Just import the right file. Read HOSTING.md for an overview.")
+    print("If you have a legitimate use case for this, I'd like to hear about it -- send me a DM at tk421#2016 on Discord.")
+    print("If you decide to remove the following call to quit() and continue, any weird behavior is on you, not me.")
+    print("Maximilian will now attempt to exit.")
+    quit()
+
 if sys.version_info.major == 3 and sys.version_info.minor < 7:
     print("Hi there. It looks like you're trying to run maximilian with an older version of Python 3.")
     print("Maximilian cannot run on Python versions older than 3.7.")
@@ -63,10 +72,69 @@ if not "--no-rich" in sys.argv:
 else:
     print("Not enabling rich text - user requested")
 
-async def load_extensions_async(bot):
-    """New non-blocking method for loading extensions. Same functionality as load_extensions but compatible with dpy2."""
+def config_logging(args):
+    """Sets logging level and file to write to"""
+    #mapping of argument to logging level and status message
+    levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
+    try:
+        _handlers = [RichHandler(rich_tracebacks=True, tracebacks_suppress=[discord, pymysql])]
+    except NameError: #rich wasn't imported, use stdout instead
+        _handlers = [logging.StreamHandler(sys.stdout)]
+    if os.path.isdir('logs'):
+        _handlers.append(logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"))
+    else:
+        print("The 'logs' directory doesn't exist! Not logging to a file.")
+    for key, value in levelmapping.items():
+        if key not in args:
+            pass
+        elif key != "-q" and key != "--quiet":
+            logging.basicConfig(level=value[0], handlers=_handlers)
+            print(value[1])
+            logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
+            return
+        else:
+            logging.disable()
+            print(value[1])
+            return
+    try:
+        RichHandler()
+        logging.basicConfig(level=logging.WARN, handlers=_handlers, format="%(message)s", datefmt="[%X]")
+    except NameError: #rich not imported
+        logging.basicConfig(level=logging.WARN, handlers=_handlers)
+    print("No logging level specified, falling back to WARN.")
+    logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
+
+async def load(bot, file):
+    #strip file extension out of filename
+    cleanname = file[:-3]
+    #ignore anything that isn't a python file
+    if file.endswith(".py"):
+        #check if we're not loading this extension
+        if cleanname in bot.noload or f"cogs.{cleanname}" in bot.noload:
+            bot.logger.info(f"Not loading module cogs.{cleanname}.")
+            bot.errorcount += 1
+            return
+        #actually load the extension
+        try:
+            await bot.load_extension(f"cogs.{cleanname}")
+            bot.extensioncount += 1
+            bot.logger.debug(f"Loaded module cogs.{cleanname}.")
+        except commands.ExtensionAlreadyLoaded:
+            bot.logger.debug(f"{cleanname} is already loaded, skipping")
+        except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
+            bot.errorcount += 1
+            if not hasattr(error, 'original'):
+                #only NoEntryPointError doesn't have original
+                error.original = commands.errors.NoEntryPointError('')
+            bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This module won't be loaded.")
+            if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
+                bot.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -r requirements_extra.txt.'")
+            else:
+                bot.logger.error(traceback.format_exc())
+
+async def load_jishaku(bot):
     if "--enablejsk" in sys.argv:
-        asyncio.create_task(bot.load_extension("jishaku"))
+        await bot.load_extension("jishaku")
         if not bot.config['jsk_used']:
             bot.logger.info("Loaded Jishaku.")
             bot.logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's extremely powerful, but can be quite dangerous in the wrong hands.")
@@ -75,55 +143,29 @@ async def load_extensions_async(bot):
             bot.logger.warning("If you keep using Jishaku, I recommend that you enable 2FA and/or run Maximilian in a VM.")
             bot.logger.warning("Startup will continue in 10 seconds.")
             time.sleep(10)
-    bot.logger.info("Loading modules...")
-    extensioncount, errorcount = 0, 0
-    print("Loading required modules...")
+
+async def load_required(bot):
     #we use a catch-all as we don't want anything going wrong with this
     # noinspection PyBroadException
     try:
-        #bot.load_extension("cogs.prefixes")
         await bot.load_extension("core")
         await bot.load_extension("errorhandling")
     except:
         bot.logger.critical("Failed to load required modules.")
         traceback.print_exc()
         quit()
+
+async def load_extensions_async(bot):
+    """New non-blocking method for loading extensions. Same functionality as load_extensions but compatible with dpy2."""
+    await load_jishaku(bot)
+    bot.logger.info("Loading modules...")
+    bot.extensioncount, bot.errorcount = 0, 0
+    print("Loading required modules...")
+    await load_required(bot)
     print("Loading other modules...")
     for each in os.listdir("./cogs"):
-        #strip file extension out of filename
-        cleanname = each[:-3]
-        #ignore anything that isn't a python file
-        if each.endswith(".py"):
-            #check if we're not loading this extension
-            if cleanname in bot.noload or f"cogs.{cleanname}" in bot.noload:
-                bot.logger.info(f"Not loading module cogs.{cleanname}.")
-                errorcount += 1
-                continue
-            #actually load the extension
-            try:
-                await bot.load_extension(f"cogs.{cleanname}")
-                extensioncount += 1
-                bot.logger.debug(f"Loaded module cogs.{cleanname}.")
-            except commands.ExtensionAlreadyLoaded:
-                bot.logger.debug(f"{cleanname} is already loaded, skipping")
-            except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
-                errorcount += 1
-                if not hasattr(error, 'original'):
-                    #only NoEntryPointError doesn't have original
-                    error.original = commands.errors.NoEntryPointError('')
-                bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This module won't be loaded.")
-                if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
-                    bot.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -r requirements_extra.txt.'")
-                else:
-                    bot.logger.error(traceback.format_exc())
-    try:
-        bot.prefixes = bot.get_cog('prefixes')
-        bot.responses = bot.get_cog('Custom Commands')
-        bot.miscinst = bot.get_cog('misc')
-        bot.reactionrolesinst = bot.get_cog('reaction roles')
-    except: #TODO: pls delet i hate this
-        bot.logger.error("Failed to get one or more cogs, some stuff might not work.")
-    bot.logger.info(f"loaded {extensioncount} extensions successfully ({errorcount} extension{'s' if errorcount != 1 else ''} not loaded), waiting for ready")
+        await load(bot, each)
+    bot.logger.info(f"Loaded {bot.extensioncount} modules successfully. {bot.errorcount} module{'s' if bot.errorcount != 1 else ''} not loaded.")
     print("Done loading modules. Finishing startup...")
 
 #wrap the main on_message event in a function for prettiness
@@ -138,14 +180,7 @@ async def wrap_event(bot):
 async def run(logger):
     logger.debug("Loading config...")
     config = common.load_config()
-    #convert hex color to int
-    config['theme_color'] = int(config['theme_color'], 16)
-    try:
-        config['jsk_used']
-        config['jsk_used'] = True
-    except:
-        config['jsk_used'] = False
-        subprocess.run("echo \"jsk_used:1\" >> config", shell=True)
+    config = startup.check_config(config)
     token = config['token']
     logger.debug("Checking discord.py version...")
     startup.check_version()
@@ -164,6 +199,7 @@ async def run(logger):
     bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.0.2{f'-{commit}' if commit else ''}"))
     #set up some important stuff
     bot.database = "maximilian" #TODO: remove this
+    #TODO: remove unused attrs
     bot.logger = logger
     bot.common = common
     bot.config = config
@@ -210,7 +246,7 @@ async def run(logger):
 print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
 print("setting up logging...")
 # set a logging level
-startup.config_logging(sys.argv)
+config_logging(sys.argv)
 outer_logger = logging.getLogger(f'maximilian') #different name than inside run for readability
 # noinspection PyBroadException
 try:
