@@ -86,7 +86,7 @@ class Category():
     Methods
     -------
 
-    fill_settings_cache
+    fill_cache
         Fills the Category's cache with new setting data. 
 
     update_setting
@@ -99,7 +99,7 @@ class Category():
     ----------
 
     ready
-        Whether settings are ready to be used. False until fill_settings_cache has completed.
+        Whether settings are ready to be used. False until fill_cache has completed.
     """
     def __init__(self, constructor, name, settingdescmapping, unusablewithmapping, permissionmapping):
         self._ready = False
@@ -112,7 +112,7 @@ class Category():
         self.logger = constructor.logger
         self.bot = constructor.bot
         self.permissionmapping = permissionmapping
-        asyncio.create_task(self.fill_settings_cache())
+        asyncio.create_task(self.fill_cache())
 
     @property
     def ready(self):
@@ -137,7 +137,7 @@ class Category():
                 continue
             self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
 
-    async def fill_settings_cache(self):
+    async def fill_cache(self):
         """
         Fills a Category's settings cache with data.
         """
@@ -357,7 +357,7 @@ class settings():
             return await ctx.send("That category doesn't exist. Check the spelling.")
         try:
             if not category.ready and not category.filling:
-                await category.fill_settings_cache()
+                await category.fill_cache()
             await category.config(ctx, setting)
         except RuntimeError:
             return await ctx.send("That setting doesn't exist.")
