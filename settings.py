@@ -11,6 +11,8 @@ from discord.ext import commands
 class Setting():
     """
     An object that represents a setting and its state.
+    Please don't directly instantiate this.
+    If you want to add settings, use settings.add_category.
 
     Methods
     -------
@@ -43,8 +45,7 @@ class Setting():
         #add this setting as an attr of category
         #one can access it via 'bot.settings.<category>.<setting>'
         setattr(category, name.strip().replace(" ", "_"), self)
-        #TODO: could we maybe not do this bs
-        category.bot.settings.logger.info(f"Registered setting {name}")
+        category.bot.settings.logger.info(f"Registered setting {name}") #dear god
 
     def enabled(self, guild_id):
         """
@@ -100,6 +101,9 @@ class Category():
 
     ready
         Whether settings are ready to be used. False until fill_cache has completed.
+        Warning:
+            If False, the behavior of calls to Setting.enabled() is unpredictable.
+            Those calls could raise AttributeError/IndexError or return None depending on the initialization state of the setting.
     """
     def __init__(self, constructor, name, settingdescmapping, unusablewithmapping, permissionmapping):
         self._ready = False
@@ -119,6 +123,9 @@ class Category():
         return self._ready
 
     def get_setting(self, name):
+        """
+        Gets a Setting by name.
+        """
         return getattr(self, name.strip().replace(" ", "_"))
 
     def get_initial_state(self, setting):
@@ -130,10 +137,16 @@ class Category():
         return False
 
     async def add_to_db(self, name):
+        """
+        Attempts to add a setting to the database.
+        """
         for guild in self.bot.guilds:
             try:
                 self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
+                self.logger.warn(f"Setting '{name}' couldn't be added to the database!")
+                self.logger.warn("Enable debug logging to view the traceback.")
+                self.logger.debug(traceback.format_exc())
                 continue
             self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
 
@@ -179,7 +192,7 @@ class Category():
                 #create new Setting, it automatically sets itself as an attr of this category
                 Setting(self, setting['setting'], states, permission)
                 states = {}
-        self.logger.info("Done filling settings cache.")
+        self.logger.info("Done filling settings cache. Settings are now available.")
         self._ready = True
         self.filling = False
 
@@ -197,12 +210,18 @@ class Category():
         await self.update_cached_state(ctx, setting)
 
     async def _prepare_conflict_string(self, conflicts):
-        q = "'" # hashtag lifehack!!1!! lets me escape quotes in fstrings like a girlboss!!
+        """
+        Returns a string describing conflicting settings.
+        """
+        q = "'"
         if not isinstance(conflicts, list):
             return f"{q}*{conflicts}*{q}"
         return f"{', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]])} and '*{conflicts[-1]}*'"
 
     async def _resolve_conflicts(self, ctx, setting):
+        """
+        Resolves conflicts between settings.
+        """
         if isinstance(setting.unusablewith, list):
             resolved = []
             for conflict in setting.unusablewith:
@@ -219,18 +238,20 @@ class Category():
             if self.get_setting(setting.unusablewith).enabled(ctx.guild.id):
                 await self.update_setting(ctx, setting.unusablewith)
                 resolved = setting.unusablewith
-        if len(resolved) == 1:
+        length = len(resolved)
+        if length == 1:
             resolved = resolved[0]
         if not resolved:
             return ""
-        return f"**Automatically disabled** {await self._prepare_conflict_string(resolved)} due to {'a conflict' if len(resolved) == 1 else 'conflicts'}."
+        return f"**Automatically disabled** {await self._prepare_conflict_string(resolved)} due to {'a conflict' if length == 1 else 'conflicts'}."
 
     def normalize_permission(self, permission):
-        '''Makes a permission name more human readable. Replaces \'guild\' with \'server\', capitalizes words, swaps underscores for spaces.'''
+        """Makes a permission name more human readable. Replaces \'guild\' with \'server\', capitalizes words, swaps underscores for spaces."""
         return permission.replace("guild", "server").replace("_", " ").title()
 
     async def config(self, ctx, name=None):
-        '''Toggles the specified setting. Settings are off by default.'''
+        """Toggles the specified setting. Settings are off by default."""
+        #setting not specified? show list of settings
         if not name:
             if self.name != "general":
                 title = f"Settings for category '{self.name}'"
@@ -251,9 +272,8 @@ class Category():
             return await ctx.send(embed=embed)
         setting = self.get_setting(name)
         if setting.permission:
-            #why am i doing this. i haet thiss
             if not getattr(ctx.channel.permissions_for(ctx.author), setting.permission):
-                return await ctx.send(f"It looks like you don't have permission to change this setting.\nYou'll need the **{self.normalize_permission(setting.permission)}** permission to change it.\nUse the `userinfo` command to check your permissions.")
+                return await ctx.send(f"It looks like you don't have permission to change this setting.\nYou'll need the **{self.normalize_permission(setting.permission)}** permission to change it.\nUse the `userinfo` command to check your permissions.\nJust a reminder, channel-specific permissions apply to this.")
         try:
             #update setting state
             await self.update_setting(ctx, setting)
@@ -285,7 +305,7 @@ class settings():
         self.unusablewithmessage = ""
         self.categorynames = []
 
-    def add_category(self, category, settingdescmapping, unusablewithmapping, permissionmapping=None):
+    def add_category(self, category, settingdescmapping, unusablewithmapping, permissionmapping):
         """
         A wrapper for creating a new Category instance. Its purpose is to allow a category to register as an attribute of the main settings instance.
         After this returns and the Category's 'ready' attribute is True, you can check the value of settings using `bot.settings.<category>.<setting>.enabled()`.
@@ -326,20 +346,25 @@ class settings():
                 Setting 'a' conflicts with settings 'spam' and 'eggs'.
                 Setting 'b' conflicts with setting 'a'.
 
-        permissionmapping : dict(str:str)=None
-            An optional mapping of setting name to permission name.
+        permissionmapping : dict(str:str)
+            A mapping of setting name to permission name.
             Use this to control access to settings in the category.
             Map a setting name to None to make it available to everyone.
-            Note that only guild-wide permissions are checked using this.
+            Note that channel permission overrides apply.
+
+            Example:
+                {'a':'manage_guild', 'b':None}
+                Setting 'a' requires the 'Manage Server' permission.
+                Setting 'b' doesn't require any permissions.
         """
         self.logger.info(f"Registering category '{category}`...")
-        if getattr(self, category, None) != None:
+        if getattr(self, category, None) != None: #a category instance already exists??
             self.logger.warn(f"add_category was called twice for category '{category}'!!")
             self.logger.warn("Don't try to update a category after creation. Doing so may break stuff.")
             return
         Category(self, category, settingdescmapping, unusablewithmapping, permissionmapping)
         self.categorynames.append(category)
-        self.logger.info(f"Category '{category}' registered. Access it at bot.settings.{category}.")
+        self.logger.info(f"Category '{category}' registered. Access it at bot.settings.{category}. Settings are unavailable until bot.settings.{category}.ready == True.")
 
     async def config(self, ctx, category:str=None, *, setting:str=None):
         """

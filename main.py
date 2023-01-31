@@ -289,7 +289,7 @@ except:
         outer_logger.error(traceback.format_exc())
         outer_logger.error("Need more information on Maximilian's state at the time of the error? Run main.py with -i or even -v.")
     except:
-        print("Unhandled exception while handling unhandled exception")
+        print("Unhandled exception while handling unhandled exception!! This should never happen")
         pass
 
 outer_logger.warning("Logging stopped at " + str(datetime.datetime.now()) + ".\n")
