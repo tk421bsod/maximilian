@@ -126,7 +126,7 @@ class Category():
         """
         Gets a Setting by name.
         """
-        return getattr(self, name.strip().replace(" ", "_"))
+        return getattr(self, name.strip().replace(" ", "_"), None)
 
     def get_initial_state(self, setting):
         """
@@ -136,18 +136,19 @@ class Category():
             return bool(setting['enabled'])
         return False
 
-    async def add_to_db(self, name):
+    async def add_to_db(self, name, noappend=False):
         """
         Attempts to add a setting to the database.
         """
+        guilds = [i['guild_id'] for i in self.data if name == name]
         for guild in self.bot.guilds:
+            if guild.id in guilds:
+                continue
             try:
                 self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
-                self.logger.warn(f"Setting '{name}' couldn't be added to the database!")
-                self.logger.warn("Enable debug logging to view the traceback.")
-                self.logger.debug(traceback.format_exc())
                 continue
+        if not noappend:
             self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
 
     async def fill_cache(self):
@@ -173,11 +174,9 @@ class Category():
         else:
             #step 2: ensure each setting has an entry
             for name in list(self.settingdescmapping.keys()):
-                if not self.data[0] or name not in [i['setting'] for i in self.data]:
-                    self.logger.info(f"Setting '{name}' wasn't found in the database. Adding it.")
-                    if not self.data[0]:
-                        del self.data[0] #edge case where query would return None
-                    await self.add_to_db(name)
+                if self.get_setting(name):
+                    delattr(self, name.replace(" ", "_"))
+                await self.add_to_db(name)
         #step 3: for each setting, get initial state and register it
         states = {}
         for setting in self.data:
@@ -206,7 +205,7 @@ class Category():
         """
         Changes a setting's state in the database. Calls update_cached_state to change a setting's state in cache.
         """
-        self.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, self.name, setting.name))
+        self.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, self.name, setting.name.replace("_", " ")))
         await self.update_cached_state(ctx, setting)
 
     async def _prepare_conflict_string(self, conflicts):
@@ -389,3 +388,6 @@ class settings():
         except AttributeError:
             traceback.print_exc()
             return await ctx.send("That category wasn't set up properly.")
+
+if __name__ == "__main__":
+    import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
