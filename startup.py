@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import datetime
+import subprocess
 
 def check_config(config):
     #convert hex color to int
