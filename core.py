@@ -340,7 +340,9 @@ class core(commands.Cog):
     async def on_guild_join(self, guild):
         await self.bot.prefixes.update_prefix_cache(guild.id)
         for name in self.bot.settings.categorynames:
-            getattr(self.bot.settings, name).fill_settings_cache()
+            while not getattr(self.bot.settings, name).ready:
+                await asyncio.sleep(0.01)
+            await getattr(self.bot.settings, name).fill_cache()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):

@@ -136,19 +136,20 @@ class Category():
             return bool(setting['enabled'])
         return False
 
-    async def add_to_db(self, name, noappend=False):
+    async def add_to_db(self, name, total_guilds):
         """
         Attempts to add a setting to the database.
         """
-        guilds = [i['guild_id'] for i in self.data if name == name]
-        for guild in self.bot.guilds:
-            if guild.id in guilds:
+        target_guilds = []
+        if self.data:
+            target_guilds = [i['guild_id'] for i in self.data if i['setting'] == name]
+        for guild in total_guilds:
+            if guild.id in target_guilds:
                 continue
             try:
                 self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
                 continue
-        if not noappend:
             self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
 
     async def fill_cache(self):
@@ -158,9 +159,12 @@ class Category():
         await self.bot.wait_until_ready()
         self.logger.info(f"Filling cache for category {self.name}...")
         self.filling = True
+        guilds = self.bot.guilds #stop state population from breaking if guilds change while filling cache
         #step 1: get data for each setting, add settings to db if needed
         try:
             self.data = self.bot.db.exec('select * from config where category=%s order by setting', (self.name), fetchall=True)
+            if self.data is None:
+                self.data = []
             if not isinstance(self.data, list):
                 self.data = [self.data]
         except:
@@ -169,17 +173,18 @@ class Category():
             self.data = []
             #if something went wrong, default to everything disabled
             for name in list(self.settingdescmapping.keys()):
-                for guild in self.bot.guilds:
+                for guild in guilds:
                     self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
         else:
+            self.logger.info("Validating setting states...")
             #step 2: ensure each setting has an entry
             for name in list(self.settingdescmapping.keys()):
                 if self.get_setting(name):
                     delattr(self, name.replace(" ", "_"))
-                await self.add_to_db(name)
+                await self.add_to_db(name, guilds)
         #step 3: for each setting, get initial state and register it
         states = {}
-        for setting in self.data:
+        for index, setting in enumerate(self.data):
             self.logger.debug(f"{setting}")
             if self.permissionmapping:
                 permission = self.permissionmapping[setting['setting']]
@@ -187,11 +192,11 @@ class Category():
                 permission = None
             states[setting['guild_id']] = self.get_initial_state(setting)
             #if we've finished populating list of states for a setting...
-            if len(list(states.keys())) >= len(self.bot.guilds):
+            if index+1 == len(self.data) or self.data[index+1]['setting'] != setting['setting']:
                 #create new Setting, it automatically sets itself as an attr of this category
                 Setting(self, setting['setting'], states, permission)
                 states = {}
-        self.logger.info("Done filling settings cache. Settings are now available.")
+        self.logger.info("Done filling settings cache.")
         self._ready = True
         self.filling = False
 
