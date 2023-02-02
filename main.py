@@ -10,9 +10,9 @@ if __name__ != "__main__":
     print("Maximilian will now attempt to exit.")
     quit()
 
-if sys.version_info.major == 3 and sys.version_info.minor < 7:
+if sys.version_info.major == 3 and sys.version_info.minor < 8:
     print("Hi there. It looks like you're trying to run maximilian with an older version of Python 3.")
-    print("Maximilian cannot run on Python versions older than 3.7.")
+    print("Maximilian cannot run on Python versions older than 3.8.")
     print("You'll need to upgrade Python to continue.")
     quit()
 
@@ -256,7 +256,7 @@ try:
         if "--noupdate" not in sys.argv:
             update()
         if "--update" in sys.argv:
-            print("Updater exited. Exiting.")
+            print("Updater exited and main.py was invoked with '--update'. Exiting.")
             quit()
     except KeyboardInterrupt:
         if "--update" in sys.argv:
