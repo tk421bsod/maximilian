@@ -96,6 +96,7 @@ def update():
         resp = input(f"\nUpdate available. \nTake a moment to review the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.\nWould you like to apply the update? Y/N\n").lower().strip()
         if resp == "y":
             print("\nApplying update...")
+            time.sleep(0.3)
             pull = common.run_command(['git', 'pull'])
             output = "\n".join(pull['output'])
             print("\nGit output:")
@@ -104,6 +105,7 @@ def update():
                 print("Something went wrong while applying the update. Take a look at the above output for details.")
                 sys.exit(124)
             print(f"\nUpdate applied. \nView the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.")
+            time.sleep(1)
             if list_in_str(['main.py', 'common.py', 'db.py', 'settings.py'], output):
                 print("This update changed some important files. Run main.py again.")
                 sys.exit(111)
