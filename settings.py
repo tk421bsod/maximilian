@@ -375,20 +375,25 @@ class settings():
         self.categorynames.append(category)
         self.logger.info(f"Category '{category}' registered. Access it at bot.settings.{category}. Settings are unavailable until bot.settings.{category}.ready == True.")
 
+    def _prepare_category_string():
+        if self.categorynames:
+            return "\n".join([f"`{i}`" for i in self.categorynames])
+        else:
+            return "None"
+
     async def config(self, ctx, category:str=None, *, setting:str=None):
         """
         A command that changes settings.
         """
+        #figure out what category we're using
         if not category:
-            if self.categorynames:
-                available = "\n".join([f"`{i}`" for i in self.categorynames])
-            else:
-                available = "None"
+            available = self._prepare_category_string()
             return await ctx.send(f"You need to specify a setting category.\nYou can choose from one of the following:\n{available}\nLooking for bot-wide settings? Use `config general`.")
         try:
             category = getattr(self, category) 
         except AttributeError:
-            return await ctx.send("That category doesn't exist. Check the spelling.")
+            available = self._prepare_category_string()
+            return await ctx.send(f"That category doesn't exist. Check the spelling.\nYou can choose from one of the following categories:\n{available}")
         try:
             if not category.ready and not category.filling:
                 await category.fill_cache()
@@ -397,7 +402,7 @@ class settings():
             return await ctx.send("That setting doesn't exist.")
         except AttributeError:
             traceback.print_exc()
-            return await ctx.send("That category wasn't set up properly.")
+            return await ctx.send("Sorry, that category wasn't set up properly.")
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
