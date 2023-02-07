@@ -65,6 +65,9 @@ class Setting():
             The setting's state couldn't be determined.
 
         """
+        if not self.category.ready:
+            self.category.bot.settings.logger.warn(f"{self.name}.enabled was called before its parent category was ready!")
+            self.category.bot.settings.logger.warn("This may cause issues. Consider awaiting Category.wait_ready before anything that depends on setting states.")
         try:
             return self.states[guild_id]
         except:
