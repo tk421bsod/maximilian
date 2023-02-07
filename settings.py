@@ -64,11 +64,6 @@ class Setting():
        None
             The setting's state couldn't be determined.
 
-        Raises
-        ------
-
-        AttributeError, KeyError
-            The Category the setting belongs to hasn't been fully initialized yet.
         """
         try:
             return self.states[guild_id]
@@ -103,7 +98,7 @@ class Category():
         Whether settings are ready to be used. False until fill_cache has completed.
         Warning:
             If False, the behavior of calls to Setting.enabled() is unpredictable.
-            Those calls could raise AttributeError/IndexError or return None depending on the initialization state of the setting.
+            Those calls could return None or even result in an AttributeError depending on the initialization state of the setting.
     """
     def __init__(self, constructor, name, settingdescmapping, unusablewithmapping, permissionmapping):
         self._ready = False
