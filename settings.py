@@ -111,7 +111,7 @@ class Category():
         setattr(constructor, name, self)
         self.name = name
         self.filling = False
-        self.logger = constructor.logger
+        self.logger = logging.getLogger(f"settings.{name}")
         self.bot = constructor.bot
         self.permissionmapping = permissionmapping
         asyncio.create_task(self.fill_cache())
@@ -152,6 +152,7 @@ class Category():
             if guild.id in target_guilds:
                 continue
             try:
+                self.logger.debug(f"state not found for setting {name} in guild {guild.id}, adding it to database")
                 self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
                 continue
@@ -189,6 +190,7 @@ class Category():
                 await self.add_to_db(name, guilds)
         #step 3: for each setting, get initial state and register it
         states = {}
+        self.logger.debug("Populating setting states...")
         for index, setting in enumerate(self.data):
             self.logger.debug(f"{setting}")
             if self.permissionmapping:
@@ -397,8 +399,13 @@ class settings():
             available = self._prepare_category_string()
             return await ctx.send(f"That category doesn't exist. Check the spelling.\nYou can choose from one of the following categories:\n{available}")
         try:
-            if not category.ready and not category.filling:
-                await category.fill_cache()
+            if not category.ready:
+                self.logger.error(f"It looks like cache filling for category {category.name} is happening way too late!!!")
+                self.logger.error("please report this issue to tk421.")
+                self.logger.error("waiting until cache fill is complete...")
+                await ctx.send("Give me a moment to prepare...")
+                await category.wait_ready()
+                self.logger.error("cache fill complete, continuing :)")
             await category.config(ctx, setting)
         except AttributeError:
             traceback.print_exc()
