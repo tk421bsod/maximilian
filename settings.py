@@ -45,7 +45,7 @@ class Setting():
         #add this setting as an attr of category
         #one can access it via 'bot.settings.<category>.<setting>'
         setattr(category, name.strip().replace(" ", "_"), self)
-        category.bot.settings.logger.info(f"Registered setting {name}") #dear god
+        category.logger.info(f"Registered setting {name}")
 
     def enabled(self, guild_id):
         """
@@ -66,8 +66,8 @@ class Setting():
 
         """
         if not self.category.ready:
-            self.category.bot.settings.logger.warn(f"{self.name}.enabled was called before its parent category was ready!")
-            self.category.bot.settings.logger.warn("This may cause issues. Consider awaiting Category.wait_ready before anything that depends on setting states.")
+            self.category.logger.warn(f"{self.name}.enabled was called before its parent category was ready!")
+            self.category.logger.warn("This may cause issues. Consider awaiting Category.wait_ready before anything that depends on setting states.")
         try:
             return self.states[guild_id]
         except:
