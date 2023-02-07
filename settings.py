@@ -280,6 +280,8 @@ class Category():
             embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings only apply to your server.")
             return await ctx.send(embed=embed)
         setting = self.get_setting(name)
+        if not setting:
+            return await ctx.send("Sorry, that setting doesn't exist. Check the spelling.")
         if setting.permission:
             if not getattr(ctx.channel.permissions_for(ctx.author), setting.permission):
                 return await ctx.send(f"It looks like you don't have permission to change this setting.\nYou'll need the **{self.normalize_permission(setting.permission)}** permission to change it.\nUse the `userinfo` command to check your permissions.\nJust a reminder, channel-specific permissions apply to this.")
@@ -375,7 +377,7 @@ class settings():
         self.categorynames.append(category)
         self.logger.info(f"Category '{category}' registered. Access it at bot.settings.{category}. Settings are unavailable until bot.settings.{category}.ready == True.")
 
-    def _prepare_category_string():
+    def _prepare_category_string(self):
         if self.categorynames:
             return "\n".join([f"`{i}`" for i in self.categorynames])
         else:
@@ -390,7 +392,7 @@ class settings():
             available = self._prepare_category_string()
             return await ctx.send(f"You need to specify a setting category.\nYou can choose from one of the following:\n{available}\nLooking for bot-wide settings? Use `config general`.")
         try:
-            category = getattr(self, category) 
+            category = getattr(self, category)
         except AttributeError:
             available = self._prepare_category_string()
             return await ctx.send(f"That category doesn't exist. Check the spelling.\nYou can choose from one of the following categories:\n{available}")
@@ -398,8 +400,6 @@ class settings():
             if not category.ready and not category.filling:
                 await category.fill_cache()
             await category.config(ctx, setting)
-        except RuntimeError:
-            return await ctx.send("That setting doesn't exist.")
         except AttributeError:
             traceback.print_exc()
             return await ctx.send("Sorry, that category wasn't set up properly.")
