@@ -402,7 +402,7 @@ class settings():
             await category.config(ctx, setting)
         except AttributeError:
             traceback.print_exc()
-            return await ctx.send("Sorry, that category wasn't set up properly.")
+            return await ctx.send("Sorry, that category wasn't set up properly. If you keep seeing this, let tk421#2016 know.")
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
