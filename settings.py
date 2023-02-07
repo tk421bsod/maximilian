@@ -120,6 +120,13 @@ class Category():
     def ready(self):
         return self._ready
 
+    async def wait_ready(self):
+        """
+        Waits until settings are ready to be used.
+        """
+        while not self.ready:
+            await asyncio.sleep(0.01)
+    
     def get_setting(self, name):
         """
         Gets a Setting by name.
