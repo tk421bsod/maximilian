@@ -191,7 +191,7 @@ async def run(logger):
     if "--alt" in sys.argv:
         token = input("Enter a token to use: \n").strip()
         logger.debug("Getting latest commit hash...")
-        commit = common.get_latest_commit()
+        commit = common.get_latest_commit()[0]
         logger.debug("Done getting latest commit hash.")
     else:
         commit = ""
