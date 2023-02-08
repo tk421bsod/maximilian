@@ -192,7 +192,7 @@ class Category():
         states = {}
         self.logger.debug("Populating setting states...")
         for index, setting in enumerate(self.data):
-            self.logger.debug(f"{setting}")
+            self.logger.debug(f"Processing entry {setting}")
             if self.permissionmapping:
                 permission = self.permissionmapping[setting['setting']]
             else:
