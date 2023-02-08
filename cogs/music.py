@@ -57,6 +57,7 @@ class Player():
         self.owner = ctx.author
         self.lock = asyncio.Lock()
         self.metadata = Metadata()
+        self.checking = False
         logger.info(f"Created player for guild id {self.guild.id}")
     
 
@@ -153,6 +154,8 @@ class music(commands.Cog):
             await ctx.send("That song is too long. Due to limits on both data usage and storage space, I can't play songs longer than an hour.")
         elif isinstance(error, NoSearchResultsError):
             await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.")
+        elif isinstance(error, asyncio.TimeoutError):
+            await ctx.send("Looks like a YouTube request timed out. Try that again.\nIf you see this message again, tell my owner.")
         else:
             try:
                 await self.bot.core.send_traceback()
@@ -333,14 +336,45 @@ class music(commands.Cog):
             #if so, recursively call this function, going to the next search result
             await self.search_youtube_for_song(ydl, ctx, url, num+1, player)
 
+    async def test_url(self, url, player):
+        player.checking = True
+        async with aiohttp.ClientSession() as cs:
+            await cs.get(url)
+        player.checking = False
+
+    async def _wait(self, player, task):
+        elapsed = 0.0
+        sent_1 = False
+        sent_2 = False
+        self.logger.info("Waiting for test_url to start...")
+        while not player.checking:
+            await asyncio.sleep(0.005)
+        self.logger.info("Waiting for test_url to finish...")
+        while player.checking:
+            await asyncio.sleep(0.1)
+            elapsed = elapsed + 0.1
+            if elapsed >= 5.0 and not sent_1:
+                self.logger.warn("test_url hasn't returned for 5 seconds! It will be canceled if it doesn't exit within 10 seconds.")
+                sent_1 = True
+            elif elapsed >= 10.0:
+                self.logger.error("test_url has hung for 10 or more seconds! Canceling it.")
+                try:
+                    task.cancel()
+                except:
+                    pass
+                player.checking = False
+                raise asyncio.TimeoutError()
+        self.logger.info("player.checking is false, assuming test_url has exited.")
+        self.logger.info(f"elapsed time: {elapsed} seconds")
+
     async def get_song(self, ctx, url, player):
         '''Gets the filename, id, and other metadata of a song. This tries to look up a song in the database first, then it searches Youtube if that fails.'''
         self.logger.info("Locked execution.")
         async with ctx.typing():
             try:
                 #check if we've been provided a valid url
-                async with aiohttp.ClientSession() as cs:
-                    await cs.get(url)
+                task = asyncio.create_task(self.test_url(url, player))
+                await self._wait(player, task)
             except Exception:
                 #if not...
                 with youtube_dl.YoutubeDL(self.ydl_opts) as ydl:
@@ -569,7 +603,7 @@ class music(commands.Cog):
         except Exception:
             traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
-    
+       
     @commands.command(aliases=["v"])
     async def volume(self, ctx, newvolume : typing.Optional[str]=None):
         '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
