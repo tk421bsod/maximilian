@@ -135,14 +135,14 @@ async def load(bot, file):
 async def load_jishaku(bot):
     if "--enablejsk" in sys.argv:
         await bot.load_extension("jishaku")
+        bot.logger.info("Loaded Jishaku!")
         if not bot.config['jsk_used']:
-            bot.logger.info("Loaded Jishaku.")
-            bot.logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's extremely powerful, but can be quite dangerous in the wrong hands.")
+            bot.logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's an invaluable tool for debugging and development, but can be quite dangerous in the wrong hands.")
             bot.logger.warning(f"If your account (or the account with the ID {bot.owner_id}) gets compromised, the attacker will have direct access to your computer.")
             bot.logger.warning("Don't want to use Jishaku? Stop Maximilian now with CTRL-C and run main.py WITHOUT --enablejsk.")
             bot.logger.warning("If you keep using Jishaku, I recommend that you enable 2FA and/or run Maximilian in a VM.")
             bot.logger.warning("Startup will continue in 10 seconds.")
-            time.sleep(10)
+            time.sleep(10) # block here so we don't do anything else (e.g login, cache filling) in the meantime
 
 async def load_required(bot):
     #we use a catch-all as we don't want anything going wrong with this
