@@ -91,20 +91,19 @@ class reminders(commands.Cog):
         await self.update_reminder_cache()
 
 
-    @commands.command(hidden=True, aliases=['reminders', 'reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.")
-    async def remind(self, ctx, action, time:TimeConverter, *, reminder):
-        if action == "add":
-            await ctx.send("Setting your reminder...")
-            #get the date the reminder will fire at
-            currenttime = datetime.datetime.now()
-            remindertime = currenttime+datetime.timedelta(0, round(time))
-            #generate uuid
-            uuid = str(uuid_generator.uuid4())
-            #add the reminder to the database
-            self.bot.db.exec(f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder, uuid))
-            await self.update_reminder_cache()
-            await ctx.send(f"Ok, in {humanize.precisedelta(remindertime-currenttime, format='%0.0f')}: '{reminder}'")
-            await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder, uuid)
+    @commands.command(aliases=['reminders', 'reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.")
+    async def remind(self, ctx, time:TimeConverter, *, reminder):
+        await ctx.send("Setting your reminder...")
+        #get the date the reminder will fire at
+        currenttime = datetime.datetime.now()
+        remindertime = currenttime+datetime.timedelta(0, round(time))
+        #generate uuid
+        uuid = str(uuid_generator.uuid4())
+        #add the reminder to the database
+        self.bot.db.exec(f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder, uuid))
+        await self.update_reminder_cache()
+        await ctx.send(f"Ok, in {humanize.precisedelta(remindertime-currenttime, format='%0.0f')}: '{reminder}'")
+        await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder, uuid)
 
     @commands.command(aliases=["to-do", "todos"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`.")
     async def todo(self, ctx, action="list", *, entry=None):
