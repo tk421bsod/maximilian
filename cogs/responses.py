@@ -30,10 +30,10 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
 
     @discord.ext.commands.has_guild_permissions(manage_guild=True)
     @discord.ext.commands.group(help=f"Add, delete, or list custom commands. This takes 3 arguments, `action` (the action you want to perform, must be either `add`, `delete`, or `list`), `command_trigger` (the text that will trigger the command), and `command_response` (what you want Maximilian to send when you enter Maximilian's prefix followed by the command trigger). \n You must have 'Manage Server' permissions to do this. Don't include Maximilian's prefix in the command trigger. You can send a custom command by typing <prefix><command_trigger>.", aliases=['command'], invoke_without_subcommand=False)
-    async def commands(self, ctx):
+    async def customcommands(self, ctx):
         pass
     
-    @commands.command(help="List all of the custom commands you've set up in your server")
+    @customcommands.command(help="List all of the custom commands you've set up in your server")
     async def list(self, ctx):
         responsestring = ""
         for response in self.bot.responses:
@@ -48,7 +48,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         else:
             await ctx.send(embed=discord.Embed(title="Custom commands in this server", description=responsestring, color=self.bot.config['theme_color']))
     
-    @commands.command(help="Add a custom command, takes the command trigger and response as parameters")
+    @customcommands.command(help="Add a custom command, takes the command trigger and response as parameters")
     async def add(self, ctx, command_trigger : str, command_response : str):
         command_response.replace("*", r"\*")
         command_trigger.replace("*", r"\*")
@@ -67,7 +67,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
             await ctx.send("Sorry, something went wrong when adding that custom command. I've reported this error to my owner.\nIf this happens again, consider opening an issue at <https://github.com/tk421bsod/maximilian>.")
             await self.bot.core.send_debug(ctx)
 
-    @commands.command(help="Delete a custom command, takes the command trigger as a parameter")
+    @customcommands.command(help="Delete a custom command, takes the command trigger as a parameter")
     async def delete(self, ctx, command_trigger : str):
         try:
             self.bot.db.exec("delete from responses where response_trigger=%s and guild_id=%s", (command_trigger, ctx.guild.id))
