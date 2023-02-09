@@ -16,7 +16,7 @@ class errorhandling(commands.Cog):
         owner = self.bot.get_user(538193752913608704)
         try:
             await owner.send(f"An error occurred in {ctx.guild.name} ({ctx.guild.id}): ")
-            await owner.send(f"`{traceback.format_exc()}`")
+            await owner.send(f"`{traceback.format_exception(type(error), error, error.__traceback__)}`")
         except:
             pass
         #get the original error so isinstance works
