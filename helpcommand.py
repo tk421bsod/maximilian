@@ -60,18 +60,29 @@ class HelpCommand(commands.HelpCommand):
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
 
+    async def get_command_docstring(self, command):
+        raw = command.help
+        if not raw:
+            return "..."
+        return raw + f"\nSyntax: `{self.context.clean_prefix}{command.name} {command.signature}`"
+
     async def send_group_help(self, group):
         embed = discord.Embed(title=group.qualified_name, color=self.context.bot.config['theme_color'])
         if group.help:
             embed.description = group.help
-
         if isinstance(group, commands.Group):
             filtered = await self.filter_commands(group.commands, sort=True)
             for command in filtered:
-                embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)     
+                doc = await self.get_command_docstring(command)
+                embed.add_field(name=self.get_command_signature(command), value=await self.get_command_docstring(command), inline=False)
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
-    send_command_help = send_group_help
+
+    async def send_command_help(self, command):
+        embed = discord.Embed(title=command.qualified_name, color=self.context.bot.config['theme_color'])
+        embed.description = await self.get_command_docstring(command)
+        embed.set_footer(text=self.get_ending_note())
+        await self.get_destination().send(embed=embed)
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
