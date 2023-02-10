@@ -3,7 +3,7 @@
 A Discord bot with some cool features that does some cool stuff.
 Currently in active development.
 
-This branch contains the latest changes to 1.0.x.
+This branch contains the latest changes to 1.1.x.
 Use the `release` branch if you want a stable release.
 
 Want 1.0 release notes?
