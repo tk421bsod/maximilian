@@ -178,7 +178,7 @@ async def wrap_event(bot):
 
 def get_intents():
     intents = discord.Intents.none()
-    intents.reactions = True; intents.members = True; intents.guilds = True; intents.message_content = True; intents.messages = True;
+    intents.reactions = True; intents.members = True; intents.guilds = True; intents.message_content = True; intents.messages = True; intents.voice_states = True;
     return intents
 
 #wrap everything in a function to prevent conflicting event loops
