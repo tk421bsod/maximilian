@@ -345,7 +345,6 @@ class music(commands.Cog):
     async def _wait(self, player, task):
         elapsed = 0.0
         sent_1 = False
-        sent_2 = False
         self.logger.info("Waiting for test_url to start...")
         while not player.checking:
             await asyncio.sleep(0.005)
