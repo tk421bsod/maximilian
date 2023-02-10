@@ -250,6 +250,7 @@ class core(commands.Cog):
             self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
             self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
             self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
+            await self.bot.tree.sync()
             return print("Ready")
 
     async def prepare(self, message):
