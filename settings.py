@@ -45,7 +45,7 @@ class Setting():
         #add this setting as an attr of category
         #one can access it via 'bot.settings.<category>.<setting>'
         setattr(category, name.strip().replace(" ", "_"), self)
-        category.bot.settings.logger.info(f"Registered setting {name}") #dear god
+        category.logger.info(f"Registered setting {name}")
 
     def enabled(self, guild_id):
         """
@@ -64,12 +64,10 @@ class Setting():
        None
             The setting's state couldn't be determined.
 
-        Raises
-        ------
-
-        AttributeError, KeyError
-            The Category the setting belongs to hasn't been fully initialized yet.
         """
+        if not self.category.ready:
+            self.category.logger.warn(f"{self.name}.enabled was called before its parent category was ready!")
+            self.category.logger.warn("This may cause issues. Consider awaiting Category.wait_ready before anything that depends on setting states.")
         try:
             return self.states[guild_id]
         except:
@@ -103,7 +101,7 @@ class Category():
         Whether settings are ready to be used. False until fill_cache has completed.
         Warning:
             If False, the behavior of calls to Setting.enabled() is unpredictable.
-            Those calls could raise AttributeError/IndexError or return None depending on the initialization state of the setting.
+            Those calls could return None or even result in an AttributeError depending on the initialization state of the setting.
     """
     def __init__(self, constructor, name, settingdescmapping, unusablewithmapping, permissionmapping):
         self._ready = False
@@ -113,7 +111,7 @@ class Category():
         setattr(constructor, name, self)
         self.name = name
         self.filling = False
-        self.logger = constructor.logger
+        self.logger = logging.getLogger(f"settings.{name}")
         self.bot = constructor.bot
         self.permissionmapping = permissionmapping
         asyncio.create_task(self.fill_cache())
@@ -122,6 +120,13 @@ class Category():
     def ready(self):
         return self._ready
 
+    async def wait_ready(self):
+        """
+        Waits until settings are ready to be used.
+        """
+        while not self.ready:
+            await asyncio.sleep(0.01)
+    
     def get_setting(self, name):
         """
         Gets a Setting by name.
@@ -147,6 +152,7 @@ class Category():
             if guild.id in target_guilds:
                 continue
             try:
+                self.logger.debug(f"state not found for setting {name} in guild {guild.id}, adding it to database")
                 self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
                 continue
@@ -184,8 +190,9 @@ class Category():
                 await self.add_to_db(name, guilds)
         #step 3: for each setting, get initial state and register it
         states = {}
+        self.logger.debug("Populating setting states...")
         for index, setting in enumerate(self.data):
-            self.logger.debug(f"{setting}")
+            self.logger.debug(f"Processing entry {setting}")
             if self.permissionmapping:
                 permission = self.permissionmapping[setting['setting']]
             else:
@@ -275,6 +282,8 @@ class Category():
             embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings only apply to your server.")
             return await ctx.send(embed=embed)
         setting = self.get_setting(name)
+        if not setting:
+            return await ctx.send("Sorry, that setting doesn't exist. Check the spelling.")
         if setting.permission:
             if not getattr(ctx.channel.permissions_for(ctx.author), setting.permission):
                 return await ctx.send(f"It looks like you don't have permission to change this setting.\nYou'll need the **{self.normalize_permission(setting.permission)}** permission to change it.\nUse the `userinfo` command to check your permissions.\nJust a reminder, channel-specific permissions apply to this.")
@@ -370,29 +379,37 @@ class settings():
         self.categorynames.append(category)
         self.logger.info(f"Category '{category}' registered. Access it at bot.settings.{category}. Settings are unavailable until bot.settings.{category}.ready == True.")
 
+    def _prepare_category_string(self):
+        if self.categorynames:
+            return "\n".join([f"`{i}`" for i in self.categorynames])
+        else:
+            return "None"
+
     async def config(self, ctx, category:str=None, *, setting:str=None):
         """
         A command that changes settings.
         """
+        #figure out what category we're using
         if not category:
-            if self.categorynames:
-                available = "\n".join([f"`{i}`" for i in self.categorynames])
-            else:
-                available = "None"
+            available = self._prepare_category_string()
             return await ctx.send(f"You need to specify a setting category.\nYou can choose from one of the following:\n{available}\nLooking for bot-wide settings? Use `config general`.")
         try:
-            category = getattr(self, category) 
+            category = getattr(self, category)
         except AttributeError:
-            return await ctx.send("That category doesn't exist. Check the spelling.")
+            available = self._prepare_category_string()
+            return await ctx.send(f"That category doesn't exist. Check the spelling.\nYou can choose from one of the following categories:\n{available}")
         try:
-            if not category.ready and not category.filling:
-                await category.fill_cache()
+            if not category.ready:
+                self.logger.error(f"It looks like cache filling for category {category.name} is happening way too late!!!")
+                self.logger.error("please report this issue to tk421.")
+                self.logger.error("waiting until cache fill is complete...")
+                await ctx.send("Give me a moment to prepare...")
+                await category.wait_ready()
+                self.logger.error("cache fill complete, continuing :)")
             await category.config(ctx, setting)
-        except RuntimeError:
-            return await ctx.send("That setting doesn't exist.")
         except AttributeError:
             traceback.print_exc()
-            return await ctx.send("That category wasn't set up properly.")
+            return await ctx.send("Sorry, that category wasn't set up properly. If you keep seeing this, let tk421#2016 know.")
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")

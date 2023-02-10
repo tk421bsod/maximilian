@@ -16,7 +16,7 @@ class errorhandling(commands.Cog):
         owner = self.bot.get_user(538193752913608704)
         try:
             await owner.send(f"An error occurred in {ctx.guild.name} ({ctx.guild.id}): ")
-            await owner.send(f"`{traceback.format_exc()}`")
+            await owner.send(f"`{traceback.format_exception(type(error), error, error.__traceback__)}`")
         except:
             pass
         #get the original error so isinstance works
@@ -67,3 +67,6 @@ async def setup(bot):
 
 async def teardown(bot):
     await bot.remove_cog(errorhandling(bot))
+
+if __name__ == "__main__":
+    import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")

@@ -10,9 +10,9 @@ if __name__ != "__main__":
     print("Maximilian will now attempt to exit.")
     quit()
 
-if sys.version_info.major == 3 and sys.version_info.minor < 7:
+if sys.version_info.major == 3 and sys.version_info.minor < 8:
     print("Hi there. It looks like you're trying to run maximilian with an older version of Python 3.")
-    print("Maximilian cannot run on Python versions older than 3.7.")
+    print("Maximilian cannot run on Python versions older than 3.8.")
     print("You'll need to upgrade Python to continue.")
     quit()
 
@@ -135,14 +135,14 @@ async def load(bot, file):
 async def load_jishaku(bot):
     if "--enablejsk" in sys.argv:
         await bot.load_extension("jishaku")
+        bot.logger.info("Loaded Jishaku!")
         if not bot.config['jsk_used']:
-            bot.logger.info("Loaded Jishaku.")
-            bot.logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's extremely powerful, but can be quite dangerous in the wrong hands.")
+            bot.logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's an invaluable tool for debugging and development, but can be quite dangerous in the wrong hands.")
             bot.logger.warning(f"If your account (or the account with the ID {bot.owner_id}) gets compromised, the attacker will have direct access to your computer.")
             bot.logger.warning("Don't want to use Jishaku? Stop Maximilian now with CTRL-C and run main.py WITHOUT --enablejsk.")
             bot.logger.warning("If you keep using Jishaku, I recommend that you enable 2FA and/or run Maximilian in a VM.")
             bot.logger.warning("Startup will continue in 10 seconds.")
-            time.sleep(10)
+            time.sleep(10) # block here so we don't do anything else (e.g login, cache filling) in the meantime
 
 async def load_required(bot):
     #we use a catch-all as we don't want anything going wrong with this
@@ -191,12 +191,12 @@ async def run(logger):
     if "--alt" in sys.argv:
         token = input("Enter a token to use: \n").strip()
         logger.debug("Getting latest commit hash...")
-        commit = common.get_latest_commit()
+        commit = common.get_latest_commit()[0]
         logger.debug("Done getting latest commit hash.")
     else:
         commit = ""
     logger.debug("Setting up some stuff")
-    bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.0.4{f'-{commit}' if commit else ''}"))
+    bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.1.0{f'-{commit}' if commit else ''}"))
     #set up some important stuff
     bot.database = "maximilian" #TODO: remove this
     #TODO: remove unused attrs
@@ -205,7 +205,7 @@ async def run(logger):
     bot.config = config
     await wrap_event(bot)
     #show version information
-    bot.logger.warning(f"Starting Maximilian v1.0.4{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
+    bot.logger.warning(f"Starting Maximilian v1.1.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
     #parse additional arguments (ip, enablejsk, noload)
     bot.noload = []
     bot.logger.debug("Parsing command line arguments...")
@@ -247,6 +247,7 @@ print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
 print("setting up logging...")
 # set a logging level
 config_logging(sys.argv)
+logging.getLogger('discord').setLevel(logging.INFO)
 outer_logger = logging.getLogger(f'maximilian') #different name than inside run for readability
 # noinspection PyBroadException
 try:
@@ -256,7 +257,7 @@ try:
         if "--noupdate" not in sys.argv:
             update()
         if "--update" in sys.argv:
-            print("Updater exited. Exiting.")
+            print("Updater exited and main.py was invoked with '--update'. Exiting.")
             quit()
     except KeyboardInterrupt:
         if "--update" in sys.argv:

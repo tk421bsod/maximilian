@@ -29,16 +29,23 @@ Just want prettier output? Run `pip3 install rich`.
 
 # additional command line arguments 
 
-To enable special commands through an extension called `jishaku` (https://github.com/Gorialis/jishaku), run `main.py` with `--enablejsk`.
+To enable special debugging commands through an extension called `jishaku` (https://github.com/Gorialis/jishaku), run `main.py` with `--enablejsk`.
+While Jishaku is an invaluable tool for debugging and development, it can be very dangerous. If your Discord account is compromised, an attacker can have almost complete access to your computer through Jishaku.
+The first time you run Maximilian with Jishaku enabled and a logging level at or below `-w`, startup will be temporarily paused and you'll see a warning with this same information.
+Want to see the warning again later? Remove the `jsk_used` line from `config`.
+I recommend enabling two factor authentication for your Discord account before using Jishaku.
 
 If you're hosting the database on another computer, you'll need to run `main.py` with `--ip <database_ip>`, replacing `<database_ip>` with the IP address of your database.
 
 To skip loading a specific extension, use the `--noload` argument. Follow it up with the names of the extensions you don't want loaded. for example, `python3 main.py --noload cogs.userinfo` will make Maximilian not load the userinfo extension.
 
-You can specify a logging level (which filters the information Maximilian outputs) through command line arguments after `main.py`; the logging levels are -q (disables logging), -e (errors only), -w (warnings + errors), -i (warnings + errors + info, recommended), -v (all log messages are outputted, this is not recommended because of the console spam).
+You can specify a logging level (which filters the information Maximilian outputs) through command line arguments after `main.py`; the logging levels are -q (disables logging), -e (errors only), -w (warnings + errors, default), -i (warnings + errors + info, recommended), -v (warnings + errors + info + debugging info).
 It defaults to -w if nothing's specified.
 For example, `python3 main.py -i` will start Maximilian with the INFO logging level.
 I recommend using `-i` as it outputs some information you wouldn't see at other logging levels.
+
+Using `-v` will result in larger log file sizes and much more output to the console, especially on the first run.
+If you choose to use it, you'll see a small warning on startup.
 
 Run main.py with `--help` to view more information on valid arguments.
 
@@ -56,12 +63,13 @@ Deleting or breaking one of these modules will prevent Maximilian from functioni
 Here's what each one does:
 * main.py - launches Maximilian, loads optional modules
 * settings.py - an extremely simple way to add setting toggles to a module
-* helpcommand.py - Maximilian's help command
+* helpcommand.py - Maximilian's custom help command
 * errorhandling.py - command error handling utilities
 * core.py - various utility commands, hooks for on_message, guild_add, and guild_remove, a couple helper methods used in async contexts
 * db.py - an interface for database interaction
 * common.py - some helper methods that are used outside of async contexts
 * updater.py - handles updating Maximilian
+* startup.py - handles a couple tasks only performed during startup
 
 There are also a couple different directories:
 * cogs - stores 'optional' modules that contain commands

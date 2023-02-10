@@ -57,6 +57,7 @@ class Player():
         self.owner = ctx.author
         self.lock = asyncio.Lock()
         self.metadata = Metadata()
+        self.checking = False
         logger.info(f"Created player for guild id {self.guild.id}")
     
 
@@ -153,6 +154,8 @@ class music(commands.Cog):
             await ctx.send("That song is too long. Due to limits on both data usage and storage space, I can't play songs longer than an hour.")
         elif isinstance(error, NoSearchResultsError):
             await ctx.send("I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.")
+        elif isinstance(error, asyncio.TimeoutError):
+            await ctx.send("Looks like a YouTube request timed out. Try that again.\nIf you see this message again, tell my owner.")
         else:
             try:
                 await self.bot.core.send_traceback()
@@ -333,14 +336,44 @@ class music(commands.Cog):
             #if so, recursively call this function, going to the next search result
             await self.search_youtube_for_song(ydl, ctx, url, num+1, player)
 
+    async def test_url(self, url, player):
+        player.checking = True
+        async with aiohttp.ClientSession() as cs:
+            await cs.get(url)
+        player.checking = False
+
+    async def _wait(self, player, task):
+        elapsed = 0.0
+        sent_1 = False
+        self.logger.info("Waiting for test_url to start...")
+        while not player.checking:
+            await asyncio.sleep(0.005)
+        self.logger.info("Waiting for test_url to finish...")
+        while player.checking:
+            await asyncio.sleep(0.1)
+            elapsed = elapsed + 0.1
+            if elapsed >= 5.0 and not sent_1:
+                self.logger.warn("test_url hasn't returned for 5 seconds! It will be canceled if it doesn't exit within 10 seconds.")
+                sent_1 = True
+            elif elapsed >= 10.0:
+                self.logger.error("test_url has hung for 10 or more seconds! Canceling it.")
+                try:
+                    task.cancel()
+                except:
+                    pass
+                player.checking = False
+                raise asyncio.TimeoutError()
+        self.logger.info("player.checking is false, assuming test_url has exited.")
+        self.logger.info(f"elapsed time: {elapsed} seconds")
+
     async def get_song(self, ctx, url, player):
         '''Gets the filename, id, and other metadata of a song. This tries to look up a song in the database first, then it searches Youtube if that fails.'''
         self.logger.info("Locked execution.")
         async with ctx.typing():
             try:
                 #check if we've been provided a valid url
-                async with aiohttp.ClientSession() as cs:
-                    await cs.get(url)
+                task = asyncio.create_task(self.test_url(url, player))
+                await self._wait(player, task)
             except Exception:
                 #if not...
                 with youtube_dl.YoutubeDL(self.ydl_opts) as ydl:
@@ -542,9 +575,9 @@ class music(commands.Cog):
                 player.current_song[7] = time.time()
                 await ctx.send(embed=discord.Embed(title=f"\U000023f8 Paused. Run `{await self.bot.get_prefix(ctx.message)}resume` to resume audio, or run `{await self.bot.get_prefix(ctx.message)}leave` to make me leave the voice channel.", color=self.bot.config['theme_color']))
             elif ctx.voice_client.is_paused():
-                await ctx.send(embed=discord.Embed(title=f"<:red_x:813135049083191307> I'm already paused. Use `{await self.bot.get_prefix(ctx.message)}resume` to resume.", color=self.bot.config['theme_color']))
+                await ctx.send(embed=discord.Embed(title=f"\U0000274e I'm already paused. Use `{await self.bot.get_prefix(ctx.message)}resume` to resume.", color=self.bot.config['theme_color']))
             else:
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything.", color=self.bot.config['theme_color']))
+                await ctx.send(embed=discord.Embed(title="\U0000274e I'm not playing anything.", color=self.bot.config['theme_color']))
         except Exception:
             traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
@@ -563,13 +596,13 @@ class music(commands.Cog):
                 ctx.voice_client.resume()
                 return
             elif ctx.voice_client.is_playing():
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm already playing something.", color=self.bot.config['theme_color']))
+                await ctx.send(embed=discord.Embed(title="\U0000274e I'm already playing something.", color=self.bot.config['theme_color']))
             else:
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything.", color=self.bot.config['theme_color']))
+                await ctx.send(embed=discord.Embed(title="\U0000274e I'm not playing anything.", color=self.bot.config['theme_color']))
         except Exception:
             traceback.print_exc()
             await ctx.send("I'm not in a voice channel.")
-    
+       
     @commands.command(aliases=["v"])
     async def volume(self, ctx, newvolume : typing.Optional[str]=None):
         '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
@@ -632,11 +665,11 @@ class music(commands.Cog):
                     player.current_song[0] = True
                     await ctx.send(embed=discord.Embed(title="\U0001f501 I'll repeat the current song after it finishes. Run this command again to stop repeating the current song.", color=self.bot.config['theme_color']))
             elif player.current_song[2] == "No duration available (this is a stream)":
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I can't repeat streams.", color=self.bot.config['theme_color']))
+                await ctx.send(embed=discord.Embed(title="\U0000274e I can't repeat streams.", color=self.bot.config['theme_color']))
             else:
-                await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=self.bot.config['theme_color']))
+                await ctx.send(embed=discord.Embed(title="\U0000274e I'm not playing anything right now.", color=self.bot.config['theme_color']))
         except AttributeError:
-            await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=self.bot.config['theme_color']))
+            await ctx.send(embed=discord.Embed(title="\U0000274e I'm not playing anything right now.", color=self.bot.config['theme_color']))
         except IndexError:
             await ctx.send("I'm not in a voice channel.")
 
@@ -653,7 +686,7 @@ class music(commands.Cog):
             elif ctx.voice_client.is_paused():
                 m, s = divmod(round((player.current_song[7] - player.current_song[6]) - player.current_song[8]), 60)
             else:
-                return await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not playing anything right now.", color=self.bot.config['theme_color']))
+                return await ctx.send(embed=discord.Embed(title="\U0000274e I'm not playing anything right now.", color=self.bot.config['theme_color']))
             embed = discord.Embed(title="Currently playing:", description=f"`{player.current_song[3]}`", color=self.bot.config['theme_color'])
             embed.add_field(name="Video URL", value=f"<{player.current_song[5]}>", inline=True)
             if player.current_song[2] == "No duration available (this is a stream)":
@@ -663,7 +696,7 @@ class music(commands.Cog):
             embed.set_image(url=player.current_song[4])
             await ctx.send(embed=embed)
         except AttributeError:
-            await ctx.send(embed=discord.Embed(title="<:red_x:813135049083191307> I'm not in a voice channel.", color=self.bot.config['theme_color']))
+            await ctx.send(embed=discord.Embed(title="\U0000274e I'm not in a voice channel.", color=self.bot.config['theme_color']))
 
     @commands.command(aliases=["quit"])
     async def stop(self, ctx):
