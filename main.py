@@ -176,6 +176,11 @@ async def wrap_event(bot):
             await bot.process_commands(message)
     pass
 
+def get_intents():
+    intents = discord.Intents.none()
+    intents.reactions = True; intents.members = True; intents.guilds = True; intents.message_content = True; intents.messages = True;
+    return intents
+
 #wrap everything in a function to prevent conflicting event loops
 async def run(logger):
     logger.debug("Loading config...")
@@ -184,9 +189,7 @@ async def run(logger):
     token = config['token']
     logger.debug("Checking discord.py version...")
     startup.check_version()
-    intents = discord.Intents.default()
-    intents.members=True
-    intents.message_content = True
+    intents = get_intents()
     logger.debug("Getting version information...")
     if "--alt" in sys.argv:
         token = input("Enter a token to use: \n").strip()
