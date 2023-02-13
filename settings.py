@@ -279,7 +279,7 @@ class Category():
                 else:
                     perms = ""
                 embed.add_field(name=f"{discord.utils.remove_markdown(setting.description.capitalize())} ({setting.name})", value=f"{'❎ Disabled' if not setting.states[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning}{perms}", inline=True)
-            embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings only apply to your server.")
+            embed.set_footer(text=self.bot.strings["CURRENTSETTINGS_FOOTER"])
             return await ctx.send(embed=embed)
         setting = self.get_setting(name)
         if not setting:

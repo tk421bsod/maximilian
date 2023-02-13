@@ -185,6 +185,7 @@ async def load_strings():
         logger.debug("Loading data...")
         strings = json.load(data)
     logger.info('Strings loaded successfully.')
+    return strings
 
 #wrap the main on_message event in a function for prettiness
 async def wrap_event(bot):
@@ -224,7 +225,7 @@ async def run(logger):
     bot.logger = logger
     bot.common = common
     bot.config = config
-    await load_strings()
+    bot.strings = await load_strings()
     await wrap_event(bot)
     #show version information
     bot.logger.warning(f"Starting Maximilian v1.1.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
