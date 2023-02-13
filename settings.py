@@ -265,9 +265,9 @@ class Category():
         #setting not specified? show list of settings
         if not name:
             if self.name != "general":
-                title = f"Settings for category '{self.name}'"
+                title = self.bot.strings["CURRENTSETTINGS_TITLE"].format(self.name)
             else:
-                title = "General settings"
+                title = self.bot.strings["GENERAL_CATEGORY"]
             embed = discord.Embed(title=title, color=self.bot.config['theme_color'])
             for setting in [self.get_setting(i) for i in list(self.settingdescmapping.keys())]:
                 if setting.unusablewith:
@@ -385,7 +385,7 @@ class settings():
         else:
             return "None"
 
-    async def config(self, ctx, category:str=None, *, setting:str=None):
+    async def config(self, ctx, category:str=None, *, setting:str):
         """
         A command that changes settings.
         """

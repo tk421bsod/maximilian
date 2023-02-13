@@ -168,6 +168,24 @@ async def load_extensions_async(bot):
     bot.logger.info(f"Loaded {bot.extensioncount} modules successfully. {bot.errorcount} module{'s' if bot.errorcount != 1 else ''} not loaded.")
     print("Done loading modules. Finishing startup...")
 
+async def load_strings():
+    logger = logging.getLogger('maximilian')
+    logger.debug('Loading strings from file...')
+    if '--language' in sys.argv:
+        language = sys.argv[sys.argv.index('--language')+1]
+        supported = [i.split('.')[0] for i in os.listdir('languages') if not i.endswith('md') and not i.endswith("-original") and not i.startswith("generate") and not i == "TEMPLATE"]
+        if language not in supported:
+            logger.error(f"Sorry, that language isn't supported right now. The only supported languages are {supported}")
+            sys.exit(25)
+    else:
+        logger.info("No language specified, defaulting to en")
+        language = 'en'
+    logger.info(f"Set language to {language}")
+    with open(f'languages/{language}', 'r') as data:
+        logger.debug("Loading data...")
+        strings = json.load(data)
+    logger.info('Strings loaded successfully.')
+
 #wrap the main on_message event in a function for prettiness
 async def wrap_event(bot):
     @bot.event
@@ -206,6 +224,7 @@ async def run(logger):
     bot.logger = logger
     bot.common = common
     bot.config = config
+    await load_strings()
     await wrap_event(bot)
     #show version information
     bot.logger.warning(f"Starting Maximilian v1.1.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
