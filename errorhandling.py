@@ -44,7 +44,7 @@ class errorhandling(commands.Cog):
                 await ctx.send("\U0000274c I don't have the permissions to run this command, try moving my role up. I'm also not allowed to send embeds, which will make some responses look worse, and will prevent certain modules from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
             return
         if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
-            message = "You don't have the permissions needed to run that command. Try using `{await self.bot.get_prefix(ctx.message)}help <command>` to get more info on that command, including the required permissions."
+            message = f"You don't have the permissions needed to run that command. Try using `{await self.bot.get_prefix(ctx.message)}help <command>` to get more info on that command, including the required permissions."
             await ctx.send(message)
             return
         if isinstance(error, commands.MissingRequiredArgument):
