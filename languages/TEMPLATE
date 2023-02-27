@@ -15,39 +15,28 @@ CONFIRMATION_OPTIONS_TITLE:Your options
 CONFIRMATION_OPTIONS:React with \\U00002705 to proceed, or react with \\U0000274e to cancel.
 CLEAR_ALL_EFFECTS_DESC:If you proceed, all reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`. **THIS CANNOT BE UNDONE.**
 CLEAR_ALL_DESC:You've requested that I delete all the information I have stored about this server (use the `privacy` command to view details on the data I collect). I need you to confirm that you actually want to do this.
+CLEAR_ALL_TITLE:Delete all data?
 DELETION_DENIED:Ok. I won't delete anything.
 DELETION_TIMEOUT:Deletion request timed out. I won't delete anything.
 DELETION_ACTIVE:A deletion request is already active.
-FETCHING_BLOCKLIST:Fetching blocklist...
-BLOCKED_USERS:I have {} users blocked. They are: \\n{}
-SUCCESSFUL_RELOAD_ONE:Successfully reloaded 1 extension.
-SUCCESSFUL_RELOAD_ALL:Successfully reloaded all extensions.
-SUCCESSFUL_RELOAD_SOME:Successfully reloaded {} extensions.
-NOFETCH:Ok, I won't fetch the latest revision. Reloading extensions...
-FETCHING_REVISION:Fetching latest revision...
-RELOAD:Reloading extensions...
-ERROR_FETCHING_REVISION_FAILED:\\U000026a0 Failed to get latest revision. Reloading local copies of extensions...
-ERROR_RELOAD_FAILED:\\U0000274c Error while reloading extensions.
-CHANGING_STATUS:Changing status...
-ERROR_INVALID_STATUS:That's an invalid status type!
-CHANGED_STATUS:Changed status!
-ADDED_TO_BLOCKLIST:Added {} to the blocklist.
-REMOVED_FROM_BLOCKLIST:Removed {} from the blocklist.
-ADDITIONAL_INFO:Here's some additional error info:
-DISABLE_REMINDER:*This behavior can be disabled through the command `<prefix> config general debug`.*
+DEBUG_INFO:Here's some additional error info:
+DEBUG_DISABLE_REMINDER:*This behavior can be disabled through the command `<prefix> config general debug`.*
+NOT_OWNER:How did you find these commands? These aren't supposed to be used by anyone but my owner. \\nHosting this instance yourself? Change owner_id in config.
 #settings.py
+CONFLICT_STRING_MULTIPLE:{} and '*{}*'
 CURRENTSETTINGS_TITLE:Settings for category '{}'
 CURRENTSETTINGS_FOOTER:If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings only apply to your server.
 GENERAL_CATEGORY:General settings
 UNKNOWN_SETTING:Sorry, that setting doesn't exist. Check the spelling.
-UNKNOWN_CATEGORY:That category doesn't exist. Check the spelling.
+UNKNOWN_CATEGORY:That category doesn't exist. Check the spelling.\\nYou can choose from one of the following categories:\n{}
 CATEGORY_NOT_SPECIFIED:You need to specify a setting category.\\nYou can choose from one of the following:\\n{}\\nLooking for bot-wide settings? Use `config general`.
 CATEGORY_NOT_READY:Give me a moment to prepare...
 CATEGORY_LIST:You can choose from one of the following categories:{}
 SETTING_ERROR:Something went wrong while changing that setting. Try again in a moment. \\nI've reported this to my owner. If this keeps happening, consider opening an issue on Github.
-SETTING_CHANGED_TITLE:Changes saved.
-SETTING_DISABLED:Disabled {}.
-SETTING_ENABLED:Enabled {}.
+SETTING_CHANGED_TITLE:\\U00002705 Changes saved.
+SETTING_DISABLED:Disabled
+SETTING_ENABLED:Enabled
+SETTING_ENTRY_NAME:{} ({})
 SETTING_CURRENTLY_ENABLED:\\U00002705 Enabled
 SETTING_CURRENTLY_DISABLED:\\U0000274e Disabled
 SETTING_ENABLED_FOOTER:Send this command again to turn this back off.
@@ -57,7 +46,7 @@ SETTINGS_AUTOMATICALLY_DISABLED:Automatically disabled {} due to conflicts.
 SETTING_UNUSABLE_WITH:Cannot be enabled at the same time as {}.
 SETTING_REQUIRES_PERMISSION:\\nRequires the **{}** permission.
 CATEGORY_INVALID:Sorry, that category wasn't set up properly. If you keep seeing this, let tk421#2016 know.
-PERMISSION_DENIED:It looks like you don't have permission to change this setting.\\nYou'll need the **{}** permission to change it.\\nUse the `userinfo` command to check your permissions.\nJust a reminder, channel-specific permissions apply to this.
+SETTING_PERMISSION_DENIED:It looks like you don't have permission to change this setting.\\nYou'll need the **{}** permission to change it.\\nUse the `userinfo` command to check your permissions.\\nJust a reminder, channel-specific permissions apply to this.
 #cogs/images.py
 AVATAR:{}'s avatar
 #cogs/misc.py
@@ -76,6 +65,11 @@ PRIVACY_DELETION_HELP_TITLE:I want to delete my server's data, how do I request 
 PRIVACY_DELETION_HELP:You can delete all the data in your server by using `{}deleteall`. This will irreversibly delete all of the reaction roles and custom commands you have set up and reset the prefix to the default of `!`. Only people with the administrator permission can use this.
 ROLEMEMBERS:Found {} users with the {} role.
 MEMBERCOUNT:Found {} members. ({} people and {} bots.)
+ABOUT_TITLE:About
+ABOUT_SUMMARY_TITLE:What's Maximilian?
+ABOUT_SUMMARY_TEXT:Quite a few things. In short, it's a versatile, multi-purpose bot.
+ABOUT_LATESTUPDATE_TITLE:Latest update - v1.1.0 (Feb 9, 2023)
+ABOUT_LATESTUPDATE_TEXT:Changes to reminders, custom commands, and the help command.\\nWant to see changes from the last few updates? Use the `news` command.
 #cogs/music.py
 JOINING:Joining your voice channel...
 MUSIC_DISABLED:Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.
