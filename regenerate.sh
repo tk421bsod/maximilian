@@ -4,13 +4,13 @@
 if [ "$1" == "setup" ];
 then
     echo "Setting this as a pre-commit hook."
-    cp ./regenerate ./.git/hooks/pre-commit
+    cp ./regenerate.sh ./.git/hooks/pre-commit
     echo "Done."
     exit
 fi
 
 langs=('en')
-echo "Regenerating language files..."
+echo "Regenerating language files... (use --no-verify to skip)"
 cd languages
 for lang in ${langs[@]}; do
     python3 generate.py $lang
