@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import datetime
+import time
 import subprocess
 
 def preprocess_config(config):
@@ -37,6 +38,8 @@ def check_version():
         print("You may experience some bugs as new code is only tested with the latest version.")
         print("Some functions may not work at all.")
         print("I recommend updating as soon as you can, through something like 'pip3 install -U -r requirements.txt'.")
+        print("Startup will continue in 5 seconds.")
+        time.sleep(5) #TODO: consider moving this outside of main.run() as keeping it there may cause some scary "Heartbeat blocked" warnings!
 
 def parse_arguments(bot, args):
     if len(args) > 1:
