@@ -32,7 +32,7 @@ def check_version():
         print("If you choose to use an old version of Maximilian, you're on your own - those versions lack support from tk421 and compatibility with discord.py 2. Old versions may stop working without notice.")
         print("See https://gist.github.com/Rapptz/c4324f17a80c94776832430007ad40e6 for more information about this.")
         quit()
-    elif version.minor < 1:
+    elif version.minor < 2:
         print("\nHi there. It looks like you're running a discord.py version that's slightly out-of-date.")
         print("You may experience some bugs as new code is only tested with the latest version.")
         print("Some functions may not work at all.")
