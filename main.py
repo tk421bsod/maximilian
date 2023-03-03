@@ -31,6 +31,7 @@ if "--help" in sys.argv:
     print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level.")
     print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
     print("--help - Shows this message and exits.")
+    print("--language <language> - Sets the language to <language>. If not specified, defaults to 'en'.")
     print("--alt - Prompts for a token to use. Also adds the latest commit hash to the default status.")
     quit()
 
@@ -181,9 +182,18 @@ async def load_strings():
         logger.info("No language specified, defaulting to en")
         language = 'en'
     logger.info(f"Set language to {language}")
-    with open(f'languages/{language}', 'r') as data:
-        logger.debug("Loading data...")
-        strings = json.load(data)
+    try:
+        with open(f'languages/{language}', 'r') as data:
+            logger.debug("Loading data...")
+            strings = json.load(data)
+    except FileNotFoundError:
+        raise RuntimeError(f"Couldn't find the file containing strings for language '{language}'.")
+    except json.JSONDecodeError as e:
+        logger.critical(f"The file containing strings for language '{language}' is invalid. Try passing it through generate.py.")
+        logger.critical("A common cause of this error is multiple unescaped backslashes in a single string.")
+        logger.critical("generate.py attempts to fix these errors, but can miss multiple in the same string.")
+        logger.critical("Maximilian will now exit with some additional error info.")
+        raise e
     logger.info('Strings loaded successfully.')
     return strings
 
@@ -261,9 +271,9 @@ async def run(logger):
     bot.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
     #TODO: choose your fighter: subclass or context manager
     #if "--with-setup-hook" in sys.argv:
-    asyncio.create_task(load_extensions_async(bot))
     print("Logging in...")
     if not "--nologin" in sys.argv:
+        asyncio.create_task(load_extensions_async(bot))
         await bot.start(token)
 
 print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
