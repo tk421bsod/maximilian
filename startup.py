@@ -6,7 +6,7 @@ import sys
 import datetime
 import subprocess
 
-def check_config(config):
+def preprocess_config(config):
     #convert hex color to int
     config['theme_color'] = int(config['theme_color'], 16)
     try:

@@ -214,7 +214,7 @@ def get_intents():
 async def run(logger):
     logger.debug("Loading config...")
     config = common.load_config()
-    config = startup.check_config(config)
+    config = startup.preprocess_config(config)
     token = config['token']
     logger.debug("Checking discord.py version...")
     startup.check_version()
