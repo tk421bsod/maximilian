@@ -40,13 +40,11 @@ print("Loading components...")
 try:
     import asyncio
     import datetime
-    import functools
     import json
     import logging
     import os
     import time
     import traceback
-    import subprocess
 
     import discord
     import pymysql
@@ -55,7 +53,6 @@ try:
 
     import common
     import core
-    import db
     import settings
     import startup
     from updater import update
@@ -214,6 +211,7 @@ def get_intents():
 async def run(logger):
     logger.debug("Loading config...")
     config = common.load_config()
+    logger.debug("Processing config...")
     config = startup.preprocess_config(config)
     token = config['token']
     logger.debug("Checking discord.py version...")
@@ -229,9 +227,8 @@ async def run(logger):
         commit = ""
     logger.debug("Setting up some stuff")
     bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.2.0{f'-{commit}' if commit else ''}"))
-    #set up some important stuff
     bot.database = "maximilian"
-    #attempt to pull database from config!
+    #attempt to pull database name from config!
     try:
         bot.database = config["database"]
     except:
@@ -248,25 +245,14 @@ async def run(logger):
     bot.noload = []
     bot.logger.debug("Parsing command line arguments...")
     startup.parse_arguments(bot, sys.argv)
-    bot.guildlist = []
     bot.prefix = {}
     bot.responses = []
     bot.start_time = time.time()
+    #initialize settings api
     bot.settings = settings.settings(bot)
     bot.logger.debug("Setting up the database...")
     #try to connect to database, exit if it fails
-    try:
-        #constructing an instance of db calls db.db.attempt_connection
-        bot.db = db.db(bot, config['dbp'])
-    except pymysql.err.OperationalError:
-        bot.logger.error("Couldn't connect to database. Trying to start it...")
-        os.system("bash setup.sh start")
-        try:
-            bot.db = db.db(bot, config['dbp'])
-        except pymysql.err.OperationalError:
-            bot.logger.debug(traceback.format_exc())
-            bot.logger.critical(f"Couldn't connect to database! \nTry running 'bash setup.sh fix'.")
-            sys.exit(96)
+    bot.db = startup.initialize_db(bot, config)
     #make sure all tables exist
     try:
         bot.db.ensure_tables()
@@ -274,8 +260,6 @@ async def run(logger):
         bot.logger.debug(traceback.format_exc())
         bot.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
     bot.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
-    #TODO: choose your fighter: subclass or context manager
-    #if "--with-setup-hook" in sys.argv:
     print("Logging in...")
     if not "--nologin" in sys.argv:
         asyncio.create_task(load_extensions_async(bot))
@@ -287,13 +271,14 @@ print("setting up logging...")
 config_logging(sys.argv)
 logging.getLogger('discord').setLevel(logging.INFO)
 outer_logger = logging.getLogger(f'maximilian') #different name than inside run for readability
-# noinspection PyBroadException
 try:
     #run updater
     outer_logger.info("Running updater")
     try:
         if "--noupdate" not in sys.argv:
             update()
+        else:
+            print("main.py invoked with '--noupdate', skipping update check")
         if "--update" in sys.argv:
             print("Updater exited and main.py was invoked with '--update'. Exiting.")
             quit()
@@ -321,8 +306,6 @@ except SystemExit: #raised on quit()
     pass
 except:
     #Unsure why this exists, maybe some errors get re-raised here??
-    #still appease pycharm
-    # noinspection PyBroadException
     try:
         outer_logger.error("Unhandled exception! Exiting.")
         outer_logger.error(traceback.format_exc())

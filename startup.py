@@ -1,11 +1,15 @@
-import discord
-import common
-import logging
 import os
-import sys
-import datetime
-import time
 import subprocess
+import sys
+import time
+import traceback
+
+import discord
+from pymysql.err import OperationalError
+
+import common
+import db
+
 
 def preprocess_config(config):
     #convert hex color to int
@@ -60,6 +64,20 @@ def parse_arguments(bot, args):
     else:
         bot.logger.warning("No arguments provided.")
         bot.dbip = "localhost"
+
+def initialize_db(bot, config):
+    try:
+        #constructing an instance of db calls db.db.attempt_connection
+        return db.db(bot, config['dbp'])
+    except OperationalError:
+        bot.logger.error("Couldn't connect to database. Trying to start it...")
+        os.system("bash setup.sh start")
+        try:
+            return db.db(bot, config['dbp'])
+        except OperationalError:
+            bot.logger.debug(traceback.format_exc())
+            bot.logger.critical(f"Couldn't connect to database! \nTry running 'bash setup.sh fix'.")
+            sys.exit(96)
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
