@@ -40,7 +40,6 @@ print("Loading components...")
 try:
     import asyncio
     import datetime
-    import json
     import logging
     import os
     import time
@@ -166,34 +165,6 @@ async def load_extensions_async(bot):
     bot.logger.info(f"Loaded {bot.extensioncount} modules successfully. {bot.errorcount} module{'s' if bot.errorcount != 1 else ''} not loaded.")
     print("Done loading modules. Finishing startup...")
 
-async def load_strings():
-    logger = logging.getLogger('maximilian')
-    logger.debug('Loading strings from file...')
-    if '--language' in sys.argv:
-        language = sys.argv[sys.argv.index('--language')+1]
-        supported = [i.split('.')[0] for i in os.listdir('languages') if not i.endswith('md') and not i.endswith("-original") and not i.startswith("generate") and not i == "TEMPLATE"]
-        if language not in supported:
-            logger.error(f"Sorry, that language isn't supported right now. The only supported languages are {supported}")
-            sys.exit(25)
-    else:
-        logger.info("No language specified, defaulting to en")
-        language = 'en'
-    logger.info(f"Set language to {language}")
-    try:
-        with open(f'languages/{language}', 'r') as data:
-            logger.debug("Loading data...")
-            strings = json.load(data)
-    except FileNotFoundError:
-        raise RuntimeError(f"Couldn't find the file containing strings for language '{language}'.")
-    except json.JSONDecodeError as e:
-        logger.critical(f"The file containing strings for language '{language}' is invalid. Try passing it through generate.py.")
-        logger.critical("A common cause of this error is multiple unescaped backslashes in a single string.")
-        logger.critical("generate.py attempts to fix these errors, but can miss multiple in the same string.")
-        logger.critical("Maximilian will now exit with some additional error info.")
-        raise e
-    logger.info('Strings loaded successfully.')
-    return strings
-
 #wrap the main on_message event in a function for prettiness
 async def wrap_event(bot):
     @bot.event
@@ -237,7 +208,7 @@ async def run(logger):
     bot.logger = logger
     bot.common = common
     bot.config = config
-    bot.strings = await load_strings()
+    bot.strings = await startup.load_strings(bot.logger)
     await wrap_event(bot)
     #show version information
     bot.logger.warning(f"Starting Maximilian v1.2.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")

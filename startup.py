@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import sys
@@ -78,6 +79,34 @@ def initialize_db(bot, config):
             bot.logger.debug(traceback.format_exc())
             bot.logger.critical(f"Couldn't connect to database! \nTry running 'bash setup.sh fix'.")
             sys.exit(96)
+
+async def load_strings(logger, exit=True):
+    logger.debug('Loading strings from file...')
+    if '--language' in sys.argv:
+        language = sys.argv[sys.argv.index('--language')+1]
+        supported = [i.split('.')[0] for i in os.listdir('languages') if not i.endswith('md') and not i.endswith("-original") and not i.startswith("generate") and not i == "TEMPLATE"]
+        if language not in supported:
+            logger.error(f"Sorry, that language isn't supported right now. The only supported languages are {supported}")
+            if exit:
+                sys.exit(25)
+    else:
+        logger.info("No language specified, defaulting to en")
+        language = 'en'
+    logger.info(f"Set language to {language}")
+    try:
+        with open(f'languages/{language}', 'r') as data:
+            logger.debug("Loading data...")
+            strings = json.load(data)
+    except FileNotFoundError:
+        raise RuntimeError(f"Couldn't find the file containing strings for language '{language}'.")
+    except json.JSONDecodeError as e:
+        logger.critical(f"The file containing strings for language '{language}' is invalid. Try passing it through generate.py.")
+        logger.critical("A common cause of this error is multiple unescaped backslashes in a single string.")
+        logger.critical("generate.py attempts to fix these errors, but can miss multiple in the same string.")
+        logger.critical("Maximilian will now exit with some additional error info.")
+        raise e
+    logger.info('Strings loaded successfully.')
+    return strings
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")

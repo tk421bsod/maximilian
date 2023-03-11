@@ -3,18 +3,17 @@
 #note that this module is loaded during early startup. the 'core' class defined below is loaded in load_extensions_async.
 
 import asyncio
-import datetime
 import inspect
 import logging
 import os
 import time
 import traceback
 import typing
-
 import discord
 from discord.ext import commands
 
 import helpcommand
+import startup
 
 try:
     import git
@@ -89,8 +88,8 @@ class deletion_request:
     def __init__(self, bot):
         '''A class that handles some deletion request logic. Has some similar attributes to `confirmation` but doesn't subclass as `confirmation`'s __init__ calls _handle_confirmation (subclassing may cause naming conflicts too)'''
         #mainembeds and clearedembeds are mappings of type to embed (see https://discord.com/developers/docs/resources/channel#embed-object for information on the format of these embeds)
-        self.mainembeds = {"todo":{'fields': [{'inline': True, 'name': 'Effects', 'value': 'If you proceed, your todo list will be deleted. **THIS CANNOT BE UNDONE.**'}, {'inline': False, 'name': 'Your options', 'value': 'React with ✅ to proceed, or react with \U0000274e to cancel.'}], 'color': 7506394, 'type': 'rich', 'description': "You've requested that I delete your todo list, and I need you to confirm that you actually want to do this.", 'title': 'Delete your todo list?'}, "all":{'fields': [{'inline': True, 'name': 'Effects', 'value': 'If you proceed, all reaction roles and custom commands you\'ve set up will be deleted, and my prefix will be reset to `!`. **THIS CANNOT BE UNDONE.**'}, {'inline': False, 'name': 'Your options', 'value': 'React with ✅ to proceed, or react with \U0000274e to cancel.'}], 'color': 7506394, 'type': 'rich', 'description': "You've requested that I delete all the information I have stored about this server (use the `privacy` command to view details on the data I collect). I need you to confirm that you actually want to do this.", 'title': 'Delete all data?'}}
-        self.clearedembeds = {"todo":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 Cleared your todo list!'}, "all":{'color': 7506394, 'type': 'rich', 'title': '\U00002705 All data for this server has been cleared!'}}
+        self.mainembeds = {"todo":{'fields': [{'inline': True, 'name': bot.strings['CLEAR_EFFECTS_TITLE'], 'value': bot.strings["CLEAR_TODO_LIST_EFFECTS_DESC"]}, {'inline': False, 'name': bot.strings['CONFIRMATION_OPTIONS_TITLE'], 'value': bot.strings['CONFIRMATION_OPTIONS']}], 'color': 7506394, 'type': 'rich', 'description': bot.strings["CLEAR_TODO_LIST_DESC"], 'title': bot.strings['CLEAR_TODO_LIST_TITLE']}, "all":{'fields': [{'inline': True, 'name': bot.strings['CLEAR_EFFECTS_TITLE'], 'value': bot.strings['CLEAR_ALL_EFFECTS_DESC']}, {'inline': False, 'name': bot.strings['CONFIRMATION_OPTIONS_TITLE'], 'value': bot.strings['CONFIRMATION_OPTIONS']}], 'color': 7506394, 'type': 'rich', 'description': bot.strings['CLEAR_ALL_DESC'], 'title': bot.strings['CLEAR_ALL_TITLE']}}
+        self.clearedembeds = {"todo":{'color': 7506394, 'type': 'rich', 'title': bot.strings['CLEARED_TODO_LIST']}, "all":{'color': 7506394, 'type': 'rich', 'title': bot.strings['CLEARED_ALL']}}
         self.bot = bot
 
     async def confirmation_callback(self, reaction, message, ctx, confirmed, requesttype, id):
@@ -122,7 +121,7 @@ class deletion_request:
             confirmation(self.bot, deletionmessage, ctx, self.confirmation_callback, requesttype, id)
         except asyncio.TimeoutError:
             self.bot.db.exec("delete from active_requests where id = %s", (id,))
-            await ctx.send("Deletion request timed out. I won't delete anything.")
+            await ctx.send(self.bot.strings["DELETION_TIMEOUT"])
             return
 
     async def create_request(self, requesttype, ctx):
@@ -139,7 +138,6 @@ class deletion_request:
         self.bot.db.exec("delete from roles where guild_id = %s", (ctx.guild.id,))
         self.bot.db.exec("delete from responses where guild_id = %s", (ctx.guild.id,))
         self.bot.db.exec("delete from prefixes where guild_id = %s", (ctx.guild.id,))
-        await ctx.guild.me.edit(nick=f"[!] Maximilian")
         await self.bot.responses.get_responses()
         await self.bot.prefixes.update_prefix_cache()
 
@@ -168,9 +166,9 @@ class core(commands.Cog):
     async def send_debug(self, ctx):
         if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
             if self.bot.settings.general.debug.enabled(ctx.guild.id):
-                await ctx.send("Here's some additional error info:")
+                await ctx.send(self.bot.strings["DEBUG_INFO"])
                 await self.send_traceback(ctx.channel)
-                await ctx.send("*This behavior can be disabled through the command `<prefix> config general debug`.*")
+                await ctx.send(self.bot.strings["DEBUG_DISABLE_REMINDER"])
 
     async def send_traceback(self, target=None):
         paginator = commands.Paginator()
@@ -273,6 +271,18 @@ class core(commands.Cog):
 
     @commands.is_owner()
     @utils.command(hidden=True)
+    async def reload_strings(self, ctx):
+        try:
+            reloading = await ctx.send("Reloading strings...")
+            self.bot.strings = await startup.load_strings(self.bot.logger, exit=False)
+            await ctx.send("Done.")
+        except:
+            await reloading.add_reaction("\U00002757")
+            return await ctx.send(f"{traceback.format_exc()}")
+
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
     async def change_status(self, ctx, type, newstatus=None):
         await ctx.send("Changing status...")
         if type.lower() == "streaming":
@@ -352,7 +362,7 @@ class core(commands.Cog):
     async def cog_command_error(self, ctx, error):
         error = getattr(error, "original", error)
         if isinstance(error, commands.errors.CheckFailure):
-            await ctx.send("How did you find these commands? These aren't supposed to be used by anyone but the owner. \nHosting this instance yourself? Change owner_id in config.")
+            await ctx.send(self.bot.strings["NOT_OWNER"])
         else:
             await self.bot.get_user(self.bot.owner_id).send("oh :blobpaiN; here's an error" + traceback.format_exc())
 
