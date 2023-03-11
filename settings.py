@@ -227,7 +227,7 @@ class Category():
         q = "'"
         if not isinstance(conflicts, list):
             return f"{q}*{conflicts}*{q}"
-        return f"{', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]])} and '*{conflicts[-1]}*'"
+        return self.bot.strings["CONFLICT_STRING_MULTIPLE"].format(', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]]), conflicts[-1])
 
     async def _resolve_conflicts(self, ctx, setting):
         """
@@ -254,7 +254,10 @@ class Category():
             resolved = resolved[0]
         if not resolved:
             return ""
-        return f"**Automatically disabled** {await self._prepare_conflict_string(resolved)} due to {'a conflict' if length == 1 else 'conflicts'}."
+        resolved_string = await self._prepare_conflict_string(resolved)
+        if length == 1:
+            return self.bot.strings["SETTING_AUTOMATICALLY_DISABLED"].format(resolved)
+        return self.bot.strings["SETTINGS_AUTOMATICALLY_DISABLED"].format(resolved)
 
     def normalize_permission(self, permission):
         """Makes a permission name more human readable. Replaces \'guild\' with \'server\', capitalizes words, swaps underscores for spaces."""
@@ -271,22 +274,22 @@ class Category():
             embed = discord.Embed(title=title, color=self.bot.config['theme_color'])
             for setting in [self.get_setting(i) for i in list(self.settingdescmapping.keys())]:
                 if setting.unusablewith:
-                    unusablewithwarning = f"Cannot be enabled at the same time as {await self._prepare_conflict_string(setting.unusablewith)}."
+                    unusablewithwarning = self.bot.strings["SETTING_UNUSABLE_WITH"].format(await self._prepare_conflict_string(setting.unusablewith))
                 else:
                     unusablewithwarning = ""
                 if setting.permission:
-                    perms = f"\nRequires the **{self.normalize_permission(setting.permission)}** permission."
+                    perms = self.bot.strings["SETTING_REQUIRES_PERMISSION"].format(self.normalize_permission(setting.permission))
                 else:
                     perms = ""
-                embed.add_field(name=f"{discord.utils.remove_markdown(setting.description.capitalize())} ({setting.name})", value=f"{'❎ Disabled' if not setting.states[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning}{perms}", inline=True)
+                embed.add_field(name=self.bot.strings["SETTING_ENTRY_NAME"].format(discord.utils.remove_markdown(setting.description.capitalize()), setting.name), value=f"{self.bot.strings['SETTING_CURRENTLY_DISABLED'] if not setting.states[ctx.guild.id] else self.bot.strings['SETTING_CURRENTLY_ENABLED']}\n{unusablewithwarning}{perms}", inline=True)
             embed.set_footer(text=self.bot.strings["CURRENTSETTINGS_FOOTER"])
             return await ctx.send(embed=embed)
         setting = self.get_setting(name)
         if not setting:
-            return await ctx.send("Sorry, that setting doesn't exist. Check the spelling.")
+            return await ctx.send(self.bot.strings["UNKNOWN_SETTING"])
         if setting.permission:
             if not getattr(ctx.channel.permissions_for(ctx.author), setting.permission):
-                return await ctx.send(f"It looks like you don't have permission to change this setting.\nYou'll need the **{self.normalize_permission(setting.permission)}** permission to change it.\nUse the `userinfo` command to check your permissions.\nJust a reminder, channel-specific permissions apply to this.")
+                return await ctx.send(self.bot.strings["SETTING_PERMISSION_DENIED"].format(self.normalize_permission(setting.permission)))
         try:
             #update setting state
             await self.update_setting(ctx, setting)
@@ -294,9 +297,9 @@ class Category():
             unusablewithmessage = await self._resolve_conflicts(ctx, setting)
         except:
             await self.bot.core.send_traceback()
-            await ctx.send(f"Something went wrong while changing that setting. Try again in a moment. \nI've reported this error to my owner. If this keeps happening, consider opening an issue at https://github.com/tk421bsod/maximilian/issues.")
+            await ctx.send(self.bot.strings["SETTING_ERROR"])
             return await self.bot.core.send_debug(ctx)
-        await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"**{'Disabled' if not setting.enabled(ctx.guild.id) else 'Enabled'}** *{setting.description}*.\n{unusablewithmessage}", color=self.bot.config['theme_color']).set_footer(text=f"Send this command again to turn this back {'off' if setting.enabled(ctx.guild.id) else 'on'}."))
+        await ctx.send(embed=discord.Embed(title=self.bot.strings["SETTING_CHANGED_TITLE"], description=f"**{self.bot.strings['SETTING_DISABLED'] if not setting.enabled(ctx.guild.id) else self.bot.strings['SETTING_ENABLED']}** *{setting.description}*.\n{unusablewithmessage}", color=self.bot.config['theme_color']).set_footer(text=f"{self.bot.strings['SETTING_ENABLED_FOOTER'] if setting.enabled(ctx.guild.id) else self.bot.strings['SETTING_DISABLED_FOOTER']}"))
 
 
 class settings():
@@ -392,24 +395,24 @@ class settings():
         #figure out what category we're using
         if not category:
             available = self._prepare_category_string()
-            return await ctx.send(f"You need to specify a setting category.\nYou can choose from one of the following:\n{available}\nLooking for bot-wide settings? Use `config general`.")
+            return await ctx.send(self.bot.strings["CATEGORY_NOT_SPECIFIED"].format(available))
         try:
             category = getattr(self, category)
         except AttributeError:
             available = self._prepare_category_string()
-            return await ctx.send(f"That category doesn't exist. Check the spelling.\nYou can choose from one of the following categories:\n{available}")
+            return await ctx.send(self.bot.strings["UNKNOWN_CATEGORY"].format(available))
         try:
             if not category.ready:
                 self.logger.error(f"It looks like cache filling for category {category.name} is happening way too late!!!")
                 self.logger.error("please report this issue to tk421.")
                 self.logger.error("waiting until cache fill is complete...")
-                await ctx.send("Give me a moment to prepare...")
+                await ctx.send(self.bot.strings["CATEGORY_NOT_READY"])
                 await category.wait_ready()
                 self.logger.error("cache fill complete, continuing :)")
             await category.config(ctx, setting)
         except AttributeError:
             traceback.print_exc()
-            return await ctx.send("Sorry, that category wasn't set up properly. If you keep seeing this, let tk421#2016 know.")
+            return await ctx.send(self.bot.strings["CATEGORY_INVALID"])
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
