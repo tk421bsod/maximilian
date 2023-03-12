@@ -1,7 +1,5 @@
 #db.py: some database utilities
 import logging
-import os
-import inspect
 
 import pymysql
 
@@ -81,12 +79,12 @@ class db:
         else:
             self.logger.warning('Database setup finished.')
 
+    def reconnect(self):
+        self.conn = self.attempt_connection()
+
     def attempt_connection(self):
         self.logger.info(f"Attempting to connect to database '{self.database}' on '{self.ip}'...")
         return self.connect()
-
-    def reconnect(self):
-        self.conn = self.connect()
 
     def connect(self):
         return pymysql.connect(host=self.ip, user="maximilianbot", password=self.databasepassword, db=self.database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, autocommit=True).cursor()
