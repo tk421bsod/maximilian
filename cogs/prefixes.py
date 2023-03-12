@@ -51,16 +51,16 @@ class prefixes(commands.Cog):
     @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission. ", aliases=['prefixes'])
     async def prefix(self, ctx, new_prefix):
         if not ctx.guild:
-            return await ctx.send("You can't change my prefix in a DM.")
+            return await ctx.send(self.bot.strings["ERROR_DM"])
         if self._is_prefix_same(ctx.guild, new_prefix):
-            return await ctx.send(f"My prefix in this server is already set to `{new_prefix}`!")
-        await ctx.send(f"Ok. Changing prefix to {new_prefix}...")
+            return await ctx.send(self.bot.strings["PREFIX_SAME"].format(new_prefix))
+        await ctx.send(self.bot.strings["CHANGING_PREFIX"].format(new_prefix))
         if self.bot.db.exec("select * from prefixes where guild_id = %s", (ctx.guild.id, )):
             self.bot.db.exec("update prefixes set prefix = %s where guild_id = %s", (new_prefix, ctx.guild.id))
         else:
             self.bot.db.exec("insert into prefixes values(%s, %s)", (ctx.guild.id, new_prefix))
         self.bot.prefix[ctx.guild.id] = new_prefix
-        await ctx.send(f"Set my prefix to `{new_prefix}`.")
+        await ctx.send(self.bot.strings["PREFIX_SET"].format(new_prefix))
 
 async def setup(bot):
     await bot.add_cog(prefixes(bot, True))
