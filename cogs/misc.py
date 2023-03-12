@@ -53,7 +53,7 @@ class misc(commands.Cog):
     @commands.command(help="**Permanently** delete all data that Maximilian's stored about your server. (requires the Administrator permission)")
     async def deleteall(self, ctx):
         try:
-            await self.bot.core.deletion_request(self.bot).create_request("all", ctx)
+            await self.bot.deletion_request(self.bot).create_request("all", ctx)
         except self.bot.DeletionRequestAlreadyActive:
             await ctx.send("A deletion request is already active.")
 

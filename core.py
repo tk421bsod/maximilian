@@ -104,7 +104,7 @@ class deletion_request:
                 await ctx.send(embed=discord.Embed.from_dict(self.clearedembeds[requesttype]))
                 return True
             if not confirmed:
-                await ctx.send("Ok. I won't delete anything.")
+                await ctx.send(self.bot.strings["DELETION_DENIED"])
                 self.bot.db.exec("delete from active_requests where id = %s", (id,))
                 return True
         except Exception as e:
@@ -138,7 +138,8 @@ class deletion_request:
         self.bot.db.exec("delete from roles where guild_id = %s", (ctx.guild.id,))
         self.bot.db.exec("delete from responses where guild_id = %s", (ctx.guild.id,))
         self.bot.db.exec("delete from prefixes where guild_id = %s", (ctx.guild.id,))
-        await self.bot.responses.get_responses()
+        responses = self.bot.get_cog("Custom Commands")
+        await responses.fill_cache()
         await self.bot.prefixes.update_prefix_cache()
 
 class core(commands.Cog):

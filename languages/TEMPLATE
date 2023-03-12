@@ -4,7 +4,6 @@ GENERIC_ERROR:Sorry, something went wrong. Try again in a moment. I've reported 
 GENERIC_FATAL_ERROR:You should never see this. If you do, contact tk421#2016.
 #core.py
 ERROR_COMMAND_NOT_READY:This command isn't ready yet. Try again in a moment.
-ERROR_CONFIRMATION_CALLBACK_NOT_COROUTINE:confirmation callback must be a coroutine!!!
 CLEARED_TODO_LIST:\u2705 Cleared your todo list!
 CLEARED_ALL:\u2705 Cleared all data for this server!
 CLEAR_EFFECTS_TITLE:Effects
