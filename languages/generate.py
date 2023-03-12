@@ -7,7 +7,7 @@ import sys
 import os
 
 print("Automatically fixing formatting errors.")
-FIX = True
+FIX = False
 
 try:
     sys.argv[1]
@@ -40,7 +40,7 @@ with open(sys.argv[1], 'r') as data:
                     next = intermediate[1][count+1]
                 except IndexError:
                     next = intermediate[1][count]
-                if char == "\\" and next != "\\" and previous != "\\":
+                if char == "\\" and next != "\\" and next != "n" and previous != "\\":
                     print(f"Single backslash found in {intermediate[0]}.")
                     new = ""
                     for (a, b) in enumerate(intermediate[1]):
