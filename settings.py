@@ -111,7 +111,7 @@ class Category():
         setattr(constructor, name, self)
         self.name = name
         self.filling = False
-        self.logger = logging.getLogger(f"settings.{name}")
+        self.logger = logging.getLogger(f"settings.{name}") #TODO: rethink this. this isn't entirely needed and could introduce some overhead
         self.bot = constructor.bot
         self.permissionmapping = permissionmapping
         asyncio.create_task(self.fill_cache())
@@ -126,7 +126,7 @@ class Category():
         """
         while not self.ready:
             await asyncio.sleep(0.01)
-    
+
     def get_setting(self, name):
         """
         Gets a Setting by name.
@@ -174,6 +174,7 @@ class Category():
             if not isinstance(self.data, list):
                 self.data = [self.data]
         except:
+            #TODO: Consider loudly failing instead of handling this as this state is undesireable and messes with existing settings
             traceback.print_exc()
             self.logger.warning('An error occurred while filling the setting cache, defaulting to every setting disabled')
             self.data = []
