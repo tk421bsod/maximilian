@@ -49,7 +49,7 @@ def update():
     time.sleep(1)
     try:
         config = common.load_config()
-        last_update = common.load_config()['last_update']
+        last_update = config['last_update']
         if not last_update:
             print("Updater was interrupted or last update failed, checking for updates now")
         elif "--force-update" in sys.argv or "--update" in sys.argv:
