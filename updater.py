@@ -34,15 +34,19 @@ def update():
     branch = common.run_command(['git', 'branch', '--show-current'])['output'][0]
     time.sleep(0.5)
     print(f"You're currently on the '{branch}' branch.")
-    if branch != 'release':
+    if branch == 'development':
         print("Updates on this branch may be unstable.")
         print("You can switch back to the 'release' branch at any time using 'git checkout release'.")
         print("If an update breaks something, reset to the previous commit using 'git reset HEAD~1'.")
-    else:
+    elif branch == 'release':
         print("Updates on this branch are infrequent but stable.")
         print("You can switch to other branches at any time using 'git checkout <branch>'.")
         print("Use 'git branch' to view a list of branches.")
-    time.sleep(0.5)
+    else:
+        print("It looks like you're on a release snapshot branch for version 1.2 or later.")
+        print("Please note that this release no longer receives support and may stop working without notice.")
+        print("Consider switching to the `release` branch using `git checkout release`.")
+    time.sleep(1)
     try:
         config = common.load_config()
         last_update = common.load_config()['last_update']
