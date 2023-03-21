@@ -42,20 +42,16 @@ try:
     import datetime
     import logging
     import os
-    import time
     import traceback
+    import time
 
     import discord
-    import pymysql
     from discord.ext import commands
     from discord.ext.commands.errors import NoEntryPointError
 
-    import common
-    import core
-    import settings
-    import startup
+    from base import maximilian
     from updater import update
-except ImportError as e:
+except (ImportError, NameError, SyntaxError) as e:
     print("Maximilian cannot start because a required component failed to load.\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
     print(e)
     sys.exit(2)
@@ -74,7 +70,7 @@ def config_logging(args):
     #mapping of argument to logging level and status message
     levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
     try:
-        _handlers = [RichHandler(rich_tracebacks=True, tracebacks_suppress=[discord, pymysql])]
+        _handlers = [RichHandler(rich_tracebacks=True, tracebacks_suppress=[discord])]
     except NameError: #rich wasn't imported, use stdout instead
         _handlers = [logging.StreamHandler(sys.stdout)]
     if os.path.isdir('logs'):
@@ -100,141 +96,6 @@ def config_logging(args):
         logging.basicConfig(level=logging.WARN, handlers=_handlers)
     print("No logging level specified, falling back to WARN.")
     logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
-
-async def load(bot, file):
-    #strip file extension out of filename
-    cleanname = file[:-3]
-    #ignore anything that isn't a python file
-    if file.endswith(".py"):
-        #check if we're not loading this extension
-        if cleanname in bot.noload or f"cogs.{cleanname}" in bot.noload:
-            bot.logger.info(f"Not loading module cogs.{cleanname}.")
-            bot.errorcount += 1
-            return
-        #actually load the extension
-        try:
-            await bot.load_extension(f"cogs.{cleanname}")
-            bot.extensioncount += 1
-            bot.logger.debug(f"Loaded module cogs.{cleanname}.")
-        except commands.ExtensionAlreadyLoaded:
-            bot.logger.debug(f"{cleanname} is already loaded, skipping")
-        except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
-            bot.errorcount += 1
-            if not hasattr(error, 'original'):
-                #only NoEntryPointError doesn't have original
-                error.original = commands.errors.NoEntryPointError('')
-            bot.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This module won't be loaded.")
-            if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
-                bot.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -r requirements_extra.txt.'")
-            else:
-                bot.logger.error(traceback.format_exc())
-
-async def load_jishaku(bot):
-    if "--enablejsk" in sys.argv:
-        await bot.load_extension("jishaku")
-        bot.logger.info("Loaded Jishaku!")
-        if not bot.config['jsk_used']:
-            bot.logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's an invaluable tool for debugging and development, but can be quite dangerous in the wrong hands.")
-            bot.logger.warning(f"If your account (or the account with the ID {bot.owner_id}) gets compromised, the attacker will have direct access to your computer.")
-            bot.logger.warning("Don't want to use Jishaku? Stop Maximilian now with CTRL-C and run main.py WITHOUT --enablejsk.")
-            bot.logger.warning("If you keep using Jishaku, I recommend that you enable 2FA and/or run Maximilian in a VM.")
-            bot.logger.warning("Startup will continue in 10 seconds.")
-            time.sleep(10) # block here so we don't do anything else (e.g login, cache filling) in the meantime
-
-async def load_required(bot):
-    #we use a catch-all as we don't want anything going wrong with this
-    # noinspection PyBroadException
-    try:
-        await bot.load_extension("core")
-        await bot.load_extension("errorhandling")
-    except:
-        bot.logger.critical("Failed to load required modules.")
-        traceback.print_exc()
-        quit()
-
-async def load_extensions_async(bot):
-    """New non-blocking method for loading extensions. Same functionality as load_extensions but compatible with dpy2."""
-    await load_jishaku(bot)
-    bot.logger.info("Loading modules...")
-    bot.extensioncount, bot.errorcount = 0, 0
-    print("Loading required modules...")
-    await load_required(bot)
-    print("Loading other modules...")
-    for each in os.listdir("./cogs"):
-        await load(bot, each)
-    bot.logger.info(f"Loaded {bot.extensioncount} modules successfully. {bot.errorcount} module{'s' if bot.errorcount != 1 else ''} not loaded.")
-    print("Done loading modules. Finishing startup...")
-
-#wrap the main on_message event in a function for prettiness
-async def wrap_event(bot):
-    @bot.event
-    async def on_message(message):
-        if await bot.core.prepare(message):
-            await bot.process_commands(message)
-    pass
-
-def get_intents():
-    intents = discord.Intents.none()
-    intents.reactions = True; intents.members = True; intents.guilds = True; intents.message_content = True; intents.messages = True; intents.voice_states = True;
-    return intents
-
-#wrap everything in a function to prevent conflicting event loops
-async def run(logger):
-    logger.debug("Loading config...")
-    config = common.load_config()
-    logger.debug("Processing config...")
-    config = startup.preprocess_config(config)
-    token = config['token']
-    logger.debug("Checking discord.py version...")
-    startup.check_version()
-    intents = get_intents()
-    logger.debug("Getting version information...")
-    if "--alt" in sys.argv:
-        token = input("Enter a token to use: \n").strip()
-        logger.debug("Getting latest commit hash...")
-        commit = common.get_latest_commit()[0]
-        logger.debug("Done getting latest commit hash.")
-    else:
-        commit = ""
-    logger.debug("Setting up some stuff")
-    bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.2.0{f'-{commit}' if commit else ''}"))
-    bot.database = "maximilian"
-    #attempt to pull database name from config!
-    try:
-        bot.database = config["database"]
-    except:
-        pass
-    #TODO: remove unused attrs
-    bot.logger = logger
-    bot.common = common
-    bot.config = config
-    bot.strings = await startup.load_strings(bot.logger)
-    await wrap_event(bot)
-    #show version information
-    bot.logger.warning(f"Starting Maximilian v1.2.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
-    #parse additional arguments (ip, enablejsk, noload)
-    bot.noload = []
-    bot.logger.debug("Parsing command line arguments...")
-    startup.parse_arguments(bot, sys.argv)
-    bot.prefix = {}
-    bot.responses = []
-    bot.start_time = time.time()
-    #initialize settings api
-    bot.settings = settings.settings(bot)
-    bot.logger.debug("Setting up the database...")
-    #try to connect to database, exit if it fails
-    bot.db = startup.initialize_db(bot, config)
-    #make sure all tables exist
-    try:
-        bot.db.ensure_tables()
-    except pymysql.OperationalError:
-        bot.logger.debug(traceback.format_exc())
-        bot.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
-    bot.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
-    print("Logging in...")
-    if not "--nologin" in sys.argv:
-        asyncio.create_task(load_extensions_async(bot))
-        await bot.start(token)
 
 print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
 print("setting up logging...")
@@ -264,8 +125,9 @@ try:
         install(suppress=[discord,pymysql])
     except NameError:
         pass
+    outer_logger.debug("Preparing to start the event loop...")
     #then start the event loop
-    asyncio.run(run(outer_logger))
+    asyncio.run(maximilian(outer_logger).run())
 except KeyboardInterrupt:
     print("\nKeyboardInterrupt detected. Exiting.")
 except KeyError:
