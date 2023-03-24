@@ -35,8 +35,8 @@ class reminders(commands.Cog):
     def __init__(self, bot, load=False):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
-        self.bot.todo_entries = {}
-        self.bot.reminders = {}
+        self.todo_lists = {}
+        self.reminders = {}
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
         if load:
             asyncio.create_task(self.update_todo_cache())
@@ -56,7 +56,7 @@ class reminders(commands.Cog):
                 if load:
                     asyncio.create_task(self.handle_reminder(item['user_id'], item['channel_id'], item['reminder_time'], item['now'], item['reminder_text'], item['uuid']))
                     self.logger.info(f"Started handling a reminder for user {item['user_id']}")
-            self.bot.reminders = new_reminders
+            self.reminders = new_reminders
         except:
             self.logger.info("Couldn't update reminder cache! Is there anything in the database?")
         traceback.print_exc()
@@ -75,7 +75,7 @@ class reminders(commands.Cog):
         except:
             self.logger.info("Couldn't update todo cache! Is anything in the database?")
             traceback.print_exc()
-        self.bot.todo_entries = new_todo_entries
+        self.todo_lists = new_todo_entries
         self.logger.info("Updated todo cache!")
     
     async def handle_reminder(self, user_id, channel_id, remindertime, reminderstarted, remindertext, uuid):
@@ -112,7 +112,7 @@ class reminders(commands.Cog):
             try:
                 if not entry:
                     return await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add fix error handling`.")
-                elif entry in [i['entry'] for i in [j for j in list(self.bot.todo_entries.values())][0] if i['user_id'] == ctx.author.id]:
+                elif entry in [i['entry'] for i in [j for j in list(self.todo_lists.values())][0] if i['user_id'] == ctx.author.id]:
                     return await ctx.send("That entry already exists.")
             except IndexError:
                 pass
@@ -135,7 +135,7 @@ class reminders(commands.Cog):
                     int(entry)
                 except (TypeError, ValueError):
                     return await ctx.send("You need to specify the number of the entry you want to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.")
-                self.bot.db.exec("delete from todo where entry=%s and user_id=%s", (self.bot.todo_entries[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
+                self.bot.db.exec("delete from todo where entry=%s and user_id=%s", (self.todo_lists[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
                 entrycount = self.bot.db.exec(f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
                 await self.update_todo_cache()
                 await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=self.bot.config['theme_color']))
@@ -156,7 +156,7 @@ class reminders(commands.Cog):
         if action == "list" or entry == None:
             entrystring = ""
             try:
-                for count, value in enumerate(self.bot.todo_entries[ctx.author.id]):
+                for count, value in enumerate(self.todo_lists[ctx.author.id]):
                     entrystring += f"{count+1}. `{value['entry']}`\nCreated {humanize.precisedelta(value['timestamp'], format='%0.0f')} ago.\n\n"
                     if len(entrystring) > 3800:
                         await ctx.send(f"\U000026a0 It looks like your todo list is too long to show in a single message.\nOnly showing entries 1-{count+1}.")
@@ -183,12 +183,12 @@ class reminders(commands.Cog):
             try:
                 if entry < 1:
                     #wrap around to 2 more than max length
-                    entry = len(self.bot.todo_entries[ctx.author.id])+2
-                await ctx.send(embed=discord.Embed(title=f"Entry \#{entry}", description=f"Created {humanize.precisedelta(self.bot.todo_entries[ctx.author.id][entry-1]['timestamp'], format='%0.0f')} ago.\n Entry text:\n`{self.bot.todo_entries[ctx.author.id][entry-1]['entry']}`", color=self.bot.config['theme_color']))
+                    entry = len(self.todo_lists[ctx.author.id])+2
+                await ctx.send(embed=discord.Embed(title=f"Entry \#{entry}", description=f"Created {humanize.precisedelta(self.todo_lists[ctx.author.id][entry-1]['timestamp'], format='%0.0f')} ago.\n Entry text:\n`{self.todo_lists[ctx.author.id][entry-1]['entry']}`", color=self.bot.config['theme_color']))
             except discord.HTTPException:
                 return await ctx.send("Sorry, that entry is wayyyyyyyyy too long to display. You should probably delete it.")
             except IndexError:
-                return await ctx.send(f"Sorry, that entry couldn't be found. Your todo list currently has {len(self.bot.todo_entries[ctx.author.id])} entries.")
+                return await ctx.send(f"Sorry, that entry couldn't be found. Your todo list currently has {len(self.todo_lists[ctx.author.id])} entries.")
             except KeyError:
                 return await ctx.send("It doesn't look like you have anything in your todo list.")
             except:
