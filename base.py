@@ -55,17 +55,14 @@ class maximilian(commands.Bot):
             #check if we're not loading this extension
             if cleanname in self.noload or f"cogs.{cleanname}" in self.noload:
                 self.logger.info(f"Not loading module cogs.{cleanname}.")
-                self.errorcount += 1
                 return
             #actually load the extension
             try:
                 await self.load_extension(f"cogs.{cleanname}")
-                self.extensioncount += 1
                 self.logger.debug(f"Loaded module cogs.{cleanname}!")
             except commands.ExtensionAlreadyLoaded:
                 self.logger.debug(f"{cleanname} is already loaded, skipping")
             except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
-                self.errorcount += 1
                 if not hasattr(error, 'original'):
                     #only NoEntryPointError doesn't have original
                     error.original = commands.errors.NoEntryPointError('')
@@ -102,13 +99,16 @@ class maximilian(commands.Bot):
         """Loads modules during startup."""
         self.logger.info("Loading modules...")
         await self.load_jishaku()
-        self.extensioncount, self.errorcount = 0, 0
         print("Loading required modules...")
         await self.load_required()
+        exts = self.extensions.copy()
         print("Loading other modules...")
-        for each in os.listdir("./cogs"):
+        files = os.listdir("./cogs")
+        for each in files:
             await self.load(each)
-        self.logger.info(f"Loaded {self.extensioncount} modules successfully. {self.errorcount} module{'s' if self.errorcount != 1 else ''} not loaded.")
+        total = len([f"{i}" for i in list(self.extensions.keys()) if i not in list(exts.keys())])
+        diff = (len(files)-1)-total
+        self.logger.info(f"Loaded {total} modules successfully. {diff} module{'s' if diff != 1 else ''} not loaded.")
         print("Done loading modules. Finishing startup...")
 
     #wrap the main on_message event in a function for prettiness
