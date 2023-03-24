@@ -31,6 +31,8 @@ class FileTooLargeError(discord.ext.commands.CommandError):
 
 class Metadata():
     '''An object that stores metadata about a song.'''
+    __slots__ = ("duration", "filename", "id", "name", "thumbnail", "info")
+
     def __init__(self):
         self.duration = None
         self.filename = None
@@ -50,6 +52,8 @@ class CurrentSong(Metadata):
 
 class Player():
     '''An object that stores the queue and current song for a specific guild.'''
+    __slots__ = ("queue", "current_song", "guild", "owner", "lock", "metadata", "checking")
+
     def __init__(self, ctx, logger):
         self.queue = []
         self.current_song = []
@@ -63,6 +67,8 @@ class Player():
 
 class music(commands.Cog):
     '''Music commands'''
+    __slots__ = ("logger", "channels_playing_audio", "lock", "bot", "players", "ydl_opts")
+
     def __init__(self, bot):
         self.channels_playing_audio = []
         self.logger = logging.getLogger(f"maximilian.{__name__}")

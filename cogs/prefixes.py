@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 
@@ -7,13 +8,15 @@ from discord.ext import commands
 
 class prefixes(commands.Cog):
     '''Change Maximilian's prefix'''
+    __slots__ = ("bot", "logger")
+
     def __init__(self, bot, load=False):
         bot.prefix = {}
         bot.prefixes = self
         self.bot = bot
         self.logger = logging.getLogger(__name__)
         if load:
-            self.bot.loop.create_task(self.update_prefix_cache())
+            asyncio.create_task(self.update_prefix_cache())
 
     def _get_prefix_if_exists(self, guild):
         try:
