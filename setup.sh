@@ -87,17 +87,23 @@ then
     exit
 fi
 
-if [ "$1" == "backup" -o "$2" == "backup" ];
+if [ "$1" == "backup" ];
 then
     echo "Backing up the database..."
     bash setup.sh start
-    sudo mysqldump --databases maximilian > backup.sql
+    if [ "$2" != "" ];
+    then
+        db="$2"
+    else
+        db="maximilian"
+    fi
+    sudo mysqldump --databases $db > backup.sql
     echo ""
     echo "Saved the backup to 'backup.sql'. Run 'bash setup.sh restore' to restore it."
     exit
 fi
 
-if [ "$1" == "restore" -o "$2" == "restore" ];
+if [ "$1" == "restore" ];
 then
     if [ ! -f backup.sql ]
     then
@@ -113,8 +119,14 @@ then
         echo ""
         echo "Ok. Restoring from the backup..."
         bash setup.sh start
-        sudo mysql -Be "drop database maximilian"
-        sudo mysql -Be "create database maximilian;"
+        if [ "$2" != "" ];
+        then
+            db="$2"
+        else
+            db="maximilian"
+        fi
+        sudo mysql -Be "drop database ${db};"
+        sudo mysql -Be "create database ${db};"
         sudo mysql maximilian < backup.sql
         if [ $? != 0 ]
         then
