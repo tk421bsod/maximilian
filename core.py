@@ -37,16 +37,12 @@ def get_prefix(bot, message):
         bot.prefix[message.guild.id] = "!"
         return "!"
 
-def get_named_logger(name):
-    logging.getLogger("maximilian.core").debug(f"Getting named logger 'maximilian.{name}'")
-    if name:
-        return logging.getLogger(f'maximilian.{name}')
-    return logging.getLogger(f'maximilian')
-
 class DeletionRequestAlreadyActive(BaseException):
     pass
 
 class confirmation:
+    __slots__ = ("bot", "GREEN_CHECK", "RED_X")
+
     def __init__(self, bot, message, ctx, callback, *additional_callback_args):
         '''A class that handles a bit of confirmation logic for you. You\'ll need to provide a callback coroutine that takes at least (reaction:discord.RawReactionActionEvent, message:discord.Message, ctx:discord.ext.commands.Context, confirmed:bool). Obviously it should also take anything else passed to additional_callback_args.'''
         self.bot = bot
@@ -85,6 +81,8 @@ class confirmation:
                     break
 
 class deletion_request:
+    __slots__ = ("bot", "mainembeds", "clearedembeds")
+
     def __init__(self, bot):
         '''A class that handles some deletion request logic. Has some similar attributes to `confirmation` but doesn't subclass as `confirmation`'s __init__ calls _handle_confirmation (subclassing may cause naming conflicts too)'''
         #mainembeds and clearedembeds are mappings of type to embed (see https://discord.com/developers/docs/resources/channel#embed-object for information on the format of these embeds)
@@ -144,6 +142,8 @@ class deletion_request:
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
+    __slots__ = ("bot", "waiting", "get_named_logger", "reload_enabled")
+
     def __init__(self, bot, load=False):
         self.bot = bot
         #we can't easily import this file from files in the cogs folder
@@ -153,7 +153,6 @@ class core(commands.Cog):
         self.bot.DeletionRequestAlreadyActive = DeletionRequestAlreadyActive
         self.bot.core = self
         self.waiting = []
-        self.get_named_logger = get_named_logger #see comments above; this also needs to be called before extension load
         self.bot.blocklist = []
         self.logger = logging.getLogger(__name__)
         self.bot.ready = False

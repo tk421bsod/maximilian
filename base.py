@@ -11,7 +11,7 @@ import db
 import settings
 
 class maximilian(commands.Bot):
-    __slots__ = ("commit", "errorcount", "logger", "noload", "extensioncount", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db")
+    __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "commit", "errorcount", "logger", "noload", "extensioncount", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db")
 
     def __init__(self, logger):
         logger.debug("Loading config...")
@@ -133,6 +133,10 @@ class maximilian(commands.Bot):
         except pymysql.OperationalError:
             self.logger.debug(traceback.format_exc())
             self.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
+    
+    async def init_general_settings(self):
+        #maybe we could make add_category itself a coro?
+        self.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
 
     #wrap everything in a function to prevent conflicting event loops
     async def run(self):
@@ -147,12 +151,23 @@ class maximilian(commands.Bot):
         self.setup_db()
         #initialize settings api
         self.settings = settings.settings(self)
-        self.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
-        print("Logging in...")
         if not "--nologin" in sys.argv:
+            #TODO: Eliminate potential for race conditions here:
+            #Either load_extensions_async or init_general_settings could run before Bot.start runs,
+            #which can cause a RuntimeError if an extension's cache fill method starts early.
+            #setup_hook may work for this, however it runs after login.
+            #extension load is time-consuming and any commands received during that window of time will fail.
             asyncio.create_task(self.load_extensions_async())
             self.logger.debug("load_extensions_async has been scheduled.")
+            asyncio.create_task(self.init_general_settings()) 
+            self.logger.debug("init_general_settings has been scheduled.")
+            print("Logging in...")
             await self.start(self.config["token"])
+        else:
+            self.logger.warn("Invoked with --nologin, exiting and not calling start()")
+            return
+        self.logger.warn("start() returned without raising an exception!!")
+        self.logger.warn("Please let tk421 know about this.")
 
 if __name__ == "__main__":
     print("Sorry, this file cannot be run directly. Run main.py instead.")

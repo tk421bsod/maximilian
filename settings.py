@@ -35,6 +35,8 @@ class Setting():
     permission : str
         The permission this setting requires, as a string. Must be a valid discord.Permission e.g manage_guild.
     """
+    __slots__ = ("states", "description", "name", "unusablewith", "category", "permission")
+
     def __init__(self, category, name, states, permission):
         self.states = states
         self.description = category.settingdescmapping[name]
@@ -103,6 +105,8 @@ class Category():
             If False, the behavior of calls to Setting.enabled() is unpredictable.
             Those calls could return None or even result in an AttributeError depending on the initialization state of the setting.
     """
+    __slots__ = ("_ready", "settingdescmapping", "unusablewithmapping", "name", "filling", "logger", "bot", "permissionmapping", "data", "__dict__")
+
     def __init__(self, constructor, name, settingdescmapping, unusablewithmapping, permissionmapping):
         self._ready = False
         self.settingdescmapping = settingdescmapping
@@ -111,7 +115,7 @@ class Category():
         setattr(constructor, name, self)
         self.name = name
         self.filling = False
-        self.logger = logging.getLogger(f"settings.{name}") #TODO: rethink this. this isn't entirely needed and could introduce some overhead
+        self.logger = constructor.logger
         self.bot = constructor.bot
         self.permissionmapping = permissionmapping
         asyncio.create_task(self.fill_cache())
@@ -176,12 +180,9 @@ class Category():
         except:
             #TODO: Consider loudly failing instead of handling this as this state is undesireable and messes with existing settings
             traceback.print_exc()
-            self.logger.warning('An error occurred while filling the setting cache, defaulting to every setting disabled')
-            self.data = []
-            #if something went wrong, default to everything disabled
-            for name in list(self.settingdescmapping.keys()):
-                for guild in guilds:
-                    self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
+            self.logger.error("An error occurred while filling the setting cache.")
+            self.logger.error("Settings in this category will not be registered.")
+            return
         else:
             self.logger.info("Validating setting states...")
             #step 2: ensure each setting has an entry
@@ -207,6 +208,7 @@ class Category():
         self.logger.info("Done filling settings cache.")
         self._ready = True
         self.filling = False
+        del self.data
 
     async def update_cached_state(self, ctx:commands.Context, setting:Setting):
         """
@@ -305,8 +307,11 @@ class Category():
 
 class settings():
     """
-    A class that allows extensions to easily add settings
+    A simple interface for adding setting toggles to modules
     """
+    #should we even use __slots__ if we're adding __dict__
+    __slots__ = ("bot", "logger", "categorynames", "__dict__")
+
     def __init__(self, bot):
         """
         Parameters
@@ -316,16 +321,15 @@ class settings():
             The main Bot instance.
         """
         self.bot = bot
-        self.settings = {}
         self.logger = logging.getLogger("settings")
         self.logger.info(f"Settings module initialized.")
-        self.unusablewithmessage = ""
         self.categorynames = []
 
     def add_category(self, category, settingdescmapping, unusablewithmapping, permissionmapping):
         """
-        A wrapper for creating a new Category instance. Its purpose is to allow a category to register as an attribute of the main settings instance.
-        After this returns and the Category's 'ready' attribute is True, you can check the value of settings using `bot.settings.<category>.<setting>.enabled()`.
+        A helper method for creating a new Category instance. It allows a category to register as an attribute of the main settings instance.
+        After this returns and the Category's 'ready' attribute is set to True, you can check the value of settings using `bot.settings.<category>.<setting>.enabled()`.
+        Consider awaiting 'Category.wait_ready' before any Setting.enabled() call.
 
         Parameters
         ----------

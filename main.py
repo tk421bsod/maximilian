@@ -6,7 +6,6 @@ if __name__ != "__main__":
     print("Please don't do that. Some code here relies on being ran directly through a command such as python3 main.py.")
     print("Need to access some Maximilian API? Just import the right file. Read HOSTING.md for an overview.")
     print("If you have a legitimate use case for this, I'd like to hear about it -- send me a DM at tk421#2016 on Discord.")
-    print("If you decide to remove the following call to quit() and continue, any weird behavior is on you, not me.")
     print("Maximilian will now attempt to exit.")
     quit()
 

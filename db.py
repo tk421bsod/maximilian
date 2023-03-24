@@ -15,6 +15,7 @@ class db:
     ensure_tables() - Ensures that all required tables exist. Called by main.run().
     exec(query, params, *,  fetchall) - Executes 'query' with 'params'. Uses pymysql's parameterized queries. 'params' can be empty.
     """
+    __slots__ = ("ip", "database", "TABLES", "logger", "failed", "conn", "p")
 
     def __init__(self, bot=None, password=None, ip=None, database=None):
         """
@@ -34,7 +35,7 @@ class db:
                 print("It looks like you still have some files left over from the configuration data format change. Run `bash setup.sh delete-old` to get rid of them.")
         except FileNotFoundError:
             pass
-        self.databasepassword = password
+        self.p = password
         if bot:
             self.ip = bot.dbip
             self.database = bot.database
@@ -78,6 +79,7 @@ class db:
             self.logger.info('Database setup was already finished, nothing to do')
         else:
             self.logger.warning('Database setup finished.')
+        del self.TABLES
 
     def reconnect(self):
         self.conn = self.attempt_connection()
@@ -87,7 +89,7 @@ class db:
         return self.connect()
 
     def connect(self):
-        return pymysql.connect(host=self.ip, user="maximilianbot", password=self.databasepassword, db=self.database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, autocommit=True).cursor()
+        return pymysql.connect(host=self.ip, user="maximilianbot", password=self.p, db=self.database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, autocommit=True).cursor()
 
     @requires_connection
     def exec(self, query, params, *, fetchall=False):
