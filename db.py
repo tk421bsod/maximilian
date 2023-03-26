@@ -1,7 +1,7 @@
 #db.py: some database utilities
 import logging
 
-import pymysql
+import aiomysql
 
 class db:
     """
@@ -13,9 +13,9 @@ class db:
     -------
 
     ensure_tables() - Ensures that all required tables exist. Called by main.run().
-    exec(query, params, *,  fetchall) - Executes 'query' with 'params'. Uses pymysql's parameterized queries. 'params' can be empty.
+    exec(query, params) - Executes 'query' with 'params'. Uses aiomysql's parameterized queries. 'params' can be empty.
     """
-    __slots__ = ("ip", "database", "TABLES", "logger", "failed", "conn", "p")
+    __slots__ = ("ip", "database", "TABLES", "logger", "failed", "pool", "p")
 
     def __init__(self, bot=None, password=None, ip=None, database=None):
         """
@@ -47,32 +47,27 @@ class db:
         self.TABLES = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting, category)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'songs':'name text, id text, duration varchar(8), thumbnail text', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned, constraint users primary key (user_id)'}
         self.logger = logging.getLogger(__name__)
         self.failed = False
-        #try to open a connection to the database
-        self.conn = self.attempt_connection()
-        self.logger.info("Connected to database.")
+        self.logger.debug("Database API initialized.")
 
     def requires_connection(func):
-        def requires_connection_inner(self, *args, **kwargs):
-            """Attempts a reconnect if OperationalError is raised"""
-            try:
-                self.logger.debug(f"Calling {func.__name__} with {args}")
-                return func(self, *args, **kwargs)
-            except (pymysql.err.OperationalError, pymysql.err.InterfaceError) as e:
-                self.logger.warn("unknown database error, attempting a reconnect")
-                self.reconnect()
-                return func(self, *args, **kwargs)
+        async def requires_connection_inner(self, *args, **kwargs):
+            """Handles connection acquisition for functions that require it"""
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    self.logger.debug(f"Calling {func.__name__} with {args}")
+                    return await func(self, cur, *args, **kwargs)
         return requires_connection_inner
 
     @requires_connection
-    def ensure_tables(self):
+    async def ensure_tables(self, cur):
         self.logger.info("Finishing database setup...")
         for table, schema in self.TABLES.items():
             try:
-                self.conn.execute(f'select * from {table}')
-            except pymysql.err.ProgrammingError:
+                await cur.execute(f'select * from {table}')
+            except aiomysql.ProgrammingError:
                 self.logger.debug(f'Table {self.database}.{table} doesn\'t exist. Creating it.')
                 self.logger.debug(f"Schema for this table is {schema}")
-                self.conn.execute(f'create table {table}({schema})')
+                await cur.execute(f'create table {table}({schema})')
                 if not self.failed:
                     self.failed = True
         if not self.failed:
@@ -81,19 +76,13 @@ class db:
             self.logger.warning('Database setup finished.')
         del self.TABLES
 
-    def reconnect(self):
-        self.conn = self.attempt_connection()
-
-    def attempt_connection(self):
+    async def connect(self):
         self.logger.info(f"Attempting to connect to database '{self.database}' on '{self.ip}'...")
-        return self.connect()
-
-    def connect(self):
-        return pymysql.connect(host=self.ip, user="maximilianbot", password=self.p, db=self.database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, autocommit=True).cursor()
+        self.pool = await aiomysql.create_pool(host=self.ip, user="maximilianbot", password=self.p, db=self.database, charset='utf8mb4', cursorclass=aiomysql.cursors.DictCursor, autocommit=True)
 
     @requires_connection
-    def exec(self, query, params, *, fetchall=False):
-        """Executes 'query' with 'params'. Uses pymysql's parameterized queries.
+    async def exec(self, cur, query, params, *, fetchall=False):
+        """Executes 'query' with 'params'. Uses aiomysql's parameterized queries.
 
         Parameters
         ----------
@@ -102,8 +91,8 @@ class db:
         params : str
             The parameters for the query.
         """
-        self.conn.execute(str(query), params)
-        row = self.conn.fetchall()
+        await cur.execute(str(query), params)
+        row = await cur.fetchall()
         if len(row) == 1:
             row = row[0]
         return row if row != () and row != "()" else None

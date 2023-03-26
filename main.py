@@ -121,7 +121,7 @@ try:
         time.sleep(1)
     try:
         #set up rich tracebacks if applicable
-        install(suppress=[discord,pymysql])
+        install(suppress=[discord,aiomysql])
     except NameError:
         pass
     outer_logger.debug("Preparing to start the event loop...")

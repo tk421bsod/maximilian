@@ -6,7 +6,7 @@ import time
 import traceback
 
 import discord
-from pymysql.err import OperationalError
+from aiomysql import OperationalError
 
 import common
 import db
@@ -66,15 +66,17 @@ def parse_arguments(bot, args):
         bot.logger.warning("No arguments provided.")
         bot.dbip = "localhost"
 
-def initialize_db(bot, config):
+async def initialize_db(bot, config):
+    inst = db.db(bot, config['dbp'])
     try:
-        #constructing an instance of db calls db.db.attempt_connection
-        return db.db(bot, config['dbp'])
+        await inst.connect()
+        return inst
     except OperationalError:
         bot.logger.error("Couldn't connect to database. Trying to start it...")
         os.system("bash setup.sh start")
         try:
-            return db.db(bot, config['dbp'])
+            await inst.connect()
+            return inst
         except OperationalError:
             bot.logger.debug(traceback.format_exc())
             bot.logger.critical(f"Couldn't connect to database! \nTry running 'bash setup.sh fix'.")

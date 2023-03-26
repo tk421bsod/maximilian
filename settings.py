@@ -1,4 +1,4 @@
-from pymysql.err import IntegrityError
+from aiomysql import IntegrityError
 
 import asyncio
 import collections
@@ -157,7 +157,7 @@ class Category():
                 continue
             try:
                 self.logger.debug(f"state not found for setting {name} in guild {guild.id}, adding it to database")
-                self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
+                await self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
                 continue
             self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
@@ -172,7 +172,7 @@ class Category():
         guilds = self.bot.guilds #stop state population from breaking if guilds change while filling cache
         #step 1: get data for each setting, add settings to db if needed
         try:
-            self.data = self.bot.db.exec('select * from config where category=%s order by setting', (self.name), fetchall=True)
+            self.data = await self.bot.db.exec('select * from config where category=%s order by setting', (self.name), fetchall=True)
             if self.data is None:
                 self.data = []
             if not isinstance(self.data, list):
@@ -220,7 +220,7 @@ class Category():
         """
         Changes a setting's state in the database. Calls update_cached_state to change a setting's state in cache.
         """
-        self.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, self.name, setting.name.replace("_", " ")))
+        await self.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, self.name, setting.name.replace("_", " ")))
         await self.update_cached_state(ctx, setting)
 
     async def _prepare_conflict_string(self, conflicts):

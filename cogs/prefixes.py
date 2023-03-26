@@ -29,7 +29,7 @@ class prefixes(commands.Cog):
         
     async def _fetch_prefix(self, guild_id):
         '''Fetches a prefix corresponding to a guild id from the database'''
-        prefix = self.bot.db.exec("select prefix from prefixes where guild_id = %s", (guild_id))
+        prefix = await self.bot.db.exec("select prefix from prefixes where guild_id = %s", (guild_id))
         if not prefix and prefix != () and prefix != "()":
             self.bot.prefix[guild_id] = '!'
         else:
@@ -58,10 +58,10 @@ class prefixes(commands.Cog):
         if self._is_prefix_same(ctx.guild, new_prefix):
             return await ctx.send(self.bot.strings["PREFIX_SAME"].format(new_prefix))
         await ctx.send(self.bot.strings["CHANGING_PREFIX"].format(new_prefix))
-        if self.bot.db.exec("select * from prefixes where guild_id = %s", (ctx.guild.id, )):
-            self.bot.db.exec("update prefixes set prefix = %s where guild_id = %s", (new_prefix, ctx.guild.id))
+        if await self.bot.db.exec("select * from prefixes where guild_id = %s", (ctx.guild.id, )):
+            await self.bot.db.exec("update prefixes set prefix = %s where guild_id = %s", (new_prefix, ctx.guild.id))
         else:
-            self.bot.db.exec("insert into prefixes values(%s, %s)", (ctx.guild.id, new_prefix))
+            await self.bot.db.exec("insert into prefixes values(%s, %s)", (ctx.guild.id, new_prefix))
         self.bot.prefix[ctx.guild.id] = new_prefix
         await ctx.send(self.bot.strings["PREFIX_SET"].format(new_prefix))
 

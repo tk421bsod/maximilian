@@ -2,13 +2,17 @@ import asyncio
 import os
 import sys
 import time
+
+import aiomysql
 import discord
 from discord.ext import commands
+
 import common
-import startup
 import core
 import db
 import settings
+import startup
+
 
 class maximilian(commands.Bot):
     __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db")
@@ -124,13 +128,13 @@ class maximilian(commands.Bot):
         intents.reactions = True; intents.members = True; intents.guilds = True; intents.message_content = True; intents.messages = True; intents.voice_states = True;
         return intents
 
-    def setup_db(self):
+    async def setup_db(self):
         #try to connect to database, exit if it fails
-        self.db = startup.initialize_db(self, self.config)
+        self.db = await startup.initialize_db(self, self.config)
         #make sure all tables exist
         try:
-            self.db.ensure_tables()
-        except pymysql.OperationalError:
+            await self.db.ensure_tables()
+        except aiomysql.OperationalError:
             self.logger.debug(traceback.format_exc())
             self.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
     
@@ -148,7 +152,7 @@ class maximilian(commands.Bot):
         #parse additional arguments (ip, enablejsk, noload)
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
-        self.setup_db()
+        await self.setup_db()
         #initialize settings api
         self.settings = settings.settings(self)
         if not "--nologin" in sys.argv:

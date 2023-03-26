@@ -3,7 +3,7 @@
 import traceback
 
 import discord
-import pymysql
+import aiomysql
 from discord.ext import commands
 
 
@@ -27,7 +27,7 @@ class errorhandling(commands.Cog):
             if cog._get_overridden_method(cog.cog_command_error) is not None:
                 return
         #check for database errors first, these should almost never happen
-        if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError):
+        if isinstance(error, aiomysql.OperationalError) or isinstance(error, aiomysql.ProgrammingError):
             embed = discord.Embed(title="Fatal Error",description="\U0000274c You shouldn't see this message. If you do, an unexpected database error has occurred. \nContact my developer (tk421#2016) if you see this again.", color=self.bot.config['theme_color'])
             if ctx.guild.me.guild_permissions.embed_links:
                 await ctx.send(embed=embed)
