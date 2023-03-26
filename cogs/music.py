@@ -381,29 +381,26 @@ class music(commands.Cog):
         '''Gets the filename, id, and other metadata of a song. This tries to look up a song in the database first, then it searches Youtube if that fails.'''
         self.logger.info("Locked execution.")
         async with ctx.typing():
-            try:
-                #check if we've been provided a valid url
-                task = asyncio.create_task(self.test_url(url, player))
-                await self._wait(player, task)
-            except Exception:
-                #if not...
-                with yt_dlp.YoutubeDL(self.ydl_opts) as ydl:
-                    #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
-                    self.logger.info("looking for song in db...")
-                    info = await self.bot.db.exec("select * from songs where name like %s", (f"%{url}%", ))
-                    if info != None:
-                        self.logger.info("found song in db! trying to get from cache...")
-                        player.metadata.id = info["id"]
-                        player.metadata.name = info["name"]
-                        if int(str(info['duration']).split(':')[0]) > 60:
-                            raise DurationLimitError()
-                    else:
-                        self.logger.info("song wasn't found in db. searching youtube...")
+            with yt_dlp.YoutubeDL(self.ydl_opts) as ydl:
+                self.logger.info("looking for song in db...")
+                info = await self.bot.db.exec("select * from songs where name like %s", (f"%{url}%", ))
+                if info:
+                    self.logger.info("found song in db! trying to get from cache...")
+                    player.metadata.id = info["id"]
+                    player.metadata.name = info["name"]
+                    if int(str(info['duration']).split(':')[0]) > 60:
+                        raise DurationLimitError()
+                else:
+                    try:
+                        #check if we've been provided a valid url
+                        task = asyncio.create_task(self.test_url(url, player))
+                        await self._wait(player, task)
+                    except Exception:
+                        #not found and not a valid url? search youtube
+                        self.logger.info("searching youtube...")
                         await self.search_youtube_for_song(ydl, ctx, url, 0, player)
-                    await self.get_song_from_cache(ctx, player.metadata.id, self.ydl_opts, player)
-            else:
-                #if the url is valid, don't try to search youtube, just get it from cache
-                await self.get_song_from_cache(ctx, url,self.ydl_opts, player)
+            url = player.metadata.id if player.metadata.id else url
+            await self.get_song_from_cache(ctx, url, self.ydl_opts, player)
 
     
     #executes when someone sends a message with the prefix followed by 'play'
