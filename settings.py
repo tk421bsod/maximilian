@@ -383,7 +383,11 @@ class settings():
             self.logger.warn(f"add_category was called twice for category '{category}'!!")
             self.logger.warn("Don't try to update a category after creation. Doing so may break stuff.")
             return
-        Category(self, category, settingdescmapping, unusablewithmapping, permissionmapping)
+        try:
+            Category(self, category, settingdescmapping, unusablewithmapping, permissionmapping)
+        except Exception as e:
+            self.logger.error("Category registration failed for category '{category}`!")
+            raise e
         self.categorynames.append(category)
         self.logger.info(f"Category '{category}' registered. Access it at bot.settings.{category}. Settings are unavailable until bot.settings.{category}.ready == True.")
 
@@ -415,7 +419,7 @@ class settings():
                 await category.wait_ready()
                 self.logger.error("cache fill complete, continuing :)")
             await category.config(ctx, setting)
-        except AttributeError:
+        except AttributeError: #category wasn't configured properly
             traceback.print_exc()
             return await ctx.send(self.bot.strings["CATEGORY_INVALID"])
 
