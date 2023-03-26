@@ -12,7 +12,7 @@ import urllib
 import aiohttp
 import discord
 import ffmpeg
-import pymysql
+import aiomysql
 import youtube_dl
 from discord.ext import commands
 
@@ -31,7 +31,7 @@ class FileTooLargeError(discord.ext.commands.CommandError):
 
 class Metadata():
     '''An object that stores metadata about a song.'''
-    __slots__ = ("duration", "filename", "id", "name", "thumbnail", "info")
+    __slots__ = ("duration", "filename", "id", "name", "thumbnail", "info", "url")
 
     def __init__(self):
         self.duration = None
@@ -40,6 +40,7 @@ class Metadata():
         self.name = None
         self.thumbnail = None
         self.info = None
+        self.url = None
 
 class CurrentSong(Metadata):
     '''A subclass of Metadata that stores information about the current song.'''
@@ -82,6 +83,8 @@ class music(commands.Cog):
         'ignoreerrors': False,
         'logtostderr': False,
         'no_warnings': True,
+        'retries': 20,
+        'fragment-retries': 20,
         'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
@@ -239,21 +242,22 @@ class music(commands.Cog):
 
     async def get_song_from_cache(self, ctx, url, ydl_opts, player):
         '''Attempts to find an mp3 matching the video id locally, downloading the video if that file isn't found. This prioritizes speed, checking if a song is saved locally before downloading it from Youtube.'''
+        self.logger.info("getting song from cache")
+        #get video id from parameters, try to open mp3 file matching that id (if that file exists, play it instead of downloading it)
+        if "youtu.be" in url:
+            video = url.split("/")[3]
+            print(video)
+        elif "youtube.com" in url:
+            url_data = urllib.parse.urlparse(url)
+            query = urllib.parse.parse_qs(url_data.query)
+            video = query["v"][0]
+        else:
+            #function doesn't take user input, so it's safe to assume the url is an id
+            video = url 
         try:
-            self.logger.info("getting song from cache")
-            #get video id from parameters, try to open mp3 file matching that id (if that file exists, play it instead of downloading it)
-            if "youtu.be" in url:
-                video = url.split("/")[3]
-            elif "youtube.com" in url:
-                url_data = urllib.parse.urlparse(url)
-                query = urllib.parse.parse_qs(url_data.query)
-                video = query["v"][0]
-            else:
-                #function doesn't take user input, so it's safe to assume the url is an id
-                video = url 
             open(f"songcache/{video}.mp3", "r")
             #check if video id is in database, add it if it isn't
-            data = self.bot.db.exec("select * from songs where id = %s limit 1", (video))
+            data = await self.bot.db.exec("select * from songs where id = %s limit 1", (video))
             if data:
                 player.metadata.name = data['name']
                 player.metadata.filename = f"songcache/{video}.mp3"
@@ -276,7 +280,7 @@ class music(commands.Cog):
                         self.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                         if m > 60 and ctx.author.id != self.bot.owner_id:
                             raise DurationLimitError()
-                    self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
+                    await self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
             self.logger.info("got song from cache!")
         except FileNotFoundError:
             self.logger.info("song isn't in cache")
@@ -287,37 +291,38 @@ class music(commands.Cog):
                     #get name of file we're going to play, for some reason prepare_filename
                     #doesn't return the correct file extension
                     player.metadata.name = info["title"]
-                    player.metadata.url = f"https://youtube.com/watch?v={video}"
                     player.metadata.thumbnail = info["thumbnail"]
+                    player.metadata.url = f"https://youtube.com/watch?v={video}"
                     #if duration is 0, we got a stream, don't put that in the database/download it
                     if info['duration'] == 0.0:
                         self.logger.info("this video is a stream")
                         player.metadata.filename = info["url"]
                         player.metadata.duration = "No duration available (this is a stream)"
-                    else:
-                        performance = self.bot.settings.music.performance.enabled(ctx.guild.id)
-                        info = None
-                        if performance and ctx.command:
-                            if ctx.command.name != "download":
-                                info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
-                        if not info:
-                            info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
-                        m, s = divmod(info["duration"], 60)
-                        player.metadata.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
-                        if m > 60 and ctx.author.id != self.bot.owner_id:
-                            raise DurationLimitError()
-                        player.metadata.filename = None
-                        if performance and ctx.command:
-                            if ctx.command.name != "download":
-                                player.metadata.filename = info["formats"][0]["url"]
-                        if not player.metadata.filename:
-                            player.metadata.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
-                            try:
-                                self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
-                            except pymysql.errors.IntegrityError:
-                                pass
-        except:
+                        return
+                    performance = self.bot.settings.music.performance.enabled(ctx.guild.id)
+                    info = None
+                    if performance and ctx.command:
+                        if ctx.command.name != "download":
+                            info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
+                    if not info:
+                        info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
+                    m, s = divmod(info["duration"], 60)
+                    player.metadata.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
+                    if m > 60 and ctx.author.id != self.bot.owner_id:
+                        raise DurationLimitError()
+                    player.metadata.filename = None
+                    if performance and ctx.command:
+                        if ctx.command.name != "download":
+                            player.metadata.filename = info["formats"][0]["url"]
+                    if not player.metadata.filename:
+                        player.metadata.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
+                        try:
+                            await self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail))
+                        except aiomysql.IntegrityError:
+                            pass
+        except Exception as e:
             traceback.print_exc()
+            raise e
         return
 
     async def search_youtube_for_song(self, ydl, ctx, url, num, player):
@@ -385,7 +390,7 @@ class music(commands.Cog):
                 with youtube_dl.YoutubeDL(self.ydl_opts) as ydl:
                     #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
                     self.logger.info("looking for song in db...")
-                    info = self.bot.db.exec("select * from songs where name like %s", (f"%{url}%", ))
+                    info = await self.bot.db.exec("select * from songs where name like %s", (f"%{url}%", ))
                     if info != None:
                         self.logger.info("found song in db! trying to get from cache...")
                         player.metadata.id = info["id"]
