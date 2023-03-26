@@ -13,7 +13,7 @@ import aiohttp
 import discord
 import ffmpeg
 import aiomysql
-import youtube_dl
+import yt_dlp
 from discord.ext import commands
 
 #warning: this uses ffmpeg-python, not ffmpeg (the python module) or python-ffmpeg
@@ -265,8 +265,8 @@ class music(commands.Cog):
                 player.metadata.thumbnail = data['thumbnail']
                 player.metadata.url = f"https://youtube.com/watch?v={video}"
             else:
-                with youtube_dl.YoutubeDL(self.ydl_opts) as youtubedl:
-                    info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
+                with yt_dlp.YoutubeDL(self.ydl_opts) as youtubedl:
+                    info = youtubedl.sanitize_info(await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False)))
                     player.metadata.url = f"https://youtube.com/watch?v={video}"
                     player.metadata.name = info["title"]
                     player.metadata.filename = f"songcache/{video}.mp3"
@@ -285,9 +285,9 @@ class music(commands.Cog):
         except FileNotFoundError:
             self.logger.info("song isn't in cache")
             async with ctx.typing():
-                with youtube_dl.YoutubeDL(self.ydl_opts) as youtubedl:
+                with yt_dlp.YoutubeDL(self.ydl_opts) as youtubedl:
                     #the self.bot.loop.run_in_executor is to prevent the extract_info call from blocking other stuff
-                    info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
+                    info = youtubedl.sanitize_info(await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False)))
                     #get name of file we're going to play, for some reason prepare_filename
                     #doesn't return the correct file extension
                     player.metadata.name = info["title"]
@@ -303,9 +303,9 @@ class music(commands.Cog):
                     info = None
                     if performance and ctx.command:
                         if ctx.command.name != "download":
-                            info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False))
+                            info = youtubedl.sanitize_info(await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=False)))
                     if not info:
-                        info = await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True))
+                        info = youtubedl.sanitize_info(await self.bot.loop.run_in_executor(None, lambda: youtubedl.extract_info(f"https://youtube.com/watch?v={video}", download=True)))
                     m, s = divmod(info["duration"], 60)
                     player.metadata.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                     if m > 60 and ctx.author.id != self.bot.owner_id:
@@ -387,7 +387,7 @@ class music(commands.Cog):
                 await self._wait(player, task)
             except Exception:
                 #if not...
-                with youtube_dl.YoutubeDL(self.ydl_opts) as ydl:
+                with yt_dlp.YoutubeDL(self.ydl_opts) as ydl:
                     #if song isn't in db, search youtube, get first result, check cache,  download file if it's not in cache
                     self.logger.info("looking for song in db...")
                     info = await self.bot.db.exec("select * from songs where name like %s", (f"%{url}%", ))
