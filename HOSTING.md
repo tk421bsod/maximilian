@@ -61,15 +61,16 @@ Any modules in the root directory are what the bot calls 'required' modules. The
 Deleting or breaking one of these modules will prevent Maximilian from functioning as all of these are interdependent to some degree.
 
 Here's what each one does:
-* main.py - launches Maximilian, loads optional modules
-* settings.py - an extremely simple way to add setting toggles to a module
-* helpcommand.py - Maximilian's custom help command
+* main.py - handles some early initialization, launches Maximilian
+* settings.py - an extremely simple API for adding setting toggles to a module
+* helpcommand.py - a custom help command
 * errorhandling.py - command error handling utilities
-* core.py - various utility commands, hooks for on_message, guild_add, and guild_remove, a couple helper methods used in async contexts
-* db.py - an interface for database interaction
+* core.py - various utility commands, hooks for on_message, guild_join, and guild_remove, a couple helper methods used in async contexts
+* db.py - database interface
 * common.py - some helper methods that are used outside of async contexts
 * updater.py - handles updating Maximilian
 * startup.py - handles a couple tasks only performed during startup
+* base.py - handles most tasks besides early initialization
 
 There are also a couple different directories:
 * cogs - stores 'optional' modules that contain commands
@@ -87,7 +88,6 @@ They are:
 * music.py - some music features
 * reactionroles.py - gives users roles on reactions
 * misc.py - a few fun commands that don't really fit into a category
-* images.py - applies effects to profile pictures
 * prefixes.py - provides per-server customizable prefixes
 * reminders.py - reminders and todo lists
 * responses.py - 'custom commands': say something, get a response
