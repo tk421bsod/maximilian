@@ -97,6 +97,14 @@ class misc(commands.Cog):
         '''Show the amount of people in this server.'''
         await ctx.send(f"Found {len(ctx.guild.members)} members. ({len([i for i in ctx.guild.members if not i.bot])} people and {len([i for i in ctx.guild.members if i.bot])} bots)")
 
+    @commands.command()
+    async def avatar(self, ctx, *, user:typing.Optional[discord.Member]=None):
+        '''View another user's avatar, or yours if you don't specify anyone'''
+        if not user:
+            await ctx.send(embed=discord.Embed(title=f"{ctx.author}'s avatar", color=self.bot.config['theme_color']).set_image(url=str(ctx.author.avatar.url)))
+            return
+        await ctx.send(embed=discord.Embed(title=f"{user}'s avatar", color=self.bot.config['theme_color']).set_image(url=str(user.avatar.url)))
+
     @commands.command(aliases=["randomdog", "dog"])
     async def dogs(self, ctx):
         '''Get a random image of a dog.'''
