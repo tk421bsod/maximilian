@@ -78,11 +78,12 @@ PERFORMANCE_MODE_REMINDER:*Songs taking forever to start playing?*\nTry the new 
 ALREADY_CONNECTED:I'm already in your voice channel, so I won't reconnect.
 QUEUE_ADD:Adding to your queue...
 MOVING_TIMEOUT:Moving to the `{}` voice channel timed out.
-CONNECTING_TIMEOUT:Connecting to the `{}` voice channel timed out.
+CONNECTION_TIMEOUT:Connecting to the `{}` voice channel timed out.
 CONNECTED:\u2705 Connected to `{}`.
 GETTING_AUDIO:Getting audio... (this may take a while)
 START_PLAYING: Use the `play` command to start playing stuff.
 ERROR_DURATION:That song is too long. Due to limits on both data usage and storage space, I can't play songs longer than an hour.
+ERROR_TIMEOUT:Looks like a YouTube request timed out. Try that again.\nIf you see this message again, tell tk421#2016.
 ERROR_NO_SEARCH_RESULTS:I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.
 ERROR_LEFT_VOICE:I've left the voice channel too.
 LEFT_VOICE:\u2705 Left the voice channel.
@@ -97,12 +98,13 @@ WARNING_STREAM:\u26a0 I'm playing a stream right now. I'll still add this song t
 SONG_ADDED:Added a song to your queue!
 SONG_NAME:Song Name
 USER_NOT_IN_VOICE:You aren't in a voice channel. Join one, then run this command again.
-UNEXPECTED_ERROR:You shouldn't see this. If you do, either something went seriously wrong or you provided an invalid URL. Try running the command again. Contact tk421#2016 if this appears again.
+UNEXPECTED_ERROR:Sorry, something went wrong while trying to play that song. Try again in a moment.\nIf you see this message again, please contact tk421#2016.
 REMOVE_HELP:Use `{}remove <song's position in queue>` to remove a song from your queue. For example, `{}remove 1` removes the first song in the queue.
 ADD_HELP:You can add items to your queue by using the `play` command again while a song is playing.
 CLEAR_HELP:If you want to clear your queue, use the `clear` command.
 QUEUE_EMPTY:You don't have anything in your queue.
 SKIPPING_SONG:\u23e9 Skipping to the next song in the queue...
+ADDED_TO_QUEUE:Currently, you have {} song(s) in your queue. \nUse {}queue to view your queue.
 PAUSED:\u23f8 Paused. Run `{}resume` to resume audio, or run `{}leave` to make me leave the voice channel.
 ALREADY_PAUSED:\u274e I'm already paused. Use `{}resume` to resume.
 NOT_PLAYING:\u274e I'm not playing anything.
