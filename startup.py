@@ -70,17 +70,17 @@ async def initialize_db(bot, config):
     inst = db.db(bot, config['dbp'])
     try:
         await inst.connect()
-        return inst
     except OperationalError:
         bot.logger.error("Couldn't connect to database. Trying to start it...")
         os.system("bash setup.sh start")
         try:
             await inst.connect()
-            return inst
         except OperationalError:
             bot.logger.debug(traceback.format_exc())
             bot.logger.critical(f"Couldn't connect to database! \nTry running 'bash setup.sh fix'.")
             sys.exit(96)
+    bot.logger.info("Connected to database.")
+    return inst
 
 async def load_strings(logger, exit=True):
     logger.debug('Loading strings from file...')
