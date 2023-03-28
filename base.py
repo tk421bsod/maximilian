@@ -2,6 +2,7 @@ import asyncio
 import os
 import sys
 import time
+import traceback
 
 import aiomysql
 import discord
