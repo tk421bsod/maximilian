@@ -64,7 +64,7 @@ class HelpCommand(commands.HelpCommand):
         raw = command.help
         if not raw:
             return "..."
-        return raw + f"\nSyntax: `{self.context.clean_prefix}{command.name} {command.signature}`"
+        return raw + f"\nSyntax: `{self.context.clean_prefix}{command.parent.name+' ' if command.parent else ''}{command.name} {command.signature}`"
 
     async def send_group_help(self, group):
         embed = discord.Embed(title=group.qualified_name, color=self.context.bot.config['theme_color'])
