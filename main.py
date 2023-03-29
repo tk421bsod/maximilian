@@ -58,7 +58,6 @@ except (ImportError, NameError, SyntaxError) as e:
 if not "--no-rich" in sys.argv:
     try:
         from rich.logging import RichHandler
-        from rich.traceback import install
     except ImportError:
         print("Not enabling rich text - import failed")
 else:
@@ -69,7 +68,7 @@ def config_logging(args):
     #mapping of argument to logging level and status message
     levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
     try:
-        _handlers = [RichHandler(rich_tracebacks=True, tracebacks_suppress=[discord])]
+        _handlers = [RichHandler(rich_tracebacks=True)]
     except NameError: #rich wasn't imported, use stdout instead
         _handlers = [logging.StreamHandler(sys.stdout)]
     if os.path.isdir('logs'):
@@ -119,14 +118,10 @@ try:
             quit()
         print("Updater interrupted. Maximilian will start in a moment.")
         time.sleep(1)
-    try:
-        #set up rich tracebacks if applicable
-        install(suppress=[discord,aiomysql])
-    except NameError:
-        pass
     outer_logger.debug("Preparing to start the event loop...")
     #then start the event loop
-    asyncio.run(maximilian(outer_logger).run())
+    bot = maximilian(outer_logger)
+    asyncio.run(bot.run())
 except KeyboardInterrupt:
     print("\nKeyboardInterrupt detected. Exiting.")
 except KeyError:
