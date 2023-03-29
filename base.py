@@ -5,6 +5,7 @@ import time
 import traceback
 
 import aiomysql
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -76,6 +77,19 @@ class maximilian(commands.Bot):
                     self.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -r requirements_extra.txt.'")
                 else:
                     self.logger.error(traceback.format_exc())
+                    await self.try_exit()
+            except Exception as e:
+                traceback.print_exc()
+                await self.try_exit()
+
+    async def try_exit(self):
+        try:
+            if not self.config['exit_on_error']:
+                return
+        except:
+            return
+        self.logger.warning("Extension error occurred, exiting")
+        await sys.exit(4)
 
     async def load_jishaku(self):
         if "--enablejsk" in sys.argv:
@@ -143,6 +157,10 @@ class maximilian(commands.Bot):
         #maybe we could make add_category itself a coro?
         self.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
 
+    async def start(self, *args, **kwargs):
+        async with aiohttp.ClientSession() as self.session:
+            await super().start(*args, **kwargs)
+
     #wrap everything in a function to prevent conflicting event loops
     async def run(self):
         self.logger.debug("Async context entered.")
@@ -160,8 +178,8 @@ class maximilian(commands.Bot):
             #TODO: Eliminate potential for race conditions here:
             #Either load_extensions_async or init_general_settings could run before Bot.start runs,
             #which can cause a RuntimeError if an extension's cache fill method starts early.
-            #setup_hook may work for this, however it runs after login.
-            #extension load is time-consuming and any commands received during that window of time will fail.
+            #setup_hook may work for this, however it runs after login...
+            #extension load is time-consuming and any commands received during that window of time will fail
             asyncio.create_task(self.load_extensions_async())
             self.logger.debug("load_extensions_async has been scheduled.")
             asyncio.create_task(self.init_general_settings()) 
