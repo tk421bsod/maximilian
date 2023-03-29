@@ -107,6 +107,8 @@ class reminders(commands.Cog):
     async def show_list(self, ctx):
         entrystring = ""
         try:
+            if not self.todo_lists[ctx.author.id]:
+                return await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
             for count, value in enumerate(self.todo_lists[ctx.author.id]):
                 entrystring += f"{count+1}. `{value['entry']}`\nCreated {humanize.precisedelta(value['timestamp'], format='%0.0f')} ago.\n\n"
                 if len(entrystring) > 3800:
@@ -141,12 +143,12 @@ class reminders(commands.Cog):
         timestamp = datetime.datetime.now()
         try:
             await self.bot.db.exec("insert into todo values(%s, %s, %s)", (ctx.author.id, entry, timestamp))
-            entrycount = (await self.bot.db.exec(f'select count(entry) from todo where user_id=%s', (ctx.author.id)))['count(entry)']
             try:
                 self.todo_lists[ctx.author.id]
             except KeyError:
                 self.todo_lists[ctx.author.id] = []
             self.todo_lists[ctx.author.id].insert(0, {"user_id":ctx.author.id, "entry":entry, "timestamp":timestamp})
+            entrycount = len(self.todo_lists[ctx.author.id])
             await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully added that to your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=self.bot.config['theme_color']))
         except:
             #dm traceback
@@ -164,8 +166,8 @@ class reminders(commands.Cog):
             except (TypeError, ValueError):
                 return await ctx.send("You need to specify the number of the entry you want to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.")
             await self.bot.db.exec("delete from todo where entry=%s and user_id=%s", (self.todo_lists[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
-            entrycount = (await self.bot.db.exec(f'select count(entry) from todo where user_id=%s', (ctx.author.id)))['count(entry)']
             del self.todo_lists[ctx.author.id][int(entry)-1]
+            entrycount = len(self.todo_lists[ctx.author.id])
             await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=self.bot.config['theme_color']))
         except IndexError:
             return await ctx.send("Sorry, that entry couldn't be found.")
