@@ -249,7 +249,7 @@ class core(commands.Cog):
             self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
             self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
             await self.bot.tree.sync()
-            return print("Ready")
+            print("Ready")
 
     async def prepare(self, message):
         if message.author != self.bot.user:
