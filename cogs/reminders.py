@@ -90,7 +90,6 @@ class reminders(commands.Cog):
         await self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
 
-
     @commands.command(aliases=['reminders', 'reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.")
     async def remind(self, ctx, time:TimeConverter, *, reminder):
         await ctx.send("Setting your reminder...")
@@ -105,96 +104,113 @@ class reminders(commands.Cog):
         await ctx.send(f"Ok, in {humanize.precisedelta(remindertime-currenttime, format='%0.0f')}: '{reminder}'")
         await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder, uuid)
 
-    @commands.command(aliases=["to-do", "todos"], help=f"A list of stuff to do. You can view your todo list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`.")
-    async def todo(self, ctx, action="list", *, entry=None):
-        #TODO: subcommands?
-        if action == "add":
-            try:
-                if not entry:
-                    return await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add fix error handling`.")
-                elif entry in [i['entry'] for i in [j for j in list(self.todo_lists.values())][0] if i['user_id'] == ctx.author.id]:
-                    return await ctx.send("That entry already exists.")
-            except IndexError:
-                pass
-            try:
-                await self.bot.db.exec("insert into todo values(%s, %s, %s)", (ctx.author.id, entry, datetime.datetime.now()))
-                await self.update_todo_cache()
-                entrycount = await self.bot.db.exec(f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
-                await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully added that to your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=self.bot.config['theme_color']))
-            except:
-                #dm traceback
-                await self.bot.core.send_traceback()
-                await ctx.send("There was an error while adding that to your todo list. Try again later.")
-                await self.bot.core.send_debug(ctx)
-            return
-        if action == "delete" or action == "remove":
-            try:
-                if not entry:
-                    return await ctx.send("You didn't say what entry you wanted to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, use 'todo delete 1'.")
-                try:
-                    int(entry)
-                except (TypeError, ValueError):
-                    return await ctx.send("You need to specify the number of the entry you want to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.")
-                await self.bot.db.exec("delete from todo where entry=%s and user_id=%s", (self.todo_lists[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
-                entrycount = await self.bot.db.exec(f'select count(entry) from todo where user_id=%s', (ctx.author.id))['count(entry)']
-                await self.update_todo_cache()
-                await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=self.bot.config['theme_color']))
-            except IndexError:
-                return await ctx.send("Sorry, that entry couldn't be found.")
-            except KeyError:
-                await ctx.send("You don't have anything in your todo list.")
-            except:
-                await self.bot.core.send_traceback()
-                await ctx.send("Hmm, something went wrong while deleting that from your todo list. Try again later.")
-                await self.bot.core.send_debug(ctx)
-            return
-        if action == "deleteall":
-            try:
-                return await self.bot.deletion_request(self.bot).create_request("todo", ctx)
-            except self.bot.DeletionRequestAlreadyActive:
-                return await ctx.send("A deletion request is already active.")
-        if action == "list" or entry == None:
-            entrystring = ""
-            try:
-                for count, value in enumerate(self.todo_lists[ctx.author.id]):
-                    entrystring += f"{count+1}. `{value['entry']}`\nCreated {humanize.precisedelta(value['timestamp'], format='%0.0f')} ago.\n\n"
-                    if len(entrystring) > 3800:
-                        await ctx.send(f"\U000026a0 It looks like your todo list is too long to show in a single message.\nOnly showing entries 1-{count+1}.")
-                        break
-                if entrystring:
-                    embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=self.bot.config['theme_color'])
-                    return await ctx.send(embed=embed)
-            except KeyError:
-                return await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
-            except discord.HTTPException:
-                return await ctx.send(f"Sorry, entry {count} in your todo list is wayyyy too long to display. Try deleting it or viewing it on its own.")
-                #paginator when
-            except:
-                await self.bot.core.send_traceback()
-                await ctx.send("Hmm, something went wrong while trying to show your todo list. Try again later.")
-                await self.bot.core.send_debug(ctx)
-        if action in ["display", "show"]:
+    async def show_list(self, ctx):
+        entrystring = ""
+        try:
+            for count, value in enumerate(self.todo_lists[ctx.author.id]):
+                entrystring += f"{count+1}. `{value['entry']}`\nCreated {humanize.precisedelta(value['timestamp'], format='%0.0f')} ago.\n\n"
+                if len(entrystring) > 3800:
+                    await ctx.send(f"\U000026a0 It looks like your todo list is too long to show in a single message.\nOnly showing entries 1-{count+1}.")
+                    break
+            if entrystring:
+                embed = discord.Embed(title=f"{ctx.author}'s todo list", description=entrystring, color=self.bot.config['theme_color'])
+                return await ctx.send(embed=embed)
+        except KeyError:
+            return await ctx.send("It doesn't look like you have anything in your todo list. Try adding something to it.")
+        except discord.HTTPException:
+            return await ctx.send(f"Sorry, entry {count} in your todo list is wayyyy too long to display. Try deleting it or viewing it on its own.")
+            #paginator when
+        except:
+            await self.bot.core.send_traceback()
+            await ctx.send("Hmm, something went wrong while trying to show your todo list. Try again later.")
+            await self.bot.core.send_debug(ctx)
+
+    @commands.group(invoke_without_command=True, aliases=["to-do", "todos"], help=f"A list of stuff to do.")
+    async def todo(self, ctx):
+        await self.show_list(ctx)
+
+    @todo.command(help="Adds an item to your todo list.")
+    async def add(self, ctx, *, entry=None):
+        try:
             if not entry:
-                return await ctx.send("You didn't say what entry you wanted to show. Want to show the first entry? Use `todo show 1`.")
+                return await ctx.send(f"You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your todo list by using `{await self.bot.get_prefix(ctx.message)}todo add fix error handling`.")
+            elif entry in [i['entry'] for i in [j for j in list(self.todo_lists.values())][0] if i['user_id'] == ctx.author.id]:
+                return await ctx.send("That entry already exists.")
+        except IndexError:
+            pass
+        timestamp = datetime.datetime.now()
+        try:
+            await self.bot.db.exec("insert into todo values(%s, %s, %s)", (ctx.author.id, entry, timestamp))
+            entrycount = (await self.bot.db.exec(f'select count(entry) from todo where user_id=%s', (ctx.author.id)))['count(entry)']
             try:
-                entry = int(entry)
-            except (TypeError, ValueError):
-                return await ctx.send("You need to specify the number of the entry you want to show. Want to show the first entry? Use `todo show 1`.")
-            try:
-                if entry < 1:
-                    #wrap around to 2 more than max length
-                    entry = len(self.todo_lists[ctx.author.id])+2
-                await ctx.send(embed=discord.Embed(title=f"Entry \#{entry}", description=f"Created {humanize.precisedelta(self.todo_lists[ctx.author.id][entry-1]['timestamp'], format='%0.0f')} ago.\n Entry text:\n`{self.todo_lists[ctx.author.id][entry-1]['entry']}`", color=self.bot.config['theme_color']))
-            except discord.HTTPException:
-                return await ctx.send("Sorry, that entry is wayyyyyyyyy too long to display. You should probably delete it.")
-            except IndexError:
-                return await ctx.send(f"Sorry, that entry couldn't be found. Your todo list currently has {len(self.todo_lists[ctx.author.id])} entries.")
+                self.todo_lists[ctx.author.id]
             except KeyError:
-                return await ctx.send("It doesn't look like you have anything in your todo list.")
-            except:
-                await self.bot.core.send_traceback()
-                await ctx.send("Sorry, something went wrong when trying to show that entry. Try again later.")
-                await self.bot.core.send_debug(ctx)
+                self.todo_lists[ctx.author.id] = []
+            self.todo_lists[ctx.author.id].insert(0, {"user_id":ctx.author.id, "entry":entry, "timestamp":timestamp})
+            await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully added that to your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=self.bot.config['theme_color']))
+        except:
+            #dm traceback
+            await self.bot.core.send_traceback()
+            await ctx.send("There was an error while adding that to your todo list. Try again later.")
+            await self.bot.core.send_debug(ctx)
+
+    @todo.command(help="Deletes an item from your todo list.", aliases=['remove'])
+    async def delete(self, ctx, entry = None):
+        try:
+            if not entry:
+                return await ctx.send("You didn't say what entry you wanted to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, use 'todo delete 1'.")
+            try:
+                int(entry)
+            except (TypeError, ValueError):
+                return await ctx.send("You need to specify the number of the entry you want to delete. For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.")
+            await self.bot.db.exec("delete from todo where entry=%s and user_id=%s", (self.todo_lists[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
+            entrycount = (await self.bot.db.exec(f'select count(entry) from todo where user_id=%s', (ctx.author.id)))['count(entry)']
+            del self.todo_lists[ctx.author.id][int(entry)-1]
+            await ctx.send(embed=discord.Embed(title=f"\U00002705 Successfully deleted that from your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.", color=self.bot.config['theme_color']))
+        except IndexError:
+            return await ctx.send("Sorry, that entry couldn't be found.")
+        except KeyError:
+            await ctx.send("You don't have anything in your todo list.")
+        except:
+            await self.bot.core.send_traceback()
+            await ctx.send("Hmm, something went wrong while deleting that from your todo list. Try again later.")
+            await self.bot.core.send_debug(ctx)
+        return
+
+    @todo.command(help="Clears your entire todo list.")
+    async def clear(self, ctx):
+        try:
+            return await self.bot.deletion_request(self.bot).create_request("todo", ctx)
+        except self.bot.DeletionRequestAlreadyActive:
+            return await ctx.send("A deletion request is already active.")
+    
+    @todo.command(help="Shows your todo list.")
+    async def list(self, ctx):
+        await self.show_list(ctx)
+
+    @todo.command(help="Shows a specific entry from your list.")
+    async def show(self, ctx, entry=None):
+        if not entry:
+            return await ctx.send("You didn't say what entry you wanted to show. Want to show the first entry? Use `todo show 1`.")
+        try:
+            entry = int(entry)
+        except (TypeError, ValueError):
+            return await ctx.send("You need to specify the number of the entry you want to show. Want to show the first entry? Use `todo show 1`.")
+        try:
+            if entry < 1:
+                #wrap around to 2 more than max length
+                entry = len(self.todo_lists[ctx.author.id])+2
+            await ctx.send(embed=discord.Embed(title=f"Entry \#{entry}", description=f"Created {humanize.precisedelta(self.todo_lists[ctx.author.id][entry-1]['timestamp'], format='%0.0f')} ago.\n Entry text:\n`{self.todo_lists[ctx.author.id][entry-1]['entry']}`", color=self.bot.config['theme_color']))
+        except discord.HTTPException:
+            return await ctx.send("Sorry, that entry is wayyyyyyyyy too long to display. You should probably delete it.")
+        except IndexError:
+            return await ctx.send(f"Sorry, that entry couldn't be found. Your todo list currently has {len(self.todo_lists[ctx.author.id])} entries.")
+        except KeyError:
+            return await ctx.send("It doesn't look like you have anything in your todo list.")
+        except:
+            await self.bot.core.send_traceback()
+            await ctx.send("Sorry, something went wrong when trying to show that entry. Try again later.")
+            await self.bot.core.send_debug(ctx)
 
 async def setup(bot):
     await bot.add_cog(reminders(bot, True))
