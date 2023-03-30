@@ -32,6 +32,8 @@ class TimeConverter(commands.Converter):
 
 class reminders(commands.Cog):
     '''Reminders to do stuff. (and todo lists!)'''
+    __slots__ = ("bot", "logger", "todo_lists", "reminders")
+
     def __init__(self, bot, load=False):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
