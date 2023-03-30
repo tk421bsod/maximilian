@@ -172,26 +172,27 @@ REMINDER_SET:Ok, in {}: '{}'
 REMINDER:{} {} ago: '{}'
 ENTRY_NOT_SPECIFIED_ADD:You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your todo list by using `{}todo add fix error handling`.
 ENTRY_ALREADY_EXISTS:That entry already exists.
-ENTRY_ADDED:\u2705 Successfully added that to your todo list. \nYou now have {entrycount} {'entries' if entrycount != 1 else 'entry'} in your list.
+ENTRY_ADDED:\u2705 Successfully added that to your todo list. \nYou now have {} {} in your list.
 ERROR_ENTRY_ADD_FAILED:There was an error while adding that to your todo list. Try again later. I've reported this error to my developer.
-ENTRY_NOT_SPECIFIED_DELETE:You didn't say what entry you wanted to delete. {}
-ERROR_ENTRY_NAN:You need to specify the number of the entry you want to delete. {}
+ENTRY_NOT_SPECIFIED_DELETE:You didn't say what entry you wanted to delete.
+ENTRY_NAN_DELETE:You need to specify the number of the entry you want to delete. {}
 DELETION_EXAMPLE:For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.
 ENTRY_DELETED:\u2705 Successfully deleted that from your todo list. \nYou now have {} entries in your list.
 ENTRY_NOT_FOUND:Sorry, that entry couldn't be found.
-LIST_EMPTY:It doesn't look like you have anything in your todo list. Try adding something to it.
-ERROR_ENTRY_DELETE_FAILED:Hmm, something went wrong while deleting that from your todo list. Try again later. I've reported this to my developer.
-LIST_TOO_LONG:Your todo list is too long to show in a single message.
+LIST_EMPTY:It doesn't look like you have anything in your todo list.
+ERROR_ENTRY_DELETE_FAILED:Sorry, something went wrong while deleting that from your todo list. Try again later. I've reported this to my developer.
+LIST_TOO_LONG:Your todo list is too long to show in a single message. Only showing entries 1 to {}.
 ENTRY:{}. `{}`\nCreated {} ago.\n\n
 LIST_HEADER:{}'s todo list
-ENTRY_TOO_LONG_LIST:Sorry, entry {count} in your todo list is wayyyy too long to display. Try deleting it or viewing it on its own.
-ERROR_SHOW_FAILED:Hmm, something went wrong while trying to show your todo list. Try again later.
+ENTRY_TOO_LONG_LIST:Sorry, entry {} in your todo list is wayyyy too long to display. Try deleting it or viewing it on its own.
+ERROR_LIST_FAILED:Sorry, something went wrong while trying to show your todo list. Try again later.
 ENTRY_NOT_SPECIFIED_SHOW:You didn't say what entry you wanted to show. Want to show the first entry? Use `todo show 1`.
 ENTRY_NAN_SHOW:You need to specify the number of the entry you want to show. Want to show the first entry? Use `todo show 1`.
 ENTRY_SHOW_TITLE:Entry \\#{}
 ENTRY_SHOW_DESC:Created {} ago.\n Entry text:\n`{}`
 ENTRY_NOT_FOUND_SHOW:Sorry, that entry couldn't be found. Your todo list currently has {} entries.
 ENTRY_TOO_LONG_SHOW:Sorry, that entry is wayyyyyyyyy too long to display. You should probably delete it.
+ERROR_SHOW_FAILED:Sorry, something went wrong while trying to show that entry. Try again later.
 #cogs/responses.py
 ERROR_COMMAND_NAME_CONFLICT:You can't create a custom command with the same name as one of my commands.
 COMMAND_ADDED:Added a custom command.
