@@ -39,11 +39,11 @@ class HelpCommand(commands.HelpCommand):
         if self.context.guild is not None:
             #TODO: use the existing cache (not sure why I didn't think of it before writing this)
             #im too lazy to change it rn as it's 1 am
-            responseslist = await self.context.bot.db.exec("select * from responses where guild_id = %s", (self.context.guild.id), fetchall=True)
+            responseslist = [i for i in self.context.bot.responses if i[0] == self.context.guild.id]
             responsestring = "A list of custom commands for this server. These don't have help entries. \n"
-            if responseslist is not None and str(responseslist)!="()":
+            if responseslist is not None:
                 for i in responseslist:
-                    responsestring += f"`{i['response_trigger']}` "
+                    responsestring += f"`{i[1]}` "
                 embed.add_field(name="Custom Commands List", value=responsestring)
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
