@@ -4,7 +4,7 @@ You can set one up in just a few minutes.
 
 First, ensure your system meets these requirements:
 - at least 2gb of RAM
-- 2gb free hard drive space (10gb for music)
+- 2gb free hard drive space (5gb for music support)
 - Working Internet connection (around 10mbps download for music)
 - Any version of Linux that supports Python 3.8+ (recommended: latest Ubuntu LTS version)
 - WSL (if on Windows)
@@ -55,7 +55,6 @@ Maximilian is broken up into a number of different Python modules to make develo
 Each module handles some specific functionality.
 
 Any modules in the root directory are what the bot calls 'required' modules. They provide a set of APIs for other modules to call into.
-Deleting or breaking one of these modules will prevent Maximilian from functioning as all of these are interdependent to some degree.
 
 Here's what each one does:
 * main.py - handles some early initialization, launches Maximilian
@@ -68,6 +67,9 @@ Here's what each one does:
 * updater.py - handles updating Maximilian
 * startup.py - handles a couple tasks only performed during startup
 * base.py - handles most tasks besides early initialization
+
+Deleting or breaking one of the above modules will prevent Maximilian from functioning as all of them are interdependent to some degree.
+Broke something and want to reset to a working version? Run `git restore <file>`.
 
 There are also a couple different directories:
 * cogs - stores 'optional' modules that contain commands
@@ -111,4 +113,32 @@ This data includes:
 * etc.
 Editing this file or quitting setup.sh before it is finished can break Maximilian. 
 If Maximilian says something is missing, try running setup.sh again, filling in the necessary details when prompted.
-Do not share this file with anyone. It could give someone access to your bot's account.
+Do not share this file with anyone. It could give people access to your bot's account.
+
+`backup.sql` is a database backup created through the command `bash setup.sh backup`.
+`setup.sh` does this through the `mysqldump` utility.
+As with `config`, do not share this file with anyone. It contains all data stored by Maximilian at the time the backup was made.
+This includes, but is not limited to, user IDs, prefixes, todo lists, custom commands, and reminders.
+You can restore the backup by running `bash setup.sh restore`.
+
+# troubleshooting
+As much as I try to make Maximilian easy to install and use, you may run into some issues.
+Below are some common errors and steps to resolve them.
+
+`Maximilian cannot start because an external dependency failed to load.`
+A dependency installed separate from Maximilian didn't load.
+Running `pip3 install -U -r requirements.txt` should fix this.
+
+`Maximilian cannot start because an internal module failed to load.`
+One of Maximilian's core files didn't load correctly.
+This usually is caused by invalid syntax or the file simply not existing.
+Just updated after modifying some files? Git may have broken something in an attempt to merge the two versions. Merge conflicts also tend to break stuff.
+Modified some files? You may have broken something.
+If there are no merge conflicts, just run `git restore <file>`.
+You can find the file name and some extra error info in the last line of output from Maximilian.
+If you introduced merge conflicts, you probably know how to fix them already.
+Updated to a newer version of Maximilian and haven't modified anything?
+Let `tk421#2016` know. They probably messed something up.
+
+`It looks like your Python installation is missing some features.`
+Try updating your Python. If you built Python from source, you may need to install additional dependencies and recompile.

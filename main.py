@@ -43,15 +43,26 @@ try:
     import os
     import traceback
     import time
+except (ImportError, NameError, SyntaxError) as e:
+    print("It looks like your Python installation is missing some features.\nIf you built it from source, you may need to install additional dependencies.")
+    print(e)
+    sys.exit(2)
 
+try:
     import discord
+    import aiomysql
     from discord.ext import commands
     from discord.ext.commands.errors import NoEntryPointError
+except (ImportError, NameError, SyntaxError) as e:
+    print("Maximilian cannot start because an external dependency failed to load.\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
+    print(e)
+    sys.exit(2)
 
+try:
     from base import maximilian
     from updater import update
 except (ImportError, NameError, SyntaxError) as e:
-    print("Maximilian cannot start because a required component failed to load.\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
+    print("Maximilian cannot start because an internal module failed to load.\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk421#2016 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
     print(e)
     sys.exit(2)
 
