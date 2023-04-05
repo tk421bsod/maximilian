@@ -15,7 +15,7 @@ class misc(commands.Cog):
 
     @commands.command(aliases=["owner"])
     async def hi(self, ctx):
-        await ctx.send("Hello! I'm a Discord bot created by tk421#2016.")
+        await ctx.send(self.bot.strings["HELLO"])
 
     @commands.command(help="Get an image of a cat.", aliases=["thiscatdoesntexist"])
     async def cats(self, ctx):
@@ -26,26 +26,26 @@ class misc(commands.Cog):
                 await ctx.send(file=discord.File(buffer, filename="cat.jpeg"))
 
     async def ping(self, ctx):
-        await ctx.send(f"Latency: {str(round(self.bot.latency*1000, 1))} ms.")
+        await ctx.send(self.bot.strings["LATENCY"])
 
     @commands.command(help="Get some info about the bot and commands")
     async def about(self, ctx):
-        embed = discord.Embed(title="About", color=self.bot.config['theme_color'])
-        embed.add_field(name="What's Maximilian?", value="Quite a few things. In short, it's a versatile, multi-purpose bot.")
-        embed.add_field(name="Latest update - v1.1.0 (Feb 9, 2023)", value="Changes to reminders, custom commands, and the help command.\nWant to see changes from the last few updates? Use the `news` command.")
-        embed.add_field(name="Useful stuff", value=f"Use `{str(await self.bot.get_prefix(ctx.message))}help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=335923264&scope=bot). \nIf you want to contribute to my development, visit my Github repository at https://github.com/tk421bsod/maximilian.", inline=False)
-        embed.add_field(name="Commands", value=f" ".join(f'`{i.name}`' for i in self.bot.commands if not i.hidden and not i.parent and i.name != 'jishaku'))
+        embed = discord.Embed(title=self.bot.strings["ABOUT_TITLE"], color=self.bot.config['theme_color'])
+        embed.add_field(name=self.bot.strings["ABOUT_SUMMARY_TITLE"], value=self.bot.strings["ABOUT_SUMMARY_TEXT"])
+        embed.add_field(name=self.bot.strings["ABOUT_LATESTUPDATE_TITLE"], value=self.bot.strings["ABOUT_LATESTUPDATE_TEXT"])
+        embed.add_field(name=self.bot.strings["ABOUT_HELP_TITLE"], value=self.bot.strings["ABOUT_HELP_TEXT"].format(str(await self.bot.get_prefix(ctx.message))), inline=False)
+        embed.add_field(name=self.bot.strings["ABOUT_COMMANDS_TITLE"], value=f" ".join(f'`{i.name}`' for i in self.bot.commands if not i.hidden and not i.parent and i.name != 'jishaku'))
         await ctx.send(embed=embed)
 
     @commands.command(help="View information about what data Maximilian accesses and stores.")
     async def privacy(self, ctx):
-        embed = discord.Embed(title="Maximilian Privacy Policy", color=self.bot.config['theme_color'])
-        embed.add_field(name="Why Maximilian collects data", value="Maximilian accesses/stores certain information that is necessary for certain functions. It doesn't collect any sort of personally identifiable information. (types of data collected are described below)", inline=False)
-        embed.add_field(name="Data that Maximilian stores", value="**-Server IDs**\nMaximilian stores server IDs when you create a custom command, add a reaction role, or change its prefix to distinguish between different servers.", inline=False)
-        embed.add_field(name="-Role IDs", value="Maximilian stores role IDs whenever you add a reaction role so it can give people the correct role.")
-        embed.add_field(name="-User IDs", value="Maximilian stores user IDs so it can keep track of your todo list and active reminders.")
-        embed.add_field(name="-Music", value="To keep track of what channels it's playing audio in, Maximilian puts your voice channel's ID in a list temporarily. This data isn't retrievable by anyone, and your channel ID is removed from the list when Maximilian stops playing audio in your voice channel.\nWhen you play a song, Maximilian stores information about that song, like the video ID and name, so it can play it without a long delay next time. When you add a song to your queue, Maximilian temporarily stores your voice channel's ID, the song's position in the queue, the song's name, and the song's id to keep track of your queue.")
-        embed.add_field(name="I want to delete my server's data, how do I request that?", value=f"You can delete all the data in your server by using `{await self.bot.get_prefix(ctx.message)}deleteall`. This will irreversibly delete all of the reaction roles and custom commands you have set up and reset the prefix to the default of `!`. Only people with the Administrator permission can use this.", inline=False)
+        embed = discord.Embed(title=self.bot.strings["PRIVACY_TITLE"], color=self.bot.config['theme_color'])
+        embed.add_field(name=self.bot.strings["PRIVACY_DATA_COLLECTION_TITLE"], value=self.bot.strings["PRIVACY_DATA_COLLECTION"], inline=False)
+        embed.add_field(name=self.bot.strings["PRIVACY_DATA_COLLECTED_TITLE"], value=self.bot.strings["PRIVACY_DATA_COLLECTED_SERVER_IDS"], inline=False)
+        embed.add_field(name=self.bot.strings["PRIVACY_DATA_COLLECTED_ROLE_IDS_TITLE"], value=self.bot.strings["PRIVACY_DATA_COLLECTED_ROLE_IDS"])
+        embed.add_field(name=self.bot.strings["PRIVACY_DATA_COLLECTED_USER_IDS_TITLE"], value=self.bot.strings["PRIVACY_DATA_COLLECTED_USER_IDS"])
+        embed.add_field(name=self.bot.strings["PRIVACY_DATA_COLLECTED_MUSIC_TITLE"], value=self.bot.strings["PRIVACY_DATA_COLLECTED_MUSIC"])
+        embed.add_field(name=self.bot.strings["PRIVACY_DELETION_HELP_TITLE"], value=self.bot.strings["PRIVACY_DELETION_HELP"].format(await self.bot.get_prefix(ctx.message)), inline=False)
         await ctx.send(embed=embed)
 
     @commands.has_permissions(administrator=True)
@@ -55,14 +55,14 @@ class misc(commands.Cog):
         try:
             await self.bot.deletion_request(self.bot).create_request("all", ctx)
         except self.bot.DeletionRequestAlreadyActive:
-            await ctx.send("A deletion request is already active.")
+            await ctx.send(self.bot.strings["DELETION_ACTIVE"])
 
     @commands.command(hidden=True)
     async def emojiinfo(self, ctx, emoji : typing.Optional[typing.Union[discord.PartialEmoji, str]]=None):
         if isinstance(emoji, discord.PartialEmoji):
             await ctx.send(f"`<{emoji.name}:{emoji.id}>`")
             return
-        await ctx.send(f"`{emoji}`")      
+        await ctx.send(f"`{emoji}`")
 
     @commands.command(aliases=["code", "src"])
     async def source(self, ctx, *, command: str = None):
@@ -75,7 +75,7 @@ class misc(commands.Cog):
             return
         obj = self.bot.get_command(command)
         if obj is None or obj.name == "jishaku":
-            return await ctx.send("I can't find the source code for that command. Make sure you didn't misspell the command's name.")
+            return await ctx.send(self.bot.strings["SOURCE_NOT_FOUND"])
         src = obj.callback.__code__
         lines, firstlineno = inspect.getsourcelines(src)
         if not obj.callback.__module__.startswith('discord'):
@@ -85,25 +85,25 @@ class misc(commands.Cog):
             source_url = "https://github.com/Rapptz/discord.py"
             branch = "master"
         await ctx.send(f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>')
-    
+
     @commands.command(aliases=["rm"])
     async def rolemembers(self, ctx, *, role:discord.Role):
         '''Show the names and discriminators of everyone who has the specified role.'''
         rolestring = "\n".join([str(member) for member in role.members])
-        await ctx.send(f"Found {len(role.members)} users with the {role.name} role. \n{rolestring}")
-    
+        await ctx.send(self.bot.strings["ROLEMEMBERS"].format(len(role.members), role.name, rolestring))
+
     @commands.command(aliases=["members"])
     async def membercount(self, ctx):
         '''Show the amount of people in this server.'''
-        await ctx.send(f"Found {len(ctx.guild.members)} members. ({len([i for i in ctx.guild.members if not i.bot])} people and {len([i for i in ctx.guild.members if i.bot])} bots)")
+        await ctx.send(self.bot.strings["MEMBERCOUNT"].format(len(ctx.guild.members), len([i for i in ctx.guild.members if not i.bot]), len([i for i in ctx.guild.members if i.bot])))
 
     @commands.command()
     async def avatar(self, ctx, *, user:typing.Optional[discord.Member]=None):
         '''View another user's avatar, or yours if you don't specify anyone'''
         if not user:
-            await ctx.send(embed=discord.Embed(title=f"{ctx.author}'s avatar", color=self.bot.config['theme_color']).set_image(url=str(ctx.author.avatar.url)))
+            await ctx.send(embed=discord.Embed(title=self.bot.strings["AVATAR"].format(ctx.author), color=self.bot.config['theme_color']).set_image(url=str(ctx.author.avatar.url)))
             return
-        await ctx.send(embed=discord.Embed(title=f"{user}'s avatar", color=self.bot.config['theme_color']).set_image(url=str(user.avatar.url)))
+        await ctx.send(embed=discord.Embed(title=self.bot.strings["AVATAR"].format(user), color=self.bot.config['theme_color']).set_image(url=str(user.avatar.url)))
 
     @commands.command(aliases=["randomdog", "dog"])
     async def dogs(self, ctx):
@@ -118,7 +118,7 @@ class misc(commands.Cog):
 
     @commands.hybrid_command(help="View patch notes for recent updates.")
     async def news(self, ctx):
-        return await ctx.send(embed=discord.Embed(title="News", description="**Feb 9, 2023 - 1.1.0**\n[Various changes to reminders, settings, custom commands, and the help command](https://gist.github.com/TK421bsod/51bc3910a32289da2e9905e20f7e0c2a)\n\n**Jan 31, 2023 - 1.0.4**\n[Another round of bug fixes](https://gist.github.com/TK421bsod/12d6f8d611f56552654301852ba72393)\n\n**Jan 26, 2023 - 1.0.3**\n[Just some bug fixes](https://gist.github.com/TK421bsod/c71364e2a10c10247ce3faede437e9a6)\n\n**Jan 17, 2023 - 1.0.2**\n[Bug fixes, `news` command](https://gist.github.com/TK421bsod/95663a2f5bde64e5fcb4bda9c8b82c05)\n\n**Jan 4, 2023 - 1.0.0**\n[The first major release since April 2021. Lots of changes.](https://gist.github.com/TK421bsod/2980fa67a9a5f925e7cdfb9f083a5c3b)", color=self.bot.config['theme_color']))
+        return await ctx.send(embed=discord.Embed(title=self.bot.strings["NEWS_TITLE"], description=self.bot.strings["NEWS_DESC"], color=self.bot.config['theme_color']))
 
     @commands.command(help="Repeats what you say. For example, `!say hi` would make Maximiilian say 'hi'. This command automatically prevents user, role, everyone, and here mentions from working.")
     async def say(self, ctx, *, thing):
