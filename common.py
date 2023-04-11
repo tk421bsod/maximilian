@@ -35,5 +35,11 @@ def get_latest_commit():
     except Exception:
         pass
 
+def get_value(dict, key, default=None):
+    try:
+        return dict[key]
+    except KeyError:
+        return default
+
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
