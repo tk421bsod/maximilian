@@ -95,7 +95,7 @@ class music(commands.Cog):
 
     async def check_enabled(self, ctx):
         if not self.bot.settings.music.ready:
-            await ctx.send("Give me a second to prepare...")
+            await ctx.send(self.bot.strings["SETTING_NOT_READY"])
         while not self.bot.settings.music.ready:
             await asyncio.sleep(0.3)
         return self.bot.settings.music.toggle.enabled(ctx.guild.id)
