@@ -44,7 +44,7 @@ def update():
         print("Use 'git branch' to view a list of branches.")
     else:
         print("It looks like you're on a release snapshot branch for version 1.2 or later.")
-        print("Please note that this release no longer receives support and may stop working without notice.")
+        print("This release no longer receives support and may stop working without notice.")
         print("Consider switching to the `release` branch using `git checkout release`.")
     time.sleep(1)
     try:
