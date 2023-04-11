@@ -7,3 +7,9 @@ logs
 songcache
 __pycache__
 config
+lib
+lib64
+include
+share
+bin
+pyvenv.cfg
