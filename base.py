@@ -166,7 +166,7 @@ class maximilian(commands.Bot):
     #wrap everything in a function to prevent conflicting event loops
     async def run(self):
         self.logger.debug("Async context entered.")
-        self.strings = await startup.load_strings(self.logger)
+        self.strings = await startup.load_strings(self.logger, self.config)
         await self.wrap_event()
         #show version information
         self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
