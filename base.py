@@ -17,7 +17,7 @@ import startup
 
 
 class maximilian(commands.Bot):
-    __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db")
+    __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER")
 
     def __init__(self, logger):
         logger.debug("Loading config...")
@@ -42,6 +42,8 @@ class maximilian(commands.Bot):
         #attempt to pull database name from config!
         try:
             self.database = config["database"]
+            self.logger.debug("Sourced database name from config.")
+            self.logger.debug(f"Using database '{self.database}'.")
         except:
             pass
         self.logger = logger
@@ -167,7 +169,7 @@ class maximilian(commands.Bot):
         self.strings = await startup.load_strings(self.logger)
         await self.wrap_event()
         #show version information
-        self.logger.warning(f"Starting Maximilian v1.2.0{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
+        self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
         #parse additional arguments (ip, enablejsk, noload)
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)

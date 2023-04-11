@@ -1,6 +1,8 @@
 #main.py: loads core libraries and everything in the cogs folder, then starts Maximilian
 import sys
 
+VER = "1.2.0"
+
 if __name__ != "__main__":
     print("It looks like you're trying to import main.py as a module.")
     print("Please don't do that. Some code here relies on being ran directly through a command such as python3 main.py.")
@@ -15,13 +17,13 @@ if sys.version_info.major == 3 and sys.version_info.minor < 8:
     print("You'll need to upgrade Python to continue.")
     quit()
 
-
 if "--help" in sys.argv:
     print("main.py usage: python3 main.py [OPTIONS]\n")
     print("main.py handles initializing core components, checking requirements, and launching Maximilian.\n")
     print("You can enable/disable features and modify Maximilian's behavior through the use of the following options.\nYou can use more than one option at a time.\n")
     print("Options:")
     print("--enablejsk - Enables Jishaku, an extension used for debugging and code evaluation.")
+    print("--version - Shows version information and exits. New in version 1.2.")
     print("--noupdate - Skips update check on startup. Takes precendence over --update.")
     print("--update - Updates Maximilian and exits. Implicitly enables --force-update.")
     print("--force-update - Forces update check on startup regardless of the time since last update.")
@@ -32,6 +34,10 @@ if "--help" in sys.argv:
     print("--help - Shows this message and exits.")
     print("--language <language> - Sets the language to <language>. If not specified, defaults to 'en'.")
     print("--alt - Prompts for a token to use. Also adds the latest commit hash to the default status.")
+    quit()
+
+if "--version" in sys.argv:
+    print(f"You are using version {VER}.")
     quit()
 
 print("Loading components...")
@@ -132,6 +138,7 @@ try:
     outer_logger.debug("Preparing to start the event loop...")
     #then start the event loop
     bot = maximilian(outer_logger)
+    bot.VER = VER
     asyncio.run(bot.run())
 except KeyboardInterrupt:
     print("\nKeyboardInterrupt detected. Exiting.")
