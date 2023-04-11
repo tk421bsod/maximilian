@@ -82,10 +82,23 @@ async def initialize_db(bot, config):
     bot.logger.info("Connected to database.")
     return inst
 
-async def load_strings(logger, exit=True):
+async def load_strings(logger, config, exit=True):
     logger.debug('Loading strings from file...')
-    if '--language' in sys.argv:
-        language = sys.argv[sys.argv.index('--language')+1]
+    #try to get language from config
+    language = common.get_value(config, 'language')
+    #do we have anything that overrides our default language?
+    if '--language' in sys.argv or language:
+        #is it from config or args
+        if '--language' in sys.argv:
+            #did we override config?
+            if language and sys.argv[sys.argv.index('--language')+1] != language:
+                logger.warning("The language you specified in 'config' has been overridden by the '--language' option!")
+            logger.debug("Sourced language from args :)")
+            #language to use is the element after this one
+            language = sys.argv[sys.argv.index('--language')+1]
+        else:
+            logger.warning("Using the language specified in 'config'.")
+        #list of supported language names
         supported = [i.split('.')[0] for i in os.listdir('languages') if not i.endswith('md') and not i.endswith("-original") and not i.startswith("generate") and not i == "TEMPLATE"]
         if language not in supported:
             logger.error(f"Sorry, that language isn't supported right now. The only supported languages are {supported}")
