@@ -389,7 +389,7 @@ class settings():
             self.logger.error("Category registration failed for category '{category}`!")
             raise e
         self.categorynames.append(category)
-        self.logger.info(f"Category '{category}' registered. Access it at bot.settings.{category}. Settings are unavailable until bot.settings.{category}.ready == True.")
+        self.logger.info(f"Category '{category}' registered.")
 
     def _prepare_category_string(self):
         if self.categorynames:
