@@ -236,8 +236,8 @@ class Category():
         """
         Resolves conflicts between settings.
         """
+        resolved = []
         if isinstance(setting.unusablewith, list):
-            resolved = []
             for conflict in setting.unusablewith:
                 #get the Setting matching the name
                 conflict = self.get_setting(conflict)
