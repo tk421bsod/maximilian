@@ -40,9 +40,9 @@ SETTING_CURRENTLY_ENABLED:\u2705 Enabled
 SETTING_CURRENTLY_DISABLED:\u274e Disabled
 SETTING_ENABLED_FOOTER:Send this command again to turn this back off.
 SETTING_DISABLED_FOOTER:Send this command again to turn this back on.
-SETTING_AUTOMATICALLY_DISABLED:Automatically disabled {} due to a conflict.
+SETTING_AUTOMATICALLY_DISABLED:Automatically disabled **{}** due to a conflict.
 SETTINGS_AUTOMATICALLY_DISABLED:Automatically disabled {} due to conflicts.
-SETTING_UNUSABLE_WITH:Cannot be enabled at the same time as {}.
+SETTING_UNUSABLE_WITH:Cannot be enabled at the same time as *{}*.
 SETTING_REQUIRES_PERMISSION:\nRequires the **{}** permission.
 CATEGORY_INVALID:Sorry, that category wasn't set up properly. If you keep seeing this, let tk421#2016 know.
 SETTING_PERMISSION_DENIED:It looks like you don't have permission to change this setting.\nYou'll need the **{}** permission to change it.\nUse the `userinfo` command to check your permissions.\nJust a reminder, channel-specific permissions apply to this.
