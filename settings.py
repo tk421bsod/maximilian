@@ -249,8 +249,9 @@ class Category():
             if not setting.unusablewith:
                 return ""
             #conflicting setting enabled? disable it
-            if self.get_setting(setting.unusablewith).enabled(ctx.guild.id):
-                await self.update_setting(ctx, setting.unusablewith)
+            conflict = self.get_setting(setting.unusablewith)
+            if conflict.enabled(ctx.guild.id):
+                await self.update_setting(ctx, conflict)
                 resolved = setting.unusablewith
         length = len(resolved)
         if length == 1:
