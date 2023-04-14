@@ -304,7 +304,7 @@ class core(commands.Cog):
     @utils.command(hidden=True)
     async def sql(self, ctx, *, query):
         try:
-            result = await self.bot.db.exec(query, (), fetchall=True)
+            result = await self.bot.db.exec(query, ())
         except:
             await ctx.message.add_reaction("\U00002757")
             return await ctx.send(f"{traceback.format_exc()}")
@@ -323,7 +323,7 @@ class core(commands.Cog):
         self.logger.info("Updating blocklist...")
         newblocklist = []
         try:
-            newblocklist = [i['user_id'] for i in await self.bot.db.exec("select * from blocked", fetchall=True)]
+            newblocklist = [i['user_id'] for i in await self.bot.db.exec("select * from blocked", ())]
             self.bot.blocklist = newblocklist
         except TypeError:
             return self.logger.info("Failed to update blocklist, is there anything in the database?")

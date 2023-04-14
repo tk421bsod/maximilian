@@ -172,7 +172,7 @@ class Category():
         guilds = self.bot.guilds #stop state population from breaking if guilds change while filling cache
         #step 1: get data for each setting, add settings to db if needed
         try:
-            self.data = await self.bot.db.exec('select * from config where category=%s order by setting', (self.name), fetchall=True)
+            self.data = await self.bot.db.exec('select * from config where category=%s order by setting', (self.name))
             if self.data is None:
                 self.data = []
             if not isinstance(self.data, list):

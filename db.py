@@ -81,7 +81,7 @@ class db:
         self.pool = await aiomysql.create_pool(host=self.ip, user="maximilianbot", password=self.p, db=self.database, charset='utf8mb4', cursorclass=aiomysql.cursors.DictCursor, autocommit=True)
 
     @requires_connection
-    async def exec(self, cur, query, params, *, fetchall=False):
+    async def exec(self, cur, query, params):
         """Executes 'query' with 'params'. Uses aiomysql's parameterized queries.
 
         Parameters
