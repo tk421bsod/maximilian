@@ -178,9 +178,8 @@ class Category():
             if not isinstance(self.data, list):
                 self.data = [self.data]
         except:
-            #TODO: Consider loudly failing instead of handling this as this state is undesireable and messes with existing settings
             traceback.print_exc()
-            self.logger.error("An error occurred while filling the setting cache.")
+            self.logger.error(f"An error occurred while filling the setting cache for category {self.name}!")
             self.logger.error("Settings in this category will not be registered.")
             return
         else:
