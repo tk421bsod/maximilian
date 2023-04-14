@@ -82,7 +82,7 @@ def update():
         print("Couldn't determine the time since last update. Updating now.")
     time.sleep(1)
     #step 2.5: if a condition above was met, reset last update timestamp
-    subprocess.run("sed -i \"s/last_update:.*/last_update:0/\" config", shell=True)
+    subprocess.run("sed -i \"s/last_update:.*/last_update:/\" config", shell=True)
     #step 3: fetch changes from remote, don't merge until user confirms though
     print("\n")
     try:
