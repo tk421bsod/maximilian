@@ -116,8 +116,6 @@ async def load_strings(logger, config, exit=True):
         raise RuntimeError(f"Couldn't find the file containing strings for language '{language}'.")
     except json.JSONDecodeError as e:
         logger.critical(f"The file containing strings for language '{language}' is invalid. Try passing it through generate.py.")
-        logger.critical("A common cause of this error is multiple unescaped backslashes in a single string.")
-        logger.critical("generate.py attempts to fix these errors, but can miss multiple in the same string.")
         logger.critical("Maximilian will now exit with some additional error info.")
         raise e
     logger.info('Strings loaded successfully.')
