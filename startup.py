@@ -93,7 +93,7 @@ async def load_strings(logger, config, exit=True):
             #did we override config?
             if language and sys.argv[sys.argv.index('--language')+1] != language:
                 logger.warning("The language you specified in 'config' has been overridden by the '--language' option!")
-            logger.debug("Sourced language from args :)")
+            logger.debug("Sourced language from args.")
             #language to use is the element after this one
             language = sys.argv[sys.argv.index('--language')+1]
         else:
@@ -105,7 +105,8 @@ async def load_strings(logger, config, exit=True):
             if exit:
                 sys.exit(25)
     else:
-        logger.info("No language specified, defaulting to en")
+        logger.warning("No language specified. Defaulting to 'en'.")
+        logger.warning("If you wish to set a default language, add `language:<language>` to config.")
         language = 'en'
     logger.info(f"Set language to {language}")
     try:
