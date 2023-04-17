@@ -215,3 +215,5 @@ USERINFO_DATE_CREATED:Date created:
 USERINFO_ROLES:Roles:
 USERINFO_PERMISSIONS:Permissions:
 USERINFO_FOOTER:Requested by {}.
+#helpcommand.py
+HELP_TITLE:Commands

@@ -21,7 +21,7 @@ class HelpCommand(commands.HelpCommand):
         return '%s%s %s' % (self.context.clean_prefix, alias, command.signature)
 
     async def send_bot_help(self, mapping):
-        embed = discord.Embed(title='Commands', color=self.context.bot.config['theme_color'])
+        embed = discord.Embed(title=self.context.bot.strings["HELP_TITLE"], color=self.context.bot.config['theme_color'])
         description = self.context.bot.description
         if description:
             embed.description = description
