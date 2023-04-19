@@ -217,3 +217,7 @@ USERINFO_PERMISSIONS:Permissions:
 USERINFO_FOOTER:Requested by {}.
 #helpcommand.py
 HELP_TITLE:Commands
+COMMAND_SYNTAX:\nSyntax: `{}{}{} {}`
+COMMANDS_LIST_TITLE:Custom Commands List
+COG_HELP_TITLE:{0.qualified_name} Commands
+COMMANDS_LIST:A list of custom commands for this server. These don't have help entries. \n
