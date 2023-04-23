@@ -221,3 +221,4 @@ COMMAND_SYNTAX:\nSyntax: `{}{}{} {}`
 COMMANDS_LIST_TITLE:Custom Commands List
 COG_HELP_TITLE:{0.qualified_name} Commands
 COMMANDS_LIST:A list of custom commands for this server. These don't have help entries. \n
+ENDING_NOTE:Use {0}{1} [command] for more info on a command.
