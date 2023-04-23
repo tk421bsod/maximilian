@@ -177,7 +177,7 @@ INVALID_UNIT:{} is an invalid unit of time! only h/m/s/d are valid!
 NAN:{} is not a number!
 SETTING_REMINDER:Setting your reminder...
 REMINDER_SET:Ok, in {}: '{}'
-REMINDER:{} {} ago: '{}'
+REMINDER:<@{}> {} ago: '{}'
 ENTRY_NOT_SPECIFIED_ADD:You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your todo list by using `{}todo add fix error handling`.
 ENTRY_ALREADY_EXISTS:That entry already exists.
 ENTRY_ADDED:\u2705 Successfully added that to your todo list. \nYou now have {} {} in your list.

@@ -87,7 +87,7 @@ class reminders(commands.Cog):
         hrtimedelta = humanize.precisedelta(remindertime-reminderstarted, format='%0.0f')
         await discord.utils.sleep_until(remindertime)
         #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
-        await self.bot.get_channel(channel_id).send(f"<@{user_id}>"+self.bot.strings["REMINDER"].format(hrtimedelta, remindertext))
+        await self.bot.get_channel(channel_id).send(self.bot.strings["REMINDER"].format(user_id, hrtimedelta, remindertext))
         #and delete it from the database
         await self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
