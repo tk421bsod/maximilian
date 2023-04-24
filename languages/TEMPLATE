@@ -185,7 +185,7 @@ ERROR_ENTRY_ADD_FAILED:There was an error while adding that to your todo list. T
 ENTRY_NOT_SPECIFIED_DELETE:You didn't say what entry you wanted to delete.
 ENTRY_NAN_DELETE:You need to specify the number of the entry you want to delete. {}
 DELETION_EXAMPLE:For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.
-ENTRY_DELETED:\u2705 Successfully deleted that from your todo list. \nYou now have {} entries in your list.
+ENTRY_DELETED:\u2705 Successfully deleted that from your todo list. \nYou now have {} {} in your list.
 ENTRY_NOT_FOUND:Sorry, that entry couldn't be found.
 LIST_EMPTY:It doesn't look like you have anything in your todo list.
 ERROR_ENTRY_DELETE_FAILED:Sorry, something went wrong while deleting that from your todo list. Try again later. I've reported this to my developer.

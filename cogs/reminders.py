@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import time
 import inspect
 import logging
 import os
@@ -30,15 +31,28 @@ class TimeConverter(commands.Converter):
                 raise commands.BadArgument(f"{v} is not a number!")
         return time
 
+class Deletion:
+    def __init__(self):
+        self.timestamp = time.time()
+
+class UserRapidDeletions:
+    def __init__(self):
+        self.deletions = []
+    
+    @property
+    def amount(self):
+        return len(self.deletions)
+
 class reminders(commands.Cog):
     '''Reminders to do stuff. (and todo lists!)'''
-    __slots__ = ("bot", "logger", "todo_lists", "reminders")
+    __slots__ = ("bot", "logger", "todo_lists", "reminders", "concurrent_deletions")
 
     def __init__(self, bot, load=False):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
         self.todo_lists = {}
         self.reminders = {}
+        self.deletions = {}
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
         if load:
             asyncio.create_task(self.update_todo_cache())
@@ -129,6 +143,38 @@ class reminders(commands.Cog):
             await ctx.send(self.bot.strings["ERROR_LIST_FAILED"])
             await self.bot.core.send_debug(ctx)
 
+    async def process_deletion(self, ctx, entry):
+        await self.bot.db.exec("delete from todo where entry=%s and user_id=%s", (self.todo_lists[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
+        del self.todo_lists[ctx.author.id][int(entry)-1]
+        self.deletions[ctx.author.id].deletions.append(Deletion())
+        entrycount = len(self.todo_lists[ctx.author.id])
+        await ctx.send(embed=discord.Embed(title=self.bot.strings["ENTRY_DELETED"].format(entrycount, 'entries' if entrycount != 1 else 'entry'), color=self.bot.config['theme_color']))
+
+    async def rapid_deletion_confirmation_callback(self, reaction, message, ctx, confirmed, entry):
+        if confirmed:
+            await ctx.send("Alright, deleting that entry.")
+            self.deletions[ctx.author.id] = UserRapidDeletions()
+            await self.process_deletion(ctx, entry)
+        else:
+            await ctx.send("Not deleting that entry.")
+        
+    async def prune_deletions(self, ctx):
+        now = time.time()
+        for deletion in self.deletions[ctx.author.id].deletions:
+            if now - deletion.timestamp >= 60:
+                del deletion
+
+    async def check_deletions(self, ctx, entry, count):
+        await self.prune_deletions(ctx)
+        if self.deletions[ctx.author.id].amount < 2:
+            return False
+        embed = discord.Embed(title="Are you sure you want to delete this entry?", description="It looks like you're rapidly deleting entries from your todo list.\nYour todo list re-organizes as you delete entries, so this entry may not be the one you want to delete.\nReact with \u2705 to delete the following anyway:")
+        embed.add_field(name=f"Entry {count}", value=entry)
+        embed.set_footer(text="You're seeing this message because you deleted more than 2 entries within 1 minute.")
+        conf = await ctx.send(embed=embed)
+        self.bot.confirmation(self.bot, conf, ctx, self.rapid_deletion_confirmation_callback, count)
+        return True
+
     @commands.group(invoke_without_command=True, aliases=["to-do", "todos"], help=f"A list of stuff to do.")
     async def todo(self, ctx):
         await self.show_list(ctx)
@@ -161,16 +207,19 @@ class reminders(commands.Cog):
     @todo.command(help="Deletes an item from your todo list.", aliases=['remove'])
     async def delete(self, ctx, entry = None):
         try:
+            try:
+                self.deletions[ctx.author.id]
+            except:
+                self.deletions[ctx.author.id] = UserRapidDeletions()
             if not entry:
                 return await ctx.send(self.bot.strings["ENTRY_NOT_SPECIFIED_DELETE"])
             try:
                 int(entry)
             except (TypeError, ValueError):
                 return await ctx.send(self.bot.strings["ENTRY_NAN_DELETE"])
-            await self.bot.db.exec("delete from todo where entry=%s and user_id=%s", (self.todo_lists[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
-            del self.todo_lists[ctx.author.id][int(entry)-1]
-            entrycount = len(self.todo_lists[ctx.author.id])
-            await ctx.send(embed=discord.Embed(title=self.bot.strings["ENTRY_DELETED"].format('entries' if entrycount != 1 else 'entry'), color=self.bot.config['theme_color']))
+            if await self.check_deletions(ctx, self.todo_lists[ctx.author.id][int(entry)-1]['entry'], entry):
+                return
+            await self.process_deletion(ctx, entry)
         except IndexError:
             return await ctx.send(self.bot.strings["ENTRY_NOT_FOUND"])
         except KeyError:
