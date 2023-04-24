@@ -32,10 +32,14 @@ class TimeConverter(commands.Converter):
         return time
 
 class Deletion:
+    __slots__ = ("timestamp")
+    
     def __init__(self):
         self.timestamp = time.time()
 
 class UserRapidDeletions:
+    __slots__ = ("deletions")
+
     def __init__(self):
         self.deletions = []
     
@@ -45,7 +49,7 @@ class UserRapidDeletions:
 
 class reminders(commands.Cog):
     '''Reminders to do stuff. (and todo lists!)'''
-    __slots__ = ("bot", "logger", "todo_lists", "reminders", "concurrent_deletions")
+    __slots__ = ("bot", "logger", "todo_lists", "reminders", "deletions")
 
     def __init__(self, bot, load=False):
         self.bot = bot
