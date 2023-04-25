@@ -33,11 +33,11 @@ class TimeConverter(commands.Converter):
 
 class Deletion:
     __slots__ = ("timestamp")
-    
+
     def __init__(self):
         self.timestamp = time.time()
 
-class UserRapidDeletions:
+class UserDeletions:
     __slots__ = ("deletions")
 
     def __init__(self):
@@ -157,7 +157,8 @@ class reminders(commands.Cog):
     async def rapid_deletion_confirmation_callback(self, reaction, message, ctx, confirmed, entry):
         if confirmed:
             await ctx.send("Alright, deleting that entry.")
-            self.deletions[ctx.author.id] = UserRapidDeletions()
+            #reset deletion info
+            self.deletions[ctx.author.id] = UserDeletions()
             await self.process_deletion(ctx, entry)
         else:
             await ctx.send("Not deleting that entry.")
@@ -214,7 +215,7 @@ class reminders(commands.Cog):
             try:
                 self.deletions[ctx.author.id]
             except:
-                self.deletions[ctx.author.id] = UserRapidDeletions()
+                self.deletions[ctx.author.id] = UserDeletions()
             if not entry:
                 return await ctx.send(self.bot.strings["ENTRY_NOT_SPECIFIED_DELETE"])
             try:
