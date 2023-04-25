@@ -168,6 +168,8 @@ class reminders(commands.Cog):
         for deletion in self.deletions[ctx.author.id].deletions:
             if now - deletion.timestamp >= 60:
                 del deletion
+            else:
+                break
 
     async def check_deletions(self, ctx, entry, count):
         await self.prune_deletions(ctx)
