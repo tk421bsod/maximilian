@@ -17,6 +17,10 @@ if sys.version_info.major == 3 and sys.version_info.minor < 8:
     print("You'll need to upgrade Python to continue.")
     quit()
 
+if sys.version_info.minor > 11:
+    print("Hi there. It looks like your Python installation is newer than version 3.11.")
+    print("You may experience issues as Maximilian has not yet been tested on newer versions of Python.\n")
+
 if "--help" in sys.argv:
     print("main.py usage: python3 main.py [OPTIONS]\n")
     print("main.py handles initializing core components, checking requirements, and launching Maximilian.\n")
@@ -24,12 +28,12 @@ if "--help" in sys.argv:
     print("Options:")
     print("--enablejsk - Enables Jishaku, an extension used for debugging and code evaluation.")
     print("--version - Shows version information and exits. New in version 1.2.")
-    print("--noupdate - Skips update check on startup. Takes precendence over --update.")
+    print("--no-update - Skips update check on startup. Takes precendence over --update.")
     print("--update - Updates Maximilian and exits. Implicitly enables --force-update.")
     print("--force-update - Forces update check on startup regardless of the time since last update.")
     print("--noload <extensions> - Skips loading the specified extensions.")
-    print("--no-rich - Disables rich text.")
-    print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level.")
+    print("--no-rich - Disables rich text. May be useful on older systems or smaller screens..")
+    print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level. If not specified, defaults to logging.WARN.")
     print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
     print("--help - Shows this message and exits.")
     print("--language <language> - Sets the language to <language>. If not specified, defaults to 'en'.")
@@ -122,10 +126,10 @@ try:
     #run updater
     outer_logger.info("Running updater")
     try:
-        if "--noupdate" not in sys.argv:
+        if "--no-update" not in sys.argv:
             update()
         else:
-            print("main.py invoked with '--noupdate', skipping update check")
+            print("main.py invoked with '--no-update', skipping update check")
         if "--update" in sys.argv:
             print("Updater exited and main.py was invoked with '--update'. Exiting.")
             quit()

@@ -383,7 +383,7 @@ then
         echo "automatic_updates:True" >> config
     else
         echo "Automatic updates disabled."
-        echo "You'll be asked about updating on every startup unless you use '--noupdate' or '--force-update'."
+        echo "You'll be asked about updating on every startup unless you use '--no-update' or '--force-update'."
         echo "To change this later, change 'automatic_updates:False' to 'automatic_updates:True' in 'config'."
         echo "automatic_updates:False" >> config
     fi
