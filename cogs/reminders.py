@@ -154,7 +154,7 @@ class reminders(commands.Cog):
         entrycount = len(self.todo_lists[ctx.author.id])
         await ctx.send(embed=discord.Embed(title=self.bot.strings["ENTRY_DELETED"].format(entrycount, 'entries' if entrycount != 1 else 'entry'), color=self.bot.config['theme_color']))
 
-    async def rapid_deletion_confirmation_callback(self, reaction, message, ctx, confirmed, entry):
+    async def rapid_deletion_confirmation_callback(self, message, ctx, confirmed, entry):
         if confirmed:
             await ctx.send(self.bot.strings["ENTRY_DELETION_CONFIRMED"])
             await self.process_deletion(ctx, entry)
@@ -179,8 +179,7 @@ class reminders(commands.Cog):
         embed = discord.Embed(title=self.bot.strings["RAPID_DELETION_CONFIRMATION_TITLE"], description=self.bot.strings["RAPID_DELETION_CONFIRMATION_DESCRIPTION"], color=self.bot.config['theme_color'])
         embed.add_field(name=self.bot.strings["ENTRY_SHOW_TITLE"].format(count), value=entry)
         embed.set_footer(text=self.bot.strings["RAPID_DELETION_CONFIRMATION_FOOTER"])
-        conf = await ctx.send(embed=embed)
-        self.bot.confirmation(self.bot, conf, ctx, self.rapid_deletion_confirmation_callback, count)
+        self.bot.confirmation(self.bot, embed, ctx, self.rapid_deletion_confirmation_callback, count)
         return True
 
     @commands.group(invoke_without_command=True, aliases=["to-do", "todos"], help=f"A list of stuff to do.")

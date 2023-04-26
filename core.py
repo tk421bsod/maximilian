@@ -40,45 +40,45 @@ def get_prefix(bot, message):
 class DeletionRequestAlreadyActive(BaseException):
     pass
 
-class confirmation:
-    __slots__ = ("bot", "GREEN_CHECK", "RED_X")
+class ConfirmationView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.confirmed = None
 
-    def __init__(self, bot, message, ctx, callback, *additional_callback_args):
-        '''A class that handles a bit of confirmation logic for you. You\'ll need to provide a callback coroutine that takes at least (reaction:discord.RawReactionActionEvent, message:discord.Message, ctx:discord.ext.commands.Context, confirmed:bool). Obviously it should also take anything else passed to additional_callback_args.'''
+    @discord.ui.button(label='\U00002705', style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.confirmed = True
+        self.stop()
+
+    @discord.ui.button(label='\U0000274e', style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.confirmed = False
+        self.stop()
+
+class confirmation:
+    __slots__ = ("bot")
+
+    def __init__(self, bot, to_send, ctx, callback, *additional_callback_args):
+        '''Handles a bit of confirmation logic for you. You\'ll need to provide a callback coroutine that takes at least (message:discord.Message, ctx:discord.ext.commands.Context, confirmed:bool). Obviously it should also take anything else passed to additional_callback_args.'''
         self.bot = bot
-        self.GREEN_CHECK = '\U00002705'
-        self.RED_X = '\U0000274e'
         if not inspect.iscoroutinefunction(callback):
-            raise TypeError("callback must be a coroutine!!!")
+            raise TypeError("Confirmation callback must be a coroutine.")
         #call handle_confirmation to prevent weird syntax like
         #await confirmation()._handle_confirmation()
-        asyncio.create_task(self._handle_confirmation(message, ctx, callback, *additional_callback_args))
+        asyncio.create_task(self._handle_confirmation(to_send, ctx, callback, *additional_callback_args))
 
-    async def _check_confirmed(self, ctx, message, reaction):
-        '''Check if the user confirmed the action by reacting with GREEN_CHECK. '''
-        emoji = str(reaction[0].emoji)
-        async for each in reaction[0].users():
-            #make sure we're only looking at a: the confirmation message and b: the reaction added by the command's invoker
-            if ctx.message.author == each and reaction[0].message.id == message.id:
-                if emoji == self.GREEN_CHECK:
-                    return True
-                elif emoji == self.RED_X:
-                    return False
-        #wait for another reaction (without running the callback) if the user that reacted wasn't the command's invoker
-        return None
-
-    async def _handle_confirmation(self, message, ctx, callback, *additional_callback_args):
+    async def _handle_confirmation(self, to_send, ctx, callback, *additional_callback_args):
         '''Handles a confirmation, transferring control to a callback if _check_confirmed returns a non-None value'''
-        await message.add_reaction(self.GREEN_CHECK)
-        await message.add_reaction(self.RED_X)
-        await asyncio.sleep(0.4)
-        while True:
-            reaction = await self.bot.wait_for('reaction_add', timeout=60.0)
-            confirmed = await self._check_confirmed(ctx, message, reaction)
-            if confirmed != None:
-                ret = await callback(reaction, message, ctx, confirmed, *additional_callback_args)
-                if ret:
-                    break
+        view = ConfirmationView()
+        if isinstance(to_send, discord.Embed):
+            message = await ctx.send(embed=to_send, view=view)
+        else:
+            message = await ctx.send(to_send, view=view)
+        await view.wait()
+        if view.confirmed == None:
+            return await ctx.send("Sorry, you didn't reply in time. Try again in a moment.")
+        return await callback(message, ctx, view.confirmed, *additional_callback_args)
+
 
 class deletion_request:
     __slots__ = ("bot", "mainembeds", "clearedembeds")
@@ -90,7 +90,7 @@ class deletion_request:
         self.clearedembeds = {"todo":{'color': 7506394, 'type': 'rich', 'title': bot.strings['CLEARED_TODO_LIST']}, "all":{'color': 7506394, 'type': 'rich', 'title': bot.strings['CLEARED_ALL']}}
         self.bot = bot
 
-    async def confirmation_callback(self, reaction, message, ctx, confirmed, requesttype, id):
+    async def confirmation_callback(self, message, ctx, confirmed, requesttype, id):
         try:
             if confirmed:
                 if requesttype == "todo":
@@ -114,9 +114,8 @@ class deletion_request:
         return False
 
     async def _handle_request(self, id, requesttype, ctx):
-        deletionmessage = await ctx.send(embed=discord.Embed.from_dict(self.mainembeds[requesttype]))
         try:
-            confirmation(self.bot, deletionmessage, ctx, self.confirmation_callback, requesttype, id)
+            confirmation(self.bot, discord.Embed.from_dict(self.mainembeds[requesttype]), ctx, self.confirmation_callback, requesttype, id)
         except asyncio.TimeoutError:
             await self.bot.db.exec("delete from active_requests where id = %s", (id,))
             await ctx.send(self.bot.strings["DELETION_TIMEOUT"])
