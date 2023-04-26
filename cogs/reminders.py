@@ -157,9 +157,10 @@ class reminders(commands.Cog):
     async def rapid_deletion_confirmation_callback(self, reaction, message, ctx, confirmed, entry):
         if confirmed:
             await ctx.send(self.bot.strings["ENTRY_DELETION_CONFIRMED"])
+            await self.process_deletion(ctx, entry)
             #reset deletion info
             self.deletions[ctx.author.id] = UserDeletions()
-            await self.process_deletion(ctx, entry)
+
         else:
             await ctx.send(self.bot.strings["ENTRY_DELETION_DENIED"])
         
