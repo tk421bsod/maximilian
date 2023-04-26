@@ -79,8 +79,6 @@ class confirmation:
         else:
             message = await ctx.send(to_send, view=view)
         await view.wait()
-        if view.confirmed == None:
-            return await ctx.send("Sorry, you didn't reply in time. Try again in a moment.")
         return await callback(message, ctx, view.confirmed, *additional_callback_args)
 
 
