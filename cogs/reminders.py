@@ -156,12 +156,12 @@ class reminders(commands.Cog):
 
     async def rapid_deletion_confirmation_callback(self, reaction, message, ctx, confirmed, entry):
         if confirmed:
-            await ctx.send("Alright, deleting that entry.")
+            await ctx.send(self.bot.strings["ENTRY_DELETION_CONFIRMED"])
             #reset deletion info
             self.deletions[ctx.author.id] = UserDeletions()
             await self.process_deletion(ctx, entry)
         else:
-            await ctx.send("Not deleting that entry.")
+            await ctx.send(self.bot.strings["ENTRY_DELETION_DENIED"])
         
     async def prune_deletions(self, ctx):
         now = time.time()
@@ -175,9 +175,9 @@ class reminders(commands.Cog):
         await self.prune_deletions(ctx)
         if self.deletions[ctx.author.id].amount < 2:
             return False
-        embed = discord.Embed(title="Are you sure you want to delete this entry?", description="It looks like you're rapidly deleting entries from your todo list.\nYour todo list re-organizes as you delete entries, so this entry may not be the one you want to delete.\nReact with \u2705 to delete the following anyway:")
-        embed.add_field(name=f"Entry {count}", value=entry)
-        embed.set_footer(text="You're seeing this message because you deleted more than 2 entries within 1 minute.")
+        embed = discord.Embed(title=self.bot.strings["RAPID_DELETION_CONFIRMATION_TITLE"], description=self.bot.strings["RAPID_DELETION_CONFIRMATION_DESCRIPTION"], color=self.bot.config['theme_color'])
+        embed.add_field(name=self.bot.strings["ENTRY_SHOW_TITLE"].format(count), value=entry)
+        embed.set_footer(text=self.bot.strings["RAPID_DELETION_CONFIRMATION_FOOTER"])
         conf = await ctx.send(embed=embed)
         self.bot.confirmation(self.bot, conf, ctx, self.rapid_deletion_confirmation_callback, count)
         return True
