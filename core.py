@@ -41,35 +41,39 @@ class DeletionRequestAlreadyActive(BaseException):
     pass
 
 class ConfirmationView(discord.ui.View):
-    def __init__(self):
+    def __init__(self, confirm_followup, cancel_followup):
         super().__init__()
         self.confirmed = None
+        self.confirm_followup = confirm_followup
+        self.cancel_followup = cancel_followup
 
     @discord.ui.button(label='\U00002705', style=discord.ButtonStyle.green)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.confirmed = True
+        await interaction.response.send_message(self.confirm_followup)
         self.stop()
 
     @discord.ui.button(label='\U0000274e', style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.confirmed = False
+        await interaction.response.send_message(self.cancel_followup)
         self.stop()
 
 class confirmation:
     __slots__ = ("bot")
 
-    def __init__(self, bot, to_send, ctx, callback, *additional_callback_args):
+    def __init__(self, bot, followups, to_send, ctx, callback, *additional_callback_args):
         '''Handles a bit of confirmation logic for you. You\'ll need to provide a callback coroutine that takes at least (message:discord.Message, ctx:discord.ext.commands.Context, confirmed:bool). Obviously it should also take anything else passed to additional_callback_args.'''
         self.bot = bot
         if not inspect.iscoroutinefunction(callback):
             raise TypeError("Confirmation callback must be a coroutine.")
         #call handle_confirmation to prevent weird syntax like
         #await confirmation()._handle_confirmation()
-        asyncio.create_task(self._handle_confirmation(to_send, ctx, callback, *additional_callback_args))
+        asyncio.create_task(self._handle_confirmation(followups, to_send, ctx, callback, *additional_callback_args))
 
-    async def _handle_confirmation(self, to_send, ctx, callback, *additional_callback_args):
+    async def _handle_confirmation(self, followups, to_send, ctx, callback, *additional_callback_args):
         '''Handles a confirmation, transferring control to a callback if _check_confirmed returns a non-None value'''
-        view = ConfirmationView()
+        view = ConfirmationView(confirm_followup=followups[0], cancel_followup=followups[1])
         if isinstance(to_send, discord.Embed):
             message = await ctx.send(embed=to_send, view=view)
         else:
@@ -77,7 +81,7 @@ class confirmation:
         await view.wait()
         if view.confirmed == None:
             return await ctx.send("Sorry, you didn't reply in time. Try again in a moment.")
-        return await callback(message, ctx, view.confirmed, *additional_callback_args)
+        return await callback(message, ctx, confirmed, *additional_callback_args)
 
 
 class deletion_request:
@@ -102,7 +106,6 @@ class deletion_request:
                 await ctx.send(embed=discord.Embed.from_dict(self.clearedembeds[requesttype]))
                 return True
             if not confirmed:
-                await ctx.send(self.bot.strings["DELETION_DENIED"])
                 await self.bot.db.exec("delete from active_requests where id = %s", (id,))
                 return True
         except Exception as e:
@@ -115,7 +118,7 @@ class deletion_request:
 
     async def _handle_request(self, id, requesttype, ctx):
         try:
-            confirmation(self.bot, discord.Embed.from_dict(self.mainembeds[requesttype]), ctx, self.confirmation_callback, requesttype, id)
+            confirmation(self.bot, [self.bot.strings["DELETION_CONFIRMED"], self.bot.strings["DELETION_DENIED"]], discord.Embed.from_dict(self.mainembeds[requesttype]), ctx, self.confirmation_callback, requesttype, id)
         except asyncio.TimeoutError:
             await self.bot.db.exec("delete from active_requests where id = %s", (id,))
             await ctx.send(self.bot.strings["DELETION_TIMEOUT"])

@@ -53,12 +53,9 @@ class reaction_roles(commands.Cog, name="reaction roles"):
 
     async def role_confirmation_callback(self, message, ctx, confirmed, roleid, messageid, emoji):
         if confirmed:
-            await ctx.send(self.bot.strings["UPDATING_ROLE"])
             await self.bot.db.exec("replace into roles values(%s, %s, %s, %s)", (ctx.guild.id, roleid, messageid, emoji))
             self.roles[ctx.guild.id][roleid] = reaction_role(roleid, ctx.guild.id, messageid, emoji)
             await ctx.send(embed=discord.Embed(title=self.bot.strings["ROLE_UPDATED"], color=self.bot.config['theme_color']))
-        else:
-            await ctx.send(self.bot.strings["ROLE_NOT_UPDATED"])
         await self.complete_hook(ctx)
 
     async def add_role(self, ctx, role, messageid, emoji):
@@ -66,7 +63,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             changes = self.detect_changes(self.roles[ctx.guild.id][role.id], reaction_role(role.id, ctx.guild.id, messageid, emoji))
             if not changes:
                 return await ctx.send(self.bot.strings["ROLE_NOT_CHANGED"])
-            self.bot.confirmation(self.bot, discord.Embed(title=self.bot.strings["ROLE_CHANGED_TITLE"], description=self.bot.strings["ROLE_CHANGED_DESC"].format(changes), color=discord.Color.yellow()), ctx, self.role_confirmation_callback, role.id, messageid, emoji)
+            self.bot.confirmation(self.bot, [self.bot.strings["UPDATING_ROLE"], self.bot.strings["ROLE_NOT_UPDATED"]], discord.Embed(title=self.bot.strings["ROLE_CHANGED_TITLE"], description=self.bot.strings["ROLE_CHANGED_DESC"].format(changes), color=discord.Color.yellow()), ctx, self.role_confirmation_callback, role.id, messageid, emoji)
             return
         await self.bot.db.exec("insert into roles values(%s, %s, %s, %s)", (ctx.guild.id, role.id, messageid, emoji))
         self.roles[ctx.guild.id][role.id] = reaction_role(role.id, ctx.guild.id, messageid, emoji)

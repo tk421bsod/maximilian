@@ -10,6 +10,7 @@ CLEAR_EFFECTS_TITLE:Effects
 CLEAR_TODO_LIST_EFFECTS_DESC:If you proceed, your todo list will be deleted. **THIS CANNOT BE UNDONE.**
 CLEAR_TODO_LIST_DESC:You've requested that I delete your todo list, and I need you to confirm you actually want to do this.
 CLEAR_TODO_LIST_TITLE:Delete your todo list?
+DELETION_CONFIRMED:Proceeding with deletion...
 CONFIRMATION_OPTIONS_TITLE:Your options
 CONFIRMATION_OPTIONS:React with \u2705 to proceed, or react with \u274e to cancel.
 CLEAR_ALL_EFFECTS_DESC:If you proceed, all reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`. **THIS CANNOT BE UNDONE.**
