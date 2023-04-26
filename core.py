@@ -81,7 +81,7 @@ class confirmation:
         await view.wait()
         if view.confirmed == None:
             return await ctx.send("Sorry, you didn't reply in time. Try again in a moment.")
-        return await callback(message, ctx, confirmed, *additional_callback_args)
+        return await callback(message, ctx, view.confirmed, *additional_callback_args)
 
 
 class deletion_request:
