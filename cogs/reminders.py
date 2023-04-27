@@ -110,7 +110,7 @@ class reminders(commands.Cog):
         await self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
 
-    @commands.command(aliases=['reminders', 'reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.")
+    @commands.command(aliases=['reminders', 'reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.", localized_help={'en':'Set a reminder.'})
     async def remind(self, ctx, time:TimeConverter, *, reminder):
         await ctx.send(self.bot.strings["SETTING_REMINDER"])
         #get the date the reminder will fire at
@@ -147,12 +147,20 @@ class reminders(commands.Cog):
             await ctx.send(self.bot.strings["ERROR_LIST_FAILED"])
             await self.bot.core.send_debug(ctx)
 
+    def get_entrycount_string(self, entrycount):
+        base = self.bot.strings["ENTRY_COUNT"]
+        if entrycount == 1:
+            return base.format(entrycount, self.bot.strings["ENTRY_SINGLE"])
+        if entrycount == 0:
+            return self.bot.strings["LIST_NOW_EMPTY"]
+        return base.format(entrycount, self.bot.strings["ENTRY_PLURAL"])
+
     async def process_deletion(self, ctx, entry):
         await self.bot.db.exec("delete from todo where entry=%s and user_id=%s", (self.todo_lists[ctx.author.id][int(entry)-1]['entry'], ctx.author.id))
         del self.todo_lists[ctx.author.id][int(entry)-1]
         self.deletions[ctx.author.id].deletions.append(Deletion())
         entrycount = len(self.todo_lists[ctx.author.id])
-        await ctx.send(embed=discord.Embed(title=self.bot.strings["ENTRY_DELETED"].format(entrycount, 'entries' if entrycount != 1 else 'entry'), color=self.bot.config['theme_color']))
+        await ctx.send(embed=discord.Embed(title=self.bot.strings["ENTRY_DELETED"]+self.get_entrycount_string(entrycount), color=self.bot.config['theme_color']))
 
     async def rapid_deletion_confirmation_callback(self, message, ctx, confirmed, entry):
         if confirmed:
@@ -175,7 +183,8 @@ class reminders(commands.Cog):
         embed = discord.Embed(title=self.bot.strings["RAPID_DELETION_CONFIRMATION_TITLE"], description=self.bot.strings["RAPID_DELETION_CONFIRMATION_DESCRIPTION"], color=self.bot.config['theme_color'])
         embed.add_field(name=self.bot.strings["ENTRY_SHOW_TITLE"].format(count), value=entry)
         embed.set_footer(text=self.bot.strings["RAPID_DELETION_CONFIRMATION_FOOTER"])
-        self.bot.confirmation(self.bot, [self.bot.strings["ENTRY_DELETION_CONFIRMED"], self.bot.strings["ENTRY_DELETION_DENIED"]], embed, ctx, self.rapid_deletion_confirmation_callback, count)
+        followups = [self.bot.strings["ENTRY_DELETION_CONFIRMED"], self.bot.strings["ENTRY_DELETION_DENIED"]]
+        self.bot.confirmation(self.bot, followups, embed, ctx, self.rapid_deletion_confirmation_callback, count)
         return True
 
     @commands.group(invoke_without_command=True, aliases=["to-do", "todos"], help=f"A list of stuff to do.")
@@ -200,7 +209,7 @@ class reminders(commands.Cog):
                 self.todo_lists[ctx.author.id] = []
             self.todo_lists[ctx.author.id].insert(0, {"user_id":ctx.author.id, "entry":entry, "timestamp":timestamp})
             entrycount = len(self.todo_lists[ctx.author.id])
-            await ctx.send(embed=discord.Embed(title=self.bot.strings["ENTRY_ADDED"].format(entrycount, 'entries' if entrycount != 1 else 'entry'), color=self.bot.config['theme_color']))
+            await ctx.send(embed=discord.Embed(title=self.bot.strings["ENTRY_ADDED"]+self.get_entrycount_string(entrycount), color=self.bot.config['theme_color']))
         except:
             #dm traceback
             await self.bot.core.send_traceback()
