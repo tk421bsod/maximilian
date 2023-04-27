@@ -72,7 +72,7 @@ class confirmation:
         asyncio.create_task(self._handle_confirmation(followups, to_send, ctx, callback, *additional_callback_args))
 
     async def _handle_confirmation(self, followups, to_send, ctx, callback, *additional_callback_args):
-        '''Handles a confirmation, transferring control to a callback if _check_confirmed returns a non-None value'''
+        '''Handles a confirmation, transferring control to a callback once ConfirmationView exits'''
         view = ConfirmationView(confirm_followup=followups[0], cancel_followup=followups[1])
         if isinstance(to_send, discord.Embed):
             message = await ctx.send(embed=to_send, view=view)
