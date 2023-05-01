@@ -41,6 +41,12 @@ class DeletionRequestAlreadyActive(BaseException):
     pass
 
 class ConfirmationView(discord.ui.View):
+    #TODO: Consider somehow passing the raw Interaction to callbacks instead of having to pass followups.
+    #Perhaps we could require consumers to pass an interaction_callback coro when constructing a confirmation.
+    #From there we could send it the Interaction and View and let it handle everything.
+
+    __slots__ = ("confirmed", "confirm_followup", "cancel_followup")
+
     def __init__(self, confirm_followup, cancel_followup):
         super().__init__()
         self.confirmed = None
@@ -63,7 +69,7 @@ class confirmation:
     __slots__ = ("bot")
 
     def __init__(self, bot, followups, to_send, ctx, callback, *additional_callback_args):
-        '''Handles a bit of confirmation logic for you. You\'ll need to provide a callback coroutine that takes at least (message:discord.Message, ctx:discord.ext.commands.Context, confirmed:bool). Obviously it should also take anything else passed to additional_callback_args.'''
+        '''Handles a bit of confirmation logic for you. You\'ll need to provide a callback coroutine that takes at least (message:discord.Message, ctx:discord.ext.commands.Context, confirmed:bool). Obviously it should also take anything else you pass to additional_callback_args.'''
         self.bot = bot
         if not inspect.iscoroutinefunction(callback):
             raise TypeError("Confirmation callback must be a coroutine.")
@@ -133,6 +139,7 @@ class deletion_request:
             raise DeletionRequestAlreadyActive()
 
     async def delete_all(self, ctx):
+        #TODO: More elegant solution than whatever the hell this is
         await self.bot.db.exec("delete from roles where guild_id = %s", (ctx.guild.id,))
         await self.bot.db.exec("delete from responses where guild_id = %s", (ctx.guild.id,))
         await self.bot.db.exec("delete from prefixes where guild_id = %s", (ctx.guild.id,))
