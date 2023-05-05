@@ -1,6 +1,4 @@
 #common.py: a shared library containing a bunch of useful stuff
-import logging
-import os
 import subprocess
 
 class Version:
