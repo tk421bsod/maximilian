@@ -1,6 +1,5 @@
 #common.py: a shared library containing a bunch of useful stuff
 import logging
-import core
 import os
 import subprocess
 
@@ -40,6 +39,14 @@ def get_value(dict, key, default=None):
         return dict[key]
     except KeyError:
         return default
+
+def set_value(dict, key, value, unique=False):
+    try:
+        dict[key]
+        if not unique:
+            dict[key] = value
+    except KeyError:
+        dict[key] = value
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
