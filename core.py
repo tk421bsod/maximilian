@@ -333,6 +333,7 @@ class core(commands.Cog):
             newblocklist = [i['user_id'] for i in await self.bot.db.exec("select * from blocked", ())]
             self.bot.blocklist = newblocklist
         except TypeError:
+            self.logger.debug(traceback.format_exc())
             return self.logger.info("Failed to update blocklist, is there anything in the database?")
         self.logger.info("Updated blocklist!")
 

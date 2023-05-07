@@ -68,7 +68,7 @@ class reminders(commands.Cog):
         new_reminders = {}
         reminders = {}
         try:
-            reminders = await self.bot.db.exec("select * from reminders order by user_id desc")
+            reminders = await self.bot.db.exec("select * from reminders order by user_id desc", ())
             for item in reminders:
                 new_reminders[item['user_id']] = [i for i in reminders if i['user_id'] == item['user_id']]
                 #only start handling reminders if the extension was loaded, we don't want reminders to fire twice once this function is
@@ -79,7 +79,7 @@ class reminders(commands.Cog):
             self.reminders = new_reminders
         except:
             self.logger.info("Couldn't update reminder cache! Is there anything in the database?")
-        traceback.print_exc()
+            self.logger.debug(traceback.format_exc())
         self.logger.info("Updated reminder cache!")
         
     async def update_todo_cache(self):

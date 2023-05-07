@@ -93,8 +93,8 @@ class db:
         """
         await cur.execute(str(query), params)
         row = await cur.fetchall()
-        if len(row) == 1:
-            row = row[0]
+        #if len(row) == 1:
+            #row = row[0]
         return row if row != () and row != "()" else None
 	
 if __name__ == "__main__":

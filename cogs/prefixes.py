@@ -33,7 +33,7 @@ class prefixes(commands.Cog):
         if not prefix and prefix != () and prefix != "()":
             self.bot.prefix[guild_id] = '!'
         else:
-            self.bot.prefix[guild_id] = prefix['prefix']
+            self.bot.prefix[guild_id] = prefix[0]['prefix']
 
     async def update_prefix_cache(self, guild_id=None):
         '''Builds/updates cache of prefixes'''
