@@ -17,7 +17,7 @@ import startup
 
 
 class maximilian(commands.Bot):
-    __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER")
+    __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "blocklist", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER")
 
     def __init__(self, logger):
         logger.debug("Loading config...")
