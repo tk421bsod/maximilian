@@ -42,8 +42,8 @@ class maximilian(commands.Bot):
         #attempt to pull database name from config!
         try:
             self.database = config["database"]
-            self.logger.debug("Sourced database name from config.")
-            self.logger.debug(f"Using database '{self.database}'.")
+            logger.warning("Sourced database name from config.")
+            logger.warning(f"Using database '{self.database}'.")
         except:
             pass
         self.logger = logger
