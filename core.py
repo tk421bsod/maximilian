@@ -281,7 +281,7 @@ class core(commands.Cog):
     async def reload_strings(self, ctx):
         try:
             reloading = await ctx.send("Reloading strings...")
-            self.bot.strings = await startup.load_strings(self.bot.logger, exit=False)
+            self.bot.strings = await startup.load_strings(self.bot.logger, self.bot.config, exit=False)
             await ctx.send("Done.")
         except:
             await reloading.add_reaction("\U00002757")
