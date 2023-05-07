@@ -238,7 +238,7 @@ class core(commands.Cog):
                      await ctx.send("\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
                      extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
             for each in targetextensions:
-                self.bot.reload_extension(each)
+                await self.bot.reload_extension(each)
             self.bot.prefixes = self.bot.get_cog('prefixes')
             self.bot.responses = self.bot.get_cog('Custom Commands')
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
