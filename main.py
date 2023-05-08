@@ -32,7 +32,7 @@ if "--help" in sys.argv:
     print("--update - Updates Maximilian and exits. Implicitly enables --force-update.")
     print("--force-update - Forces update check on startup regardless of the time since last update.")
     print("--noload <extensions> - Skips loading the specified extensions.")
-    print("--no-rich - Disables rich text. May be useful on older systems or smaller screens..")
+    print("--no-rich - Disables rich text. May be useful on older systems or smaller screens.")
     print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level. If not specified, defaults to logging.WARN.")
     print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
     print("--help - Shows this message and exits.")
@@ -42,6 +42,10 @@ if "--help" in sys.argv:
 
 if "--version" in sys.argv:
     print(f"You are using version {VER}.")
+    quit()
+
+if "--noupdate" in sys.argv:
+    print("You're using the old --noupdate option.\nThis option was changed to '--no-update' in 1.2.0.\nUse the new option instead.")
     quit()
 
 print("Loading components...")
@@ -54,7 +58,7 @@ try:
     import traceback
     import time
 except (ImportError, NameError, SyntaxError) as e:
-    print("It looks like your Python installation is missing some features.\nIf you built it from source, you may need to install additional dependencies.")
+    print("It looks like your Python installation is missing some features.\nIf you built it from source, you may need to install additional dependencies and reinstall.")
     print(e)
     sys.exit(2)
 
