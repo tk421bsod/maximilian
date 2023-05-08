@@ -31,7 +31,7 @@ if "--help" in sys.argv:
     print("--no-update - Skips update check on startup. Takes precendence over --update.")
     print("--update - Updates Maximilian and exits. Implicitly enables --force-update.")
     print("--force-update - Forces update check on startup regardless of the time since last update.")
-    print("--noload <extensions> - Skips loading the specified extensions.")
+    print("--no-load <extensions> - Skips loading the specified extensions.")
     print("--no-rich - Disables rich text. May be useful on older systems or smaller screens.")
     print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level. If not specified, defaults to logging.WARN.")
     print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
@@ -44,9 +44,11 @@ if "--version" in sys.argv:
     print(f"You are using version {VER}.")
     quit()
 
-if "--noupdate" in sys.argv:
-    print("You're using the old --noupdate option.\nThis option was changed to '--no-update' in 1.2.0.\nUse the new option instead.")
-    quit()
+
+for old_arg, new_arg in {"--noupdate":"--no-update", "--noload":"--no-load"}.items():
+    if old_arg in sys.argv:
+        print(f"You're using the old '{old_arg}' option.\nThis option was changed to '{new_arg}' in 1.2.0.\nUse the new option instead.")
+        quit()
 
 print("Loading components...")
 

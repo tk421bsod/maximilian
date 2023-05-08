@@ -58,8 +58,8 @@ def parse_arguments(bot, args):
         else:
             bot.logger.warning("No database IP address provided. Falling back to localhost.")
             bot.dbip = "localhost"
-        if "--noload" in args:
-            bot.noload = [i for i in args[args.index('--noload')+1:] if not i.startswith('-')]
+        if "--no-load" in args:
+            bot.noload = [i for i in args[args.index('--no-load')+1:] if not i.startswith('-')]
         else:
             bot.noload = []
     else:

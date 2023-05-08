@@ -34,7 +34,7 @@ I recommend enabling two factor authentication for your Discord account before u
 
 If you're hosting the database on another computer, you'll need to run `main.py` with `--ip <database_ip>`, replacing `<database_ip>` with the IP address of your database.
 
-To skip loading a specific extension, use the `--noload` argument. Follow it up with the names of the extensions you don't want loaded. for example, `python3 main.py --noload cogs.userinfo` will make Maximilian not load the userinfo extension.
+To skip loading a specific extension, use the `--no-load` argument. Follow it up with the names of the extensions you don't want loaded. for example, `python3 main.py --noload cogs.userinfo` will make Maximilian not load the userinfo extension.
 
 You can specify a logging level (which filters the information Maximilian outputs) through command line arguments after `main.py`; the logging levels are -q (disables logging), -e (errors only), -w (warnings + errors, default), -i (warnings + errors + info, recommended), -v (warnings + errors + info + debugging info).
 It defaults to -w if nothing's specified.
