@@ -3,7 +3,9 @@
 A Discord bot with some cool features that does some cool stuff.
 Currently in active development.
 
-This branch contains the latest changes to 1.1.x.
+This branch is used for active development of v1.2.0.
+For an incomplete changelog, take a look at https://gist.github.com/TK421bsod/356dec54683c93026fe0af2193b96ee6.
+Most commits are tested, but sometimes things will break.
 Use the `release` branch if you want a stable release.
 
 Want 1.0 release notes?
