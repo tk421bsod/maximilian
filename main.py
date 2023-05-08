@@ -1,7 +1,7 @@
 #main.py: loads core libraries and everything in the cogs folder, then starts Maximilian
 import sys
 
-VER = "1.2.0"
+VER = "1.2.0-prerelease"
 
 if __name__ != "__main__":
     print("It looks like you're trying to import main.py as a module.")
