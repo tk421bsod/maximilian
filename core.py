@@ -12,16 +12,12 @@ import typing
 import discord
 from discord.ext import commands
 
+import common
 import helpcommand
 import startup
 
-try:
-    import git
-except (ImportError, ModuleNotFoundError):
-    pass #we'll deal with it in a bit
-
 def get_prefix(bot, message):
-    if not bot.prefixes:
+    if not getattr(bot, "prefixes", None):
         try:
             bot.loop.create_task(bot.prefixes.update_prefix_cache())
         #fall back if something goes wrong
@@ -166,9 +162,6 @@ class core(commands.Cog):
         self.reload_enabled = True
         if load:
             asyncio.create_task(self.update_blocklist())
-            #disable reload command if gitpython isn't installed
-            #this is done in a task to make sure it's done after commands have been registered
-            asyncio.create_task(self.check_for_git())
 
     async def send_debug(self, ctx):
         if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
@@ -188,13 +181,6 @@ class core(commands.Cog):
         for page in paginator.pages:
             await target.send(page)
 
-    async def check_for_git(self):
-        try:
-            import git
-        except (ImportError, ModuleNotFoundError):
-            self.reload_enabled = False
-            self.logger.info("Disabled reload command as gitpython isn't installed.")
-
     @commands.group(invoke_without_command=False, hidden=True)
     async def utils(self, ctx):
         pass
@@ -209,8 +195,6 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def reload(self, ctx, *targetextensions):
-        if not self.reload_enabled:
-            return await ctx.send("Sorry, this command is disabled. Install `gitpython` to enable it.")
         await ctx.typing()
         try:
             if "--nofetch" in targetextensions:
@@ -230,13 +214,13 @@ class core(commands.Cog):
                 await ctx.send("Ok, I won't fetch the latest revision. Reloading extensions...")
             else:
                  reloadmessage = await ctx.send("Fetching latest revision...")
-                 try:
-                     git.Repo(os.getcwd()).remotes.origin.pull()
-                     await reloadmessage.edit(content=f"Reloading extensions...")
-                 except:
+                 ret = await self.bot.loop.run_in_executor(None, common.run_command, ["git", "pull"])
+                 if ret['returncode']:
                      await ctx.send(traceback.print_exc())
                      await ctx.send("\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
                      extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
+                 else:
+                     await reloadmessage.edit(content=f"Reloading extensions...")
             for each in targetextensions:
                 await self.bot.reload_extension(each)
             self.bot.prefixes = self.bot.get_cog('prefixes')
@@ -286,7 +270,6 @@ class core(commands.Cog):
         except:
             await reloading.add_reaction("\U00002757")
             return await ctx.send(f"{traceback.format_exc()}")
-
 
     @commands.is_owner()
     @utils.command(hidden=True)
