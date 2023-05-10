@@ -61,7 +61,6 @@ def update():
             try:
                 automatic_updates = bool(config['automatic_updates'])
             except KeyError:
-                common.run_command(["echo", "\"automatic_updates:True\"", ">>", "config"])
                 automatic_updates = True
             if not automatic_updates:
                 print("Automatic updates aren't enabled. Would you like to attempt an update? Y/N\n")
