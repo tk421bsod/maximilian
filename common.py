@@ -1,5 +1,6 @@
 #common.py: a shared library containing a bunch of useful stuff
 import subprocess
+import logging
 
 class Version:
     __slots__ = ("major", "minor", "micro")
@@ -22,6 +23,8 @@ def load_config():
     return config
 
 def run_command(args):
+    if logging.root.level == logging.DEBUG:
+        logging.getLogger('common').debug(f"Calling run_command with {args}")
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
     return {"output":out.decode('utf-8').strip().split("\n"), "returncode":p.returncode}
