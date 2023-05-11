@@ -20,11 +20,13 @@ class maximilian(commands.Bot):
     __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "blocklist", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER")
 
     def __init__(self, logger):
+        #step 1: prep config
         logger.debug("Loading config...")
         config = common.load_config()
         logger.debug("Processing config...")
         config = startup.preprocess_config(config)
         token = config['token']
+        #step 2: check requirements
         logger.debug("Checking discord.py version...")
         startup.check_version()
         intents = self.get_intents()
@@ -36,6 +38,7 @@ class maximilian(commands.Bot):
             logger.debug("Done getting latest commit hash.")
         else:
             self.commit = ""
+        #step 3: set up some attributes we'll need soon
         logger.debug("Setting up some stuff")
         super().__init__(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.2.0{f'-{self.commit}' if self.commit else ''}"))
         self.database = "maximilian"
@@ -76,7 +79,7 @@ class maximilian(commands.Bot):
                     error.original = commands.errors.NoEntryPointError('')
                 self.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This module won't be loaded.")
                 if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
-                    self.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -r requirements_extra.txt.'")
+                    self.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -U -r requirements.txt.'")
                 else:
                     self.logger.error(traceback.format_exc())
                     await self.try_exit()
@@ -166,16 +169,23 @@ class maximilian(commands.Bot):
     #wrap everything in a function to prevent conflicting event loops
     async def run(self):
         self.logger.debug("Async context entered.")
+        #now that we're in an async context, we can initialize our translation layer...
         self.strings = await startup.load_strings(self.logger, self.config)
+        #register events...
         await self.wrap_event()
         #show version information
         self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
         #parse additional arguments (ip, enablejsk, noload)
+        #TODO: Consider moving parse_arguments outside this context. Non-async stuff has no place here.
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
+        #...and initialize the database.
         await self.setup_db()
         #initialize settings api
         self.settings = settings.settings(self)
+        #If we're actually logging in, schedule some tasks for after login starts...
+        #TODO: Rename --nologin to --no-login to match other args.
+        #TODO: Fix RuntimeErrors if exiting before Bot.start runs, e.g "Exception ignored in: <function Connection.__del__ at 0x7ddc7b348220>"
         if not "--nologin" in sys.argv:
             #TODO: Eliminate potential for race conditions here:
             #Either load_extensions_async or init_general_settings could run before Bot.start runs,
