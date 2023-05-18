@@ -47,7 +47,7 @@ class HelpCommand(commands.HelpCommand):
         await self.get_destination().send(embed=embed)
 
     async def send_cog_help(self, cog):
-        embed = discord.Embed(title=self.bot.strings["COG_HELP_TITLE"].format(cog), color=self.context.bot.config['theme_color'])
+        embed = discord.Embed(title=self.context.bot.strings["COG_HELP_TITLE"].format(cog), color=self.context.bot.config['theme_color'])
         if cog.description:
             embed.description = cog.description
 
@@ -60,10 +60,14 @@ class HelpCommand(commands.HelpCommand):
 
     async def get_command_docstring(self, command, append_syntax=True):
         help = None
+        name = ""
+        if command.parent:
+            name += command.parent.name
+        name += command.name
         try:
-            help = self.context.bot.strings[f"COMMAND_HELP_{command.name.strip().replace(' ', '_').upper()}"]
+            help = self.context.bot.strings[f"COMMAND_HELP_{name.strip().replace(' ', '_').upper()}"]
         except KeyError:
-            self.context.bot.logger.debug(f"No localized help string found for command {command.name} in the current language. Falling back to provided help string.")
+            self.context.bot.logger.debug(f"No localized help string found for command {name.strip().replace(' ', '_').upper()} in the current language. Falling back to provided help string.")
             if command.help:
                 help = command.help
         parent = ""
