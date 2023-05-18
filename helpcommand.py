@@ -70,7 +70,7 @@ class HelpCommand(commands.HelpCommand):
         if command.parent:
             parent = command.parent.name + " "
         if help:
-            return help + self.bot.strings["COMMAND_SYNTAX"].format(self.context.clean_prefix, parent, command.name, command.signature)
+            return help + self.context.bot.strings["COMMAND_SYNTAX"].format(self.context.clean_prefix, parent, command.name, command.signature)
         self.context.bot.logger.debug(f'No help string provided for command {command.name}.')
         return '...'
 
