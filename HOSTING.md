@@ -34,17 +34,27 @@ I recommend enabling two factor authentication for your Discord account before u
 
 If you're hosting the database on another computer, you'll need to run `main.py` with `--ip <database_ip>`, replacing `<database_ip>` with the IP address of your database.
 
-To skip loading a specific extension, use the `--no-load` argument. Follow it up with the names of the extensions you don't want loaded. for example, `python3 main.py --noload cogs.userinfo` will make Maximilian not load the userinfo extension.
+To skip loading a specific extension, use the `--no-load` argument. Follow it up with the names of the extensions you don't want loaded. for example, `python3 main.py --no-load cogs.userinfo` will make Maximilian not load the userinfo extension.
 
 You can specify a logging level (which filters the information Maximilian outputs) through command line arguments after `main.py`; the logging levels are -q (disables logging), -e (errors only), -w (warnings + errors, default), -i (warnings + errors + info, recommended), -v (warnings + errors + info + debugging info).
 It defaults to -w if nothing's specified.
 For example, `python3 main.py -i` will start Maximilian with the INFO logging level.
 I recommend using `-i` as it outputs some information you wouldn't see at other logging levels.
 
-Using `-v` will result in larger log file sizes and much more output to the console, especially on the first run.
+Using `-v`, `--verbose`, or `--debug` will result in larger log file sizes and much more output to the console, especially on the first run.
+You may also see a small decrease in performance.
 If you choose to use it, you'll see a small warning on startup.
 
+To bypass the updater on startup, run main.py with `--no-update`.
+This can save some startup time if you're restarting Maximilian frequently.
+
+Want to make Maximilian check for updates each time it starts, regardless of the time since the last update?
+Run main.py with `--force-update`.
+
+Want to attempt an update and exit? Use `--update`. This implicitly enables `--force-update`.
+
 Run main.py with `--help` to view more information on valid arguments.
+Anything not documented either here or in `--help` is not stable and can change at any time.
 
 # can I run Maximilian on Windows?
 At the moment, no.
