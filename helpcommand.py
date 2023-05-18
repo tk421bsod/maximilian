@@ -53,12 +53,12 @@ class HelpCommand(commands.HelpCommand):
 
         filtered = await self.filter_commands(cog.get_commands(), sort=True)
         for command in filtered:
-            embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)
+            embed.add_field(name=self.get_command_signature(command), value=await self.get_command_docstring(command, append_syntax=False), inline=False)
 
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
 
-    async def get_command_docstring(self, command):
+    async def get_command_docstring(self, command, append_syntax=True):
         help = None
         try:
             help = self.context.bot.strings[f"COMMAND_HELP_{command.name.strip().replace(' ', '_').upper()}"]
@@ -70,6 +70,8 @@ class HelpCommand(commands.HelpCommand):
         if command.parent:
             parent = command.parent.name + " "
         if help:
+            if not append_syntax:
+                return help
             return help + self.context.bot.strings["COMMAND_SYNTAX"].format(self.context.clean_prefix, parent, command.name, command.signature)
         self.context.bot.logger.debug(f'No help string provided for command {command.name}.')
         return '...'
@@ -82,7 +84,7 @@ class HelpCommand(commands.HelpCommand):
             filtered = await self.filter_commands(group.commands, sort=True)
             for command in filtered:
                 doc = await self.get_command_docstring(command)
-                embed.add_field(name=self.get_command_signature(command), value=await self.get_command_docstring(command), inline=False)
+                embed.add_field(name=self.get_command_signature(command), value=doc, inline=False)
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
 
