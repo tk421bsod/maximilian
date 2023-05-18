@@ -8,5 +8,7 @@ For an incomplete changelog, take a look at https://gist.github.com/TK421bsod/35
 Most commits are tested, but sometimes things will break.
 Use the `release` branch if you want a stable release.
 
+If you're interested in hosting this yourself, check out HOSTING.md.
+
 Want 1.0 release notes?
 See https://gist.github.com/TK421bsod/2980fa67a9a5f925e7cdfb9f083a5c3b
