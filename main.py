@@ -27,13 +27,13 @@ if "--help" in sys.argv:
     print("You can enable/disable features and modify Maximilian's behavior through the use of the following options.\nYou can use more than one option at a time.\n")
     print("Options:")
     print("--enablejsk - Enables Jishaku, an extension used for debugging and code evaluation.")
-    print("--version - Shows version information and exits. New in version 1.2.")
-    print("--no-update - Skips update check on startup. Takes precendence over --update.")
+    print("--version - Shows version information and exits. New in version 1.2.0.")
+    print("--no-update - Skips update check on startup. Takes precendence over --update. Renamed from --noupdate in version 1.2.0.")
     print("--update - Updates Maximilian and exits. Implicitly enables --force-update.")
     print("--force-update - Forces update check on startup regardless of the time since last update.")
-    print("--no-load <extensions> - Skips loading the specified extensions.")
+    print("--no-load <extensions> - Skips loading the specified extensions. Renamed from --noload in version 1.2.0.")
     print("--no-rich - Disables rich text. May be useful on older systems or smaller screens.")
-    print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level. If not specified, defaults to logging.WARN.")
+    print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level. If not specified, defaults to logging.WARN. Debug logging (-v, --debug, --verbose) can cause a slight performance decrease and will make log files much larger.")
     print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
     print("--help - Shows this message and exits.")
     print("--language <language> - Sets the language to <language>. If not specified, defaults to 'en'.")
@@ -43,7 +43,6 @@ if "--help" in sys.argv:
 if "--version" in sys.argv:
     print(f"You are using version {VER}.")
     quit()
-
 
 for old_arg, new_arg in {"--noupdate":"--no-update", "--noload":"--no-load"}.items():
     if old_arg in sys.argv:
@@ -76,7 +75,7 @@ except (ImportError, NameError, SyntaxError) as e:
 
 try:
     from base import maximilian
-    from updater import update
+    import updater
 except (ImportError, NameError, SyntaxError) as e:
     print("Maximilian cannot start because an internal module failed to load.\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk421#2016 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
     print(e)
@@ -133,7 +132,7 @@ try:
     outer_logger.info("Running updater")
     try:
         if "--no-update" not in sys.argv:
-            update()
+            updater.update()
         else:
             print("main.py invoked with '--no-update', skipping update check")
         if "--update" in sys.argv:
@@ -146,7 +145,7 @@ try:
         print("Updater interrupted. Maximilian will start in a moment.")
         time.sleep(1)
     outer_logger.debug("Preparing to start the event loop...")
-    #then start the event loop
+    #initialize stuff needed before we enter an async context
     bot = maximilian(outer_logger)
     bot.VER = VER
     asyncio.run(bot.run())
