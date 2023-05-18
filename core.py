@@ -278,19 +278,16 @@ class core(commands.Cog):
     @utils.command(hidden=True)
     async def change_status(self, ctx, type, newstatus=None):
         await ctx.send("Changing status...")
-        if type.lower() == "streaming":
-            await self.bot.change_presence(activity=discord.Streaming(name=" my development!", url=newstatus))
-        elif type.lower() == "listening":
+        if type.lower() == "listening":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=newstatus))
         elif type.lower() == "watching":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=newstatus))
         elif type.lower() == "playing":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=newstatus))
         elif type.lower() == "default":
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" v0.6 (stable)"))
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{self.bot.VER}"))
         else:
-            await ctx.send("oh :blobpaiN; invalid status! ¯\_(ツ)_/¯")
-            return
+            return await ctx.send("Sorry, that's an invalid status type.\nYou can choose from one of the following:\n`listening`\n`watching`\n`playing\n`default`")
         await ctx.send("Changed status!")
 
     @commands.is_owner()
