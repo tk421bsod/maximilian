@@ -163,6 +163,13 @@ class core(commands.Cog):
         if load:
             asyncio.create_task(self.update_blocklist())
 
+    async def send_paginated(self, to_send, target):
+        paginator = commands.Paginator()
+        for line in to_send.split("\n"):
+            paginator.add_line(line)
+        for page in paginator.pages:
+            await target.send(page)
+
     async def send_debug(self, ctx):
         if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
             if self.bot.settings.general.debug.enabled(ctx.guild.id):
@@ -171,15 +178,11 @@ class core(commands.Cog):
                 await ctx.send(self.bot.strings["DEBUG_DISABLE_REMINDER"])
 
     async def send_traceback(self, target=None):
-        paginator = commands.Paginator()
-        for line in traceback.format_exc().split("\n"):
-            paginator.add_line(line)
         if not target:
             target = self.bot.get_user(self.bot.owner_id)
         if not target:
             return
-        for page in paginator.pages:
-            await target.send(page)
+        await self.send_paginated(traceback.format_exc(), target)
 
     @commands.group(invoke_without_command=False, hidden=True)
     async def utils(self, ctx):
@@ -269,7 +272,7 @@ class core(commands.Cog):
             await ctx.send("Done.")
         except:
             await reloading.add_reaction("\U00002757")
-            return await ctx.send(f"{traceback.format_exc()}")
+            return await self.send_traceback()
 
     @commands.is_owner()
     @utils.command(hidden=True)
@@ -304,10 +307,7 @@ class core(commands.Cog):
             try:
                 await ctx.send(f"`{result}`")
             except discord.HTTPException:
-                paginator = commands.Paginator()
-                for line in result:
-                    paginator.add_line(str(line))
-                [await ctx.send(page) for page in paginator.pages]
+                await self.send_paginated(result, ctx)
 
     async def update_blocklist(self):
         self.logger.info("Updating blocklist...")
@@ -355,8 +355,7 @@ class core(commands.Cog):
         if isinstance(error, commands.errors.CheckFailure):
             await ctx.send(self.bot.strings["NOT_OWNER"])
         else:
-            await self.bot.get_user(self.bot.owner_id).send("oh :blobpaiN; here's an error" + traceback.format_exc())
-
+            await self.send_traceback()
 
 async def setup(bot):
     await bot.add_cog(core(bot, True))
