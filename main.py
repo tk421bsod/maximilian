@@ -2,6 +2,7 @@
 import sys
 
 VER = "1.2.0-prerelease"
+IS_DEBUG = bool([i for i in sys.argv if i in ['-v', '--verbose', '--debug']])
 
 if __name__ != "__main__":
     print("It looks like you're trying to import main.py as a module.")
@@ -71,6 +72,8 @@ try:
 except (ImportError, NameError, SyntaxError) as e:
     print("Maximilian cannot start because an external dependency failed to load.\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
     print(e)
+    if IS_DEBUG:
+        traceback.print_exc()
     sys.exit(2)
 
 try:
@@ -79,6 +82,8 @@ try:
 except (ImportError, NameError, SyntaxError) as e:
     print("Maximilian cannot start because an internal module failed to load.\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk421#2016 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
     print(e)
+    if IS_DEBUG:
+        traceback.print_exc()
     sys.exit(2)
 
 if not "--no-rich" in sys.argv:
