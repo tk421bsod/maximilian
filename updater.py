@@ -34,18 +34,22 @@ def update():
     branch = common.run_command(['git', 'branch', '--show-current'])['output'][0]
     time.sleep(0.5)
     print(f"You're currently on the '{branch}' branch.")
-    if branch != 'release':
+    if branch == 'development':
         print("Updates on this branch may be unstable.")
         print("You can switch back to the 'release' branch at any time using 'git checkout release'.")
         print("If an update breaks something, reset to the previous commit using 'git reset HEAD~1'.")
-    else:
+    elif branch == 'release':
         print("Updates on this branch are infrequent but stable.")
         print("You can switch to other branches at any time using 'git checkout <branch>'.")
         print("Use 'git branch' to view a list of branches.")
-    time.sleep(0.5)
+    else:
+        print("It looks like you're on a release snapshot branch for version 1.2 or later.")
+        print("This release no longer receives support and may stop working without notice.")
+        print("Consider switching to the `release` branch using `git checkout release`.")
+    time.sleep(1)
     try:
         config = common.load_config()
-        last_update = common.load_config()['last_update']
+        last_update = config['last_update']
         if not last_update:
             print("Updater was interrupted or last update failed, checking for updates now")
         elif "--force-update" in sys.argv or "--update" in sys.argv:
@@ -57,7 +61,6 @@ def update():
             try:
                 automatic_updates = bool(config['automatic_updates'])
             except KeyError:
-                common.run_command(["echo", "\"automatic_updates:True\"", ">>", "config"])
                 automatic_updates = True
             if not automatic_updates:
                 print("Automatic updates aren't enabled. Would you like to attempt an update? Y/N\n")
@@ -78,7 +81,7 @@ def update():
         print("Couldn't determine the time since last update. Updating now.")
     time.sleep(1)
     #step 2.5: if a condition above was met, reset last update timestamp
-    subprocess.run("sed -i \"s/last_update:.*/last_update:0/\" config", shell=True)
+    subprocess.run("sed -i \"s/last_update:.*/last_update:/\" config", shell=True)
     #step 3: fetch changes from remote, don't merge until user confirms though
     print("\n")
     try:
@@ -96,6 +99,7 @@ def update():
         resp = input(f"\nUpdate available. \nTake a moment to review the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.\nWould you like to apply the update? Y/N\n").lower().strip()
         if resp == "y":
             print("\nApplying update...")
+            time.sleep(0.3)
             pull = common.run_command(['git', 'pull'])
             output = "\n".join(pull['output'])
             print("\nGit output:")
@@ -104,6 +108,7 @@ def update():
                 print("Something went wrong while applying the update. Take a look at the above output for details.")
                 sys.exit(124)
             print(f"\nUpdate applied. \nView the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.")
+            time.sleep(1)
             if list_in_str(['main.py', 'common.py', 'db.py', 'settings.py'], output):
                 print("This update changed some important files. Run main.py again.")
                 sys.exit(111)

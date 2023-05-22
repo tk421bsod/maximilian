@@ -1,4 +1,4 @@
-from pymysql.err import IntegrityError
+from aiomysql import IntegrityError
 
 import asyncio
 import collections
@@ -35,6 +35,8 @@ class Setting():
     permission : str
         The permission this setting requires, as a string. Must be a valid discord.Permission e.g manage_guild.
     """
+    __slots__ = ("states", "description", "name", "unusablewith", "category", "permission")
+
     def __init__(self, category, name, states, permission):
         self.states = states
         self.description = category.settingdescmapping[name]
@@ -45,7 +47,7 @@ class Setting():
         #add this setting as an attr of category
         #one can access it via 'bot.settings.<category>.<setting>'
         setattr(category, name.strip().replace(" ", "_"), self)
-        category.bot.settings.logger.info(f"Registered setting {name}") #dear god
+        category.logger.info(f"Registered setting {name}")
 
     def enabled(self, guild_id):
         """
@@ -64,12 +66,10 @@ class Setting():
        None
             The setting's state couldn't be determined.
 
-        Raises
-        ------
-
-        AttributeError, KeyError
-            The Category the setting belongs to hasn't been fully initialized yet.
         """
+        if not self.category.ready:
+            self.category.logger.warn(f"{self.name}.enabled was called before its parent category was ready!")
+            self.category.logger.warn("This may cause issues. Consider awaiting Category.wait_ready before anything that depends on setting states.")
         try:
             return self.states[guild_id]
         except:
@@ -103,8 +103,10 @@ class Category():
         Whether settings are ready to be used. False until fill_cache has completed.
         Warning:
             If False, the behavior of calls to Setting.enabled() is unpredictable.
-            Those calls could raise AttributeError/IndexError or return None depending on the initialization state of the setting.
+            Those calls could return None or even result in an AttributeError depending on the initialization state of the setting.
     """
+    __slots__ = ("_ready", "settingdescmapping", "unusablewithmapping", "name", "filling", "logger", "bot", "permissionmapping", "data", "__dict__")
+
     def __init__(self, constructor, name, settingdescmapping, unusablewithmapping, permissionmapping):
         self._ready = False
         self.settingdescmapping = settingdescmapping
@@ -121,6 +123,13 @@ class Category():
     @property
     def ready(self):
         return self._ready
+
+    async def wait_ready(self):
+        """
+        Waits until settings are ready to be used.
+        """
+        while not self.ready:
+            await asyncio.sleep(0.01)
 
     def get_setting(self, name):
         """
@@ -147,7 +156,8 @@ class Category():
             if guild.id in target_guilds:
                 continue
             try:
-                self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
+                self.logger.debug(f"state not found for setting {name} in guild {guild.id}, adding it to database")
+                await self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
                 continue
             self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
@@ -162,19 +172,16 @@ class Category():
         guilds = self.bot.guilds #stop state population from breaking if guilds change while filling cache
         #step 1: get data for each setting, add settings to db if needed
         try:
-            self.data = self.bot.db.exec('select * from config where category=%s order by setting', (self.name), fetchall=True)
+            self.data = await self.bot.db.exec('select * from config where category=%s order by setting', (self.name))
             if self.data is None:
                 self.data = []
             if not isinstance(self.data, list):
                 self.data = [self.data]
         except:
             traceback.print_exc()
-            self.logger.warning('An error occurred while filling the setting cache, defaulting to every setting disabled')
-            self.data = []
-            #if something went wrong, default to everything disabled
-            for name in list(self.settingdescmapping.keys()):
-                for guild in guilds:
-                    self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
+            self.logger.error(f"An error occurred while filling the setting cache for category {self.name}!")
+            self.logger.error("Settings in this category will not be registered.")
+            return
         else:
             self.logger.info("Validating setting states...")
             #step 2: ensure each setting has an entry
@@ -184,8 +191,9 @@ class Category():
                 await self.add_to_db(name, guilds)
         #step 3: for each setting, get initial state and register it
         states = {}
+        self.logger.debug("Populating setting states...")
         for index, setting in enumerate(self.data):
-            self.logger.debug(f"{setting}")
+            self.logger.debug(f"Processing entry {setting}")
             if self.permissionmapping:
                 permission = self.permissionmapping[setting['setting']]
             else:
@@ -199,6 +207,7 @@ class Category():
         self.logger.info("Done filling settings cache.")
         self._ready = True
         self.filling = False
+        del self.data
 
     async def update_cached_state(self, ctx:commands.Context, setting:Setting):
         """
@@ -210,7 +219,7 @@ class Category():
         """
         Changes a setting's state in the database. Calls update_cached_state to change a setting's state in cache.
         """
-        self.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, self.name, setting.name.replace("_", " ")))
+        await self.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, self.name, setting.name.replace("_", " ")))
         await self.update_cached_state(ctx, setting)
 
     async def _prepare_conflict_string(self, conflicts):
@@ -220,14 +229,14 @@ class Category():
         q = "'"
         if not isinstance(conflicts, list):
             return f"{q}*{conflicts}*{q}"
-        return f"{', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]])} and '*{conflicts[-1]}*'"
+        return self.bot.strings["CONFLICT_STRING_MULTIPLE"].format(', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]]), conflicts[-1])
 
     async def _resolve_conflicts(self, ctx, setting):
         """
         Resolves conflicts between settings.
         """
+        resolved = []
         if isinstance(setting.unusablewith, list):
-            resolved = []
             for conflict in setting.unusablewith:
                 #get the Setting matching the name
                 conflict = self.get_setting(conflict)
@@ -239,15 +248,19 @@ class Category():
             if not setting.unusablewith:
                 return ""
             #conflicting setting enabled? disable it
-            if self.get_setting(setting.unusablewith).enabled(ctx.guild.id):
-                await self.update_setting(ctx, setting.unusablewith)
+            conflict = self.get_setting(setting.unusablewith)
+            if conflict.enabled(ctx.guild.id):
+                await self.update_setting(ctx, conflict)
                 resolved = setting.unusablewith
         length = len(resolved)
         if length == 1:
             resolved = resolved[0]
         if not resolved:
             return ""
-        return f"**Automatically disabled** {await self._prepare_conflict_string(resolved)} due to {'a conflict' if length == 1 else 'conflicts'}."
+        resolved_string = await self._prepare_conflict_string(resolved)
+        if length == 1:
+            return self.bot.strings["SETTING_AUTOMATICALLY_DISABLED"].format(resolved)
+        return self.bot.strings["SETTINGS_AUTOMATICALLY_DISABLED"].format(resolved)
 
     def normalize_permission(self, permission):
         """Makes a permission name more human readable. Replaces \'guild\' with \'server\', capitalizes words, swaps underscores for spaces."""
@@ -258,26 +271,28 @@ class Category():
         #setting not specified? show list of settings
         if not name:
             if self.name != "general":
-                title = f"Settings for category '{self.name}'"
+                title = self.bot.strings["CURRENTSETTINGS_TITLE"].format(self.name)
             else:
-                title = "General settings"
+                title = self.bot.strings["GENERAL_CATEGORY"]
             embed = discord.Embed(title=title, color=self.bot.config['theme_color'])
             for setting in [self.get_setting(i) for i in list(self.settingdescmapping.keys())]:
                 if setting.unusablewith:
-                    unusablewithwarning = f"Cannot be enabled at the same time as {await self._prepare_conflict_string(setting.unusablewith)}."
+                    unusablewithwarning = self.bot.strings["SETTING_UNUSABLE_WITH"].format(await self._prepare_conflict_string(setting.unusablewith))
                 else:
                     unusablewithwarning = ""
                 if setting.permission:
-                    perms = f"\nRequires the **{self.normalize_permission(setting.permission)}** permission."
+                    perms = self.bot.strings["SETTING_REQUIRES_PERMISSION"].format(self.normalize_permission(setting.permission))
                 else:
                     perms = ""
-                embed.add_field(name=f"{discord.utils.remove_markdown(setting.description.capitalize())} ({setting.name})", value=f"{'❎ Disabled' if not setting.states[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning}{perms}", inline=True)
-            embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings only apply to your server.")
+                embed.add_field(name=self.bot.strings["SETTING_ENTRY_NAME"].format(discord.utils.remove_markdown(setting.description.capitalize()), setting.name), value=f"{self.bot.strings['SETTING_CURRENTLY_DISABLED'] if not setting.states[ctx.guild.id] else self.bot.strings['SETTING_CURRENTLY_ENABLED']}\n{unusablewithwarning}{perms}", inline=True)
+            embed.set_footer(text=self.bot.strings["CURRENTSETTINGS_FOOTER"])
             return await ctx.send(embed=embed)
         setting = self.get_setting(name)
+        if not setting:
+            return await ctx.send(self.bot.strings["UNKNOWN_SETTING"])
         if setting.permission:
             if not getattr(ctx.channel.permissions_for(ctx.author), setting.permission):
-                return await ctx.send(f"It looks like you don't have permission to change this setting.\nYou'll need the **{self.normalize_permission(setting.permission)}** permission to change it.\nUse the `userinfo` command to check your permissions.\nJust a reminder, channel-specific permissions apply to this.")
+                return await ctx.send(self.bot.strings["SETTING_PERMISSION_DENIED"].format(self.normalize_permission(setting.permission)))
         try:
             #update setting state
             await self.update_setting(ctx, setting)
@@ -285,15 +300,18 @@ class Category():
             unusablewithmessage = await self._resolve_conflicts(ctx, setting)
         except:
             await self.bot.core.send_traceback()
-            await ctx.send(f"Something went wrong while changing that setting. Try again in a moment. \nI've reported this error to my owner. If this keeps happening, consider opening an issue at https://github.com/tk421bsod/maximilian/issues.")
+            await ctx.send(self.bot.strings["SETTING_ERROR"])
             return await self.bot.core.send_debug(ctx)
-        await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"**{'Disabled' if not setting.enabled(ctx.guild.id) else 'Enabled'}** *{setting.description}*.\n{unusablewithmessage}", color=self.bot.config['theme_color']).set_footer(text=f"Send this command again to turn this back {'off' if setting.enabled(ctx.guild.id) else 'on'}."))
+        await ctx.send(embed=discord.Embed(title=self.bot.strings["SETTING_CHANGED_TITLE"], description=f"**{self.bot.strings['SETTING_DISABLED'] if not setting.enabled(ctx.guild.id) else self.bot.strings['SETTING_ENABLED']}** *{setting.description}*.\n{unusablewithmessage}", color=self.bot.config['theme_color']).set_footer(text=f"{self.bot.strings['SETTING_ENABLED_FOOTER'] if setting.enabled(ctx.guild.id) else self.bot.strings['SETTING_DISABLED_FOOTER']}"))
 
 
 class settings():
     """
-    A class that allows extensions to easily add settings
+    A simple interface for adding setting toggles to modules
     """
+    #should we even use __slots__ if we're adding __dict__
+    __slots__ = ("bot", "logger", "categorynames", "__dict__")
+
     def __init__(self, bot):
         """
         Parameters
@@ -303,16 +321,15 @@ class settings():
             The main Bot instance.
         """
         self.bot = bot
-        self.settings = {}
         self.logger = logging.getLogger("settings")
         self.logger.info(f"Settings module initialized.")
-        self.unusablewithmessage = ""
         self.categorynames = []
 
     def add_category(self, category, settingdescmapping, unusablewithmapping, permissionmapping):
         """
-        A wrapper for creating a new Category instance. Its purpose is to allow a category to register as an attribute of the main settings instance.
-        After this returns and the Category's 'ready' attribute is True, you can check the value of settings using `bot.settings.<category>.<setting>.enabled()`.
+        A helper method for creating a new Category instance. It allows a category to register as an attribute of the main settings instance.
+        After this returns and the Category's 'ready' attribute is set to True, you can check the value of settings using `bot.settings.<category>.<setting>.enabled()`.
+        Consider awaiting 'Category.wait_ready' before any Setting.enabled() call.
 
         Parameters
         ----------
@@ -366,33 +383,45 @@ class settings():
             self.logger.warn(f"add_category was called twice for category '{category}'!!")
             self.logger.warn("Don't try to update a category after creation. Doing so may break stuff.")
             return
-        Category(self, category, settingdescmapping, unusablewithmapping, permissionmapping)
+        try:
+            Category(self, category, settingdescmapping, unusablewithmapping, permissionmapping)
+        except Exception as e:
+            self.logger.error("Category registration failed for category '{category}`!")
+            raise e
         self.categorynames.append(category)
-        self.logger.info(f"Category '{category}' registered. Access it at bot.settings.{category}. Settings are unavailable until bot.settings.{category}.ready == True.")
+        self.logger.info(f"Category '{category}' registered.")
 
-    async def config(self, ctx, category:str=None, *, setting:str=None):
+    def _prepare_category_string(self):
+        if self.categorynames:
+            return "\n".join([f"`{i}`" for i in self.categorynames])
+        else:
+            return "None"
+
+    async def config(self, ctx, category:str=None, *, setting:str):
         """
         A command that changes settings.
         """
+        #figure out what category we're using
         if not category:
-            if self.categorynames:
-                available = "\n".join([f"`{i}`" for i in self.categorynames])
-            else:
-                available = "None"
-            return await ctx.send(f"You need to specify a setting category.\nYou can choose from one of the following:\n{available}\nLooking for bot-wide settings? Use `config general`.")
+            available = self._prepare_category_string()
+            return await ctx.send(self.bot.strings["CATEGORY_NOT_SPECIFIED"].format(available))
         try:
-            category = getattr(self, category) 
+            category = getattr(self, category)
         except AttributeError:
-            return await ctx.send("That category doesn't exist. Check the spelling.")
+            available = self._prepare_category_string()
+            return await ctx.send(self.bot.strings["UNKNOWN_CATEGORY"].format(available))
         try:
-            if not category.ready and not category.filling:
-                await category.fill_cache()
+            if not category.ready:
+                self.logger.error(f"It looks like cache filling for category {category.name} is happening way too late!!!")
+                self.logger.error("please report this issue to tk421.")
+                self.logger.error("waiting until cache fill is complete...")
+                await ctx.send(self.bot.strings["CATEGORY_NOT_READY"])
+                await category.wait_ready()
+                self.logger.error("cache fill complete, continuing :)")
             await category.config(ctx, setting)
-        except RuntimeError:
-            return await ctx.send("That setting doesn't exist.")
-        except AttributeError:
+        except AttributeError: #category wasn't configured properly
             traceback.print_exc()
-            return await ctx.send("That category wasn't set up properly.")
+            return await ctx.send(self.bot.strings["CATEGORY_INVALID"])
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")

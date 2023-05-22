@@ -3,7 +3,7 @@
 import traceback
 
 import discord
-import pymysql
+import aiomysql
 from discord.ext import commands
 
 
@@ -16,7 +16,7 @@ class errorhandling(commands.Cog):
         owner = self.bot.get_user(538193752913608704)
         try:
             await owner.send(f"An error occurred in {ctx.guild.name} ({ctx.guild.id}): ")
-            await owner.send(f"`{traceback.format_exc()}`")
+            await owner.send(f"`{traceback.format_exception(type(error), error, error.__traceback__)}`")
         except:
             pass
         #get the original error so isinstance works
@@ -27,7 +27,7 @@ class errorhandling(commands.Cog):
             if cog._get_overridden_method(cog.cog_command_error) is not None:
                 return
         #check for database errors first, these should almost never happen
-        if isinstance(error, pymysql.err.OperationalError) or isinstance(error, pymysql.err.ProgrammingError):
+        if isinstance(error, aiomysql.OperationalError) or isinstance(error, aiomysql.ProgrammingError):
             embed = discord.Embed(title="Fatal Error",description="\U0000274c You shouldn't see this message. If you do, an unexpected database error has occurred. \nContact my developer (tk421#2016) if you see this again.", color=self.bot.config['theme_color'])
             if ctx.guild.me.guild_permissions.embed_links:
                 await ctx.send(embed=embed)
@@ -44,7 +44,7 @@ class errorhandling(commands.Cog):
                 await ctx.send("\U0000274c I don't have the permissions to run this command, try moving my role up. I'm also not allowed to send embeds, which will make some responses look worse, and will prevent certain modules from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
             return
         if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
-            message = "You don't have the permissions needed to run that command. Try using `{await self.bot.get_prefix(ctx.message)}help <command>` to get more info on that command, including the required permissions."
+            message = f"You don't have the permissions needed to run that command. Try using `{await self.bot.get_prefix(ctx.message)}help <command>` to get more info on that command, including the required permissions."
             await ctx.send(message)
             return
         if isinstance(error, commands.MissingRequiredArgument):
@@ -67,3 +67,6 @@ async def setup(bot):
 
 async def teardown(bot):
     await bot.remove_cog(errorhandling(bot))
+
+if __name__ == "__main__":
+    import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")

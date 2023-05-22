@@ -1,8 +1,7 @@
 discord.py[voice]
-pymysql
+aiomysql
 ffmpeg-python
-youtube_dl
-pytz
-gitpython
+yt-dlp
 jishaku
 humanize
+

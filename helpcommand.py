@@ -5,7 +5,7 @@ from discord.ext import commands
 class HelpCommand(commands.HelpCommand):
 
     def get_ending_note(self):
-        return 'Use {0}{1} [command] for more info on a command.'.format(self.context.clean_prefix, self.invoked_with)
+        return self.context.bot.strings["ENDING_NOTE"].format(self.context.clean_prefix, self.invoked_with)
 
     def get_command_signature(self, command):
         parent = command.full_parent_name
@@ -21,7 +21,7 @@ class HelpCommand(commands.HelpCommand):
         return '%s%s %s' % (self.context.clean_prefix, alias, command.signature)
 
     async def send_bot_help(self, mapping):
-        embed = discord.Embed(title='Commands', color=self.context.bot.config['theme_color'])
+        embed = discord.Embed(title=self.context.bot.strings["HELP_TITLE"], color=self.context.bot.config['theme_color'])
         description = self.context.bot.description
         if description:
             embed.description = description
@@ -37,38 +37,66 @@ class HelpCommand(commands.HelpCommand):
 
                     embed.add_field(name=name, value=value)
         if self.context.guild is not None:
-            #TODO: use the existing cache (not sure why I didn't think of it before writing this)
-            #im too lazy to change it rn as it's 1 am
-            responseslist = self.context.bot.db.exec("select * from responses where guild_id = %s", (self.context.guild.id), fetchall=True)
-            responsestring = "A list of custom commands for this server. These don't have help entries. \n"
-            if responseslist is not None and str(responseslist)!="()":
+            responseslist = [i for i in self.context.bot.responses if i[0] == self.context.guild.id]
+            responsestring = self.context.bot.strings["COMMANDS_LIST"]
+            if responseslist is not None:
                 for i in responseslist:
-                    responsestring += f"`{i['response_trigger']}` "
-                embed.add_field(name="Custom Commands List", value=responsestring)
+                    responsestring += f"`{i[1]}` "
+                embed.add_field(name=self.context.bot.strings["COMMANDS_LIST_TITLE"], value=responsestring)
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
 
     async def send_cog_help(self, cog):
-        embed = discord.Embed(title='{0.qualified_name} Commands'.format(cog), color=self.context.bot.config['theme_color'])
+        embed = discord.Embed(title=self.context.bot.strings["COG_HELP_TITLE"].format(cog), color=self.context.bot.config['theme_color'])
         if cog.description:
             embed.description = cog.description
 
         filtered = await self.filter_commands(cog.get_commands(), sort=True)
         for command in filtered:
-            embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)
+            embed.add_field(name=self.get_command_signature(command), value=await self.get_command_docstring(command, append_syntax=False), inline=False)
 
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
+
+    async def get_command_docstring(self, command, append_syntax=True):
+        help = None
+        name = ""
+        if command.parent:
+            name += command.parent.name
+        name += command.name
+        try:
+            help = self.context.bot.strings[f"COMMAND_HELP_{name.strip().replace(' ', '_').upper()}"]
+        except KeyError:
+            self.context.bot.logger.debug(f"No localized help string found for command {name.strip().replace(' ', '_').upper()} in the current language. Falling back to provided help string.")
+            if command.help:
+                help = command.help
+        parent = ""
+        if command.parent:
+            parent = command.parent.name + " "
+        if help:
+            if not append_syntax:
+                return help
+            return help + self.context.bot.strings["COMMAND_SYNTAX"].format(self.context.clean_prefix, parent, command.name, command.signature)
+        self.context.bot.logger.debug(f'No help string provided for command {command.name}.')
+        return '...'
 
     async def send_group_help(self, group):
         embed = discord.Embed(title=group.qualified_name, color=self.context.bot.config['theme_color'])
         if group.help:
             embed.description = group.help
-
         if isinstance(group, commands.Group):
             filtered = await self.filter_commands(group.commands, sort=True)
             for command in filtered:
-                embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)     
+                doc = await self.get_command_docstring(command)
+                embed.add_field(name=self.get_command_signature(command), value=doc, inline=False)
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
-    send_command_help = send_group_help
+
+    async def send_command_help(self, command):
+        embed = discord.Embed(title=command.qualified_name, color=self.context.bot.config['theme_color'])
+        embed.description = await self.get_command_docstring(command)
+        embed.set_footer(text=self.get_ending_note())
+        await self.get_destination().send(embed=embed)
+
+if __name__ == "__main__":
+    import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
