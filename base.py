@@ -184,9 +184,8 @@ class maximilian(commands.Bot):
         #initialize settings api
         self.settings = settings.settings(self)
         #If we're actually logging in, schedule some tasks for after login starts...
-        #TODO: Rename --nologin to --no-login to match other args.
         #TODO: Fix RuntimeErrors if exiting before Bot.start runs, e.g "Exception ignored in: <function Connection.__del__ at 0x7ddc7b348220>"
-        if not "--nologin" in sys.argv:
+        if not "--no-login" in sys.argv:
             #TODO: Eliminate potential for race conditions here:
             #Either load_extensions_async or init_general_settings could run before Bot.start runs,
             #which can cause a RuntimeError if an extension's cache fill method starts early.
