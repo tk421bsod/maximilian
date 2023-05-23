@@ -65,30 +65,29 @@ class maximilian(commands.Bot):
         #strip file extension out of filename
         cleanname = file[:-3]
         #ignore anything that isn't a python file
-        if file.endswith(".py"):
-            #check if we're not loading this extension
-            if cleanname in self.noload or f"cogs.{cleanname}" in self.noload:
-                self.logger.info(f"Not loading module cogs.{cleanname}.")
-                return
-            #actually load the extension
-            try:
-                await self.load_extension(f"cogs.{cleanname}")
-                self.logger.debug(f"Loaded module cogs.{cleanname}!")
-            except commands.ExtensionAlreadyLoaded:
-                self.logger.debug(f"{cleanname} is already loaded, skipping")
-            except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
-                if not hasattr(error, 'original'):
-                    #only NoEntryPointError doesn't have original
-                    error.original = commands.errors.NoEntryPointError('')
-                self.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This module won't be loaded.")
-                if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
-                    self.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -U -r requirements.txt.'")
-                else:
-                    self.logger.error(traceback.format_exc())
-                    await self.try_exit()
-            except Exception as e:
-                traceback.print_exc()
+        #check if we're not loading this extension
+        if cleanname in self.noload or f"cogs.{cleanname}" in self.noload:
+            self.logger.info(f"Not loading module cogs.{cleanname}.")
+            return
+        #actually load the extension
+        try:
+            await self.load_extension(f"cogs.{cleanname}")
+            self.logger.debug(f"Loaded module cogs.{cleanname}!")
+        except commands.ExtensionAlreadyLoaded:
+            self.logger.debug(f"{cleanname} is already loaded, skipping")
+        except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
+            if not hasattr(error, 'original'):
+                #only NoEntryPointError doesn't have original
+                error.original = commands.errors.NoEntryPointError('')
+            self.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This module won't be loaded.")
+            if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
+                self.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -U -r requirements.txt.'")
+            else:
+                self.logger.error(traceback.format_exc())
                 await self.try_exit()
+        except Exception as e:
+            traceback.print_exc()
+            await self.try_exit()
 
     async def try_exit(self):
         if not common.get_value(self.config, 'exit_on_error', False):
@@ -127,11 +126,11 @@ class maximilian(commands.Bot):
         await self.load_required()
         exts = self.extensions.copy()
         print("Loading other modules...")
-        files = os.listdir("./cogs")
+        files = [filename for filename in os.listdir("./cogs") if filename.endswith(".py")]
         for each in files:
             await self.load(each)
         total = len([f"{i}" for i in list(self.extensions.keys()) if i not in list(exts.keys())])
-        diff = (len(files)-1)-total
+        diff = (len(files))-total
         self.logger.info(f"Loaded {total} modules successfully. {diff} module{'s' if diff != 1 else ''} not loaded.")
         print("Done loading modules. Finishing startup...")
 
