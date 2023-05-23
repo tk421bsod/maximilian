@@ -88,10 +88,7 @@ class maximilian(commands.Bot):
                 await self.try_exit()
 
     async def try_exit(self):
-        try:
-            if not self.config['exit_on_error']:
-                return
-        except:
+        if not common.get_value(self.config, 'exit_on_error', False):
             return
         self.logger.warning("Extension error occurred, exiting")
         await sys.exit(4)
@@ -171,11 +168,11 @@ class maximilian(commands.Bot):
         self.logger.debug("Async context entered.")
         #now that we're in an async context, we can initialize our translation layer...
         self.strings = await startup.load_strings(self.logger, self.config)
-        #register events...
+        #register our on_message event...
         await self.wrap_event()
-        #show version information
+        #show version information...
         self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
-        #parse additional arguments (ip, enablejsk, noload)
+        #parse additional arguments (ip, enablejsk, noload)...
         #TODO: Consider moving parse_arguments outside this context. Non-async stuff has no place here.
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
