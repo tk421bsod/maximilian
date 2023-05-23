@@ -56,6 +56,9 @@ class maximilian(commands.Bot):
         self.prefix = {}
         self.responses = []
         self.start_time = time.time()
+        #step 4: parse additional arguments (ip, enablejsk, noload)
+        self.logger.debug("Parsing command line arguments...")
+        startup.parse_arguments(self, sys.argv)
         logger.debug("Starting the event loop.")
 
     async def load(self, file):
@@ -163,7 +166,6 @@ class maximilian(commands.Bot):
         async with aiohttp.ClientSession() as self.session:
             await super().start(*args, **kwargs)
 
-    #wrap everything in a function to prevent conflicting event loops
     async def run(self):
         self.logger.debug("Async context entered.")
         #now that we're in an async context, we can initialize our translation layer...
@@ -172,10 +174,6 @@ class maximilian(commands.Bot):
         await self.wrap_event()
         #show version information...
         self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
-        #parse additional arguments (ip, enablejsk, noload)...
-        #TODO: Consider moving parse_arguments outside this context. Non-async stuff has no place here.
-        self.logger.debug("Parsing command line arguments...")
-        startup.parse_arguments(self, sys.argv)
         #...and initialize the database.
         await self.setup_db()
         #initialize settings api
