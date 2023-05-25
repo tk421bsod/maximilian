@@ -171,6 +171,10 @@ class core(commands.Cog):
             await target.send(page)
 
     async def send_debug(self, ctx):
+        try:
+            self.bot.settings.general
+        except:
+            return
         if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
             if self.bot.settings.general.debug.enabled(ctx.guild.id):
                 await ctx.send(self.bot.strings["DEBUG_INFO"])
@@ -273,6 +277,28 @@ class core(commands.Cog):
         except:
             await reloading.add_reaction("\U00002757")
             return await self.send_traceback()
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
+    async def disable(self, ctx, *, command):
+        command = self.bot.get_command(command)
+        if not command:
+            return await ctx.send("Sorry, that command couldn't be found.")
+        if not command.enabled:
+            return await ctx.send("That command is already disabled.")
+        command.enabled = False
+        await ctx.send(embed=discord.Embed(title="✅ Command disabled.", color=self.bot.config['theme_color']))
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
+    async def enable(self, ctx, *, command):
+        command = self.bot.get_command(command)
+        if not command:
+            return await ctx.send("Sorry, that command couldn't be found.")
+        if command.enabled:
+            return await ctx.send("That command is already enabled.")
+        command.enabled = True
+        await ctx.send(embed=discord.Embed(title="✅ Command enabled.", color=self.bot.config['theme_color']))
 
     @commands.is_owner()
     @utils.command(hidden=True)

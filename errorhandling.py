@@ -47,9 +47,11 @@ class errorhandling(commands.Cog):
             message = f"You don't have the permissions needed to run that command. Try using `{await self.bot.get_prefix(ctx.message)}help <command>` to get more info on that command, including the required permissions."
             await ctx.send(message)
             return
+        if isinstance(error, commands.DisabledCommand):
+            return await ctx.send(embed=discord.Embed(title="\U0000274c Sorry, that command is disabled.", color=self.bot.config['theme_color']))
         if isinstance(error, commands.MissingRequiredArgument):
             if ctx.guild.me.guild_permissions.embed_links:
-                embed = discord.Embed(title="\U0000274c You didn't provide the required parameter `" + error.param.name + "`. See the help entry for `" + ctx.command.name + "` to see what parameters this command takes." )
+                embed = discord.Embed(title="\U0000274c You didn't provide the required parameter `" + error.param.name + "`. See the help entry for `" + ctx.command.name + "` to see what parameters this command takes.", color=self.bot.config['theme_color'])
                 await ctx.send(embed=embed)
                 return
             else:
@@ -61,6 +63,7 @@ class errorhandling(commands.Cog):
         if not str(error):
             error = error.__name__
         await ctx.send(f"`{error}`")
+        await self.bot.core.send_debug(ctx)
 
 async def setup(bot):
     await bot.add_cog(errorhandling(bot))
