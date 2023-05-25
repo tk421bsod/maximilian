@@ -276,6 +276,17 @@ class core(commands.Cog):
 
     @commands.is_owner()
     @utils.command(hidden=True)
+    async def disable(self, ctx, *, command):
+        command = bot.get_command(command)
+        if not command:
+            return await ctx.send("Sorry, that command couldn't be found.")
+        if not command.enabled:
+            return await ctx.send("That command is already disabled.")
+        command.enabled = False
+        await ctx.send(embed=discord.Embed(title="✅ Command disabled."))
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
     async def change_status(self, ctx, type, newstatus=None):
         await ctx.send("Changing status...")
         if type.lower() == "listening":
