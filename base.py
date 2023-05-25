@@ -17,20 +17,22 @@ import startup
 
 
 class maximilian(commands.Bot):
-    __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "blocklist", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER")
+    __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "blocklist", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER", "IS_DEBUG")
 
     def __init__(self, logger):
-        #step 1: prep config
+        #Now that we've checked basic requirements and ran the updater, we can
+        #load our config data...
         logger.debug("Loading config...")
         config = common.load_config()
         logger.debug("Processing config...")
         config = startup.preprocess_config(config)
         token = config['token']
-        #step 2: check requirements
+        #check discord.py version...
+        #TODO: Consider moving this to main.py next to Python version checks
         logger.debug("Checking discord.py version...")
         startup.check_version()
+        #get our Intents...
         intents = self.get_intents()
-        logger.debug("Getting version information...")
         if "--alt" in sys.argv:
             token = input("Enter a token to use: \n").strip()
             logger.debug("Getting latest commit hash...")
@@ -38,11 +40,10 @@ class maximilian(commands.Bot):
             logger.debug("Done getting latest commit hash.")
         else:
             self.commit = ""
-        #step 3: set up some attributes we'll need soon
+        #set up some attributes we'll need soon...
         logger.debug("Setting up some stuff")
         super().__init__(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.2.0{f'-{self.commit}' if self.commit else ''}"))
         self.database = "maximilian"
-        #attempt to pull database name from config!
         try:
             self.database = config["database"]
             logger.warning("Sourced database name from config.")
@@ -50,11 +51,11 @@ class maximilian(commands.Bot):
         except:
             pass
         self.logger = logger
-        self.common = common
-        self.config = config
-        self.noload = []
-        self.prefix = {}
-        self.responses = []
+        self.common = common 
+        self.config = config 
+        self.noload = [] #list of modules for load_extensions_async to skip, set by parse_arguments
+        self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
+        self.responses = [] #custom commands list. TODO: make this less baked in
         self.start_time = time.time()
         #step 4: parse additional arguments (ip, enablejsk, noload)
         self.logger.debug("Parsing command line arguments...")
@@ -162,6 +163,7 @@ class maximilian(commands.Bot):
         self.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
 
     async def start(self, *args, **kwargs):
+        #Create our own ClientSession to prevent "Unclosed session" warnings at shutdown
         async with aiohttp.ClientSession() as self.session:
             await super().start(*args, **kwargs)
 
@@ -172,6 +174,7 @@ class maximilian(commands.Bot):
         #initialize our translation layer...
         self.strings = await startup.load_strings(self.logger, self.config)
         #register our on_message event...
+        #TODO: Consider moving this to core
         await self.wrap_event()
         #initialize the database...
         await self.setup_db()

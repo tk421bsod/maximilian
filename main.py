@@ -1,9 +1,13 @@
 #main.py: loads core libraries and everything in the cogs folder, then starts Maximilian
 import sys
 
+#Version number. Please don't modify this.
 VER = "1.2.0-prerelease"
+
+#Are we using or going to use debug logging?
 IS_DEBUG = bool([i for i in sys.argv if i in ['-v', '--verbose', '--debug']])
 
+#Are we being imported as a module?
 if __name__ != "__main__":
     print("It looks like you're trying to import main.py as a module.")
     print("Please don't do that. Some code here relies on being ran directly through a command such as python3 main.py.")
@@ -12,12 +16,14 @@ if __name__ != "__main__":
     print("Maximilian will now attempt to exit.")
     quit()
 
+#Are we using an out-of-date Python?
 if sys.version_info.major == 3 and sys.version_info.minor < 8:
     print("Hi there. It looks like you're trying to run maximilian with an older version of Python 3.")
     print("Maximilian cannot run on Python versions older than 3.8.")
     print("You'll need to upgrade Python to continue.")
     quit()
 
+#Are we using a very new Python?
 if sys.version_info.minor > 11:
     print("Hi there. It looks like your Python installation is newer than version 3.11.")
     print("You may experience issues as Maximilian has not yet been tested on newer versions of Python.\n")
@@ -45,6 +51,7 @@ if "--version" in sys.argv:
     print(f"You are using version {VER}.")
     quit()
 
+#Did the user use any old arguments?
 for old_arg, new_arg in {"--noupdate":"--no-update", "--noload":"--no-load"}.items():
     if old_arg in sys.argv:
         print(f"You're using the old '{old_arg}' option.\nThis option was changed to '{new_arg}' in 1.2.0.\nUse the new option instead.")
@@ -52,6 +59,8 @@ for old_arg, new_arg in {"--noupdate":"--no-update", "--noload":"--no-load"}.ite
 
 print("Loading components...")
 
+#Ignore unused imports here.
+#We import all our dependencies here to provide the user with useful feedback if something is missing.
 try:
     import asyncio
     import datetime
@@ -153,6 +162,8 @@ try:
     #initialize stuff needed before we enter an async context
     bot = maximilian(outer_logger)
     bot.VER = VER
+    bot.IS_DEBUG = IS_DEBUG
+    #hand things over to base.maximilian.run
     asyncio.run(bot.run())
 except KeyboardInterrupt:
     print("\nKeyboardInterrupt detected. Exiting.")
