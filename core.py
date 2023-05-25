@@ -277,13 +277,24 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def disable(self, ctx, *, command):
-        command = bot.get_command(command)
+        command = self.bot.get_command(command)
         if not command:
             return await ctx.send("Sorry, that command couldn't be found.")
         if not command.enabled:
             return await ctx.send("That command is already disabled.")
         command.enabled = False
-        await ctx.send(embed=discord.Embed(title="✅ Command disabled."))
+        await ctx.send(embed=discord.Embed(title="✅ Command disabled.", color=self.bot.config['theme_color']))
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
+    async def enable(self, ctx, *, command):
+        command = self.bot.get_command(command)
+        if not command:
+            return await ctx.send("Sorry, that command couldn't be found.")
+        if command.enabled:
+            return await ctx.send("That command is already enabled.")
+        command.enabled = True
+        await ctx.send(embed=discord.Embed(title="✅ Command enabled.", color=self.bot.config['theme_color']))
 
     @commands.is_owner()
     @utils.command(hidden=True)
