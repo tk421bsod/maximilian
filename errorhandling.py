@@ -48,7 +48,7 @@ class errorhandling(commands.Cog):
             await ctx.send(message)
             return
         if isinstance(error, commands.DisabledCommand):
-            await ctx.send(embed=discord.Embed(title="\U0000274c Sorry, that command is disabled.", color=self.bot.config['theme_color']))
+            return await ctx.send(embed=discord.Embed(title="\U0000274c Sorry, that command is disabled.", color=self.bot.config['theme_color']))
         if isinstance(error, commands.MissingRequiredArgument):
             if ctx.guild.me.guild_permissions.embed_links:
                 embed = discord.Embed(title="\U0000274c You didn't provide the required parameter `" + error.param.name + "`. See the help entry for `" + ctx.command.name + "` to see what parameters this command takes.", color=self.bot.config['theme_color'])
