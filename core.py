@@ -171,6 +171,10 @@ class core(commands.Cog):
             await target.send(page)
 
     async def send_debug(self, ctx):
+        try:
+            self.bot.settings.general
+        except:
+            return
         if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
             if self.bot.settings.general.debug.enabled(ctx.guild.id):
                 await ctx.send(self.bot.strings["DEBUG_INFO"])
