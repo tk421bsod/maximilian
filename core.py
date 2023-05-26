@@ -194,6 +194,13 @@ class core(commands.Cog):
 
     @commands.is_owner()
     @utils.command(hidden=True)
+    async def sync(self, ctx):
+        await ctx.send("Syncing the command tree...")
+        await self.bot.tree.sync()
+        await ctx.send("Done.")
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
     async def blocklist(self, ctx):
         await ctx.send("Fetching blocklist...")
         users = "\n".join([str(self.bot.get_user(i)) for i in self.bot.blocklist]) 
@@ -246,7 +253,6 @@ class core(commands.Cog):
             self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
             self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
             self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
-            await self.bot.tree.sync()
             print("Ready")
 
     async def prepare(self, message):
