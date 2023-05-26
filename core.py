@@ -49,16 +49,24 @@ class ConfirmationView(discord.ui.View):
         self.confirm_followup = confirm_followup
         self.cancel_followup = cancel_followup
 
+    def remove_children(self):
+        for item in self.children:
+            self.remove_item(item)
+
     @discord.ui.button(label='\U00002705', style=discord.ButtonStyle.green)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.confirmed = True
-        await interaction.response.send_message(self.confirm_followup)
+        await interaction.channel.send(self.confirm_followup)
+        self.remove_children()
+        await interaction.response.edit_message(view=self)
         self.stop()
 
     @discord.ui.button(label='\U0000274e', style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.confirmed = False
-        await interaction.response.send_message(self.cancel_followup)
+        await interaction.channel.send(self.cancel_followup)
+        self.remove_children()
+        await interaction.response.edit_message(view=self)
         self.stop()
 
 class confirmation:
