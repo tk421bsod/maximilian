@@ -11,17 +11,21 @@ from aiomysql import OperationalError
 import common
 import db
 
+def set_bit(config, name, requirement=True):
+    """Sets a bit at 'name' if it doesn't exist. Otherwise, keeps the value the same. Used for one-time things, e.g warnings on first startup"""
+    try:
+        config[name]
+        config[name] = True
+    except:
+        config[name] = False
+        if requirement:
+            subprocess.run(f"echo \"{name}:1\" >> config", shell=True)
+    return config
 
 def preprocess_config(config):
     #convert hex color to int
     config['theme_color'] = int(config['theme_color'], 16)
-    try:
-        config['jsk_used']
-        config['jsk_used'] = True
-    except:
-        config['jsk_used'] = False
-        if "--enablejsk" in sys.argv:
-            subprocess.run("echo \"jsk_used:1\" >> config", shell=True)
+    config = set_bit(config, "jsk_used", "--enablejsk" in sys.argv)
     return config
 
 def parse_version(versionstring):
