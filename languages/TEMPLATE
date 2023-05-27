@@ -177,7 +177,7 @@ DOESNT_HAVE_ROLE:{} For some reason, you don't have the '{}' role, even though y
 INVALID_UNIT:{} is an invalid unit of time! only h/m/s/d are valid!
 NAN:{} is not a number!
 SETTING_REMINDER:Setting your reminder...
-REMINDER_SET:Ok, in {}: '{}'
+REMINDER_SET:Ok, in {} i'll remind you to: '{}'
 REMINDER:<@{}> {} ago: '{}'
 COMMAND_HELP_TODO_ADD:Adds an item to your todo list.
 ENTRY_NOT_SPECIFIED_ADD:You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your todo list by using `{}todo add fix error handling`.
