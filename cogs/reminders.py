@@ -244,6 +244,8 @@ class reminders(commands.Cog):
 
     @todo.command(help="Clears your entire todo list.")
     async def clear(self, ctx):
+        if not self.bot.common.get_value(self.todo_lists, ctx.author.id, None):
+            return await ctx.send(self.bot.strings["LIST_EMPTY"])
         try:
             return await self.bot.deletion_request(self.bot).create_request("todo", ctx)
         except self.bot.DeletionRequestAlreadyActive:
