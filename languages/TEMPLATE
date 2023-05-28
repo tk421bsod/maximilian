@@ -4,12 +4,12 @@ GENERIC_ERROR:Sorry, something went wrong. Try again in a moment. I've reported 
 GENERIC_FATAL_ERROR:You should never see this. If you do, contact tk421#2016.
 #core.py
 ERROR_COMMAND_NOT_READY:This command isn't ready yet. Try again in a moment.
-CLEARED_TODO_LIST:\u2705 Cleared your todo list!
+CLEARED_TODO_LIST:\u2705 Cleared your to-do list!
 CLEARED_ALL:\u2705 Cleared all data for this server!
 CLEAR_EFFECTS_TITLE:Effects
-CLEAR_TODO_LIST_EFFECTS_DESC:If you proceed, your todo list will be deleted. **THIS CANNOT BE UNDONE.**
-CLEAR_TODO_LIST_DESC:You've requested that I delete your todo list, and I need you to confirm you actually want to do this.
-CLEAR_TODO_LIST_TITLE:Delete your todo list?
+CLEAR_TODO_LIST_EFFECTS_DESC:If you proceed, your to-do list will be deleted. **THIS CANNOT BE UNDONE.**
+CLEAR_TODO_LIST_DESC:You've requested that I delete your to-do list, and I need you to confirm you actually want to do this.
+CLEAR_TODO_LIST_TITLE:Delete your to-do list?
 DELETION_CONFIRMED:Proceeding with deletion...
 CONFIRMATION_OPTIONS_TITLE:Your options
 CONFIRMATION_OPTIONS:React with \u2705 to proceed, or react with \u274e to cancel.
@@ -59,7 +59,7 @@ PRIVACY_DATA_COLLECTED_SERVER_IDS:**-Server IDs**\nMaximilian stores server IDs 
 PRIVACY_DATA_COLLECTED_ROLE_IDS_TITLE:-Role IDs
 PRIVACY_DATA_COLLECTED_ROLE_IDS:Maximilian stores role IDs whenever you add a reaction role so it can give people the correct role.
 PRIVACY_DATA_COLLECTED_USER_IDS_TITLE:-User IDs
-PRIVACY_DATA_COLLECTED_USER_IDS:Maximilian stores user IDs so it can keep track of todo lists and active reminders.
+PRIVACY_DATA_COLLECTED_USER_IDS:Maximilian stores user IDs so it can keep track of to-do lists and active reminders.
 PRIVACY_DATA_COLLECTED_MUSIC_TITLE:-Music
 PRIVACY_DATA_COLLECTED_MUSIC:To keep track of what channels it's playing audio in, Maximilian puts your voice channel's ID in a list temporarily. This data isn't retrievable by anyone, and your channel ID is removed from the list when Maximilian stops playing audio in your server. When you play a song, Maximilian stores information about that song, like the video ID and name, so it can be played without a long delay next time. When you add a song to your queue, Maximilian temporarily stores your voice channel's ID, the song's position in the queue, the song's name, and the song's id to keep track of your queue.
 PRIVACY_DELETION_HELP_TITLE:I want to delete my server's data, how do I request that?
@@ -179,37 +179,37 @@ NAN:{} is not a number!
 SETTING_REMINDER:Setting your reminder...
 REMINDER_SET:Ok, in {} i'll remind you to: '{}'
 REMINDER:<@{}> {} ago: '{}'
-COMMAND_HELP_TODO_ADD:Adds an item to your todo list.
-ENTRY_NOT_SPECIFIED_ADD:You didn't say what you wanted to add to your todo list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your todo list by using `{}todo add fix error handling`.
+COMMAND_HELP_TODO_ADD:Adds an item to your to-do list.
+ENTRY_NOT_SPECIFIED_ADD:You didn't say what you wanted to add to your to-do list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your to-do list by using `{}todo add fix error handling`.
 ENTRY_ALREADY_EXISTS:That entry already exists.
-ENTRY_ADDED:\u2705 Successfully added that to your todo list.\n
+ENTRY_ADDED:\u2705 Successfully added that to your to-do list.\n
 ENTRY_COUNT:You now have {} {} in your list.
 ENTRY_SINGLE:entry
 ENTRY_PLURAL:entries
-ERROR_ENTRY_ADD_FAILED:There was an error while adding that to your todo list. Try again later. I've reported this error to my developer.
+ERROR_ENTRY_ADD_FAILED:There was an error while adding that to your to-do list. Try again later. I've reported this error to my developer.
 ENTRY_NOT_SPECIFIED_DELETE:You didn't say what entry you wanted to delete.
 ENTRY_NAN_DELETE:You need to specify the number of the entry you want to delete. {}
-DELETION_EXAMPLE:For example, if 'fix todo deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.
+DELETION_EXAMPLE:For example, if 'fix to-do deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.
 ENTRY_DELETION_CONFIRMED:Alright, deleting that entry.
 ENTRY_DELETION_DENIED:Not deleting that entry.
 RAPID_DELETION_CONFIRMATION_TITLE:Are you sure you want to delete this entry?
-RAPID_DELETION_CONFIRMATION_DESCRIPTION:It looks like you're rapidly deleting entries from your todo list.\nYour todo list re-organizes as you delete entries, so this entry may not be the one you want to delete.\nReact with \u2705 to delete the following anyway:
+RAPID_DELETION_CONFIRMATION_DESCRIPTION:It looks like you're rapidly deleting entries from your to-do list.\nYour to-do list re-organizes as you delete entries, so this entry may not be the one you want to delete.\nReact with \u2705 to delete the following anyway:
 RAPID_DELETION_CONFIRMATION_FOOTER:You're seeing this message because you deleted more than 2 entries within 1 minute.
-ENTRY_DELETED:\u2705 Successfully deleted that from your todo list.\n
+ENTRY_DELETED:\u2705 Successfully deleted that from your to-do list.\n
 ENTRY_NOT_FOUND:Sorry, that entry couldn't be found.
 LIST_NOW_EMPTY:Your list is now empty.
-LIST_EMPTY:It doesn't look like you have anything in your todo list.
-ERROR_ENTRY_DELETE_FAILED:Sorry, something went wrong while deleting that from your todo list. Try again later. I've reported this to my developer.
-LIST_TOO_LONG:Your todo list is too long to show in a single message. Only showing entries 1 to {}.
+LIST_EMPTY:It doesn't look like you have anything in your to-do list.
+ERROR_ENTRY_DELETE_FAILED:Sorry, something went wrong while deleting that from your to-do list. Try again later. I've reported this to my developer.
+LIST_TOO_LONG:Your to-do list is too long to show in a single message. Only showing entries 1 to {}.
 ENTRY:{}. `{}`\nCreated {} ago.\n\n
-LIST_HEADER:{}'s todo list
-ENTRY_TOO_LONG_LIST:Sorry, entry {} in your todo list is wayyyy too long to display. Try deleting it or viewing it on its own.
-ERROR_LIST_FAILED:Sorry, something went wrong while trying to show your todo list. Try again later.
+LIST_HEADER:{}'s to-do list
+ENTRY_TOO_LONG_LIST:Sorry, entry {} in your to-do list is wayyyy too long to display. Try deleting it or viewing it on its own.
+ERROR_LIST_FAILED:Sorry, something went wrong while trying to show your to-do list. Try again later.
 ENTRY_NOT_SPECIFIED_SHOW:You didn't say what entry you wanted to show. Want to show the first entry? Use `todo show 1`.
 ENTRY_NAN_SHOW:You need to specify the number of the entry you want to show. Want to show the first entry? Use `todo show 1`.
 ENTRY_SHOW_TITLE:Entry \\#{}
 ENTRY_SHOW_DESC:Created {} ago.\n Entry text:\n`{}`
-ENTRY_NOT_FOUND_SHOW:Sorry, that entry couldn't be found. Your todo list currently has {} entries.
+ENTRY_NOT_FOUND_SHOW:Sorry, that entry couldn't be found. Your to-do list currently has {} entries.
 ENTRY_TOO_LONG_SHOW:Sorry, that entry is wayyyyyyyyy too long to display. You should probably delete it.
 ERROR_SHOW_FAILED:Sorry, something went wrong while trying to show that entry. Try again later.
 #cogs/responses.py

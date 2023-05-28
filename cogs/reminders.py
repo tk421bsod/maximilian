@@ -48,7 +48,7 @@ class UserDeletions:
         return len(self.deletions)
 
 class reminders(commands.Cog):
-    '''Reminders to do stuff. (and todo lists!)'''
+    '''Reminders to do stuff. (and to-do lists!)'''
     __slots__ = ("bot", "logger", "todo_lists", "reminders", "deletions")
 
     def __init__(self, bot, load=False):
@@ -84,7 +84,7 @@ class reminders(commands.Cog):
         
     async def update_todo_cache(self):
         await self.bot.wait_until_ready()
-        self.logger.info("Updating todo cache...")
+        self.logger.info("Updating to-do cache...")
         new_todo_entries = {}
         try:
             todolists = await self.bot.db.exec("select * from todo order by timestamp desc", ())
@@ -93,10 +93,10 @@ class reminders(commands.Cog):
             for item in todolists:
                 new_todo_entries[item['user_id']] = [i for i in todolists if i['user_id'] == item['user_id']]
         except:
-            self.logger.info("Couldn't update todo cache! Is anything in the database?")
+            self.logger.info("Couldn't update to-do cache! Is anything in the database?")
             traceback.print_exc()
         self.todo_lists = new_todo_entries
-        self.logger.info("Updated todo cache!")
+        self.logger.info("Updated to-do cache!")
     
     async def handle_reminder(self, user_id, channel_id, remindertime, reminderstarted, remindertext, uuid):
         #waait for as long as needed
@@ -191,7 +191,7 @@ class reminders(commands.Cog):
     async def todo(self, ctx):
         await self.show_list(ctx)
 
-    @todo.command(help="Adds an item to your todo list.")
+    @todo.command(help="Adds an item to your to-do list.")
     async def add(self, ctx, *, entry=None):
         try:
             if not entry:
@@ -216,7 +216,7 @@ class reminders(commands.Cog):
             await ctx.send(self.bot.strings["ERROR_ENTRY_ADD_FAILED"])
             await self.bot.core.send_debug(ctx)
 
-    @todo.command(help="Deletes an item from your todo list.", aliases=['remove'])
+    @todo.command(help="Deletes an item from your to-do list.", aliases=['remove'])
     async def delete(self, ctx, entry = None):
         try:
             try:
@@ -242,7 +242,7 @@ class reminders(commands.Cog):
             await self.bot.core.send_debug(ctx)
         return
 
-    @todo.command(help="Clears your entire todo list.")
+    @todo.command(help="Clears your entire to-do list.")
     async def clear(self, ctx):
         if not self.bot.common.get_value(self.todo_lists, ctx.author.id, None):
             return await ctx.send(self.bot.strings["LIST_EMPTY"])
@@ -251,7 +251,7 @@ class reminders(commands.Cog):
         except self.bot.DeletionRequestAlreadyActive:
             return await ctx.send(self.bot.strings["DELETION_ACTIVE"])
     
-    @todo.command(help="Shows your todo list.")
+    @todo.command(help="Shows your to-do list.")
     async def list(self, ctx):
         await self.show_list(ctx)
 
