@@ -1,7 +1,6 @@
 from aiomysql import IntegrityError
 
 import asyncio
-import collections
 import logging
 import traceback
 
@@ -82,7 +81,7 @@ class Category():
     Use the `add_category` method instead.
 
     Want to update a Category after creation?
-    Don't. You shouldn't need to.
+    Please don't do that. Thanks.
 
     Methods
     -------
