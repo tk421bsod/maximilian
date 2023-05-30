@@ -4,6 +4,7 @@ import functools
 import inspect
 import logging
 from random import randint
+import re
 import time
 import traceback
 import typing
@@ -41,6 +42,25 @@ class Metadata():
         self.thumbnail = None
         self.info = None
         self.url = None
+
+#TimeConverter from cogs/reminders.py.
+class TimeConverter(commands.Converter):
+    __slots__ = ("time_regex", "time_dict")
+    def __init__(self):
+        self.time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
+        self.time_dict = {"h":3600, "s":1, "m":60}
+
+    async def convert(self, ctx, argument):
+        matches = self.time_regex.findall(argument.lower())
+        time = 0
+        for v, k in matches:
+            try:
+                time += self.time_dict[k]*float(v)
+            except KeyError:
+                raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s are valid!")
+            except ValueError:
+                raise commands.BadArgument(f"{v} is not a number!")
+        return time
 
 class CurrentSong(Metadata):
     '''A subclass of Metadata that stores information about the current song.'''
@@ -647,6 +667,10 @@ class music(commands.Cog):
             if player.lock.locked():
                 return await ctx.send("I can't change the volume if I'm not playing something.")
             await ctx.send("I'm not in a voice channel.")
+
+    @commands.command()
+    async def seek(self, ctx, to:TimeConverter):
+        pass
 
     @commands.command(aliases=["c"])
     async def clear(self, ctx):

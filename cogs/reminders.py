@@ -15,18 +15,20 @@ import humanize
 from discord.ext import commands
 
 #Thanks to Vexs for help with this.
-time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
-time_dict = {"h":3600, "s":1, "m":60, "d":86400}
-
 class TimeConverter(commands.Converter):
+    __slots__ = ("time_regex", "time_dict")
+    def __init__(self):
+        self.time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
+        self.time_dict = {"h":3600, "s":1, "m":60}
+
     async def convert(self, ctx, argument):
-        matches = time_regex.findall(argument.lower())
+        matches = self.time_regex.findall(argument.lower())
         time = 0
         for v, k in matches:
             try:
-                time += time_dict[k]*float(v)
+                time += self.time_dict[k]*float(v)
             except KeyError:
-                raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s/d are valid!")
+                raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s are valid!")
             except ValueError:
                 raise commands.BadArgument(f"{v} is not a number!")
         return time
