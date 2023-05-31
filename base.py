@@ -19,7 +19,7 @@ import startup
 class maximilian(commands.Bot):
     __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "blocklist", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER", "IS_DEBUG")
 
-    def __init__(self, logger):
+    def __init__(self, logger, VER):
         #Now that we've checked basic requirements and ran the updater, we can
         #load our config data...
         logger.debug("Loading config...")
@@ -42,14 +42,15 @@ class maximilian(commands.Bot):
             self.commit = ""
         #set up some attributes we'll need soon...
         logger.debug("Setting up some stuff")
-        super().__init__(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.2.0{f'-{self.commit}' if self.commit else ''}"))
+        super().__init__(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
+        self.VER = VER
         self.database = "maximilian"
         try:
             self.database = config["database"]
             logger.warning("Sourced database name from config.")
             logger.warning(f"Using database '{self.database}'.")
         except:
-            pass
+            logger.warning("No database name found in config.")
         self.logger = logger
         self.common = common 
         self.config = config 

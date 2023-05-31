@@ -160,8 +160,7 @@ try:
         time.sleep(1)
     outer_logger.debug("Preparing to start the event loop...")
     #initialize stuff needed before we enter an async context
-    bot = maximilian(outer_logger)
-    bot.VER = VER
+    bot = maximilian(outer_logger, VER)
     bot.IS_DEBUG = IS_DEBUG
     #hand things over to base.maximilian.run
     asyncio.run(bot.run())
