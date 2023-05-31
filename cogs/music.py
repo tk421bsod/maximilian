@@ -284,10 +284,10 @@ class music(commands.Cog):
             #check if video id is in database, add it if it isn't
             data = await self.bot.db.exec("select * from songs where id = %s limit 1", (video))
             if data:
-                player.metadata.name = data['name']
+                player.metadata.name = data[0]['name']
                 player.metadata.filename = f"songcache/{video}.mp3"
-                player.metadata.duration = data['duration']
-                player.metadata.thumbnail = data['thumbnail']
+                player.metadata.duration = data[0]['duration']
+                player.metadata.thumbnail = data[0]['thumbnail']
                 player.metadata.url = f"https://youtube.com/watch?v={video}"
             else:
                 with yt_dlp.YoutubeDL(self.ydl_opts) as youtubedl:
