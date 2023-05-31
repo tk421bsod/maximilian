@@ -244,7 +244,7 @@ class core(commands.Cog):
                 else:
                     if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
                         if self.bot.settings.general.debug.enabled(ctx.guild.id):
-                            await self.send_paginated(ret['output'], ctx)
+                            await self.send_paginated("\n".join(ret['output']), ctx)
                     await reloadmessage.edit(content=f"Reloading extensions...")
             for each in targetextensions:
                 await self.bot.reload_extension(each)
