@@ -284,6 +284,7 @@ class music(commands.Cog):
             #check if video id is in database, add it if it isn't
             data = await self.bot.db.exec("select * from songs where id = %s limit 1", (video))
             if data:
+                data = data[0]
                 player.metadata.name = data['name']
                 player.metadata.filename = f"songcache/{video}.mp3"
                 player.metadata.duration = data['duration']
@@ -410,6 +411,7 @@ class music(commands.Cog):
                 self.logger.info("looking for song in db...")
                 info = await self.bot.db.exec("select * from songs where name like %s", (f"%{url}%", ))
                 if info:
+                    info = info[0]
                     self.logger.info("found song in db! trying to get from cache...")
                     player.metadata.id = info["id"]
                     player.metadata.name = info["name"]
@@ -420,6 +422,7 @@ class music(commands.Cog):
                         #check if we've been provided a valid url
                         task = asyncio.create_task(self.test_url(url, player))
                         await self._wait(player, task)
+                        player.metadata.id = url #TODO: this is a hack! Very bad
                     except Exception:
                         #not found and not a valid url? search youtube
                         self.logger.info("searching youtube...")
