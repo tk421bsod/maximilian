@@ -1,18 +1,18 @@
 #Read through README.md in this directory if you haven't already. It's important.
 
 GENERIC_ERROR:Sorry, something went wrong. Try again in a moment. I've reported this error to my owner.
-GENERIC_FATAL_ERROR:You should never see this. If you do, contact tk421#2016.
+GENERIC_FATAL_ERROR:You should never see this. If you do, let tk421#2016 know.
 #core.py
 ERROR_COMMAND_NOT_READY:This command isn't ready yet. Try again in a moment.
-CLEARED_TODO_LIST:\u2705 Cleared your to-do list!
+CLEARED_TODO_LIST:\u2705 Cleared your to-do list
 CLEARED_ALL:\u2705 Cleared all data for this server!
 CLEAR_EFFECTS_TITLE:Effects
 CLEAR_TODO_LIST_EFFECTS_DESC:If you proceed, your to-do list will be deleted. **THIS CANNOT BE UNDONE.**
-CLEAR_TODO_LIST_DESC:You've requested that I delete your to-do list, and I need you to confirm you actually want to do this.
+CLEAR_TODO_LIST_DESC:You've requested that I delete your to-do list. To prevent accidental deletion, I need you to confirm this.
 CLEAR_TODO_LIST_TITLE:Delete your to-do list?
 DELETION_CONFIRMED:Proceeding with deletion...
 CONFIRMATION_OPTIONS_TITLE:Your options
-CONFIRMATION_OPTIONS:React with \u2705 to proceed, or react with \u274e to cancel.
+CONFIRMATION_OPTIONS:Click/tap \u2705 to delete your to-do list. \nClick/tap \u274e to cancel.
 CLEAR_ALL_EFFECTS_DESC:If you proceed, all reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`. **THIS CANNOT BE UNDONE.**
 CLEAR_ALL_DESC:You've requested that I delete all the information I have stored about this server (use the `privacy` command to view details on the data I collect). I need you to confirm that you actually want to do this.
 CLEAR_ALL_TITLE:Delete all data?
