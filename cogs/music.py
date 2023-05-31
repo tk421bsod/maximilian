@@ -411,8 +411,8 @@ class music(commands.Cog):
                 info = await self.bot.db.exec("select * from songs where name like %s", (f"%{url}%", ))
                 if info:
                     self.logger.info("found song in db! trying to get from cache...")
-                    player.metadata.id = info["id"]
-                    player.metadata.name = info["name"]
+                    player.metadata.id = info[0]["id"]
+                    player.metadata.name = info[0]["name"]
                     if int(str(info['duration']).split(':')[0]) > 60:
                         raise DurationLimitError()
                 else:
