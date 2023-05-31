@@ -235,14 +235,17 @@ class core(commands.Cog):
             if nofetch:
                 await ctx.send("Ok, I won't fetch the latest revision. Reloading extensions...")
             else:
-                 reloadmessage = await ctx.send("Fetching latest revision...")
-                 ret = await self.bot.loop.run_in_executor(None, common.run_command, ["git", "pull"])
-                 if ret['returncode']:
-                     await ctx.send(traceback.print_exc())
-                     await ctx.send("\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
-                     extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
-                 else:
-                     await reloadmessage.edit(content=f"Reloading extensions...")
+                reloadmessage = await ctx.send("Fetching latest revision...")
+                ret = await self.bot.loop.run_in_executor(None, common.run_command, ["git", "pull"])
+                if ret['returncode']:
+                    await ctx.send(traceback.print_exc())
+                    await ctx.send("\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
+                    extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
+                else:
+                    if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
+                        if self.bot.settings.general.debug.enabled(ctx.guild.id):
+                            await self.send_paginated(ret['output'], ctx)
+                    await reloadmessage.edit(content=f"Reloading extensions...")
             for each in targetextensions:
                 await self.bot.reload_extension(each)
             self.bot.prefixes = self.bot.get_cog('prefixes')
