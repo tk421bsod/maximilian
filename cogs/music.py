@@ -422,6 +422,7 @@ class music(commands.Cog):
                         #check if we've been provided a valid url
                         task = asyncio.create_task(self.test_url(url, player))
                         await self._wait(player, task)
+                        player.metadata.id = url #TODO: this is a hack! Very bad
                     except Exception:
                         #not found and not a valid url? search youtube
                         self.logger.info("searching youtube...")
