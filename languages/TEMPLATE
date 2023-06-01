@@ -173,6 +173,7 @@ REMOVED_ROLE:Removed the '{}' role from {}.
 HAS_ROLE:{}, you already have the '{}' role.
 ROLE_LIST_TITLE:Reaction roles in this server:
 DOESNT_HAVE_ROLE:{} For some reason, you don't have the '{}' role, even though you reacted to the message. Try removing your reaction and adding it again. If this keeps happening, notify tk421#2016.
+ROLE_FORMAT: <@&{}>\nMessage ID: {} \nEmoji: {}\n\n
 #cogs/reminders.py
 INVALID_UNIT:{} is an invalid unit of time! only h/m/s/d are valid!
 NAN:{} is not a number!

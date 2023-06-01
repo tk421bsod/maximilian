@@ -29,6 +29,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
             guild_roles = await self.bot.db.exec("select * from roles where guild_id = %s", (guild.id, ))
             if not guild_roles:
                 continue
+            #TODO: is this needed anymore? db.exec changes may have made this invalid
             if isinstance(guild_roles, dict): #dicts by themselves don't play nicely with the loop below, so wrap them in a list
                 guild_roles = [guild_roles]
             for role in guild_roles:
@@ -81,33 +82,33 @@ class reaction_roles(commands.Cog, name="reaction roles"):
         if role and messageid:
             if action == "add":
                 if len(list(self.roles[ctx.guild.id].values())) >= 24:
-                    return await ctx.send("You can't have more than 24 reaction roles in one server for now.")
+                    return await ctx.send(self.bot.strings["TOO_MANY_ROLES"])
                 try:
                     await self.add_role(ctx, role, messageid, emoji)
                 except:
                     self.bot.logger.info(traceback.format_exc())
-                    return await ctx.send("Something went wrong while adding that reaction role. Try again in a moment.")
+                    return await ctx.send(self.bot.strings["ERROR_ROLE_ADD_FAILED"])
             if action == "delete":
                 if len(list(self.roles[ctx.guild.id].values())) == 0:
-                    return await ctx.send("You don't have any reaction roles set up.")
+                    return await ctx.send(self.bot.strings["NO_ROLES"])
                 try:
                     self.roles[ctx.guild.id][role.id]
                 except KeyError:
-                    return await ctx.send("That reaction role doesn't exist.")
+                    return await ctx.send(self.bot.strings["INVALID_ROLE"])
                 await self.delete_role(ctx, role)
         elif action == "list":
             if len(list(self.roles[ctx.guild.id].values())) == 0:
-                return await ctx.send("You don't have any reaction roles set up.")
+                return await ctx.send(self.bot.strings["NO_ROLES"])
             desc = ""
             for role in list(self.roles[ctx.guild.id].values()):
                 if not role.emoji:
                     emoji = "Any"
                 else:
                     emoji = role.emoji
-                desc += f"<@&{role.id}>\nMessage ID: {role.message_id} \nEmoji: {emoji}\n\n"
-            await ctx.send(embed=discord.Embed(title="Reaction roles in this server:", description=desc, color=self.bot.config['theme_color']))
+                desc += self.bot.strings["ROLE_FORMAT"].format(role.id, role.message_id, emoji)
+            await ctx.send(embed=discord.Embed(title=self.bot.strings["ROLE_LIST_TITLE"], description=desc, color=self.bot.config['theme_color']))
         elif not messageid or not role:
-            await ctx.send(f"It doesn't look like you've provided all of the required arguments. See `{await self.bot.get_prefix(ctx.message)}help reactionroles` for more details.")
+            await ctx.send(self.bot.strings["ROLE_MISSING_ARGUMENTS"].format(await self.bot.get_prefix(ctx.message)))
             return
 
     def lookup_role_by_message(self, guildid, messageid):
@@ -125,12 +126,12 @@ class reaction_roles(commands.Cog, name="reaction roles"):
                     ctx = self.bot.get_channel(payload.channel_id)
                     roletoadd = discord.utils.get(payload.member.guild.roles, id=int(role.id))
                     if roletoadd in payload.member.roles:
-                        await ctx.send(f" <@!{payload.member.id}>, you already have the '{roletoadd.name}' role.", delete_after=5)
+                        await ctx.send(self.bot.strings["HAS_ROLE"].format(payload.member.mention, roletoadd.name), delete_after=5)
                         return
                     await payload.member.add_roles(roletoadd)
                     print("added role to user")
                     if self.bot.settings.reactionroles.notify.enabled(payload.guild_id):
-                        await ctx.send(f"Gave <@!{payload.member.id}> the '{roletoadd.name}' role.", delete_after=5)
+                        await ctx.send(self.bot.strings["GAVE_ROLE"].format(payload.member.mention, roletoadd.name), delete_after=5)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
@@ -145,9 +146,9 @@ class reaction_roles(commands.Cog, name="reaction roles"):
                     if roletoadd in member.roles:
                         await member.remove_roles(roletoadd)
                         if self.bot.settings.reactionroles.notify.enabled(payload.guild_id):
-                            await ctx.send(f"Removed the '{roletoadd.name}' role from <@!{member.id}>.", delete_after=5)
+                            await ctx.send(self.bot.strings["REMOVED_ROLE"].format(roletoadd.name, member.mention), delete_after=5)
                         return
-                    await ctx.send(f"<@!{member.id}> For some reason, you don't have the '{roletoadd.name}' role, even though you reacted to this message. Try removing your reaction and adding your reaction again. If this keeps happening, notify tk421#7244.", delete_after=15)
+                    await ctx.send(self.bot.strings["DOESNT_HAVE_ROLE"].format(member.mention, roletoadd.name), delete_after=15)
 
 async def setup(bot):
     await bot.add_cog(reaction_roles(bot))
