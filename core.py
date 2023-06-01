@@ -43,7 +43,7 @@ class ConfirmationView(discord.ui.View):
 
     __slots__ = ("confirmed", "confirm_followup", "cancel_followup")
 
-    def __init__(self, confirm_followup, cancel_followup):
+    def __init__(self, confirm_followup=None, cancel_followup=None):
         super().__init__()
         self.confirmed = None
         self.confirm_followup = confirm_followup
@@ -56,7 +56,8 @@ class ConfirmationView(discord.ui.View):
     @discord.ui.button(label='\U00002705', style=discord.ButtonStyle.green)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.confirmed = True
-        await interaction.channel.send(self.confirm_followup)
+        if self.confirm_followup:
+            await interaction.channel.send(self.confirm_followup)
         self.remove_children()
         await interaction.response.edit_message(view=self)
         self.stop()
@@ -64,7 +65,8 @@ class ConfirmationView(discord.ui.View):
     @discord.ui.button(label='\U0000274e', style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.confirmed = False
-        await interaction.channel.send(self.cancel_followup)
+        if self.cancel_followup:
+            await interaction.channel.send(self.cancel_followup)
         self.remove_children()
         await interaction.response.edit_message(view=self)
         self.stop()
