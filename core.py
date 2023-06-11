@@ -173,8 +173,8 @@ class core(commands.Cog):
         if load:
             asyncio.create_task(self.update_blocklist())
 
-    async def send_paginated(self, to_send, target):
-        paginator = commands.Paginator()
+    async def send_paginated(self, to_send, target, prefix="```", suffix="```"):
+        paginator = commands.Paginator(prefix=prefix, suffix=suffix)
         for line in to_send.split("\n"):
             paginator.add_line(line)
         for page in paginator.pages:
