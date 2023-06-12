@@ -24,6 +24,8 @@ class TimeConverter(commands.Converter):
     async def convert(self, ctx, argument):
         matches = self.time_regex.findall(argument.lower())
         time = 0
+        if argument == "add":
+            await ctx.send("The 'add' option was removed in 1.1.0. Remove it from the command so the time value gets interpreted correctly.")
         for v, k in matches:
             try:
                 time += self.time_dict[k]*float(v)
@@ -31,6 +33,8 @@ class TimeConverter(commands.Converter):
                 raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s are valid!")
             except ValueError:
                 raise commands.BadArgument(f"{v} is not a number!")
+        if time == 0:
+            raise commands.BadArgument("Sorry, that amount of time is invalid.")
         return time
 
 class Deletion:
@@ -44,7 +48,7 @@ class UserDeletions:
 
     def __init__(self):
         self.deletions = []
-    
+
     @property
     def amount(self):
         return len(self.deletions)
@@ -180,6 +184,7 @@ class reminders(commands.Cog):
 
     async def check_deletions(self, ctx, entry, count):
         await self.prune_deletions(ctx)
+        await self.bot.settings.reminders.wait_ready()
         if self.deletions[ctx.author.id].amount < 2:
             return False
         embed = discord.Embed(title=self.bot.strings["RAPID_DELETION_CONFIRMATION_TITLE"], description=self.bot.strings["RAPID_DELETION_CONFIRMATION_DESCRIPTION"], color=self.bot.config['theme_color'])
