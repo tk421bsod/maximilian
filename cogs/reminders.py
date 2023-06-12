@@ -21,13 +21,17 @@ class TimeConverter(commands.Converter):
     async def convert(self, ctx, argument):
         matches = time_regex.findall(argument.lower())
         time = 0
+        if argument == "add":
+            await ctx.send("The 'add' option was removed in 1.1.0. Remove it from the command so the time value gets interpreted correctly.")
         for v, k in matches:
             try:
                 time += time_dict[k]*float(v)
             except KeyError:
-                raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s/d are valid!")
+                raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s are valid!")
             except ValueError:
                 raise commands.BadArgument(f"{v} is not a number!")
+        if time == 0:
+            raise commands.BadArgument("Sorry, that amount of time is invalid.")
         return time
 
 class reminders(commands.Cog):
