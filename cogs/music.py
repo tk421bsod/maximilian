@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import datetime
 import functools
 import inspect
 import logging
@@ -675,7 +676,24 @@ class music(commands.Cog):
         #High-level overview for impl:
         #Step 1: convert time.
         #Step 2: Do some pre-flight checks e.g playing audio, not paused, seek time < total duration
-        raise NotImplementedError
+        player = await self._get_player(ctx)
+        try:
+            if not ctx.voice_client:
+                return await ctx.send("I'm not in a voice channel.")
+        except AttributeError:
+            return await ctx.send("I'm not in a voice channel.")
+        if player.raw_duration == 0:
+            return await ctx.send("This feature can't be used with streams.")
+        if to > player.raw_duration-1:
+            return await ctx.send("I can't skip beyond the end of a song.")
+        player.seeking = True
+        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(player.current_song['filename'], options=f"-ss {datetime.timedelta(seconds=to)}"), volume=player.current_song['volume'])
+        try:
+            ctx.voice_client.stop()
+        except:
+            pass
+        handle_queue = functools.partial(self.process_queue, ctx, channel)
+        ctx.voice_client.play(source, after=handle_queue)
 
     @commands.command(aliases=["c"])
     async def clear(self, ctx):
