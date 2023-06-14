@@ -148,7 +148,7 @@ If there are no merge conflicts, just run `git restore <file>`.
 You can find the file name and some extra error info in the last line of output from Maximilian.
 If you introduced merge conflicts, you probably know how to fix them already.
 Updated to a newer version of Maximilian and haven't modified anything?
-Let `tk421#2016` know. They probably messed something up.
+Let `tk___421` know. They probably messed something up.
 
 `It looks like your Python installation is missing some features.`
 Try updating your Python. If you built Python from source, you may need to install additional dependencies and recompile.

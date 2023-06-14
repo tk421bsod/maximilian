@@ -1,7 +1,7 @@
 #Read through README.md in this directory if you haven't already. It's important.
 
 GENERIC_ERROR:Sorry, something went wrong. Try again in a moment. I've reported this error to my owner.
-GENERIC_FATAL_ERROR:You should never see this. If you do, let tk421#2016 know.
+GENERIC_FATAL_ERROR:You should never see this. If you do, let tk___421 know.
 #core.py
 ERROR_COMMAND_NOT_READY:This command isn't ready yet. Try again in a moment.
 CLEARED_TODO_LIST:\u2705 Cleared your to-do list!
@@ -45,11 +45,11 @@ SETTING_AUTOMATICALLY_DISABLED:Automatically disabled **{}** due to a conflict.
 SETTINGS_AUTOMATICALLY_DISABLED:Automatically disabled {} due to conflicts.
 SETTING_UNUSABLE_WITH:Cannot be enabled at the same time as *{}*.
 SETTING_REQUIRES_PERMISSION:\nRequires the **{}** permission.
-CATEGORY_INVALID:Sorry, that category wasn't set up properly. If you keep seeing this, let tk421#2016 know.
+CATEGORY_INVALID:Sorry, that category wasn't set up properly. If you keep seeing this, let tk___421 know.
 SETTING_PERMISSION_DENIED:It looks like you don't have permission to change this setting.\nYou'll need the **{}** permission to change it.
 #cogs/misc.py
 AVATAR:{}'s avatar
-HELLO:Hello! I'm a Discord bot created by tk421#2016.
+HELLO:Hello! I'm a Discord bot created by tk___421.
 LATENCY:Latency is {} ms.
 PRIVACY_TITLE:Maximilian Privacy Policy
 PRIVACY_DATA_COLLECTION_TITLE:Why Maximilian collects data
@@ -92,7 +92,7 @@ CONNECTED:\u2705 Connected to `{}`.
 GETTING_AUDIO:Getting audio... (this may take a while)
 START_PLAYING: Use the `play` command to start playing stuff.
 ERROR_DURATION:That song is too long. Due to limits on both data usage and storage space, I can't play songs longer than an hour.
-ERROR_TIMEOUT:Looks like a YouTube request timed out. Try that again.\nIf you see this message again, tell tk421#2016.
+ERROR_TIMEOUT:Looks like a YouTube request timed out. Try that again.\nIf you see this message again, tell tk___421.
 ERROR_NO_SEARCH_RESULTS:I couldn't find any search results, or the first 5 search results were more than an hour long. Try running this command again (Youtube sometimes fails to give me a list of search results, this is an issue on Youtube's end), then try entering a more broad search term if you get this error again.
 ERROR_LEFT_VOICE:I've left the voice channel too.
 LEFT_VOICE:\u2705 Left the voice channel.
@@ -107,7 +107,7 @@ WARNING_STREAM:\u26a0 I'm playing a stream right now. I'll still add this song t
 SONG_ADDED:Added a song to your queue!
 SONG_NAME:Song Name
 USER_NOT_IN_VOICE:You aren't in a voice channel. Join one, then run this command again.
-UNEXPECTED_ERROR:Sorry, something went wrong while trying to play that song. Try again in a moment.\nIf you see this message again, please contact tk421#2016.
+UNEXPECTED_ERROR:Sorry, something went wrong while trying to play that song. Try again in a moment.\nIf you see this message again, please contact tk___421.
 REMOVE_HELP:Use `{}remove <song's position in queue>` to remove a song from your queue. For example, `{}remove 1` removes the first song in the queue.
 ADD_HELP:You can add items to your queue by using the `play` command again while a song is playing.
 CLEAR_HELP:If you want to clear your queue, use the `clear` command.
@@ -172,7 +172,7 @@ GAVE_ROLE:Gave {} the '{}' role.
 REMOVED_ROLE:Removed the '{}' role from {}.
 HAS_ROLE:{}, you already have the '{}' role.
 ROLE_LIST_TITLE:Reaction roles in this server:
-DOESNT_HAVE_ROLE:{} For some reason, you don't have the '{}' role, even though you reacted to the message. Try removing your reaction and adding it again. If this keeps happening, notify tk421#2016.
+DOESNT_HAVE_ROLE:{} For some reason, you don't have the '{}' role, even though you reacted to the message. Try removing your reaction and adding it again. If this keeps happening, notify tk___421.
 ROLE_FORMAT: <@&{}>\nMessage ID: {} \nEmoji: {}\n\n
 #cogs/reminders.py
 INVALID_UNIT:{} is an invalid unit of time! only h/m/s/d are valid!

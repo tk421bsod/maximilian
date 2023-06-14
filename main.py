@@ -12,7 +12,7 @@ if __name__ != "__main__":
     print("It looks like you're trying to import main.py as a module.")
     print("Please don't do that. Some code here relies on being ran directly through a command such as python3 main.py.")
     print("Need to access some Maximilian API? Just import the right file. Read HOSTING.md for an overview.")
-    print("If you have a legitimate use case for this, I'd like to hear about it -- send me a DM at tk421#2016 on Discord.")
+    print("If you have a legitimate use case for this, I'd like to hear about it -- send me a DM at tk___421 on Discord.")
     print("Maximilian will now attempt to exit.")
     quit()
 
@@ -89,7 +89,7 @@ try:
     from base import maximilian
     import updater
 except (ImportError, NameError, SyntaxError) as e:
-    print("Maximilian cannot start because an internal module failed to load.\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk421#2016 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
+    print("Maximilian cannot start because an internal module failed to load.\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk___421 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
     print(e)
     if IS_DEBUG:
         traceback.print_exc()
