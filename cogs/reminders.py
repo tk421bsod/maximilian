@@ -146,7 +146,7 @@ class reminders(commands.Cog):
             if entrystring:
                 embed = discord.Embed(title=self.bot.strings["LIST_HEADER"].format(ctx.author), description=entrystring, color=self.bot.config['theme_color'])
                 if pagination_enabled:
-                    return await self.bot.core.send_paginated(embed, ctx)
+                    return await self.bot.core.send_paginated(embed, ctx, prefix="", suffix="")
                 return await ctx.send(embed=embed)
         except KeyError:
             return await ctx.send(self.bot.strings["LIST_EMPTY"])

@@ -174,7 +174,6 @@ class core(commands.Cog):
             asyncio.create_task(self.update_blocklist())
 
     async def send_paginated_embed(self, paginator, to_send, target):
-        #TODO: Unsure of this attribute name, seems logical but would be nice to double-check
         if len(to_send.fields) < 2:
             self.logger.debug("Sourcing paginated embed content from description")
             #TODO: On some special embeds e.g todo lists this can break groups of text in half.
@@ -184,15 +183,13 @@ class core(commands.Cog):
         else:
             self.logger.debug("Sourcing paginated embed content from fields")
             for field in to_send.fields:
-                #TODO: Am inferring these attribute names from the add_field kwargs. CHECK THIS
                 paginator.add_line(field.name)
                 for line in field.value.split("\n"):
                     paginator.add_line(line)
         for count, page in enumerate(paginator.pages):
             title = to_send.title
-            if len(paginator.pages > 1):
+            if len(paginator.pages) > 1:
                 title += f" (page {count+1})"                    
-            #TODO: This assumes page is always a String. Check docs when able and ensure this is correct.
             #TODO: This can break some embed layouts as we may be converting from separate fields to a description.
             await target.send(embed=discord.Embed(title=title, description=page))
 
