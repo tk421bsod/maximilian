@@ -173,12 +173,40 @@ class core(commands.Cog):
         if load:
             asyncio.create_task(self.update_blocklist())
 
+    async def send_paginated_embed(self, paginator, to_send, target):
+        #TODO: Unsure of this attribute name, seems logical but would be nice to double-check
+        if len(to_send.fields) < 2:
+            self.logger.debug("Sourcing paginated embed content from description")
+            #TODO: On some special embeds e.g todo lists this can break groups of text in half.
+            #Consider adding text groups on the same "line" on the paginator and only moving on once reaching a blank line.
+            for line in to_send.description.split("\n"):
+                paginator.add_line(line)
+        else:
+            self.logger.debug("Sourcing paginated embed content from fields")
+            for field in to_send.fields:
+                #TODO: Am inferring these attribute names from the add_field kwargs. CHECK THIS
+                paginator.add_line(field.name)
+                for line in field.value.split("\n"):
+                    paginator.add_line(line)
+        for count, page in enumerate(paginator.pages):
+            title = to_send.title
+            if len(paginator.pages > 1):
+                title += f" (page {count+1})"                    
+            #TODO: This assumes page is always a String. Check docs when able and ensure this is correct.
+            #TODO: This can break some embed layouts as we may be converting from separate fields to a description.
+            await target.send(embed=discord.Embed(title=title, description=page))
+
+    #TODO: View-based paginator
     async def send_paginated(self, to_send, target, prefix="```", suffix="```"):
+        self.logger.debug(f"send_paginated called with ({type(to_send)}, {target}, {prefix}, {suffix})")
         paginator = commands.Paginator(prefix=prefix, suffix=suffix)
-        for line in to_send.split("\n"):
-            paginator.add_line(line)
-        for page in paginator.pages:
-            await target.send(page)
+        if isinstance(to_send, discord.Embed):
+            await self.send_paginated_embed(paginator, to_send, target)
+        else:
+            for line in to_send.split("\n"):
+                paginator.add_line(line)
+            for page in paginator.pages:
+                await target.send(page)
 
     async def send_debug(self, ctx):
         try:
