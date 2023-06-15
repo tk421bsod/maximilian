@@ -215,10 +215,12 @@ class music(commands.Cog):
         '''Starts playing the next song in the queue, cleans up some stuff if the queue is empty'''
         #this is a callback that is executed after song ends
         try:
-            if channel.id not in self.channels_playing_audio:
-                return
+            print(ctx.guild.id)
             player = self.players[ctx.guild.id]
-            if player.seeking and round((time.time() - player.current_song["start_time"]) - player.current_song["time_paused"]):
+            print(player.seeking)
+            if player.seeking:
+                return
+            if channel.id not in self.channels_playing_audio:
                 return
             if player.current_song["repeating"]:
                 #reset duration when repeating
@@ -303,7 +305,7 @@ class music(commands.Cog):
                         player.metadata.duration = f"{m}:{0 if len(list(str(s))) == 1 else ''}{s}"
                         if m > 60 and ctx.author.id != self.bot.owner_id:
                             raise DurationLimitError()
-                    await self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail, player.metadata.raw_duration))
+                    await self.bot.db.exec("insert into songs values(%s, %s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail, player.metadata.raw_duration))
             self.logger.info("got song from cache!")
         except FileNotFoundError:
             self.logger.info("song isn't in cache")
@@ -341,7 +343,7 @@ class music(commands.Cog):
                     if not player.metadata.filename:
                         player.metadata.filename = youtubedl.prepare_filename(info).replace(youtubedl.prepare_filename(info).split(".")[1], "mp3")
                         try:
-                            await self.bot.db.exec("insert into songs values(%s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail, player.metadata.raw_duration))
+                            await self.bot.db.exec("insert into songs values(%s, %s, %s, %s, %s)", (player.metadata.name, video, player.metadata.duration, player.metadata.thumbnail, player.metadata.raw_duration))
                         except aiomysql.IntegrityError:
                             pass
         except Exception as e:
@@ -352,7 +354,7 @@ class music(commands.Cog):
     async def search_youtube_for_song(self, ydl, ctx, url, num, player):
         '''Searches Youtube for a song and extracts metadata from the first search result. If the maximum duration is exceeded, it goes to the next search result, up to 4 times. If no more search results are available, it raises NoSearchResultsError'''
         if num == 0:
-            player.metadata.info = youtubedl.sanitize_info(await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False)))
+            player.metadata.info = ydl.sanitize_info(await self.bot.loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False)))
         try:
             player.metadata.id = player.metadata.info["entries"][num]["id"]
             player.metadata.name = player.metadata.info["entries"][num]["title"]
@@ -676,24 +678,32 @@ class music(commands.Cog):
         #High-level overview for impl:
         #Step 1: convert time.
         #Step 2: Do some pre-flight checks e.g playing audio, not paused, seek time < total duration
+        #Step 3: Construct a new audio source with -ss in options.
+        #Step 4: Stop audio, play new source
         player = await self._get_player(ctx)
         try:
             if not ctx.voice_client:
                 return await ctx.send("I'm not in a voice channel.")
         except AttributeError:
             return await ctx.send("I'm not in a voice channel.")
-        if player.raw_duration == 0:
+        if player.metadata.raw_duration == 0:
             return await ctx.send("This feature can't be used with streams.")
-        if to > player.raw_duration-1:
+        if to > player.metadata.raw_duration-1:
             return await ctx.send("I can't skip beyond the end of a song.")
+        target = datetime.timedelta(seconds=to)
+        await ctx.send(embed=discord.Embed(title=f"\u23e9 Seeking to `{target}`...", color=self.bot.config['theme_color']))
         player.seeking = True
-        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(player.current_song['filename'], options=f"-ss {datetime.timedelta(seconds=to)}"), volume=player.current_song['volume'])
+        print(player.current_song)
+        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(player.current_song['filename'], options=f"-ss {target}"), volume=player.current_song['volume'])
         try:
             ctx.voice_client.stop()
         except:
             pass
-        handle_queue = functools.partial(self.process_queue, ctx, channel)
+        handle_queue = functools.partial(self.process_queue, ctx, ctx.voice_client.channel)
         ctx.voice_client.play(source, after=handle_queue)
+        await asyncio.sleep(0.4)
+        player.seeking = False
+
 
     @commands.command(aliases=["c"])
     async def clear(self, ctx):
