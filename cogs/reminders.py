@@ -65,6 +65,7 @@ class reminders(commands.Cog):
         self.deletions = {}
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
         if load:
+            self.bot.settings.add_category("reminders", {"pagination":"Experimental embed pagination features"}, {"pagination":None}, {"pagination":None})
             asyncio.create_task(self.update_todo_cache())
             asyncio.create_task(self.update_reminder_cache(True))
 
@@ -131,23 +132,26 @@ class reminders(commands.Cog):
         await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder, uuid)
 
     async def show_list(self, ctx):
+        await self.bot.settings.reminders.wait_ready()
         entrystring = ""
+        pagination_enabled = self.bot.settings.reminders.pagination.enabled(ctx.guild.id)
         try:
             if not self.todo_lists[ctx.author.id]:
                 return await ctx.send(self.bot.strings["LIST_EMPTY"])
             for count, value in enumerate(self.todo_lists[ctx.author.id]):
                 entrystring += self.bot.strings["ENTRY"].format(count+1, value['entry'], humanize.precisedelta(value['timestamp'], format='%0.0f'))
-                if len(entrystring) > 3800:
+                if len(entrystring) > 3800 and not pagination_enabled:
                     await ctx.send(self.bot.strings["LIST_TOO_LONG"].format(count+1))
                     break
             if entrystring:
                 embed = discord.Embed(title=self.bot.strings["LIST_HEADER"].format(ctx.author), description=entrystring, color=self.bot.config['theme_color'])
+                if pagination_enabled:
+                    return await self.bot.core.send_paginated(embed, ctx)
                 return await ctx.send(embed=embed)
         except KeyError:
             return await ctx.send(self.bot.strings["LIST_EMPTY"])
         except discord.HTTPException:
             return await ctx.send(self.bot.strings["ENTRY_TOO_LONG_LIST"].format(count))
-            #paginator when
         except:
             await self.bot.core.send_traceback()
             await ctx.send(self.bot.strings["ERROR_LIST_FAILED"])
