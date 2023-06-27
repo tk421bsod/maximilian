@@ -1,3 +1,6 @@
 [submodule "web/deps/vif"]
 	path = web/deps/vif
 	url = https://github.com/tk421bsod/vif.git
+[submodule "db_utils"]
+	path = db_utils
+	url = https://github.com/TK421bsod/db_utils.git

@@ -9,7 +9,7 @@ import discord
 from aiomysql import OperationalError
 
 import common
-import db
+from db_utils import async_db as db
 
 def set_bit(config, name, requirement=True):
     """Sets a bit at 'name' if it doesn't exist. Otherwise, keeps the value the same. Used for one-time things, e.g warnings on first startup"""
@@ -71,7 +71,8 @@ def parse_arguments(bot, args):
         bot.dbip = "localhost"
 
 async def initialize_db(bot, config):
-    inst = db.db(bot, config['dbp'])
+    tables = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting, category)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'songs':'name text, id text, duration varchar(8), thumbnail text, raw_duration mediumint unsigned', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned, constraint users primary key (user_id)'}
+    inst = db.async_db("maximilianbot", config['dbp'], bot.dbip, bot.database, tables)
     try:
         await inst.connect()
     except OperationalError:
