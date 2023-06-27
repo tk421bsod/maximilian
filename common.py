@@ -22,16 +22,17 @@ def load_config():
                 config[i[0]] = i[1]
     return config
 
-def run_command(args):
+def run_command(cmd):
     if logging.root.level == logging.DEBUG:
-        logging.getLogger('common').debug(f"Calling run_command with {args}")
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = p.communicate()
-    return {"output":out.decode('utf-8').strip().split("\n"), "returncode":p.returncode}
+        logging.getLogger('common').debug(f"Calling run_command with \"{cmd}\"")
+    p = subprocess.run(cmd, shell=True, capture_output=True, encoding="utf-8")
+    if logging.root.level == logging.DEBUG:
+        logging.getLogger('common').debug({"output":p.stdout.strip().split("\n"), "returncode":p.returncode})
+    return {"output":p.stdout.strip().split("\n"), "returncode":p.returncode}
 
 def get_latest_commit():
     try:
-        return run_command(['git', 'rev-parse', '--short', 'HEAD'])['output']
+        return run_command("git rev-parse --short HEAD")['output']
     except Exception:
         pass
 

@@ -29,9 +29,9 @@ def update():
     #step 1: get info & display current branch
     initial = common.get_latest_commit()[0]
     #get current remote
-    remote = common.run_command(['git', 'remote'])['output'][0]
+    remote = common.run_command("git remote")['output'][0]
     #get current branch
-    branch = common.run_command(['git', 'branch', '--show-current'])['output'][0]
+    branch = common.run_command("git branch --show-current")['output'][0]
     time.sleep(0.5)
     print(f"You're currently on the '{branch}' branch.")
     if branch == 'development':
@@ -89,7 +89,7 @@ def update():
     except subprocess.CalledProcessError:
         print("Update check failed. See the above output for details.")
         return
-    after = common.run_command(['git', 'rev-parse', '--short', f'{remote}/{branch}'])['output'][0]
+    after = common.run_command(f"git rev-parse --short {remote}/{branch}")['output'][0]
     #now that we can check if an update exists, set last update timestamp
     subprocess.run(f"sed -i \"s/last_update:.*/last_update:{round(time.time())}/\" config", shell=True)
     if initial != after:
@@ -100,7 +100,7 @@ def update():
         if resp == "y":
             print("\nApplying update...")
             time.sleep(0.3)
-            pull = common.run_command(['git', 'pull'])
+            pull = common.run_command("git pull")
             output = "\n".join(pull['output'])
             print("\nGit output:")
             print(output)
