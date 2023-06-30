@@ -11,7 +11,6 @@ from discord.ext import commands
 
 import common
 import core
-import db
 import settings
 import startup
 
@@ -58,7 +57,7 @@ class maximilian(commands.Bot):
         self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
         self.responses = [] #custom commands list. TODO: make this less baked in
         self.start_time = time.time()
-        #step 4: parse additional arguments (ip, enablejsk, noload)
+        #parse additional arguments (ip, enablejsk, noload)
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
         logger.debug("Starting the event loop.")
