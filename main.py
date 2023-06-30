@@ -88,7 +88,7 @@ except (ImportError, NameError, SyntaxError) as e:
 try:
     from db_utils import async_db
 except ImportError as e:
-    print("Maximilian cannot start because its database API failed to load.\nHave you run 'git submodule init' and 'git submodule update' yet?")
+    print("Maximilian cannot start because its database API failed to load.\nIf you haven't yet, run 'git submodule init' and 'git submodule update'.")
 
 try:
     from base import maximilian
