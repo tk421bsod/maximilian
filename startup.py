@@ -87,8 +87,7 @@ async def initialize_db(bot, config):
     bot.logger.info("Connected to database.")
     return inst
 
-async def load_strings(logger, config, exit=True):
-    logger.debug('Loading strings from file...')
+async def get_language(logger, config, exit):
     #try to get language from config
     language = common.get_value(config, 'language')
     #do we have anything that overrides our default language?
@@ -109,21 +108,40 @@ async def load_strings(logger, config, exit=True):
             logger.error(f"Sorry, that language isn't supported right now. The only supported languages are {supported}")
             if exit:
                 sys.exit(25)
-    else:
-        logger.warning("No language specified. Defaulting to 'en'.")
-        logger.warning("If you wish to set a default language, add `language:<language>` to config.")
-        language = 'en'
+        return language
+    logger.warning("No language specified. Defaulting to 'en'.")
+    logger.warning("If you wish to set a default language, add `language:<language>` to config.")
+    return 'en'
+
+async def load_strings(logger, config, exit=True):
+    logger.debug('Loading strings from file...')
+    language = await get_language(logger, config, exit)
     logger.info(f"Set language to {language}")
     try:
         with open(f'languages/{language}', 'r') as data:
             logger.debug("Loading data...")
             strings = json.load(data)
+            logger.debug("Loaded data.")
     except FileNotFoundError:
         raise RuntimeError(f"Couldn't find the file containing strings for language '{language}'.")
     except json.JSONDecodeError as e:
         logger.critical(f"The file containing strings for language '{language}' is invalid. Try passing it through generate.py.")
         logger.critical("Maximilian will now exit with some additional error info.")
         raise e
+    errors_found = False
+    if language != 'en':
+        logger.info('Validating strings...')
+        with open('languages/en', 'r') as data:
+            reference = json.load(data)
+            for identifier in list(reference.keys()):
+                try:
+                    strings[identifier]
+                except KeyError:
+                    logger.warn(f"The language file '{language}' is missing the string '{identifier}'!")
+                    errors_found = True
+                    strings[identifier] = ""
+    if errors_found:
+        logger.warn("This language file is missing some strings found in 'en'. Some features may not work.")
     logger.info('Strings loaded successfully.')
     return strings
 
