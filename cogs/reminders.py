@@ -55,13 +55,13 @@ class UserDeletions:
 
 class reminders(commands.Cog):
     '''Reminders to do stuff. (and to-do lists!)'''
-    __slots__ = ("bot", "logger", "todo_lists", "reminders", "deletions")
+    __slots__ = ("bot", "logger", "todo_lists", "active_reminders", "deletions")
 
     def __init__(self, bot, load=False):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
         self.todo_lists = {}
-        self.reminders = {}
+        self.active_reminders = {}
         self.deletions = {}
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
         if load:
@@ -73,17 +73,17 @@ class reminders(commands.Cog):
         await self.bot.wait_until_ready()
         self.logger.info("Updating reminder cache...")
         new_reminders = {}
-        reminders = {}
+        active_reminders = {}
         try:
-            reminders = await self.bot.db.exec("select * from reminders order by user_id desc", ())
-            for item in reminders:
-                new_reminders[item['user_id']] = [i for i in reminders if i['user_id'] == item['user_id']]
+            active_reminders = await self.bot.db.exec("select * from reminders order by user_id desc", ())
+            for item in active_reminders:
+                new_reminders[item['user_id']] = [i for i in active_reminders if i['user_id'] == item['user_id']]
                 #only start handling reminders if the extension was loaded, we don't want reminders to fire twice once this function is
                 #called by handle_reminder
                 if load:
                     asyncio.create_task(self.handle_reminder(item['user_id'], item['channel_id'], item['reminder_time'], item['now'], item['reminder_text'], item['uuid']))
                     self.logger.info(f"Started handling a reminder for user {item['user_id']}")
-            self.reminders = new_reminders
+            self.active_reminders = new_reminders
         except:
             self.logger.info("Couldn't update reminder cache! Is there anything in the database?")
             self.logger.debug(traceback.format_exc())
@@ -117,7 +117,7 @@ class reminders(commands.Cog):
         await self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
 
-    @commands.command(aliases=['reminders', 'reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.", localized_help={'en':'Set a reminder.'})
+    @commands.command(aliases=['reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.", localized_help={'en':'Set a reminder.'})
     async def remind(self, ctx, time:TimeConverter, *, reminder):
         await ctx.send(self.bot.strings["SETTING_REMINDER"])
         #get the date the reminder will fire at
@@ -130,6 +130,27 @@ class reminders(commands.Cog):
         await self.update_reminder_cache()
         await ctx.send(self.bot.strings["REMINDER_SET"].format(humanize.precisedelta(remindertime-currenttime, format='%0.0f'), reminder))
         await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder, uuid)
+
+    @commands.command(hidden=True)
+    async def reminders(self, ctx):
+        #Display a list of reminders.
+        try:
+            active_reminders = self.active_reminders[ctx.author.id]
+            if not active_reminders:
+                return await ctx.send("You don't have any reminders set.")
+        except KeyError:
+            return await ctx.send("You don't have any reminders set.")
+        desc = ""
+        for count, reminder in enumerate(active_reminders):
+            desc += f"**{count+1}:**\n"
+            desc += f"*Created {humanize.naturaldelta(datetime.datetime.now()-reminder['now'])} ago.*\n"
+            try:
+                scheduled = humanize.naturaltime(reminder['reminder_time'],future=True)
+            except OverflowError:
+                scheduled = "wayyyyyyyyyy too far in the future to display"
+            desc += f"*Scheduled for {scheduled}.*\n"
+            desc += f"*Message: `{reminder['reminder_text']}`*\n\n"
+        await ctx.send(embed=discord.Embed(title=f"{ctx.author.name}'s reminders:", description=desc, color=self.bot.config['theme_color']))
 
     async def show_list(self, ctx):
         await self.bot.settings.reminders.wait_ready()
