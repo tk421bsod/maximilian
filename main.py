@@ -9,6 +9,13 @@ import os
 import git 
 import pymysql
 import sys
+import time
+
+print("Hi there.")
+print("You're attempting to run Maximilian 0.3, a very old version that should not be used.")
+print("Please update to the latest version by running 'git pull --all --rebase' and checking out the 'release' branch.")
+print("Startup will continue in 30 seconds.")
+time.sleep(30)
 
 print("starting...")
 #create instance of 'Token' class, decrypt token
