@@ -770,7 +770,7 @@ class music(commands.Cog):
                             for i in range(320, 1, -1):
                                 #check if the output file size (bitrate*seconds) in kilobytes (8 bits = 1 byte, so divide by 8)
                                 #is less than the upload limit (8mb or 8000kb)
-                                if ((i)*s)/8 <= 7500:
+                                if ((i)*s)/8 <= 23500:
                                     self.logger.info(f"Suitable bitrate found. Transcoding to {i} kbps...")
                                     #if so, transcode to that bitrate
                                     inputfile = ffmpeg.input(player.metadata.filename)
