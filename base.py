@@ -16,7 +16,7 @@ import startup
 
 
 class maximilian(commands.Bot):
-    __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "blocklist", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER", "IS_DEBUG")
+    __slots__ = ("deletion_request", "confirmation", "DeletionRequestAlreadyActive", "blocklist", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER", "IS_DEBUG", "language")
 
     def __init__(self, logger, VER):
         #Now that we've checked basic requirements and ran the updater, we can
@@ -179,6 +179,7 @@ class maximilian(commands.Bot):
         self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
         #initialize our translation layer...
         self.strings = await startup.load_strings(self.logger, self.config)
+        self.language = await startup.get_language(self.logger, self.config, False)
         #register our on_message event...
         #TODO: Consider moving this to core
         await self.wrap_event()
