@@ -26,6 +26,7 @@ def preprocess_config(config):
     #convert hex color to int
     config['theme_color'] = int(config['theme_color'], 16)
     config = set_bit(config, "jsk_used", "--enablejsk" in sys.argv)
+    config = set_bit(config, "dependency_change_warning")
     return config
 
 def parse_version(versionstring):
