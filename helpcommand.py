@@ -65,11 +65,15 @@ class HelpCommand(commands.HelpCommand):
             name += command.parent.name
         name += command.name
         try:
-            help = self.context.bot.strings[f"COMMAND_HELP_{name.strip().replace(' ', '_').upper()}"]
-        except KeyError:
-            self.context.bot.logger.debug(f"No localized help string found for command {name.strip().replace(' ', '_').upper()} in the current language. Falling back to provided help string.")
-            if command.help:
-                help = command.help
+            help = command.localized_help[self.context.bot.language]
+        except (AttributeError, KeyError):
+            self.context.bot.logger.debug(f"No help string found for command {name.strip().replace(' ', '_').upper()} in the command's localized_help. Searching in bot.strings.")
+            try:
+                help = self.context.bot.strings[f"COMMAND_HELP_{name.strip().replace(' ', '_').upper()}"]
+            except KeyError:
+                self.context.bot.logger.debug(f"No help string found for command {name.strip().replace(' ', '_').upper()} in bot.strings. Falling back to provided help string.")
+                if command.help:
+                    help = command.help
         parent = ""
         if command.parent:
             parent = command.parent.name + " "
