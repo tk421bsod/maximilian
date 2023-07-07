@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import traceback
 
 
 class HelpCommand(commands.HelpCommand):
@@ -65,8 +66,9 @@ class HelpCommand(commands.HelpCommand):
             name += command.parent.name
         name += command.name
         try:
-            help = command.localized_help[self.context.bot.language]
+            help = command.extras['localized_help'][self.context.bot.language]
         except (AttributeError, KeyError):
+            self.context.bot.logger.debug(traceback.format_exc())
             self.context.bot.logger.debug(f"No help string found for command {name.strip().replace(' ', '_').upper()} in the command's localized_help. Searching in bot.strings.")
             try:
                 help = self.context.bot.strings[f"COMMAND_HELP_{name.strip().replace(' ', '_').upper()}"]
