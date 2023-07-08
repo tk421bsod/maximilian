@@ -131,6 +131,8 @@ class maximilian(commands.Bot):
         await self.load_jishaku()
         print("Loading required modules...")
         await self.load_required()
+        #Get a snapshot of our current extension state.
+        #We'll compare it to our state after load to figure out how many were loaded.
         exts = self.extensions.copy()
         print("Loading other modules...")
         files = [filename for filename in os.listdir("./cogs") if filename.endswith(".py")]
@@ -178,8 +180,8 @@ class maximilian(commands.Bot):
         #now that we're in an async context, we can show version information...
         self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
         #initialize our translation layer...
-        self.strings = await startup.load_strings(self.logger, self.config)
-        self.language = await startup.get_language(self.logger, self.config, False)
+        self.language = await startup.get_language(self.logger, self.config, exit = True)
+        self.strings = await startup.load_strings(self.language, self.logger, self.config)
         #register our on_message event...
         #TODO: Consider moving this to core
         await self.wrap_event()

@@ -11,6 +11,7 @@ from aiomysql import OperationalError
 import common
 from db_utils import async_db as db
 
+#TODO: Think of a better arg name than 'requirement'. what does that even mean??
 def set_bit(config, name, requirement=True):
     """Sets a bit at 'name' if it doesn't exist. Otherwise, keeps the value the same. Used for one-time things, e.g warnings on first startup"""
     try:
@@ -114,9 +115,8 @@ async def get_language(logger, config, exit):
     logger.warning("If you wish to set a default language, add `language:<language>` to config.")
     return 'en'
 
-async def load_strings(logger, config, exit=True):
+async def load_strings(language, logger, config):
     logger.debug('Loading strings from file...')
-    language = await get_language(logger, config, exit)
     logger.info(f"Set language to {language}")
     try:
         with open(f'languages/{language}', 'r') as data:
