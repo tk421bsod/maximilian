@@ -5,7 +5,6 @@ import functools
 import inspect
 import logging
 from random import randint
-import re
 import time
 import traceback
 import typing
@@ -45,25 +44,6 @@ class Metadata():
         self.info = None
         self.url = None
 
-#TimeConverter from cogs/reminders.py.
-class TimeConverter(commands.Converter):
-    __slots__ = ("time_regex", "time_dict")
-    def __init__(self):
-        self.time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
-        self.time_dict = {"h":3600, "s":1, "m":60}
-
-    async def convert(self, ctx, argument):
-        matches = self.time_regex.findall(argument.lower())
-        time = 0
-        for v, k in matches:
-            try:
-                time += self.time_dict[k]*float(v)
-            except KeyError:
-                raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s are valid!")
-            except ValueError:
-                raise commands.BadArgument(f"{v} is not a number!")
-        return time
-
 class Player():
     '''An object that stores the queue and current song for a specific guild.'''
     __slots__ = ("queue", "current_song", "guild", "owner", "lock", "metadata", "checking", "seeking")
@@ -78,6 +58,13 @@ class Player():
         self.checking = False
         self.seeking = False
         logger.info(f"Created player for guild id {self.guild.id}")
+
+class Song(Metadata):
+
+    __slots__ = ("duration", "raw_duration", "filename", "id", "name", "thumbnail", "info", "url")
+
+    def __init__(self):
+        super().__init__()
 
 class music(commands.Cog):
     '''Music commands'''
@@ -551,20 +538,10 @@ class music(commands.Cog):
         try:
             queuelength = len(player.queue)
             if queuelength != 0:
-                m, s = 0, 0
+                seconds = 
                 #get total duration, could probably clean this up a bit
                 for i in player.queue:
-                    s, m = int(s), int(m)
-                    try:
-                        m += int(i[3].split(':')[0])
-                        s += int(i[3].split(':')[1])
-                    except ValueError:
-                        continue
-                    #don't show amounts of seconds greater than 60
-                    m += s//60
-                s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
-                h = f"{'' if int(m)//60 < 1 else f'{int(m)//60}:'}"
-                m = f"{0 if len(str(m%60)) == 1 else ''}{m%60}"
+                    
                 newline = "\n" #evil hack for using newlines in fstrings
                 #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
                 #show user's queue, change how it's displayed depending on how many songs are in the queue
@@ -674,12 +651,13 @@ class music(commands.Cog):
             await ctx.send("I'm not in a voice channel.")
 
     @commands.command()
-    async def seek(self, ctx, to:TimeConverter):
+    async def seek(self, ctx, to):
         #High-level overview for impl:
         #Step 1: convert time.
         #Step 2: Do some pre-flight checks e.g playing audio, not paused, seek time < total duration
         #Step 3: Construct a new audio source with -ss in options.
         #Step 4: Stop audio, play new source
+        to = self.bot.common.TimeConverter(self.bot.strings, ("h", "m", "s")).convert(ctx, to)
         player = await self._get_player(ctx)
         try:
             if not ctx.voice_client:

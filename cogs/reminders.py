@@ -5,7 +5,6 @@ import inspect
 import logging
 import os
 import random
-import re
 import sys
 import traceback
 import uuid as uuid_generator #prevent conflict with the local variable 'uuid'
@@ -13,29 +12,6 @@ import uuid as uuid_generator #prevent conflict with the local variable 'uuid'
 import discord
 import humanize
 from discord.ext import commands
-
-#Thanks to Vexs for help with this.
-class TimeConverter(commands.Converter):
-    __slots__ = ("time_regex", "time_dict")
-    def __init__(self):
-        self.time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
-        self.time_dict = {"h":3600, "s":1, "m":60}
-
-    async def convert(self, ctx, argument):
-        matches = self.time_regex.findall(argument.lower())
-        time = 0
-        if argument == "add":
-            await ctx.send("The 'add' option was removed in 1.1.0. Remove it from the command so the time value gets interpreted correctly.")
-        for v, k in matches:
-            try:
-                time += self.time_dict[k]*float(v)
-            except KeyError:
-                raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s are valid!")
-            except ValueError:
-                raise commands.BadArgument(f"{v} is not a number!")
-        if time == 0:
-            raise commands.BadArgument("Sorry, that amount of time is invalid.")
-        return time
 
 class Deletion:
     __slots__ = ("timestamp")
@@ -109,16 +85,22 @@ class reminders(commands.Cog):
         #waait for as long as needed
         self.logger.info("handling reminder...")
         #make timestamp human readable before sleeping (otherwise it just shows up as 0 seconds)
-        hrtimedelta = humanize.precisedelta(remindertime-reminderstarted, format='%0.0f')
-        await discord.utils.sleep_until(remindertime)
-        #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
-        await self.bot.get_channel(channel_id).send(self.bot.strings["REMINDER"].format(user_id, hrtimedelta, remindertext))
+        try:
+            hrtimedelta = humanize.precisedelta(remindertime-reminderstarted, format='%0.0f')
+            await discord.utils.sleep_until(remindertime)
+            #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
+            #TODO: get_channel RELIES ON CACHE SO THIS MAY NOT BE RELIABLE!!!!!!
+            #Consider writing a method that falls back to an API call if get_channel fails.
+            await self.bot.get_channel(channel_id).send(self.bot.strings["REMINDER"].format(user_id, hrtimedelta, remindertext))
+        except OverflowError:
+            await self.bot.get_channel(channel_id).send(self.bot.strings["REMINDER_OVERFLOW_ERROR"])
         #and delete it from the database
         await self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
 
-    @commands.command(aliases=['reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.", extras={'localized_help':{'en':'Set a reminder.', 'owo':'Set a wemindew :)'}})
-    async def remind(self, ctx, time:TimeConverter, *, reminder):
+    @commands.command(aliases=['reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.", extras={'localized_help':{}})
+    async def remind(self, ctx, time, *, reminder):
+        reminder = self.bot.common.TimeConverter(self.bot.strings, ("w", "d", "h", "m", "s")).convert(ctx, reminder)
         await ctx.send(self.bot.strings["SETTING_REMINDER"])
         #get the date the reminder will fire at
         currenttime = datetime.datetime.now()

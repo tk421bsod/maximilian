@@ -1,4 +1,6 @@
 #common.py: a shared library containing a bunch of useful stuff
+from discord.ext import commands
+import re
 import subprocess
 import logging
 
@@ -12,25 +14,35 @@ class Version:
 
 #TimeConverter originally from cogs/reminders.py
 class TimeConverter(commands.Converter):
-    __slots__ = ("time_regex", "time_dict")
-    def __init__(self):
-        self.time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
-        self.time_dict = {"h":3600, "s":1, "m":60}
+    __slots__ = ("TIME_REGEX", "TIME_DICT", "NAN", "INVALID_UNIT", "ADD_REMOVED", "allowed_units")
+    def __init__(self, strings, allowed_units):
+        self.TIME_REGEX = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhdw])")
+        self.TIME_DICT = {"w":604800, "d":86400, "h":3600, "m":60, "s":1}
+        self.NAN = strings["TIMECONVERTER_NAN"]
+        self.INVALID_UNIT = strings["TIMECONVERTER_INVALID_UNIT"]
+        self.INVALID_TIME = strings["TIMECONVERTER_INVALID_TIME"]
+        self.ADD_REMOVED = strings["TIMECONVERTER_ADD_REMOVED"]
+        self.allowed_units = allowed_units
+        time_dict_copy = self.TIME_DICT.copy() 
+        self.TIME_DICT = {}
+        #Only include allowed units in TIME_DICT.
+        for unit in self.allowed_units:
+            self.TIME_DICT[unit] = time_dict_copy[unit]
 
     async def convert(self, ctx, argument):
-        matches = self.time_regex.findall(argument.lower())
+        matches = self.TIME_REGEX.findall(argument.lower())
         time = 0
         if argument == "add":
-            await ctx.send("The 'add' option was removed in 1.1.0. Remove it from the command so the time value gets interpreted correctly.")
+            await ctx.send(self.ADD_REMOVED)
         for v, k in matches:
             try:
-                time += self.time_dict[k]*float(v)
+                time += self.TIME_DICT[k]*float(v)
             except KeyError:
-                raise commands.BadArgument(f"{k} is an invalid unit of time! only h/m/s are valid!")
+                raise commands.BadArgument(self.INVALID_UNIT.format(k, '/'.join(allowed_units)))
             except ValueError:
-                raise commands.BadArgument(f"{v} is not a number!")
+                raise commands.BadArgument(self.NAN)
         if time == 0:
-            raise commands.BadArgument("Sorry, that amount of time is invalid.")
+            raise commands.BadArgument(self.INVALID_TIME)
         return time
 
 def load_config():
@@ -46,6 +58,9 @@ def load_config():
     return config
 
 def run_command(cmd):
+    #why have this check?
+    #getting a new Logger on every run_command call could add some performance overhead.
+    #(and I don't want to wrap this in a class just so I can add that as an attr)
     if logging.root.level == logging.DEBUG:
         logging.getLogger('common').debug(f"Calling run_command with \"{cmd}\"")
     p = subprocess.run(cmd, shell=True, capture_output=True, encoding="utf-8")
@@ -53,9 +68,10 @@ def run_command(cmd):
         logging.getLogger('common').debug({"output":p.stdout.strip().split("\n"), "returncode":p.returncode})
     return {"output":p.stdout.strip().split("\n"), "returncode":p.returncode}
 
+#TODO: Is this needed? This is just a wrapper for a single run_command call.
 def get_latest_commit():
     try:
-        return run_command("git rev-parse --short HEAD")['output']
+        return run_command("git rev-parse --short HEAD")['output'][0]
     except Exception:
         pass
 
