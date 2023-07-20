@@ -423,7 +423,7 @@ class music(commands.Cog):
     @commands.command(aliases=["p"], help=f"Play something from youtube. You need to provide a valid Youtube URL or a search term for this to work. For example, you can use `<prefix>play never gonna give you up` to search youtube for a song named 'never gonna give you up' and rickroll all of your friends in the voice channel.")
     async def play(self, ctx, *, url=None):
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         if not url:
             await ctx.send("You need to specify a url or something to search for.")
             return
@@ -531,35 +531,45 @@ class music(commands.Cog):
     
     @commands.command(aliases=["q"])
     async def queue(self, ctx):
-        '''View what's in your queue.'''
-        if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
-        player = await self._get_player(ctx)
-        try:
-            queuelength = len(player.queue)
-            if queuelength != 0:
-                seconds = 
-                #get total duration, could probably clean this up a bit
-                for i in player.queue:
-                    
-                newline = "\n" #evil hack for using newlines in fstrings
-                #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
-                #show user's queue, change how it's displayed depending on how many songs are in the queue
+    '''View what's in your queue.'''
+    if not await self.check_enabled(ctx):
+        return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
+    player = await self._get_player(ctx)
+    try:
+        queuelength = len(player.queue)
+        if queuelength != 0:
+            m, s = 0, 0
+            #get total duration, could probably clean this up a bit
+            for i in player.queue:
+                s, m = int(s), int(m)
                 try:
-                    await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue)])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.") 
-                except discord.HTTPException:
-                    await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\nYour queue is too long to display, so I'm only showing the first 10 songs in it.\n {f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue[:10])])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.")
-            else:
-                await ctx.send("You don't have anything in your queue.")
-        except (IndexError, AttributeError):
-            traceback.print_exc()
+                    m += int(i[3].split(':')[0])
+                    s += int(i[3].split(':')[1])
+                except ValueError:
+                    continue
+                #don't show amounts of seconds greater than 60
+                m += s//60
+            s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
+            h = f"{'' if int(m)//60 < 1 else f'{int(m)//60}:'}"
+            m = f"{0 if len(str(m%60)) == 1 else ''}{m%60}"
+            newline = "\n" #evil hack for using newlines in fstrings
+            #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
+            #show user's queue, change how it's displayed depending on how many songs are in the queue
+            try:
+                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue)])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.") 
+            except discord.HTTPException:
+                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\nYour queue is too long to display, so I'm only showing the first 10 songs in it.\n {f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue[:10])])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.")
+        else:
             await ctx.send("You don't have anything in your queue.")
+    except (IndexError, AttributeError):
+        traceback.print_exc()
+        await ctx.send("You don't have anything in your queue.")
 
     @commands.command(aliases=["s"])
     async def skip(self, ctx):
         '''Skip the current song.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         player = await self._get_player(ctx)
         try:
             assert player.queue != []
@@ -580,7 +590,7 @@ class music(commands.Cog):
     async def pause(self, ctx):
         '''Pause the current song.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         player = await self._get_player(ctx)
         try:
             assert ctx.guild.me.voice != None
@@ -600,7 +610,7 @@ class music(commands.Cog):
     async def resume(self, ctx):
         '''Resume the current song.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         player = await self._get_player(ctx)
         try:
             assert ctx.guild.me.voice != None
@@ -622,7 +632,7 @@ class music(commands.Cog):
     async def volume(self, ctx, newvolume : typing.Optional[str]=None):
         '''Set the volume of audio to the provided percentage. The default volume is 50%.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         player = await self._get_player(ctx)
         try:
             ctx.voice_client.source
@@ -661,15 +671,15 @@ class music(commands.Cog):
         player = await self._get_player(ctx)
         try:
             if not ctx.voice_client:
-                return await ctx.send("I'm not in a voice channel.")
+                return await ctx.send(self.bot.strings["NOT_IN_VOICE"])
         except AttributeError:
-            return await ctx.send("I'm not in a voice channel.")
+            return await ctx.send(self.bot.strings["NOT_IN_VOICE"])
         if player.metadata.raw_duration == 0:
-            return await ctx.send("This feature can't be used with streams.")
+            return await ctx.send(self.bot.strings["FEATURE_UNUSABLE_WITH_STREAMS"])
         if to > player.metadata.raw_duration-1:
-            return await ctx.send("I can't skip beyond the end of a song.")
+            return await ctx.send(self.bot.strings["SEEK_INVALID"])
         target = datetime.timedelta(seconds=to)
-        await ctx.send(embed=discord.Embed(title=f"\u23e9 Seeking to `{target}`...", color=self.bot.config['theme_color']))
+        await ctx.send(embed=discord.Embed(title=self.bot.strings["SEEKING"].format(target), color=self.bot.config['theme_color']))
         player.seeking = True
         print(player.current_song)
         source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(player.current_song['filename'], options=f"-ss {target}"), volume=player.current_song['volume'])
@@ -687,7 +697,7 @@ class music(commands.Cog):
     async def clear(self, ctx):
         '''Clear the queue.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         player = await self._get_player(ctx)
         try:
             assert player.queue != []
@@ -702,7 +712,7 @@ class music(commands.Cog):
     async def repeat(self, ctx):
         '''Toggle repeating the current song.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         player = await self._get_player(ctx)
         try: 
             if ctx.voice_client.is_playing() and player.current_song["duration"] != "No duration available (this is a stream)":
@@ -725,7 +735,7 @@ class music(commands.Cog):
     async def nowplaying(self, ctx):
         '''Show the song that's currently playing.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         player = await self._get_player(ctx)
         try:
             if ctx.voice_client.is_playing():
@@ -750,7 +760,7 @@ class music(commands.Cog):
     async def stop(self, ctx):
         '''Stop playing music. Clears your queue if you have anything in it. '''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         if not await self._check_player(ctx):
             return await ctx.send("It doesn't look like I'm in a voice channel.")
         if not ctx.voice_client.is_playing():
@@ -775,7 +785,7 @@ class music(commands.Cog):
     async def remove(self, ctx, item:int):
         '''Remove the specified thing from the queue. If you want to clear your queue, use the `clear` command.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         player = await self._get_player(ctx)
         try:
             del player.queue[item-1]
@@ -791,7 +801,7 @@ class music(commands.Cog):
     async def download(self, ctx, *, url=None):
         '''Very similar to `play`, but sends the mp3 file in chat instead of playing it in a voice channel.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         if not url:
             return await ctx.send(f"Run this command again and specify something you want to search for. For example, running `{await self.bot.get_prefix(ctx.message)}download never gonna give you up` will download and send Never Gonna Give You Up in the channel you sent the command in.")
         player = await self._get_player(ctx)
@@ -839,7 +849,7 @@ class music(commands.Cog):
     async def join(self, ctx):
         '''Make Maximilian join the voice channel you're in.'''
         if not await self.check_enabled(ctx):
-            return await ctx.send("Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.")
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
         player = await self._get_player(ctx)
         try:
             await self._join_voice(ctx, ctx.author.voice.channel)
