@@ -531,39 +531,39 @@ class music(commands.Cog):
     
     @commands.command(aliases=["q"])
     async def queue(self, ctx):
-    '''View what's in your queue.'''
-    if not await self.check_enabled(ctx):
-        return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
-    player = await self._get_player(ctx)
-    try:
-        queuelength = len(player.queue)
-        if queuelength != 0:
-            m, s = 0, 0
-            #get total duration, could probably clean this up a bit
-            for i in player.queue:
-                s, m = int(s), int(m)
+        '''View what's in your queue.'''
+        if not await self.check_enabled(ctx):
+            return await ctx.send(self.bot.strings["MUSIC_DISABLED"])
+        player = await self._get_player(ctx)
+        try:
+            queuelength = len(player.queue)
+            if queuelength != 0:
+                m, s = 0, 0
+                #get total duration, could probably clean this up a bit
+                for i in player.queue:
+                    s, m = int(s), int(m)
+                    try:
+                        m += int(i[3].split(':')[0])
+                        s += int(i[3].split(':')[1])
+                    except ValueError:
+                        continue
+                    #don't show amounts of seconds greater than 60
+                    m += s//60
+                s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
+                h = f"{'' if int(m)//60 < 1 else f'{int(m)//60}:'}"
+                m = f"{0 if len(str(m%60)) == 1 else ''}{m%60}"
+                newline = "\n" #evil hack for using newlines in fstrings
+                #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
+                #show user's queue, change how it's displayed depending on how many songs are in the queue
                 try:
-                    m += int(i[3].split(':')[0])
-                    s += int(i[3].split(':')[1])
-                except ValueError:
-                    continue
-                #don't show amounts of seconds greater than 60
-                m += s//60
-            s = f"{0 if len(list(str(s))) == 1 else ''}{s%60}"
-            h = f"{'' if int(m)//60 < 1 else f'{int(m)//60}:'}"
-            m = f"{0 if len(str(m%60)) == 1 else ''}{m%60}"
-            newline = "\n" #evil hack for using newlines in fstrings
-            #the following statement is really long and hard to read, not sure whether to split into multiple lines or not
-            #show user's queue, change how it's displayed depending on how many songs are in the queue
-            try:
-                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue)])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.") 
-            except discord.HTTPException:
-                await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\nYour queue is too long to display, so I'm only showing the first 10 songs in it.\n {f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue[:10])])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.")
-        else:
+                    await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\n{f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue)])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.") 
+                except discord.HTTPException:
+                    await ctx.send(f"You have {queuelength} {'song in your queue: ' if queuelength == 1 else 'songs in your queue. '}\nYour queue is too long to display, so I'm only showing the first 10 songs in it.\n {f'Your queue: {newline}' if queuelength != 1 else ''}{f'{newline}'.join([f'{count+1}: `{i[1]}`(<{i[2]}>) Duration: {i[3]}' for count, i in enumerate(player.queue[:10])])}\n{f'Total duration: {h}{m}:{s}' if queuelength != 1 and f'{h}{m}:{s}' != '0:0' else ''}\nUse `{await self.bot.get_prefix(ctx.message)}remove <song's position>` to remove a song from your queue. For example, `{await self.bot.get_prefix(ctx.message)}remove 1` removes the first item in the queue.\nYou can add items to your queue by using the `play` command again while a song is playing. If you want to clear your queue, use the `clear` command.")
+            else:
+                await ctx.send("You don't have anything in your queue.")
+        except (IndexError, AttributeError):
+            traceback.print_exc()
             await ctx.send("You don't have anything in your queue.")
-    except (IndexError, AttributeError):
-        traceback.print_exc()
-        await ctx.send("You don't have anything in your queue.")
 
     @commands.command(aliases=["s"])
     async def skip(self, ctx):
