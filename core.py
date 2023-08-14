@@ -189,9 +189,9 @@ class core(commands.Cog):
         for count, page in enumerate(paginator.pages):
             title = to_send.title
             if len(paginator.pages) > 1:
-                title += f" (page {count+1})"                    
+                title += f" (page {count+1})"
             #TODO: This can break some embed layouts as we may be converting from separate fields to a description.
-            await target.send(embed=discord.Embed(title=title, description=page))
+            await target.send(embed=discord.Embed(title=title, description=page, color=self.bot.config['theme_color']))
 
     #TODO: View-based paginator
     async def send_paginated(self, to_send, target, prefix="```", suffix="```"):
