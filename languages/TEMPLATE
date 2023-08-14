@@ -85,7 +85,7 @@ SETTING_NOT_READY:Give me a second to prepare...
 JOINING:Joining your voice channel...
 MUSIC_DISABLED:Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.
 NO_URL:You need to specify a url or something to search for.
-PERFORMANCE_MODE_ENABLED:\u26a0 Performance mode is enabled. Songs will load faster, but you may experience reduced audio quality.\nTo disable this, run `{}config music performance`.
+PERFORMANCE_MODE_ENABLED:\u26a0\ufe0f Performance mode is enabled. Songs will load faster, but you may experience reduced audio quality.\nTo disable this, run `{}config music performance`.
 PERFORMANCE_MODE_REMINDER:*Songs taking forever to start playing?*\nTry the new performance mode by using `{await self.bot.get_prefix(ctx.message)}config music performance`.\nThis may reduce audio quality.\n
 ALREADY_CONNECTED:I'm already in your voice channel, so I won't reconnect.
 QUEUE_ADD:Adding to your queue...
@@ -105,8 +105,8 @@ NOW_PLAYING_TITLE:Now playing
 VIDEO_URL:Video URL
 DURATION:Duration
 NOW_PLAYING_FOOTER:You have {} song(s) in your queue. \nUse the play command to add songs to it or the `queue` command to view it.
-WARNING_REPEATING:\u26a0 I'm repeating a song right now. I'll still add this song to your queue, but I won't play it until you run `{}loop` again (and wait for the current song to finish) or skip the current song using `{}skip`.
-WARNING_STREAM:\u26a0 I'm playing a stream right now. I'll still add this song to your queue, but I won't play it until either you run `{}skip` or the stream ends.
+WARNING_REPEATING:\u26a0\ufe0f I'm repeating a song right now. I'll still add this song to your queue, but I won't play it until you run `{}loop` again (and wait for the current song to finish) or skip the current song using `{}skip`.
+WARNING_STREAM:\u26a0\ufe0f I'm playing a stream right now. I'll still add this song to your queue, but I won't play it until either you run `{}skip` or the stream ends.
 SONG_ADDED:Added a song to your queue!
 SONG_NAME:Song Name
 USER_NOT_IN_VOICE:You aren't in a voice channel. Join one, then run this command again.
