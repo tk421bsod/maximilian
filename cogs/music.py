@@ -667,7 +667,7 @@ class music(commands.Cog):
         #Step 2: Do some pre-flight checks e.g playing audio, not paused, seek time < total duration
         #Step 3: Construct a new audio source with -ss in options.
         #Step 4: Stop audio, play new source
-        to = self.bot.common.TimeConverter(self.bot.strings, ("h", "m", "s")).convert(ctx, to)
+        to = await self.bot.common.TimeConverter(self.bot.strings, ("h", "m", "s")).convert(ctx, to)
         player = await self._get_player(ctx)
         try:
             if not ctx.voice_client:
