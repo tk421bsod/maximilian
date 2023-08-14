@@ -243,6 +243,66 @@ class core(commands.Cog):
 
     @commands.is_owner()
     @utils.command(hidden=True)
+    async def loaded(self, ctx):
+        """Displays a list of all loaded modules."""
+        current = [f"{ext}" for ext in list(self.bot.extensions.keys())]
+        desc = "\n".join(current)
+        embed = discord.Embed(title="Modules loaded:", description=desc, color=self.bot.config['theme_color'])
+        await self.bot.core.send_paginated(embed, ctx)
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
+    async def load(self, ctx, *targets):
+        """Attempts to load all modules specified in `targets`. `targets` must be a list of one or more module names.
+
+        Key:
+            \u2705 - Module loaded successfully.
+            \u26a0\ufe0f - Module was already loaded.
+            \u274e - Module failed to load. See tracebacks for more details.
+        """
+        await ctx.typing()
+        ret = []
+        tracebacks = []
+        if not targets:
+            return await ctx.send("You must provide a list of modules to load.")
+        for ext in targets:
+            try:
+                await self.bot.load_extension(ext)
+                ret.append(f"\u2705 {ext}")
+            except commands.ExtensionAlreadyLoaded:
+                ret.append(f"\u26a0\ufe0f {ext}")
+            except:
+                ret.append(f"\u274e {ext}")
+                tracebacks.append(traceback.format_exc())
+        ret.append(f"Use `{await self.bot.get_prefix(ctx.message)}help utils load` for an explanation of these symbols.")
+        await ctx.send("\n".join(ret))
+        if tracebacks:
+            await self.bot.core.send_paginated("\n".join(tracebacks), ctx, prefix="```py")
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
+    async def unload(self, ctx, *targets):
+        """Attempts to unload all modules specified in `targets`. `targets` must be a list of one or more module names.
+
+        Key:
+            \u2705 - Module was unloaded successfully.
+            \u26a0\ufe0f - Module was not loaded.
+        """
+        await ctx.typing()
+        ret = []
+        if not targets:
+            return await ctx.send("You must provide a list of modules to unload.")
+        for ext in targets:
+            try:
+                await self.bot.unload_extension(ext)
+                ret.append(f"\u2705 {ext}")
+            except commands.ExtensionNotLoaded:
+                ret.append(f"\u26a0\ufe0f {ext}")
+        ret.append(f"Use `{await self.bot.get_prefix(ctx.message)}help utils unload` for an explanation of these symbols.")
+        await ctx.send("\n".join(ret))
+
+    @commands.is_owner()
+    @utils.command(hidden=True)
     async def reload(self, ctx, *targetextensions):
         await ctx.typing()
         try:
