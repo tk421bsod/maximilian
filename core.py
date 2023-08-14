@@ -355,7 +355,7 @@ class core(commands.Cog):
 
     async def prepare(self, message):
         if message.author != self.bot.user:
-            if message.author.id in self.bot.blocklist:
+            if message.author.id in self.bot.blocklist or message.author.bot:
                 return False
             if message.guild is not None:
                 if self.bot.responses:
