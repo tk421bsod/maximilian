@@ -52,8 +52,9 @@ def load_config():
     #import collections; config = collections.defaultdict(lambda: None)
     with open('config', 'r') as configfile:
         for i in configfile.readlines():
-            if not i.strip().startswith('#') and i.strip():
-                i = i.strip().split(':',1)
+            i = i.strip()
+            if not i.startswith('#') and i:
+                i = i.split(':',1)
                 config[i[0]] = i[1]
     return config
 
