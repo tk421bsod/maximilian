@@ -173,6 +173,11 @@ class core(commands.Cog):
         if load:
             asyncio.create_task(self.update_blocklist())
 
+    async def getch_channel(self, channel_id):
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            return await self.bot.fetch_channel(channel_id)
+
     async def send_paginated_embed(self, paginator, to_send, target):
         if len(to_send.fields) < 2:
             self.logger.debug("Sourcing paginated embed content from description")

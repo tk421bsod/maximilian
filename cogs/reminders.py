@@ -86,14 +86,17 @@ class reminders(commands.Cog):
         self.logger.info("handling reminder...")
         #make timestamp human readable before sleeping (otherwise it just shows up as 0 seconds)
         try:
+            channel = await self.bot.core.getch_channel(channel_id)
             hrtimedelta = humanize.precisedelta(remindertime-reminderstarted, format='%0.0f')
             await discord.utils.sleep_until(remindertime)
             #then send the reminder, with the time in a more human readable form than a bunch of seconds. (i.e '4 hours ago' instead of '14400 seconds ago')
             #TODO: get_channel RELIES ON CACHE SO THIS MAY NOT BE RELIABLE!!!!!!
             #Consider writing a method that falls back to an API call if get_channel fails.
-            await self.bot.get_channel(channel_id).send(self.bot.strings["REMINDER"].format(user_id, hrtimedelta, remindertext))
+            await channel.send(self.bot.strings["REMINDER"].format(user_id, hrtimedelta, remindertext))
         except OverflowError:
-            await self.bot.get_channel(channel_id).send(self.bot.strings["REMINDER_OVERFLOW_ERROR"])
+            await channel.send(self.bot.strings["REMINDER_OVERFLOW_ERROR"])
+        except:
+            pass
         #and delete it from the database
         await self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
