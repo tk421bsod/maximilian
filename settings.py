@@ -149,6 +149,7 @@ class Category():
         Attempts to add a setting to the database.
         """
         target_guilds = []
+        #Compare stored states with actual state.
         if self.data:
             target_guilds = [i['guild_id'] for i in self.data if i['setting'] == name]
         for guild in total_guilds:
@@ -183,7 +184,7 @@ class Category():
             return
         else:
             self.logger.info("Validating setting states...")
-            #step 2: ensure each setting has an entry
+            #step 2: ensure each setting has an entry in the database for each guild
             for name in list(self.settingdescmapping.keys()):
                 if self.get_setting(name):
                     delattr(self, name.replace(" ", "_"))
@@ -251,12 +252,12 @@ class Category():
             if conflict.enabled(ctx.guild.id):
                 await self.update_setting(ctx, conflict)
                 resolved = setting.unusablewith
-        length = len(resolved)
-        if length == 1:
+        length = len(resolved) if isinstance(resolved,list) else 1
+        if length == 1 and isinstance(resolved,list):
             resolved = resolved[0]
         if not resolved:
             return ""
-        resolved_string = await self._prepare_conflict_string(resolved)
+        resolved = await self._prepare_conflict_string(resolved)
         if length == 1:
             return self.bot.strings["SETTING_AUTOMATICALLY_DISABLED"].format(resolved)
         return self.bot.strings["SETTINGS_AUTOMATICALLY_DISABLED"].format(resolved)
@@ -378,9 +379,13 @@ class settings():
                 Setting 'b' doesn't require any permissions.
         """
         self.logger.info(f"Registering category '{category}`...")
-        if getattr(self, category, None) != None: #a category instance already exists??
+        #Does a Category with this name already exist??
+        if getattr(self, category, None) != None:
+            self.logger.warn("----")
             self.logger.warn(f"add_category was called twice for category '{category}'!!")
             self.logger.warn("Don't try to update a category after creation. Doing so may break stuff.")
+            self.logger.warn("Seeing this message after reloading a module? Add a check for bot.initial_load in __init__.")
+            self.logger.warn("----")
             return
         try:
             Category(self, category, settingdescmapping, unusablewithmapping, permissionmapping)
