@@ -40,7 +40,12 @@ class Setting():
         self.states = states
         self.description = category.settingdescmapping[name]
         self.name = name
-        self.unusablewith = category.unusablewithmapping[name]
+        try:
+            self.unusablewith = category.unusablewithmapping[name]
+        except KeyError:
+            category.logger.warn(f"Setting '{self.name}' doesn't have an entry in the parent Category's 'unusablewithmapping'!")
+            category.logger.warn("Defaulting to None.")
+            self.unusablewith = None
         self.category = category
         self.permission = permission
         #add this setting as an attr of category
@@ -194,12 +199,29 @@ class Category():
         self.logger.debug("Populating setting states...")
         for index, setting in enumerate(self.data):
             self.logger.debug(f"Processing entry {setting}")
-            if self.permissionmapping:
-                permission = self.permissionmapping[setting['setting']]
-            else:
+            try:
+                if self.permissionmapping:
+                    permission = self.permissionmapping[setting['setting']]
+                else:
+                    permission = None
+            except KeyError:
+                self.logger.info(f"Setting '{setting['setting']}' was not included in permissionmapping for category '{self.name}'! Assuming a permission value of None.")
                 permission = None
+            try:
+                self.settingdescmapping[setting['setting']]
+            except KeyError:
+                self.logger.warn(f"Setting '{setting['setting']}' was removed from its parent Category but is still in the database.")
+                self.logger.warn(f"Removing it.")
+                try:
+                    await self.bot.db.exec("delete from config where category=%s and setting=%s", (self.name, setting['setting']))
+                except:
+                    self.logger.warn("Setting was already removed from the database.")
+                else:
+                    self.logger.warn("Removed that setting.")
+                continue
             states[setting['guild_id']] = self.get_initial_state(setting)
             #if we've finished populating list of states for a setting...
+            #(we are on the last element of 'data' or the next element isn't for the same setting)
             if index+1 == len(self.data) or self.data[index+1]['setting'] != setting['setting']:
                 #create new Setting, it automatically sets itself as an attr of this category
                 Setting(self, setting['setting'], states, permission)
