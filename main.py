@@ -7,9 +7,12 @@ VER = "1.2.0-prerelease"
 #Are we using or going to use debug logging?
 IS_DEBUG = bool([i for i in sys.argv if i in ['-v', '--verbose', '--debug']])
 
-#Are we being imported as a module?
+#Python minor version. Used for some compatibility checks.
+PYTHON_MINOR_VERSION = sys.version_info.minor
+
+#Are we being imported?
 if __name__ != "__main__":
-    print("It looks like you're trying to import main.py as a module.")
+    print("It looks like you're trying to import main.py.")
     print("Please don't do that. Some code here relies on being ran directly through a command such as python3 main.py.")
     print("Need to access some Maximilian API? Just import the right file. Read HOSTING.md for an overview.")
     print("If you have a legitimate use case for this, I'd like to hear about it -- send me a DM at tk___421 on Discord.")
@@ -168,6 +171,7 @@ try:
     #initialize stuff needed before we enter an async context
     bot = maximilian(outer_logger, VER)
     bot.IS_DEBUG = IS_DEBUG
+    bot.PYTHON_MINOR_VERSION = PYTHON_MINOR_VERSION
     #hand things over to base.maximilian.run
     asyncio.run(bot.run())
 except KeyboardInterrupt:
