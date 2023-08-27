@@ -19,7 +19,7 @@ import startup
 def get_prefix(bot, message):
     if not getattr(bot, "prefixes", None):
         try:
-            bot.loop.create_task(bot.prefixes.update_prefix_cache())
+            asyncio.create_task(bot.prefixes.update_prefix_cache())
         #fall back if something goes wrong
         except:
             bot.logger.error("Something went wrong while updating the prefix cache. Falling back to '!'.")
