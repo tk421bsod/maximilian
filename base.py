@@ -136,8 +136,11 @@ class maximilian(commands.Bot):
         exts = self.extensions.copy()
         print("Loading other modules...")
         files = [filename for filename in os.listdir("./cogs") if filename.endswith(".py")]
-        for each in files:
-            await self.load(each)
+        if "--experimental-concurrency" in sys.argv:
+            await common.run_now(*[self.load(file) for file in files])
+        else:
+            for each in files:
+                await self.load(each)
         total = len([f"{i}" for i in list(self.extensions.keys()) if i not in list(exts.keys())])
         diff = (len(files))-total
         self.logger.info(f"Loaded {total} modules successfully. {diff} module{'s' if diff != 1 else ''} not loaded.")
@@ -177,6 +180,8 @@ class maximilian(commands.Bot):
 
     async def run(self):
         self.logger.debug("Async context entered.")
+        if "--experimental-concurrency" in sys.argv:
+            self.logger.warning("Experimental concurrency features enabled.")
         #now that we're in an async context, we can show version information...
         self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
         #initialize our translation layer...
