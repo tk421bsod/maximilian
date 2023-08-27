@@ -20,14 +20,14 @@ if __name__ != "__main__":
     quit()
 
 #Are we using an out-of-date Python?
-if sys.version_info.major == 3 and sys.version_info.minor < 8:
+if sys.version_info.major == 3 and PYTHON_MINOR_VERSION < 8:
     print("Hi there. It looks like you're trying to run maximilian with an older version of Python 3.")
     print("Maximilian cannot run on Python versions older than 3.8.")
     print("You'll need to upgrade Python to continue.")
     quit()
 
 #Are we using a very new Python?
-if sys.version_info.minor > 11:
+if PYTHON_MINOR_VERSION > 11:
     print("Hi there. It looks like your Python installation is newer than version 3.11.")
     print("You may experience issues as Maximilian has not yet been tested on newer versions of Python.\n")
 
