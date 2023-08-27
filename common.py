@@ -41,7 +41,7 @@ class TimeConverter(commands.Converter):
             try:
                 time += self.TIME_DICT[k]*float(v)
             except KeyError:
-                raise commands.BadArgument(self.INVALID_UNIT.format(k, '/'.join(allowed_units)))
+                raise commands.BadArgument(self.INVALID_UNIT.format(k, '/'.join(self.allowed_units)))
             except ValueError:
                 raise commands.BadArgument(self.NAN)
         if time == 0:
