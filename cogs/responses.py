@@ -10,7 +10,7 @@ class responses(discord.ext.commands.Cog, name='Custom Commands'):
         self.bot = bot
         self.bot.responses = []
         if not teardown:
-            self.bot.loop.create_task(self.fill_cache())
+            asyncio.create_task(self.fill_cache())
 
     async def fill_cache(self):
         '''Builds cache of custom commands'''
