@@ -79,9 +79,9 @@ class maximilian(commands.Bot):
         #actually load the extension
         try:
             await self.load_extension(f"cogs.{cleanname}")
-            self.logger.debug(f"Loaded module cogs.{cleanname}!")
+            self.logger.info(f"Loaded module cogs.{cleanname}!")
         except commands.ExtensionAlreadyLoaded:
-            self.logger.debug(f"{cleanname} is already loaded, skipping")
+            self.logger.info(f"{cleanname} is already loaded, skipping")
         except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
             if not hasattr(error, 'original'):
                 #only NoEntryPointError doesn't have original
@@ -183,7 +183,7 @@ class maximilian(commands.Bot):
         if "--experimental-concurrency" in sys.argv:
             self.logger.warning("Experimental concurrency features enabled.")
         #now that we're in an async context, we can show version information...
-        self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
+        self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{self.PYTHON_MINOR_VERSION} and discord.py {discord.__version__}) ")
         #initialize our translation layer...
         self.language = await startup.get_language(self.logger, self.config, exit = True)
         self.strings = await startup.load_strings(self.language, self.logger, self.config)
