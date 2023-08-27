@@ -80,6 +80,8 @@ async def initialize_db(bot, config):
     except OperationalError:
         bot.logger.error("Couldn't connect to database. Trying to start it...")
         os.system("bash setup.sh start")
+        bot.logger.error("Waiting 5 seconds for database to settle...")
+        time.sleep(5)
         try:
             await inst.connect()
         except OperationalError:
