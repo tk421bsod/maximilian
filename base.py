@@ -16,7 +16,7 @@ import startup
 
 
 class maximilian(commands.Bot):
-    __slots__ = ("PYTHON_MINOR_VERSION", "deletion_request", "confirmation", "DeletionRequestAlreadyActive", "blocklist", "commit", "logger", "noload", "core", "config", "common", "database", "strings", "prefix", "responses", "start_time", "settings", "db", "VER", "IS_DEBUG", "language")
+    __slots__ = ("PYTHON_MINOR_VERSION", "VER", "IS_DEBUG", "blocklist", "config", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings")
 
     def __init__(self, logger, VER):
         #Now that we've checked basic requirements and ran the updater, we can
