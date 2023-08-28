@@ -137,11 +137,16 @@ class maximilian(commands.Bot):
         print("Loading other modules...")
         files = [filename for filename in os.listdir("./cogs") if filename.endswith(".py")]
         if "--experimental-concurrency" in sys.argv:
-            await common.run_now(*[self.load(file) for file in files])
+            #Construct a list of coros to run.
+            to_run = []
+            for file in files:
+                to_run.append(self.load(file))
+            #Then run them.
+            await common.run_now(*to_run)
         else:
             for each in files:
                 await self.load(each)
-        total = len([f"{i}" for i in list(self.extensions.keys()) if i not in list(exts.keys())])
+        total = len([i for i in list(self.extensions.keys()) if i not in list(exts.keys())])
         diff = (len(files))-total
         self.logger.info(f"Loaded {total} modules successfully. {diff} module{'s' if diff != 1 else ''} not loaded.")
         print("Done loading modules. Finishing startup...")
