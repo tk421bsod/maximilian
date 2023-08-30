@@ -20,6 +20,12 @@ def list_in_str(list, string):
             return True
     return False
 
+def print_git_output(output):
+    print("\n-----")
+    print("Git output:")
+    print("\n".join(output))
+    print("-----\n")
+
 def update():
     '''
     Checks for updates if needed. Applies update if one is found.
@@ -101,12 +107,16 @@ def update():
             print("\nApplying update...")
             time.sleep(0.3)
             pull = common.run_command("git pull")
-            output = "\n".join(pull['output'])
-            print("\nGit output:")
-            print(output)
+            print_git_output(pull['output'])
             if pull['returncode']:
                 print("Something went wrong while applying the update. Take a look at the above output for details.")
                 sys.exit(124)
+            print("\nUpdating submodules...")
+            submodule_update = common.run_command("git submodule update --remote")
+            print_git_output(submodule_update['output'])
+            if submodule_update['returncode']:
+                print("Something went wrong while updating submodules. The above output may contain more details.")
+                print("You may want to go into the directory for each submodule and pull changes from the remote.")
             print(f"\nUpdate applied. \nView the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.")
             time.sleep(1)
             if list_in_str(['main.py', 'common.py', 'db.py', 'settings.py', 'base.py', 'startup.py', 'core.py'], output):
