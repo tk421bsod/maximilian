@@ -38,13 +38,19 @@ class maximilian(commands.Bot):
         startup.check_version()
         #get our Intents...
         intents = self.get_intents()
+        #Is this a prerelease version? Add the latest commit to the status.
+        if "prerelease" in VER:
+            self.commit = common.get_latest_commit()[0]
         if "--alt" in sys.argv:
             token = input("Enter a token to use: \n").strip()
             logger.debug("Getting latest commit hash...")
             self.commit = common.get_latest_commit()[0]
             logger.debug("Done getting latest commit hash.")
         else:
-            self.commit = ""
+            try:
+                self.commit
+            except AttributeError:
+                self.commit = ""
         #set up some attributes we'll need soon...
         logger.debug("Setting up some stuff")
         super().__init__(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
