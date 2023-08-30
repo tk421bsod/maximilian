@@ -40,11 +40,11 @@ class maximilian(commands.Bot):
         intents = self.get_intents()
         #Is this a prerelease version? Add the latest commit to the status.
         if "prerelease" in VER:
-            self.commit = common.get_latest_commit()[0]
+            self.commit = common.get_latest_commit()
         if "--alt" in sys.argv:
             token = input("Enter a token to use: \n").strip()
             logger.debug("Getting latest commit hash...")
-            self.commit = common.get_latest_commit()[0]
+            self.commit = common.get_latest_commit()
             logger.debug("Done getting latest commit hash.")
         else:
             try:
