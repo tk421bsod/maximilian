@@ -111,15 +111,15 @@ def update():
             if pull['returncode']:
                 print("Something went wrong while applying the update. Take a look at the above output for details.")
                 sys.exit(124)
-            print("\nUpdating submodules...")
+            print("Updating submodules...")
             submodule_update = common.run_command("git submodule update --remote")
             print_git_output(submodule_update['output'])
             if submodule_update['returncode']:
                 print("Something went wrong while updating submodules. The above output may contain more details.")
                 print("You may want to go into the directory for each submodule and pull changes from the remote.")
-            print(f"\nUpdate applied. \nView the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.")
+            print(f"Update applied. \nView the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.")
             time.sleep(1)
-            if list_in_str(['main.py', 'common.py', 'db.py', 'settings.py', 'base.py', 'startup.py', 'core.py'], output):
+            if list_in_str(['main.py', 'common.py', 'db.py', 'settings.py', 'base.py', 'startup.py', 'core.py'], "\n".join(pull['output'])):
                 print("This update changed some important files. Run main.py again.")
                 sys.exit(111)
         else:
