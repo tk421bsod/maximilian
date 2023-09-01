@@ -208,6 +208,11 @@ class maximilian(commands.Bot):
         #If we're actually logging in, schedule some tasks for after login starts...
         #TODO: Fix RuntimeErrors if exiting before Bot.start runs, e.g "Exception ignored in: <function Connection.__del__ at 0x7ddc7b348220>"
         if not "--no-login" in sys.argv:
+            #Remove sensitive data from 'config' and 'db'.
+            self.logger.debug("Removing sensitive data from global objects.")
+            token = self.config['token']
+            del self.config['token'], self.config['dbp'], self.db.p, self.db.ip
+            self.logger.debug("Done.")
             #TODO: Eliminate potential for race conditions here:
             #Either load_extensions_async or init_general_settings could run before Bot.start runs,
             #which can cause a RuntimeError if an extension's cache fill method starts early.
@@ -218,7 +223,7 @@ class maximilian(commands.Bot):
             asyncio.create_task(self.init_general_settings()) 
             self.logger.debug("init_general_settings has been scheduled.")
             print("Logging in...")
-            await self.start(self.config["token"])
+            await self.start(token)
         else:
             self.logger.warn("Invoked with --nologin, exiting and not calling start()")
             return
