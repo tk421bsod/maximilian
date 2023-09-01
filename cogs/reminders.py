@@ -101,8 +101,9 @@ class reminders(commands.Cog):
         await self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
 
-    @commands.command(aliases=['reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.", extras={'localized_help':{}})
+    @commands.command(aliases=['reminder'], extras={'localized_help':{}})
     async def remind(self, ctx, time, *, reminder):
+        """Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted."""
         time = await self.bot.common.TimeConverter(self.bot.strings, ("w", "d", "h", "m", "s")).convert(ctx, time)
         await ctx.send(self.bot.strings["SETTING_REMINDER"])
         #get the date the reminder will fire at
