@@ -240,3 +240,5 @@ COMMANDS_LIST_TITLE:Custom Commands List
 COG_HELP_TITLE:{0.qualified_name} Commands
 COMMANDS_LIST:A list of custom commands for this server. These don't have help entries. \n
 ENDING_NOTE:Use {0}{1} [command] for more info on a command.
+COMMAND_USES_TIMECONVERTER:\nThis command accepts an amount of time through its `time` parameter.
+TIMECONVERTER_ALLOWED_UNITS:\nYou can use the following units of time:{}
