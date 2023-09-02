@@ -660,14 +660,15 @@ class music(commands.Cog):
                 return await ctx.send("I can't change the volume if I'm not playing something.")
             await ctx.send("I'm not in a voice channel.")
 
-    @commands.command()
-    async def seek(self, ctx, to):
+    @commands.command(extras={'uses_timeconverter':True, 'timeconverter_allowed_units':("h", "m", "s")})
+    async def seek(self, ctx, time):
+        """Attempt to seek to `time` in the current song. `time` must be a relative time."""
         #High-level overview for impl:
         #Step 1: convert time.
         #Step 2: Do some pre-flight checks e.g playing audio, not paused, seek time < total duration
         #Step 3: Construct a new audio source with -ss in options.
         #Step 4: Stop audio, play new source
-        to = await self.bot.common.TimeConverter(self.bot.strings, ("h", "m", "s")).convert(ctx, to)
+        time = await self.bot.common.TimeConverter(self.bot.strings, ("h", "m", "s")).convert(ctx, time)
         player = await self._get_player(ctx)
         try:
             if not ctx.voice_client:
@@ -676,9 +677,9 @@ class music(commands.Cog):
             return await ctx.send(self.bot.strings["NOT_IN_VOICE"])
         if player.metadata.raw_duration == 0:
             return await ctx.send(self.bot.strings["FEATURE_UNUSABLE_WITH_STREAMS"])
-        if to > player.metadata.raw_duration-1:
+        if time > player.metadata.raw_duration-1:
             return await ctx.send(self.bot.strings["SEEK_INVALID"])
-        target = datetime.timedelta(seconds=to)
+        target = datetime.timedelta(seconds=time)
         await ctx.send(embed=discord.Embed(title=self.bot.strings["SEEKING"].format(target), color=self.bot.config['theme_color']))
         player.seeking = True
         print(player.current_song)

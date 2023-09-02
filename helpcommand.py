@@ -76,6 +76,17 @@ class HelpCommand(commands.HelpCommand):
                 self.context.bot.logger.debug(f"No help string found for command {name.strip().replace(' ', '_').upper()} in bot.strings. Falling back to provided help string.")
                 if command.help:
                     help = command.help
+        try:
+            command.extras
+            if self.context.bot.common.get_value(command.extras, "uses_timeconverter"):
+                help += self.context.bot.strings["COMMAND_USES_TIMECONVERTER"]
+                UNITS = {"w":"[w]eeks", "d":"[d]ays", "h":"[h]ours", "m":"[m]inutes", "s":"[s]econds"}
+                unit_string = ""
+                for unit in self.context.bot.common.get_value(command.extras, "timeconverter_allowed_units", ("d","h","m","s")):
+                    unit_string += f"\n`{unit}` : `{UNITS[unit]}`"
+                help += self.context.bot.strings["TIMECONVERTER_ALLOWED_UNITS"].format(unit_string)
+        except AttributeError:
+            pass
         parent = ""
         if command.parent:
             parent = command.parent.name + " "
