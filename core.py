@@ -152,6 +152,15 @@ class deletion_request:
         await responses.fill_cache()
         await self.bot.prefixes.update_prefix_cache()
 
+class _ThemeColorEmbed(discord.Embed):
+    def __init__(self, theme_color, *args, **kwargs):
+        if common.get_value(kwargs, "color"):
+            color = kwargs.pop(color)
+        else:
+            color = theme_color
+        kwargs['color'] = color
+        super.__init__(*args, **kwargs)
+
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
     __slots__ = ("bot", "waiting", "get_named_logger", "reload_enabled")
@@ -171,15 +180,6 @@ class core(commands.Cog):
         self.reload_enabled = True
         if load:
             asyncio.create_task(self.update_blocklist())
-
-    class _ThemeColorEmbed(discord.Embed):
-        def __init__(self, theme_color, *args, **kwargs):
-            if common.get_value(kwargs, "color"):
-                color = kwargs.pop(color)
-            else:
-                color = theme_color
-            kwargs['color'] = color
-            super.__init__(*args, **kwargs)
 
     def ThemeColorEmbed(self, *args, **kwargs):
         #i hate this
