@@ -172,14 +172,18 @@ class core(commands.Cog):
         if load:
             asyncio.create_task(self.update_blocklist())
 
-    class ThemeColorEmbed(discord.Embed):
-        def __init__(self, *args, **kwargs):
+    class _ThemeColorEmbed(discord.Embed):
+        def __init__(self, theme_color, *args, **kwargs):
             if common.get_value(kwargs, "color"):
                 color = kwargs.pop(color)
             else:
-                color = self.bot.config['theme_color']
+                color = theme_color
             kwargs['color'] = color
             super.__init__(*args, **kwargs)
+
+    def ThemeColorEmbed(self, *args, **kwargs):
+        #i hate this
+        return _ThemeColorEmbed(self.bot.config['theme_color'], *args, **kwargs)
 
     async def getch_channel(self, channel_id):
         channel = self.bot.get_channel(channel_id)
