@@ -159,7 +159,7 @@ class _ThemeColorEmbed(discord.Embed):
         else:
             color = theme_color
         kwargs['color'] = color
-        super.__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
