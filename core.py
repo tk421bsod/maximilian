@@ -152,7 +152,7 @@ class deletion_request:
         await responses.fill_cache()
         await self.bot.prefixes.update_prefix_cache()
 
-class _ThemeColorEmbed(discord.Embed):
+class _ThemedEmbed(discord.Embed):
     def __init__(self, theme_color, *args, **kwargs):
         if common.get_value(kwargs, "color"):
             color = kwargs.pop(color)
@@ -181,9 +181,9 @@ class core(commands.Cog):
         if load:
             asyncio.create_task(self.update_blocklist())
 
-    def ThemeColorEmbed(self, *args, **kwargs):
+    def ThemedEmbed(self, *args, **kwargs):
         #i hate this
-        return _ThemeColorEmbed(self.bot.config['theme_color'], *args, **kwargs)
+        return _ThemedEmbed(self.bot.config['theme_color'], *args, **kwargs)
 
     async def getch_channel(self, channel_id):
         channel = self.bot.get_channel(channel_id)
@@ -208,7 +208,7 @@ class core(commands.Cog):
             if len(paginator.pages) > 1:
                 title += f" (page {count+1})"
             #TODO: This can break some embed layouts as we may be converting from separate fields to a description.
-            await target.send(embed=self.ThemeColorEmbed(title=title, description=page))
+            await target.send(embed=self.ThemedEmbed(title=title, description=page))
 
     #TODO: View-based paginator
     async def send_paginated(self, to_send, target, prefix="```", suffix="```"):
@@ -247,7 +247,7 @@ class core(commands.Cog):
     @utils.command(hidden=True)
     async def version(self, ctx):
         desc = f"Currently running version *{self.bot.VER}* at commit *{common.get_latest_commit()}*."
-        embed = self.ThemeColorEmbed(title="Version information", description=desc)
+        embed = self.ThemedEmbed(title="Version information", description=desc)
         await ctx.send(embed=embed)
 
     @commands.is_owner()
@@ -270,7 +270,7 @@ class core(commands.Cog):
         """Displays a list of all loaded modules."""
         current = [f"{ext}" for ext in list(self.bot.extensions.keys())]
         desc = "\n".join(current)
-        embed = self.ThemeColorEmbed(title="Modules loaded:", description=desc)
+        embed = self.ThemedEmbed(title="Modules loaded:", description=desc)
         await self.bot.core.send_paginated(embed, ctx)
 
     @commands.is_owner()
@@ -361,9 +361,9 @@ class core(commands.Cog):
             self.bot.prefixes = self.bot.get_cog('prefixes')
             self.bot.responses = self.bot.get_cog('Custom Commands')
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
-            embed = self.ThemeColorEmbed(title=f"\U00002705 {extensionsreloaded}")
+            embed = self.ThemedEmbed(title=f"\U00002705 {extensionsreloaded}")
         except:
-            embed = self.ThemeColorEmbed(title=f"\U0000274c Error while reloading extensions.")
+            embed = self.ThemedEmbed(title=f"\U0000274c Error while reloading extensions.")
             embed.add_field(name="Error:", value=traceback.format_exc())
         await ctx.send(embed=embed)
 
@@ -414,7 +414,7 @@ class core(commands.Cog):
         if not command.enabled:
             return await ctx.send("That command is already disabled.")
         command.enabled = False
-        await ctx.send(embed=self.ThemeColorEmbed(title="✅ Command disabled."))
+        await ctx.send(embed=self.ThemedEmbed(title="✅ Command disabled."))
 
     @commands.is_owner()
     @utils.command(hidden=True)
@@ -425,7 +425,7 @@ class core(commands.Cog):
         if command.enabled:
             return await ctx.send("That command is already enabled.")
         command.enabled = True
-        await ctx.send(embed=self.ThemeColorEmbed(title="✅ Command enabled."))
+        await ctx.send(embed=self.ThemedEmbed(title="✅ Command enabled."))
 
     @commands.is_owner()
     @utils.command(hidden=True)
