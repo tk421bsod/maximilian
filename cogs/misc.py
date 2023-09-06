@@ -28,7 +28,7 @@ class misc(commands.Cog):
     async def ping(self, ctx):
         await ctx.send(self.bot.strings["LATENCY"])
 
-    @commands.command(help="Get some info about the bot and commands")
+    @commands.hybrid_command(help="Get some info about the bot and commands")
     async def about(self, ctx):
         embed = discord.Embed(title=self.bot.strings["ABOUT_TITLE"], color=self.bot.config['theme_color'])
         embed.add_field(name=self.bot.strings["ABOUT_SUMMARY_TITLE"], value=self.bot.strings["ABOUT_SUMMARY_TEXT"])
@@ -97,7 +97,7 @@ class misc(commands.Cog):
         '''Show the amount of people in this server.'''
         await ctx.send(self.bot.strings["MEMBERCOUNT"].format(len(ctx.guild.members), len([i for i in ctx.guild.members if not i.bot]), len([i for i in ctx.guild.members if i.bot])))
 
-    @commands.command()
+    @commands.hybrid_command()
     async def avatar(self, ctx, *, user:typing.Optional[discord.Member]=None):
         '''View another user's avatar, or yours if you don't specify anyone'''
         if not user:
