@@ -163,7 +163,7 @@ class _ThemedEmbed(discord.Embed):
 
 class core(commands.Cog):
     '''Utility commands and a few events. The commands here are only usable by the owner.'''
-    __slots__ = ("bot", "waiting", "get_named_logger", "reload_enabled")
+    __slots__ = ("bot")
 
     def __init__(self, bot, load=False):
         self.bot = bot
@@ -173,16 +173,12 @@ class core(commands.Cog):
         self.bot.deletion_request = deletion_request
         self.bot.DeletionRequestAlreadyActive = DeletionRequestAlreadyActive
         self.bot.core = self
-        self.waiting = []
         self.bot.blocklist = []
         self.logger = logging.getLogger(__name__)
-        self.bot.ready = False
-        self.reload_enabled = True
         if load:
             asyncio.create_task(self.update_blocklist())
-
+ 
     def ThemedEmbed(self, *args, **kwargs):
-        #i hate this
         return _ThemedEmbed(self.bot.config['theme_color'], *args, **kwargs)
 
     async def getch_channel(self, channel_id):
