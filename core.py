@@ -167,6 +167,7 @@ class core(commands.Cog):
 
     def __init__(self, bot, load=False):
         self.bot = bot
+        self.bot.ready = False
         #we can't easily import this file from files in the cogs folder
         #provide references to other classes in the file to prevent this
         self.bot.confirmation = confirmation
