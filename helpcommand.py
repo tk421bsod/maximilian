@@ -101,9 +101,11 @@ class HelpCommand(commands.HelpCommand):
         if group.help:
             embed.description = group.help
         if isinstance(group, commands.Group):
+            self.show_hidden = True
             filtered = await self.filter_commands(group.commands, sort=True)
+            self.show_hidden = False
             for command in filtered:
-                doc = await self.get_command_docstring(command)
+                doc = await self.get_command_docstring(command, append_syntax=False)
                 embed.add_field(name=self.get_command_signature(command), value=doc, inline=False)
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
