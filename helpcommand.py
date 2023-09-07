@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import traceback
 
-
 class HelpCommand(commands.HelpCommand):
 
     def get_ending_note(self):
@@ -51,11 +50,11 @@ class HelpCommand(commands.HelpCommand):
         embed = discord.Embed(title=self.context.bot.strings["COG_HELP_TITLE"].format(cog), color=self.context.bot.config['theme_color'])
         if cog.description:
             embed.description = cog.description
-
+        self.show_hidden = True
         filtered = await self.filter_commands(cog.get_commands(), sort=True)
+        self.show_hidden = False
         for command in filtered:
             embed.add_field(name=self.get_command_signature(command), value=await self.get_command_docstring(command, append_syntax=False), inline=False)
-
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
 
