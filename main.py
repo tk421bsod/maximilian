@@ -48,6 +48,7 @@ if "--help" in sys.argv:
     print("--help - Shows this message and exits.")
     print("--language <language> - Sets the language to <language>. If not specified, defaults to 'en'.")
     print("--alt - Prompts for a token to use. Also adds the latest commit hash to the default status.")
+    print("--no-file - Stops Maximilian from saving logs to a file. New in version 1.2.0. ")
     quit()
 
 if "--version" in sys.argv:
@@ -120,8 +121,10 @@ def config_logging(args):
         _handlers = [RichHandler(rich_tracebacks=True)]
     except NameError: #rich wasn't imported, use stdout instead
         _handlers = [logging.StreamHandler(sys.stdout)]
-    if os.path.isdir('logs'):
+    if os.path.isdir('logs') and "--no-file" not in sys.argv:
         _handlers.append(logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"))
+    elif "--no-file" in sys.argv:
+        print("main.py was invoked with --no-file, not logging to a file")
     else:
         print("The 'logs' directory doesn't exist! Not logging to a file.")
     for key, value in levelmapping.items():
@@ -129,7 +132,12 @@ def config_logging(args):
             pass
         elif key != "-q" and key != "--quiet":
             logging.basicConfig(level=value[0], handlers=_handlers)
-            print(value[1])
+            print("\n"+value[1])
+            if value[0] == logging.DEBUG:
+                print("This may cause a small performance decrease for some operations.")
+                print("It can also result in very large log files.")
+                print("Debug logging is not recommended for production use.")
+                time.sleep(2)
             logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
             return
         else:
