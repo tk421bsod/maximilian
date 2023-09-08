@@ -11,6 +11,7 @@ from discord.ext import commands
 
 import common
 import core
+import helpcommand
 import settings
 import startup
 
@@ -69,6 +70,7 @@ class maximilian(commands.Bot):
         self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
         self.responses = [] #custom commands list. TODO: make this less baked in
         self.start_time = time.time()
+        self.help_command = helpcommand.HelpCommand(verify_checks=False)
         #parse additional arguments (ip, enablejsk, noload)
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)

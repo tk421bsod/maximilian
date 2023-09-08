@@ -13,7 +13,6 @@ import discord
 from discord.ext import commands
 
 import common
-import helpcommand
 import startup
 
 def get_prefix(bot, message):
@@ -369,7 +368,6 @@ class core(commands.Cog):
             self.bot.ready = True
             self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
             self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
-            self.bot.help_command = helpcommand.HelpCommand(verify_checks=False)
             print("Ready")
 
     async def prepare(self, message):
