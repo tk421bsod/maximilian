@@ -166,6 +166,7 @@ class core(commands.Cog):
 
     def __init__(self, bot, load=False):
         self.bot = bot
+        self.bot.ready = False
         #we can't easily import this file from files in the cogs folder
         #provide references to other classes in the file to prevent this
         self.bot.confirmation = confirmation
@@ -241,6 +242,7 @@ class core(commands.Cog):
 
     @utils.command(hidden=True)
     async def version(self, ctx):
+        """Show version information."""
         desc = f"Currently running version *{self.bot.VER}* at commit *{common.get_latest_commit()}*."
         embed = self.ThemedEmbed(title="Version information", description=desc)
         await ctx.send(embed=embed)
@@ -248,6 +250,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def sync(self, ctx):
+        """Sync slash commands."""
         await ctx.send("Syncing the command tree...")
         await self.bot.tree.sync()
         await ctx.send("Done.")
@@ -255,6 +258,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def blocklist(self, ctx):
+        """Show a list of blocked users."""
         await ctx.send("Fetching blocklist...")
         users = "\n".join([str(self.bot.get_user(i)) for i in self.bot.blocklist]) 
         await ctx.send(f"I have {len(self.bot.blocklist)} users blocked. They are: \n{users}")
@@ -262,7 +266,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def loaded(self, ctx):
-        """Displays a list of all loaded modules."""
+        """Display a list of all loaded modules."""
         current = [f"{ext}" for ext in list(self.bot.extensions.keys())]
         desc = "\n".join(current)
         embed = self.ThemedEmbed(title="Modules loaded:", description=desc)
@@ -271,7 +275,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def load(self, ctx, *targets):
-        """Attempts to load all modules specified in `targets`. `targets` must be a list of one or more module names.
+        """Attempt to load all modules specified in `targets`. `targets` must be a list of one or more module names.
 
         Key:
             \u2705 - Module loaded successfully.
@@ -300,7 +304,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def unload(self, ctx, *targets):
-        """Attempts to unload all modules specified in `targets`. `targets` must be a list of one or more module names.
+        """Attempt to unload all modules specified in `targets`. `targets` must be a list of one or more module names.
 
         Key:
             \u2705 - Module was unloaded successfully.
@@ -322,6 +326,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def reload(self, ctx, *targetextensions):
+        """Reload <targetextensions>"""
         await ctx.typing()
         try:
             if "--nofetch" in targetextensions:
@@ -391,6 +396,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def reload_strings(self, ctx):
+        """Reload language files without restarting."""
         try:
             reloading = await ctx.send("Reloading strings...")
             self.bot.strings = await startup.load_strings(self.bot.logger, self.bot.config, exit=False)
@@ -402,6 +408,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def disable(self, ctx, *, command):
+        """Disable <command>."""
         command = self.bot.get_command(command)
         if not command:
             return await ctx.send("Sorry, that command couldn't be found.")
@@ -413,6 +420,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def enable(self, ctx, *, command):
+        """Enable <command>."""
         command = self.bot.get_command(command)
         if not command:
             return await ctx.send("Sorry, that command couldn't be found.")
@@ -424,6 +432,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def change_status(self, ctx, type, newstatus=None):
+        """Change the status that the bot displays. Defaults to the current version."""
         await ctx.send("Changing status...")
         if type.lower() == "listening":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=newstatus))
@@ -440,6 +449,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def sql(self, ctx, *, query):
+        """Run a SQL query."""
         try:
             result = await self.bot.db.exec(query, ())
         except:
@@ -467,6 +477,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def block(self, ctx, member:typing.Union[discord.Member, discord.User]):
+        """Block someone from using the bot."""
         if member.id in self.bot.blocklist:
             return await ctx.send(f"I already have {member} blocked.")
         await self.bot.db.exec(f"insert into blocked values(%s)", (member.id,))
@@ -476,6 +487,7 @@ class core(commands.Cog):
     @commands.is_owner()
     @utils.command(hidden=True)
     async def unblock(self, ctx, member:typing.Union[discord.Member, discord.User]):
+        """Unblock someone."""
         if member.id not in self.bot.blocklist:
             return await ctx.send(f"{member} isn't blocked.")
         await self.bot.db.exec(f"delete from blocked where user_id = %s", (member.id,))
