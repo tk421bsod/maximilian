@@ -95,16 +95,20 @@ def get_latest_commit():
     except Exception:
         pass
 
-def get_value(dict, key, default=None):
+def get_value(attr, loc, default=None):
+    """Get the value from 'attr' stored at 'loc'. 'attr' must be a list or dict. 'loc' must be an index or a key. Returns 'default' if nothing's found"""
     try:
-        return dict[key]
+        return attr[loc]
     except KeyError:
         return default
+    except IndexError:
+        return defailt
 
-def set_value(dict, key, value, unique=False):
+def set_value(dict, key, value, replace=False):
+    """Attempt to set the value at dict[key] to 'value'. Does not replace existing values unless 'replace' is True"""
     try:
         dict[key]
-        if not unique:
+        if not replace:
             dict[key] = value
     except KeyError:
         dict[key] = value
