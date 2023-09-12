@@ -15,6 +15,24 @@ import helpcommand
 import settings
 import startup
 
+class CustomContext(commands.Context):
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    async def send(self, *args, **kwargs):
+        to_send = common.get_value(args, 0)
+        if not to_send:
+            to_send = common.get_value(kwargs, "embed")
+        id = self.guild.id if self.guild else 0
+        try:
+            await self.bot.settings.general.wait_ready()
+            ret = self.bot.settings.general.pagination.enabled(id)
+        except AttributeError:
+            ret = False
+        if to_send and ret:
+            return await self.bot.core.send_paginated(to_send, self, prefix="", suffix="")
+        return await super().send(*args, **kwargs)
 
 class maximilian(commands.Bot):
     __slots__ = ("PYTHON_MINOR_VERSION", "VER", "IS_DEBUG", "blocklist", "config", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings")
@@ -75,6 +93,9 @@ class maximilian(commands.Bot):
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
         logger.debug("Starting the event loop.")
+
+    async def get_context(self, message, *, cls=CustomContext):
+        return await super().get_context(message, cls=cls)
 
     async def load(self, file):
         #strip file extension out of filename
@@ -164,7 +185,8 @@ class maximilian(commands.Bot):
         @self.event
         async def on_message(message):
             if await self.core.prepare(message):
-                await self.process_commands(message)
+                ctx = await self.get_context(message)
+                await self.invoke(ctx)
         pass
 
     def get_intents(self):
@@ -184,7 +206,7 @@ class maximilian(commands.Bot):
     
     async def init_general_settings(self):
         #maybe we could make add_category itself a coro?
-        self.settings.add_category("general", {"debug":"Show additional error info"}, {"debug":None}, {"debug":"manage_guild"})
+        self.settings.add_category("general", {"debug":"Show additional error info", "pagination":"Experimental pagination features"}, {"debug":None, "pagination":None}, {"debug":"manage_guild", "pagination":None})
 
     async def start(self, *args, **kwargs):
         #Create our own ClientSession to prevent "Unclosed session" warnings at shutdown
