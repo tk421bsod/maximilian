@@ -102,7 +102,7 @@ def get_value(attr, loc, default=None):
     except KeyError:
         return default
     except IndexError:
-        return defailt
+        return default
 
 def set_value(dict, key, value, replace=False):
     """Attempt to set the value at dict[key] to 'value'. Does not replace existing values unless 'replace' is True"""
