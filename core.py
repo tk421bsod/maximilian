@@ -179,6 +179,7 @@ class core(commands.Cog):
             asyncio.create_task(self.update_blocklist())
  
     def ThemedEmbed(self, *args, **kwargs):
+        """Wrapper for creating a ThemedEmbed, a subclass of discord.Embed that uses bot.config['theme_color']."""
         return _ThemedEmbed(self.bot.config['theme_color'], *args, **kwargs)
 
     async def getch_channel(self, channel_id):
@@ -229,12 +230,16 @@ class core(commands.Cog):
                 await self.send_traceback(ctx.channel)
                 await ctx.send(self.bot.strings["DEBUG_DISABLE_REMINDER"])
 
-    async def send_traceback(self, target=None):
+    async def send_traceback(self, target=None, error=None):
         if not target:
             target = self.bot.get_user(self.bot.owner_id)
         if not target:
             return
-        await self.send_paginated(traceback.format_exc(), target)
+        if error:
+            text = traceback.format_exception(type(error), error, error.__traceback__)
+        else:
+            text = traceback.format_exc()
+        await self.send_paginated("".join(text), target)
 
     @commands.group(invoke_without_command=False, hidden=True)
     async def utils(self, ctx):
