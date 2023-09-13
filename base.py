@@ -21,6 +21,7 @@ class CustomContext(commands.Context):
         super().__init__(*args, **kwargs)
 
     async def send(self, *args, **kwargs):
+        skip_pagination = False
         to_send = common.get_value(args, 0)
         if not to_send:
             to_send = common.get_value(kwargs, "embed")
@@ -28,9 +29,15 @@ class CustomContext(commands.Context):
         try:
             await self.bot.settings.general.wait_ready()
             ret = self.bot.settings.general.pagination.enabled(id)
+            #Get the name of our caller.
+            #Faster than inspect.currentframe().f_back.f_code.co_name and much faster than inspect.stack()[1].function
+            #See https://docs.python.org/3/library/inspect.html#types-and-members and https://docs.python.org/3/library/sys.html#sys._getframe
+            caller = sys._getframe(1).f_code.co_name
+            if caller == "send_paginated" or caller == "send_paginated_embed":
+                skip_pagination = True
         except AttributeError:
             ret = False
-        if to_send and ret:
+        if to_send and ret and not skip_pagination:
             return await self.bot.core.send_paginated(to_send, self, prefix="", suffix="")
         return await super().send(*args, **kwargs)
 
