@@ -69,7 +69,7 @@ def load_config():
     config = {}
     #Uncomment the following line to suppress KeyErrors that can happen when trying to access config. This may break stuff.
     #import collections; config = collections.defaultdict(lambda: None)
-    with open('config', 'r') as configfile:
+    with open('config') as configfile:
         for i in configfile.readlines():
             i = i.strip()
             if not i.startswith('#') and i:

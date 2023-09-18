@@ -121,7 +121,7 @@ async def load_strings(language, logger, config):
     logger.debug('Loading strings from file...')
     logger.info(f"Set language to {language}")
     try:
-        with open(f'languages/{language}', 'r') as data:
+        with open(f'languages/{language}') as data:
             logger.debug("Loading data...")
             strings = json.load(data)
             logger.debug("Loaded data.")
@@ -134,9 +134,9 @@ async def load_strings(language, logger, config):
     errors_found = False
     if language != 'en':
         logger.info('Validating strings...')
-        with open('languages/en', 'r') as data:
+        with open('languages/en') as data:
             reference = json.load(data)
-            for identifier in list(reference.keys()):
+            for identifier in list(reference):
                 try:
                     strings[identifier]
                 except KeyError:

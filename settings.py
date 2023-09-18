@@ -190,7 +190,7 @@ class Category():
         else:
             self.logger.info("Validating setting states...")
             #step 2: ensure each setting has an entry in the database for each guild
-            for name in list(self.settingdescmapping.keys()):
+            for name in list(self.settingdescmapping):
                 if self.get_setting(name):
                     delattr(self, name.replace(" ", "_"))
                 await self.add_to_db(name, guilds)
@@ -297,7 +297,7 @@ class Category():
             else:
                 title = self.bot.strings["GENERAL_CATEGORY"]
             embed = discord.Embed(title=title, color=self.bot.config['theme_color'])
-            for setting in [self.get_setting(i) for i in list(self.settingdescmapping.keys())]:
+            for setting in [self.get_setting(i) for i in list(self.settingdescmapping)]:
                 if setting.unusablewith:
                     unusablewithwarning = self.bot.strings["SETTING_UNUSABLE_WITH"].format(await self._prepare_conflict_string(setting.unusablewith))
                 else:

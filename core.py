@@ -272,7 +272,7 @@ class core(commands.Cog):
     @utils.command(hidden=True)
     async def loaded(self, ctx):
         """Display a list of all loaded modules."""
-        current = [f"{ext}" for ext in list(self.bot.extensions.keys())]
+        current = [f"{ext}" for ext in list(self.bot.extensions)]
         desc = "\n".join(current)
         embed = self.ThemedEmbed(title="Modules loaded:", description=desc)
         await self.bot.core.send_paginated(embed, ctx)
@@ -344,7 +344,7 @@ class core(commands.Cog):
                 extensionsreloaded = "Successfully reloaded 1 extension."
             elif len(targetextensions) == 0:
                 extensionsreloaded=f"Successfully reloaded all extensions."
-                targetextensions = list(self.bot.extensions.keys())
+                targetextensions = list(self.bot.extensions)
             else:
                 extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
             if nofetch:

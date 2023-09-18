@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import os
 import sys
 import time
@@ -14,6 +15,8 @@ import core
 import helpcommand
 import settings
 import startup
+
+builtin_open = copy.deepcopy(__builtins__['open'])
 
 class CustomContext(commands.Context):
     
@@ -101,6 +104,13 @@ class maximilian(commands.Bot):
         startup.parse_arguments(self, sys.argv)
         logger.debug("Starting the event loop.")
 
+    def restricted_open(self, *args, **kwargs):
+        file = common.get_value(args, 0, "")
+        RESTRICTED = ["config"]
+        if [i for i in RESTRICTED if i in file]:
+            raise ValueError("You cannot open files containing sensitive data after startup.")
+        return builtin_open(*args, **kwargs)
+
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
 
@@ -182,7 +192,7 @@ class maximilian(commands.Bot):
         else:
             for each in files:
                 await self.load(each)
-        total = len([i for i in list(self.extensions.keys()) if i not in list(exts.keys())])
+        total = len([i for i in list(self.extensions) if i not in list(exts)])
         diff = (len(files))-total
         self.logger.info(f"Loaded {total} modules successfully. {diff} module{'s' if diff != 1 else ''} not loaded.")
         print("Done loading modules. Finishing startup...")
@@ -243,6 +253,9 @@ class maximilian(commands.Bot):
             self.logger.debug("Removing sensitive data from global objects.")
             token = self.config['token']
             del self.config['token'], self.config['dbp'], self.db.p, self.db.ip
+            self.logger.debug("Done.")
+            self.logger.debug("Restricting built-in open().")
+            __builtins__['open'] = self.restricted_open
             self.logger.debug("Done.")
             #TODO: Eliminate potential for race conditions here:
             #Either load_extensions_async or init_general_settings could run before Bot.start runs,

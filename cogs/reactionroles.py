@@ -60,7 +60,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
         await self.complete_hook(ctx)
 
     async def add_role(self, ctx, role, messageid, emoji):
-        if role.id in [i for i in list(self.roles[ctx.guild.id].keys())]:
+        if role.id in [i for i in list(self.roles[ctx.guild.id])]:
             changes = self.detect_changes(self.roles[ctx.guild.id][role.id], reaction_role(role.id, ctx.guild.id, messageid, emoji))
             if not changes:
                 return await ctx.send(self.bot.strings["ROLE_NOT_CHANGED"])
