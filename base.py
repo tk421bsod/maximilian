@@ -16,10 +16,8 @@ import helpcommand
 import settings
 import startup
 
-builtin_open = copy.deepcopy(__builtins__['open'])
-
 class CustomContext(commands.Context):
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -103,13 +101,6 @@ class maximilian(commands.Bot):
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
         logger.debug("Starting the event loop.")
-
-    def restricted_open(self, *args, **kwargs):
-        file = common.get_value(args, 0, "")
-        RESTRICTED = ["config"]
-        if [i for i in RESTRICTED if i in file]:
-            raise ValueError("You cannot open files containing sensitive data after startup.")
-        return builtin_open(*args, **kwargs)
 
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
@@ -220,7 +211,7 @@ class maximilian(commands.Bot):
         except aiomysql.OperationalError:
             self.logger.debug(traceback.format_exc())
             self.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
-    
+
     async def init_general_settings(self):
         #maybe we could make add_category itself a coro?
         self.settings.add_category("general", {"debug":"Show additional error info", "pagination":"Experimental pagination features"}, {"debug":None, "pagination":None}, {"debug":"manage_guild", "pagination":None})
@@ -253,9 +244,6 @@ class maximilian(commands.Bot):
             self.logger.debug("Removing sensitive data from global objects.")
             token = self.config['token']
             del self.config['token'], self.config['dbp'], self.db.p, self.db.ip
-            self.logger.debug("Done.")
-            self.logger.debug("Restricting built-in open().")
-            __builtins__['open'] = self.restricted_open
             self.logger.debug("Done.")
             #TODO: Eliminate potential for race conditions here:
             #Either load_extensions_async or init_general_settings could run before Bot.start runs,
