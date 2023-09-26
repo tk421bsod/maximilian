@@ -197,19 +197,24 @@ class core(commands.Cog):
         if to_send.fields:
             self.logger.debug("Sourcing paginated embed content from fields")
             for field in to_send.fields:
-                paginator.add_line(f"\n**field.name**")
+                paginator.add_line(f"\n**{field.name}**")
                 for line in field.value.split("\n"):
                     paginator.add_line(line)
         #Edge case where the embed only has a title.
         #Used in some status messages.
         if not paginator.pages:
-            return await target.send(embed=self.ThemedEmbed(title=title))
+            return await target.send(embed=to_send)
         for count, page in enumerate(paginator.pages):
             title = to_send.title
             if len(paginator.pages) > 1:
                 title += f" (page {count+1})"
             #TODO: This can break some embed layouts as we may be converting from separate fields to a description.
-            await target.send(embed=self.ThemedEmbed(title=title, description=page))
+            embed = self.ThemedEmbed(title=title, description=page)
+            print(f"{count}  {len(paginator.pages)}")
+            if count+1 == len(paginator.pages) and to_send.footer:
+                print("Footer exists")
+                embed.set_footer(text=to_send.footer.text)
+            await target.send(embed=embed)
 
     #TODO: View-based paginator
     async def send_paginated(self, to_send, target, prefix="```", suffix="```"):
