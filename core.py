@@ -188,18 +188,22 @@ class core(commands.Cog):
             return await self.bot.fetch_channel(channel_id)
 
     async def send_paginated_embed(self, paginator, to_send, target):
-        if len(to_send.fields) < 2:
+        if to_send.description:
             self.logger.debug("Sourcing paginated embed content from description")
             #TODO: On some special embeds e.g todo lists this can break groups of text in half.
             #Consider adding text groups on the same "line" on the paginator and only moving on once reaching a blank line.
             for line in to_send.description.split("\n"):
                 paginator.add_line(line)
-        else:
+        if to_send.fields:
             self.logger.debug("Sourcing paginated embed content from fields")
             for field in to_send.fields:
-                paginator.add_line(field.name)
+                paginator.add_line(f"\n**field.name**")
                 for line in field.value.split("\n"):
                     paginator.add_line(line)
+        #Edge case where the embed only has a title.
+        #Used in some status messages.
+        if not paginator.pages:
+            return await target.send(embed=self.ThemedEmbed(title=title))
         for count, page in enumerate(paginator.pages):
             title = to_send.title
             if len(paginator.pages) > 1:
