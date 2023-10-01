@@ -2,7 +2,7 @@
 import sys
 
 #Version number. Please don't modify this.
-VER = "1.2.0-prerelease"
+VER = "2.0.0-prerelease"
 
 #Are we using or going to use debug logging?
 IS_DEBUG = bool([i for i in sys.argv if i in ['-v', '--verbose', '--debug']])
@@ -37,18 +37,18 @@ if "--help" in sys.argv:
     print("You can enable/disable features and modify Maximilian's behavior through the use of the following options.\nYou can use more than one option at a time.\n")
     print("Options:")
     print("--enablejsk - Enables Jishaku, an extension used for debugging and code evaluation.")
-    print("--version - Shows version information and exits. New in version 1.2.0.")
-    print("--no-update - Skips update check on startup. Takes precendence over --update. Renamed from --noupdate in version 1.2.0.")
+    print("--version - Shows version information and exits. New in version 2.0.")
+    print("--no-update - Skips update check on startup. Takes precendence over --update. Renamed from --noupdate in version 2.0.")
     print("--update - Updates Maximilian and exits. Implicitly enables --force-update.")
     print("--force-update - Forces update check on startup regardless of the time since last update.")
-    print("--no-load <extensions> - Skips loading the specified extensions. Renamed from --noload in version 1.2.0.")
+    print("--no-load <extensions> - Skips loading the specified extensions. Renamed from --noload in version 2.0.")
     print("--no-rich - Disables rich text. May be useful on older systems or smaller screens.")
     print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level. If not specified, defaults to logging.WARN. Debug logging (-v, --debug, --verbose) can cause a slight performance decrease and will make log files much larger.")
     print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
     print("--help - Shows this message and exits.")
-    print("--language <language> - Sets the language to <language>. If not specified, defaults to 'en'.")
+    print("--language <language> - Sets the language to <language>. If not specified, defaults to 'en'. New in version 2.0.")
     print("--alt - Prompts for a token to use. Also adds the latest commit hash to the default status.")
-    print("--no-file - Stops Maximilian from saving logs to a file. New in version 1.2.0. ")
+    print("--no-file - Stops Maximilian from saving logs to a file. New in version 2.0.")
     quit()
 
 if "--version" in sys.argv:
@@ -58,7 +58,7 @@ if "--version" in sys.argv:
 #Did the user use any old arguments?
 for old_arg, new_arg in {"--noupdate":"--no-update", "--noload":"--no-load"}.items():
     if old_arg in sys.argv:
-        print(f"You're using the old '{old_arg}' option.\nThis option was changed to '{new_arg}' in 1.2.0.\nUse the new option instead.")
+        print(f"You're using the old '{old_arg}' option.\nThis option was changed to '{new_arg}' in 2.0.\nUse the new option instead.")
         quit()
 
 print("Loading components...")
