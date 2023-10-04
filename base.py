@@ -24,7 +24,7 @@ class CustomContext(commands.Context):
         skip_pagination = False
         to_send = common.get_value(args, 0)
         if not to_send:
-            to_send = common.get_value(kwargs, "embed")
+            to_send = kwargs.get("embed")
         id = self.guild.id if self.guild else 0
         try:
             await self.bot.settings.general.wait_ready()

@@ -133,7 +133,7 @@ class deletion_request:
             return
 
     async def create_request(self, requesttype, ctx):
-        '''Attempts to create a deletion request, raises errors.DeletionRequestAlreadyActive if one's active'''
+        '''Attempts to create a deletion request, raises DeletionRequestAlreadyActive if one's active'''
         id = ctx.guild.id if requesttype == 'all' else ctx.author.id
         result = await self.bot.db.exec("select id from active_requests where id=%s", (id,))
         if not result:
@@ -179,7 +179,7 @@ class core(commands.Cog):
             asyncio.create_task(self.update_blocklist())
  
     def ThemedEmbed(self, *args, **kwargs):
-        """Wrapper for creating a ThemedEmbed, a subclass of discord.Embed that uses bot.config['theme_color']."""
+        """Factory method that returns a ThemedEmbed."""
         return _ThemedEmbed(self.bot.config['theme_color'], *args, **kwargs)
 
     async def getch_channel(self, channel_id):
