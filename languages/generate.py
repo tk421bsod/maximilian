@@ -41,4 +41,6 @@ os.replace(sys.argv[1], f"{sys.argv[1]}-original")
 with open(sys.argv[1], 'x') as languagefile:
     languagefile.write(generated)
 
-print(f"Saved output to '{sys.argv[1]}' and moved the original to '{sys.argv[1]}-original'.")
+print(f"Saved output to '{sys.argv[1]}'.")
+print(f"\nYour template has been saved to '{sys.argv[1]}-original' for your editing pleasure.")
+print(f"After making template edits, copy it over '{sys.argv[1]}' and re-run this script.")
