@@ -53,7 +53,7 @@ class Setting():
         setattr(category, name.strip().replace(" ", "_"), self)
         category.logger.info(f"Registered setting {name}")
 
-    def enabled(self, guild_id):
+    def enabled(self, guild_id:int):
         """
         enabled(guild_id:int)
         Returns a boolean specifying whether this setting is enabled in the specified guild.
@@ -79,6 +79,19 @@ class Setting():
         except:
             return None
 
+    async def update_cached_state(self, ctx:commands.Context):
+        setting.states[ctx.guild.id] = not setting.states[ctx.guild.id]
+
+    async def update_database_state(self, ctx:commands.Context):
+        await self.category.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not self.states[ctx.guild.id], ctx.guild.id, self.category.name, self.name.replace("_", " ")))
+
+    async def toggle(self, ctx:commands.Context):
+        """
+        Flips this setting's state in both the database and cache.
+        """
+        await self.update_database_state(ctx)
+        await self.update_cached_state(ctx)
+
 class Category():
     """
     An object that represents a collection of Settings.
@@ -93,12 +106,6 @@ class Category():
 
     fill_cache
         Fills the Category's cache with new setting data. 
-
-    update_setting
-        Updates a setting's state in the database, then calls `update_cached_state`.
-
-    update_cached_state
-        Updates a setting's state in the cache.
 
     Attributes
     ----------
@@ -231,19 +238,6 @@ class Category():
         self.filling = False
         del self.data
 
-    async def update_cached_state(self, ctx:commands.Context, setting:Setting):
-        """
-        Changes a setting's state in cache. Doesn't affect the database.
-        """
-        setting.states[ctx.guild.id] = not setting.states[ctx.guild.id]
-
-    async def update_setting(self, ctx:commands.Context, setting:Setting):
-        """
-        Changes a setting's state in the database. Calls update_cached_state to change a setting's state in cache.
-        """
-        await self.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not setting.states[ctx.guild.id], ctx.guild.id, self.name, setting.name.replace("_", " ")))
-        await self.update_cached_state(ctx, setting)
-
     async def _prepare_conflict_string(self, conflicts):
         """
         Returns a string describing conflicting settings.
@@ -263,7 +257,7 @@ class Category():
                 #get the Setting matching the name
                 conflict = self.get_setting(conflict)
                 if conflict.enabled(ctx.guild.id):
-                    await self.update_setting(ctx, conflict)
+                    await conflict.toggle(ctx)
                     resolved.append(conflict)
         else:
             #no conflict? do nothing
@@ -272,7 +266,7 @@ class Category():
             #conflicting setting enabled? disable it
             conflict = self.get_setting(setting.unusablewith)
             if conflict.enabled(ctx.guild.id):
-                await self.update_setting(ctx, conflict)
+                await conflict.toggle(ctx)
                 resolved = setting.unusablewith
         length = len(resolved) if isinstance(resolved,list) else 1
         if length == 1 and isinstance(resolved,list):
@@ -317,7 +311,7 @@ class Category():
                 return await ctx.send(self.bot.strings["SETTING_PERMISSION_DENIED"].format(self.normalize_permission(setting.permission)))
         try:
             #update setting state
-            await self.update_setting(ctx, setting)
+            await setting.toggle(ctx)
             #check for conflicts and resolve them
             unusablewithmessage = await self._resolve_conflicts(ctx, setting)
         except:
