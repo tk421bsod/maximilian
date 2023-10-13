@@ -79,18 +79,18 @@ class Setting():
         except:
             return None
 
-    async def update_cached_state(self, ctx:commands.Context):
-        setting.states[ctx.guild.id] = not setting.states[ctx.guild.id]
+    async def _update_cached_state(self, ctx:commands.Context):
+        self.states[ctx.guild.id] = not self.states[ctx.guild.id]
 
-    async def update_database_state(self, ctx:commands.Context):
+    async def _update_database_state(self, ctx:commands.Context):
         await self.category.bot.db.exec("update config set enabled=%s where guild_id=%s and category=%s and setting=%s", (not self.states[ctx.guild.id], ctx.guild.id, self.category.name, self.name.replace("_", " ")))
 
     async def toggle(self, ctx:commands.Context):
         """
         Flips this setting's state in both the database and cache.
         """
-        await self.update_database_state(ctx)
-        await self.update_cached_state(ctx)
+        await self._update_database_state(ctx)
+        await self._update_cached_state(ctx)
 
 class Category():
     """
