@@ -96,7 +96,6 @@ async def get_language(logger, config, exit):
     language = common.get_value(config, 'language')
     #do we have anything that overrides our default language?
     if '--language' in sys.argv or language:
-        #is it from config or args
         if '--language' in sys.argv:
             #did we override config?
             if language and sys.argv[sys.argv.index('--language')+1] != language:
@@ -107,7 +106,7 @@ async def get_language(logger, config, exit):
         else:
             logger.warning("Using the language specified in 'config'.")
         #list of supported language names
-        supported = [i.split('.')[0] for i in os.listdir('languages') if not i.endswith('md') and not i.endswith("-original") and not i.startswith("generate") and not i == "TEMPLATE"]
+        supported = [i.split('.')[0] for i in os.listdir('languages') if not i.endswith('md') and not i.endswith('_') and not i.endswith("-original") and not i.startswith("generate") and not i == "TEMPLATE"]
         if language not in supported:
             logger.error(f"Sorry, that language isn't supported right now. The only supported languages are {supported}")
             if exit:
@@ -142,7 +141,7 @@ async def load_strings(language, logger, config):
                 except KeyError:
                     logger.warn(f"The language file '{language}' is missing the string '{identifier}'!")
                     errors_found = True
-                    strings[identifier] = ""
+                    strings[identifier] = identifier
     if errors_found:
         logger.warn("This language file is missing some strings found in 'en'. Some features may not work.")
     logger.info('Strings loaded successfully.')
