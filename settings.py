@@ -148,7 +148,7 @@ class Category():
         """
         return getattr(self, name.strip().replace(" ", "_"), None)
 
-    def get_initial_state(self, setting):
+    def _get_initial_state(self, setting):
         """
         Gets the initial state of a setting.
         """
@@ -156,7 +156,7 @@ class Category():
             return bool(setting['enabled'])
         return False
 
-    async def add_to_db(self, name, total_guilds):
+    async def _add_to_db(self, name, total_guilds):
         """
         Attempts to add a setting to the database.
         """
@@ -200,7 +200,7 @@ class Category():
             for name in list(self.settingdescmapping):
                 if self.get_setting(name):
                     delattr(self, name.replace(" ", "_"))
-                await self.add_to_db(name, guilds)
+                await self._add_to_db(name, guilds)
         #step 3: for each setting, get initial state and register it
         states = {}
         self.logger.debug("Populating setting states...")
@@ -226,7 +226,7 @@ class Category():
                 else:
                     self.logger.warn("Removed that setting.")
                 continue
-            states[setting['guild_id']] = self.get_initial_state(setting)
+            states[setting['guild_id']] = self._get_initial_state(setting)
             #if we've finished populating list of states for a setting...
             #(we are on the last element of 'data' or the next element isn't for the same setting)
             if index+1 == len(self.data) or self.data[index+1]['setting'] != setting['setting']:
