@@ -1,8 +1,3 @@
-import asyncio
-import typing
-import traceback
-
-import discord
 from discord.ext import commands
 
 class settings(commands.Cog):
