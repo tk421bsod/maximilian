@@ -121,7 +121,6 @@ async def get_language(logger, config, exit):
 
 async def load_strings(language, logger, config):
     logger.debug('Loading strings from file...')
-    logger.info(f"Set language to {language}")
     try:
         with open(f'languages/{language}') as data:
             logger.debug("Loading data...")
