@@ -98,11 +98,14 @@ async def get_language(logger, config, exit):
     if '--language' in sys.argv or language:
         if '--language' in sys.argv:
             #did we override config?
-            if language and sys.argv[sys.argv.index('--language')+1] != language:
-                logger.warning("The language you specified in 'config' has been overridden by the '--language' option!")
-            logger.debug("Sourced language from args.")
-            #language to use is the element after this one
-            language = sys.argv[sys.argv.index('--language')+1]
+            try:
+                if language and sys.argv[sys.argv.index('--language')+1] != language:
+                    logger.warning("The language you specified in 'config' has been overridden by the '--language' option!")
+                logger.debug("Sourced language from args.")
+                #language to use is the element after this one
+                language = sys.argv[sys.argv.index('--language')+1]
+            except IndexError:
+                logger.warning("No language specified after `--language`!")
         else:
             logger.warning("Using the language specified in 'config'.")
         #list of supported language names
