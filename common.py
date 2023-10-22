@@ -104,6 +104,24 @@ def get_value(attr, loc, default=None):
     except IndexError:
         return default
 
+def consume_all(l, start, end_condition):
+    """
+    Return a list of items from list 'l' after index 'start' and until an element starts with 'end_condition'.
+
+    Example:
+
+        >>> a = ["main.py", "--enablejsk", "--no-load", "cogs.music", "-v"]
+        >>> consume_all(a, a.index("--no-load), "-")
+            ["cogs.music"]
+
+    """
+    ret = []
+    for elem in l[start+1:]:
+        if str(elem).startswith(end_condition):
+            break
+        ret.append(elem)
+    return ret
+
 def set_value(dict, key, value, replace=False):
     """Attempt to set the value at dict[key] to 'value'. Does not replace existing values unless 'replace' is True"""
     try:
