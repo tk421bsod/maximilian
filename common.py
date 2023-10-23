@@ -17,14 +17,33 @@ class Version:
 
 #TimeConverter originally from cogs/reminders.py
 class TimeConverter(commands.Converter):
+    """
+    A discord.ext.commands.Converter that converts time values into an amount of seconds.
+    You can choose which units of time to accept.
+
+    Example usage:  
+        #Create a new TimeConverter with only hours, minutes, and seconds allowed  
+        a = TimeConverter(self.bot, ("h", "m", "s"))  
+        a.convert(ctx, "5m")  
+        #Returns 300  
+  
+    For help command integration:  
+        1. Add `'uses_timeconverter':True` to Command.extras  
+        2. Add `'timeconverter_allowed_units':(<allowed_units>)` to Command.extras  
+    Use the 'remind' command from cogs/reminders.py as a reference.
+    """
     __slots__ = ("TIME_REGEX", "TIME_DICT", "NAN", "INVALID_UNIT", "ADD_REMOVED", "allowed_units")
-    def __init__(self, strings, allowed_units):
+
+    def __init__(self, bot, allowed_units):
+        """
+        Construct a new TimeConverter.
+        """
         self.TIME_REGEX = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhdw])")
         self.TIME_DICT = {"w":604800, "d":86400, "h":3600, "m":60, "s":1}
-        self.NAN = strings["TIMECONVERTER_NAN"]
-        self.INVALID_UNIT = strings["TIMECONVERTER_INVALID_UNIT"]
-        self.INVALID_TIME = strings["TIMECONVERTER_INVALID_TIME"]
-        self.ADD_REMOVED = strings["TIMECONVERTER_ADD_REMOVED"]
+        self.NAN = bot.strings["TIMECONVERTER_NAN"]
+        self.INVALID_UNIT = bot.strings["TIMECONVERTER_INVALID_UNIT"]
+        self.INVALID_TIME = bot.strings["TIMECONVERTER_INVALID_TIME"]
+        self.ADD_REMOVED = bot.strings["TIMECONVERTER_ADD_REMOVED"]
         self.allowed_units = allowed_units
         time_dict_copy = self.TIME_DICT.copy() 
         self.TIME_DICT = {}
@@ -48,19 +67,23 @@ class TimeConverter(commands.Converter):
             raise commands.BadArgument(self.INVALID_TIME)
         return time
 
+async def _new_run_now(*coros):
+    """Run 'coros' concurrently without delay. Uses python 3.11 features like asyncio.TaskGroup and ExceptionGroup"""
+    try:
+        async with asyncio.TaskGroup() as runner:
+            for coro in coros:
+                runner.create_task(coro)
+    except ExceptionGroup as raised: # pyright: ignore[reportUndefinedVariable]
+        #TODO: How should we handle exceptions here?
+        #Should we just let the caller take care of everything?
+        if len(raised.exceptions) == 1:
+            raise raised.exceptions[0]
+        raise raised
+
 async def run_now(*coros):
     """Run 'coros' concurrently without delay."""
     if sys.version_info.minor >= 11:
-        try:
-            async with asyncio.TaskGroup() as runner:
-                for coro in coros:
-                    runner.create_task(coro)
-        except ExceptionGroup as raised:
-            #TODO: How should we handle exceptions here?
-            #Should we just let the caller take care of everything?
-            if len(raised.exceptions) == 1:
-                raise raised.exceptions[0]
-            raise raised
+        _new_run_now(*coros)
         return
     await asyncio.gather(*coros)
 

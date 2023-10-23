@@ -52,12 +52,6 @@ class maximilian(commands.Bot):
         config = common.load_config()
         logger.debug("Processing config...")
         config = startup.preprocess_config(config)
-        if not config['dependency_change_warning']:
-            print("\n")
-            logger.warning("Hi there.")
-            logger.warning("Some dependencies have changed since you last started Maximilian.")
-            logger.warning("Run 'pip3 install -U -r requirements.txt' to update them.")
-            os._exit(10)
         token = config['token']
         #check discord.py version...
         #TODO: Consider moving this to main.py next to Python version checks
@@ -82,8 +76,7 @@ class maximilian(commands.Bot):
         logger.debug("Setting up some stuff")
         super().__init__(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
         self.VER = VER
-
-        self.init = False
+        self.init_finished = False
         self.logger = logger
         self.common = common 
         self.config = config
