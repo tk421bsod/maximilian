@@ -43,7 +43,7 @@ class CustomContext(commands.Context):
         return await super().send(*args, **kwargs)
 
 class maximilian(commands.Bot):
-    __slots__ = ("PYTHON_MINOR_VERSION", "VER", "IS_DEBUG", "blocklist", "config", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings")
+    __slots__ = ("PYTHON_MINOR_VERSION", "VER", "IS_DEBUG", "blocklist", "config", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "init_finished", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings")
 
     def __init__(self, logger, VER):
         #Now that we've checked basic requirements and ran the updater, we can
@@ -82,16 +82,12 @@ class maximilian(commands.Bot):
         logger.debug("Setting up some stuff")
         super().__init__(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
         self.VER = VER
-        self.database = "maximilian"
-        try:
-            self.database = config["database"]
-            logger.warning("Sourced database name from config.")
-            logger.warning(f"Using database '{self.database}'.")
-        except:
-            logger.warning("No database name found in config.")
+
+        self.init = False
         self.logger = logger
         self.common = common 
-        self.config = config 
+        self.config = config
+        self.set_database_name()
         self.noload = [] #list of modules for load_extensions_async to skip, set by parse_arguments
         self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
         self.responses = [] #custom commands list. TODO: make this less baked in
@@ -101,6 +97,15 @@ class maximilian(commands.Bot):
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
         logger.debug("Starting the event loop.")
+
+    def set_database_name(self):
+        self.database = "maximilian"
+        try:
+            self.database = self.config["database"]
+            self.logger.warning("Sourced database name from config.")
+            self.logger.warning(f"Using database '{self.database}'.")
+        except:
+            self.logger.warning("No database name found in config.")
 
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
@@ -149,11 +154,9 @@ class maximilian(commands.Bot):
                 self.logger.warning("Don't want to use Jishaku? Stop Maximilian now with CTRL-C and run main.py WITHOUT --enablejsk.")
                 self.logger.warning("If you keep using Jishaku, I recommend that you enable 2FA and/or run Maximilian in a VM.")
                 self.logger.warning("Startup will continue in 10 seconds.")
-                time.sleep(10) # block here so we don't do anything else (e.g login, cache filling) in the meantime
+                time.sleep(10)  # block here so we don't do anything else (e.g login, cache filling) in the meantime
 
     async def load_required(self):
-        #we use a catch-all as we don't want anything going wrong with this
-        # noinspection PyBroadException
         try:
             await self.load_extension("core")
             await self.load_extension("errorhandling")
@@ -169,7 +172,7 @@ class maximilian(commands.Bot):
         print("Loading required modules...")
         await self.load_required()
         #Get a snapshot of our current extension state.
-        #We'll compare it to our state after load to figure out how many were loaded.
+        #We compare it to our state after load to figure out how many were loaded.
         exts = self.extensions.copy()
         print("Loading other modules...")
         files = [filename for filename in os.listdir("./cogs") if filename.endswith(".py")]
@@ -250,7 +253,8 @@ class maximilian(commands.Bot):
             #Either load_extensions_async or init_general_settings could run before Bot.start runs,
             #which can cause a RuntimeError if an extension's cache fill method starts early.
             #setup_hook may work for this, however it runs after login...
-            #extension load is time-consuming and any commands received during that window of time will fail
+            #extension load is time-consuming and
+            #any commands received during that window of time will fail
             asyncio.create_task(self.load_extensions_async())
             self.logger.debug("load_extensions_async has been scheduled.")
             asyncio.create_task(self.init_general_settings()) 

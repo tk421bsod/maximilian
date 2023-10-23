@@ -79,7 +79,7 @@ class Setting():
         except:
             return None
 
-    async def _update_cached_state(self, ctx:commands.Context):
+    async def _update_cached_state(self, ctx:commands.Context): 
         self.states[ctx.guild.id] = not self.states[ctx.guild.id]
 
     async def _update_database_state(self, ctx:commands.Context):
@@ -97,15 +97,6 @@ class Category():
     An object that represents a collection of Settings.
     Please don't directly instantiate this.
     Use the `add_category` method instead.
-
-    Want to update a Category after creation?
-    Please don't do that. Thanks.
-
-    Methods
-    -------
-
-    fill_cache
-        Fills the Category's cache with new setting data. 
 
     Attributes
     ----------
@@ -174,9 +165,9 @@ class Category():
                 continue
             self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
 
-    async def fill_cache(self):
+    async def _fill_cache(self):
         """
-        Fills a Category's settings cache with data.
+        Fill a Category's settings cache with data.
         """
         await self.bot.wait_until_ready()
         self.logger.info(f"Filling cache for category {self.name}...")
@@ -400,7 +391,7 @@ class settings():
             self.logger.warn("----")
             self.logger.warn(f"add_category was called twice for category '{category}'!!")
             self.logger.warn("Don't try to update a category after creation. Doing so may break stuff.")
-            self.logger.warn("Seeing this message after reloading a module? Add a check for bot.initial_load in __init__.")
+            self.logger.warn("Seeing this message after reloading a module? Add a check for bot.init_finished in __init__.")
             self.logger.warn("----")
             return
         try:
@@ -417,6 +408,8 @@ class settings():
         else:
             return "None"
 
+    #THIS DOCSTRING DOES NOT SHOW UP IN THE HELP COMMAND
+    #See cogs/config.py for the actual command.
     async def config(self, ctx, category:str=None, *, setting:str):
         """
         A command that changes settings.

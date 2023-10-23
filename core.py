@@ -166,7 +166,7 @@ class core(commands.Cog):
 
     def __init__(self, bot, load=False):
         self.bot = bot
-        self.bot.ready = False
+        self.bot.init_finished = False
         #we can't easily import this file from files in the cogs folder
         #provide references to other classes in the file to prevent this
         self.bot.confirmation = confirmation
@@ -179,7 +179,7 @@ class core(commands.Cog):
             asyncio.create_task(self.update_blocklist())
  
     def ThemedEmbed(self, *args, **kwargs):
-        """Factory method that returns a ThemedEmbed."""
+        """A discord.Embed that uses the theme color"""
         return _ThemedEmbed(self.bot.config['theme_color'], *args, **kwargs)
 
     async def getch_channel(self, channel_id):
@@ -383,8 +383,8 @@ class core(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        if not self.bot.ready:
-            self.bot.ready = True
+        if not self.bot.init_finished:
+            self.bot.init_finished = True
             self.logger.info(f"on_ready was dispatched {time.time()-self.bot.start_time} seconds after init started")
             self.bot.commandnames = [i.name for i in self.bot.commands if not i.hidden and i.name != "jishaku"]
             print("Ready")
