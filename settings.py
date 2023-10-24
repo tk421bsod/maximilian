@@ -120,7 +120,7 @@ class Category():
         self.logger = constructor.logger
         self.bot = constructor.bot
         self.permissionmapping = permissionmapping
-        asyncio.create_task(self.fill_cache())
+        asyncio.create_task(self._fill_cache())
 
     @property
     def ready(self):
@@ -397,7 +397,7 @@ class settings():
         try:
             Category(self, category, settingdescmapping, unusablewithmapping, permissionmapping)
         except Exception as e:
-            self.logger.error("Category registration failed for category '{category}`!")
+            self.logger.error(f"Category registration failed for category '{category}'!")
             raise e
         self.categorynames.append(category)
         self.logger.info(f"Category '{category}' registered.")
