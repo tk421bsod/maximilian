@@ -104,7 +104,7 @@ class reminders(commands.Cog):
     @commands.command(aliases=['reminder'], extras={'localized_help':{}, 'uses_timeconverter':True, 'timeconverter_allowed_units':("w", "d", "h", "m", "s")})
     async def remind(self, ctx, time, *, reminder):
         """Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted."""
-        time = await self.bot.common.TimeConverter(self.bot.strings, ("w", "d", "h", "m", "s")).convert(ctx, time)
+        time = await self.bot.common.TimeConverter(self.bot, ("w", "d", "h", "m", "s")).convert(ctx, time)
         await ctx.send(self.bot.strings["SETTING_REMINDER"])
         #get the date the reminder will fire at
         currenttime = datetime.datetime.now()
