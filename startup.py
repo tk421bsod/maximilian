@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 import sys
 import time
 import traceback
@@ -11,24 +10,32 @@ from aiomysql import OperationalError
 import common
 from db_utils import async_db as db
 
-#TODO: Think of a better arg name than 'requirement'. what does that even mean??
-def set_bit(config, name, requirement=True):
-    """Sets a bit at 'name' if it doesn't exist. Otherwise, keeps the value the same. Used for one-time things, e.g warnings on first startup"""
+def set_bit(config : dict, name : str, write:bool=True):
+    """Sets a bit at 'name' if it doesn't exist. Otherwise, keeps the value the same. Used for one-time things, e.g warnings on first startup. The write argument specifies whether to write the bit to persistent storage."""
     try:
         config[name]
         config[name] = True
     except:
         config[name] = False
-        if requirement:
-            subprocess.run(f"echo \"{name}:1\" >> config", shell=True)
+        if write:
+            common.run_command(f'echo \"{name}:1\" >> config')
     return config
 
-def preprocess_config(config):
+def preprocess_config(config : dict):
+    """Processes configuration data and sets flags if needed. Returns the processed data."""
     #convert hex color to int
     config['theme_color'] = int(config['theme_color'], 16)
     config = set_bit(config, "jsk_used", "--enablejsk" in sys.argv)
-    config = set_bit(config, "dependency_change_warning")
+    #config = set_bit(config, "2.0_first_run_message")
     return config
+
+def show_2_0_first_run_message(config : dict):
+    """Shows the Maximilian 2.0 first run message."""
+    if common.get_value(config, "2.0_first_run_message") == False:
+        print("\nUpdate finished.")
+        print("Welcome to Maximilian 2.0.")
+        print("This release includes hybrid commands, new components, performance improvements, API changes, new runtime options, a translation subsystem, and so much more.")
+        print("")
 
 def parse_version(versionstring):
     version = common.Version()
@@ -65,7 +72,7 @@ def parse_arguments(bot, args):
             bot.logger.warning("No database IP address provided. Falling back to localhost.")
             bot.dbip = "localhost"
         if "--no-load" in args:
-            bot.noload = [i for i in args[args.index('--no-load')+1:] if not i.startswith('-')]
+            bot.noload = common.consume_all(args, args.index("--no-load"), "-")
         else:
             bot.noload = []
     else:
@@ -92,6 +99,7 @@ async def initialize_db(bot, config):
     return inst
 
 async def get_language(logger, config, exit):
+    """Gets the language to use (as a string)"""
     #try to get language from config
     language = common.get_value(config, 'language')
     #do we have anything that overrides our default language?
@@ -119,7 +127,7 @@ async def get_language(logger, config, exit):
     logger.warning("If you wish to set a default language, add `language:<language>` to config.")
     return 'en'
 
-async def load_strings(language, logger, config):
+async def load_strings(language, logger):
     logger.debug('Loading strings from file...')
     try:
         with open(f'languages/{language}') as data:
@@ -127,7 +135,7 @@ async def load_strings(language, logger, config):
             strings = json.load(data)
             logger.debug("Loaded data.")
     except FileNotFoundError:
-        raise RuntimeError(f"Couldn't find the file containing strings for language '{language}'.")
+        raise RuntimeError(f"Couldn't find the file containing strings for language '{language}'!")
     except json.JSONDecodeError as e:
         logger.critical(f"The file containing strings for language '{language}' is invalid. Try passing it through generate.py.")
         logger.critical("Maximilian will now exit with some additional error info.")
