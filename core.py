@@ -210,9 +210,8 @@ class core(commands.Cog):
                 title += f" (page {count+1})"
             #TODO: This can break some embed layouts as we may be converting from separate fields to a description.
             embed = self.ThemedEmbed(title=title, description=page)
-            print(f"{count}  {len(paginator.pages)}")
+            self.logger.debug(f"page {count} of {len(paginator.pages)}")
             if count+1 == len(paginator.pages) and to_send.footer:
-                print("Footer exists")
                 embed.set_footer(text=to_send.footer.text)
             await target.send(embed=embed)
 
