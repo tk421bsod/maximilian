@@ -413,7 +413,7 @@ class core(commands.Cog):
         """Reload language files without restarting."""
         try:
             reloading = await ctx.send("Reloading strings...")
-            self.bot.strings = await startup.load_strings(self.bot.logger, self.bot.config, exit=False)
+            self.bot.strings = await startup.load_strings(self.bot.language, self.bot.logger)
             await ctx.send("Done.")
         except:
             await reloading.add_reaction("\U00002757")
