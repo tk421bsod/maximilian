@@ -30,7 +30,7 @@ class CustomContext(commands.Context):
             await self.bot.settings.general.wait_ready()
             ret = self.bot.settings.general.pagination.enabled(id)
             if ret:
-                #Get the name of our caller.
+                #Get the name of our caller (prevent an infinite loop if we were called from send_paginated)
                 #Faster than inspect.currentframe().f_back.f_code.co_name and much faster than inspect.stack()[1].function
                 #See https://docs.python.org/3/library/inspect.html#types-and-members and https://docs.python.org/3/library/sys.html#sys._getframe
                 caller = sys._getframe(1).f_code.co_name
@@ -80,12 +80,13 @@ class maximilian(commands.Bot):
         self.logger = logger
         self.common = common 
         self.config = config
-        self.set_database_name()
         self.noload = [] #list of modules for load_extensions_async to skip, set by parse_arguments
         self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
         self.responses = [] #custom commands list. TODO: make this less baked in
         self.start_time = time.time()
         self.help_command = helpcommand.HelpCommand(verify_checks=False)
+        self.set_database_name()
+        startup.show_2_0_first_run_message(config)
         #parse additional arguments (ip, enablejsk, noload)
         self.logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
@@ -226,7 +227,7 @@ class maximilian(commands.Bot):
         #initialize our translation layer...
         self.language = await startup.get_language(self.logger, self.config, exit = True)
         self.logger.info(f"Set language to {self.language}")
-        self.strings = await startup.load_strings(self.language, self.logger, self.config)
+        self.strings = await startup.load_strings(self.language, self.logger)
         #register our on_message event...
         #TODO: Consider moving this to core
         await self.wrap_event()
