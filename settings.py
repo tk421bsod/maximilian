@@ -273,27 +273,36 @@ class Category():
         """Makes a permission name more human readable. Replaces \'guild\' with \'server\', capitalizes words, swaps underscores for spaces."""
         return permission.replace("guild", "server").replace("_", " ").title()
 
+    async def _show_setting_list(self, ctx):
+        if self.name != "general":
+                title = self.bot.strings["CURRENTSETTINGS_TITLE"].format(self.name)
+        else:
+            title = self.bot.strings["GENERAL_CATEGORY"]
+        embed = self.bot.core.ThemedEmbed(title=title)
+        for setting in [self.get_setting(i) for i in list(self.settingdescmapping)]:
+            if setting.unusablewith:
+                #String with conflicts, shown below setting name.
+                #Example: "Cannot be used at the same time as 'a', 'b', 'c'"
+                unusablewithwarning = self.bot.strings["SETTING_UNUSABLE_WITH"].format(await self._prepare_conflict_string(setting.unusablewith))
+            else:
+                unusablewithwarning = ""
+            if setting.permission:
+                #Required permission for a setting (if applicable)
+                #Shown below the setting name and conflicts
+                #Example: "Requires the *Manage Server* permission"
+                perms = self.bot.strings["SETTING_REQUIRES_PERMISSION"].format(self.normalize_permission(setting.permission))
+            else:
+                perms = ""
+            #Add the setting name and description.
+            embed.add_field(name=self.bot.strings["SETTING_ENTRY_NAME"].format(discord.utils.remove_markdown(setting.description.capitalize()), setting.name), value=f"{self.bot.strings['SETTING_CURRENTLY_DISABLED'] if not setting.states[ctx.guild.id] else self.bot.strings['SETTING_CURRENTLY_ENABLED']}\n{unusablewithwarning}{perms}", inline=True)
+        embed.set_footer(text=self.bot.strings["CURRENTSETTINGS_FOOTER"])
+        return await ctx.send(embed=embed)
+
     async def config(self, ctx, name=None):
-        """Toggles the specified setting. Settings are off by default."""
+        """Toggles the specified setting. Settings are off by default. Lists settings in this Category if nothing's specified."""
         #setting not specified? show list of settings
         if not name:
-            if self.name != "general":
-                title = self.bot.strings["CURRENTSETTINGS_TITLE"].format(self.name)
-            else:
-                title = self.bot.strings["GENERAL_CATEGORY"]
-            embed = discord.Embed(title=title, color=self.bot.config['theme_color'])
-            for setting in [self.get_setting(i) for i in list(self.settingdescmapping)]:
-                if setting.unusablewith:
-                    unusablewithwarning = self.bot.strings["SETTING_UNUSABLE_WITH"].format(await self._prepare_conflict_string(setting.unusablewith))
-                else:
-                    unusablewithwarning = ""
-                if setting.permission:
-                    perms = self.bot.strings["SETTING_REQUIRES_PERMISSION"].format(self.normalize_permission(setting.permission))
-                else:
-                    perms = ""
-                embed.add_field(name=self.bot.strings["SETTING_ENTRY_NAME"].format(discord.utils.remove_markdown(setting.description.capitalize()), setting.name), value=f"{self.bot.strings['SETTING_CURRENTLY_DISABLED'] if not setting.states[ctx.guild.id] else self.bot.strings['SETTING_CURRENTLY_ENABLED']}\n{unusablewithwarning}{perms}", inline=True)
-            embed.set_footer(text=self.bot.strings["CURRENTSETTINGS_FOOTER"])
-            return await ctx.send(embed=embed)
+            return await self._show_setting_list(ctx)
         setting = self.get_setting(name)
         if not setting:
             return await ctx.send(self.bot.strings["UNKNOWN_SETTING"])
@@ -314,7 +323,7 @@ class Category():
 
 class settings():
     """
-    A simple interface for adding setting toggles to modules
+    A simple interface for adding setting toggles to modules.
     """
     #should we even use __slots__ if we're adding __dict__
     __slots__ = ("bot", "logger", "categorynames", "__dict__")
