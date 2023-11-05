@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 #Generates a language file from a more human-readable format.
 #This will replace the original file with the generated data.
 
