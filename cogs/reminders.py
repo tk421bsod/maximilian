@@ -214,9 +214,9 @@ class reminders(commands.Cog):
         try:
             if not entry:
                 return await ctx.send(self.bot.strings["ENTRY_NOT_SPECIFIED_ADD"].format(await self.bot.get_prefix(ctx.message)))
-            elif entry in [i['entry'] for i in [j for j in list(self.todo_lists.values())][0] if i['user_id'] == ctx.author.id]:
+            elif entry in [i['entry'] for i in self.todo_lists[ctx.author.id]]:
                 return await ctx.send(self.bot.strings["ENTRY_ALREADY_EXISTS"])
-        except IndexError:
+        except (IndexError, KeyError):
             pass
         timestamp = datetime.datetime.now()
         try:
