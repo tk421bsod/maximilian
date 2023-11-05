@@ -1,7 +1,9 @@
 #Read through README.md in this directory if you haven't already. It's important.
 
 GENERIC_ERROR:Sorry, something went wrong. Try again in a moment. I've reported this error to my owner.
-GENERIC_FATAL_ERROR:You should never see this. If you do, let tk___421 know.
+GENERIC_ERROR_TITLE:Error
+GENERIC_FATAL_ERROR:Looks like something broke. Let tk___421 know if this happens again.
+GENERIC_FATAL_ERROR_TITLE:Fatal Error
 #core.py
 ERROR_COMMAND_NOT_READY:This command isn't ready yet. Try again in a moment.
 CLEARED_TODO_LIST:\u2705 Cleared your to-do list!
