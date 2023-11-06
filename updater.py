@@ -120,7 +120,7 @@ def update():
             print(f"Update applied. \nView the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.")
             time.sleep(1)
             if list_in_str(['main.py', 'common.py', 'db.py', 'settings.py', 'base.py', 'startup.py', 'core.py'], "\n".join(pull['output'])):
-                print("This update changed some important files. Run main.py again.")
+                print("\nThis update changed some important files that can't be reloaded while Maximilian is running.\nPlease restart Maximilian to finish the update process.")
                 sys.exit(111)
         else:
             print("\nNot applying the update.")
