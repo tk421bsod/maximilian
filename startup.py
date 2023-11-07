@@ -118,7 +118,7 @@ async def get_language(logger, config, exit):
             logger.warning("Using the language specified in 'config'.")
         #list of supported language names
         supported = [i.split('.')[0] for i in os.listdir('languages') if not i.endswith('md') and not i.endswith('_') and not i.endswith("-original") and not i.startswith("generate") and not i == "TEMPLATE"]
-        if language not in supported:
+        if language not in supported and language != "en":
             logger.error(f"Sorry, that language isn't supported right now. The only supported languages are {supported}")
             if exit:
                 sys.exit(25)
