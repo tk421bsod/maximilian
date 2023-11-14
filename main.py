@@ -59,7 +59,7 @@ if "--version" in sys.argv:
 for old_arg, new_arg in {"--noupdate":"--no-update", "--noload":"--no-load"}.items():
     if old_arg in sys.argv:
         print(f"You're using the old '{old_arg}' option.\nThis option was changed to '{new_arg}' in 2.0.\nUse the new option instead.")
-        quit()
+    quit()
 
 print("Loading components...")
 
