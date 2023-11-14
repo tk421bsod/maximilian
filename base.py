@@ -1,3 +1,11 @@
+"""The bot base. Performs initialization of key components, loads extensions, and calls Bot.start.
+
+Implements a subclass of discord.ext.commands.Bot with some custom attributes.
+main.py creates an instance of this subclass and calls its run() method.
+
+Also implements a subclass of discord.ext.commands.Context to allow for pagination across all messages and perhaps other things in the future.
+"""
+
 import asyncio
 import os
 import sys
@@ -30,10 +38,8 @@ class CustomContext(commands.Context):
             await self.bot.settings.general.wait_ready()
             ret = self.bot.settings.general.pagination.enabled(id)
             if ret:
-                #Get the name of our caller (prevent an infinite loop if we were called from send_paginated)
-                #Faster than inspect.currentframe().f_back.f_code.co_name and much faster than inspect.stack()[1].function
-                #See https://docs.python.org/3/library/inspect.html#types-and-members and https://docs.python.org/3/library/sys.html#sys._getframe
-                caller = sys._getframe(1).f_code.co_name
+                #Get the name of our caller to prevent an infinite loop if we were called from send_paginated.
+                common.get_caller_name()
                 if caller == "send_paginated" or caller == "send_paginated_embed":
                     skip_pagination = True
         except AttributeError:
