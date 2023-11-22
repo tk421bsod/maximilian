@@ -138,7 +138,7 @@ class deletion_request:
 class _ThemedEmbed(discord.Embed):
     def __init__(self, theme_color, *args, **kwargs):
         if common.get_value(kwargs, "color"):
-            color = kwargs.pop(color)
+            color = kwargs.pop("color")
         else:
             color = theme_color
         kwargs['color'] = color
