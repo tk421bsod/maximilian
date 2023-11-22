@@ -4,6 +4,12 @@ GENERIC_ERROR:Sorry, something went wrong. Try again in a moment. I've reported 
 GENERIC_ERROR_TITLE:Error
 GENERIC_FATAL_ERROR:Looks like something broke. Let tk___421 know if this happens again.
 GENERIC_FATAL_ERROR_TITLE:Fatal Error
+#errorhandling.py
+ERROR_MISSING_PERMISSIONS_SPECIFIC:I don't have the permissions to run this command. Try moving my role higher or giving me the `{}` permission. 
+ERROR_MISSING_PERMISSIONS_GENERAL:I don't have the permissions to run this command. Try moving my role higher.
+ERROR_USER_MISSING_PERMISSIONS:You don't have the permissions needed to run this command. Try using `{}help <command>` to get more info on this command, including the required permissions.
+ERROR_COMMAND_DISABLED:\u274c Sorry, that command is disabled.
+ERROR_MISSING_ARGUMENT:You didn't provide the required parameter `{}`. See the help entry for `{}` to see what it takes.
 #core.py
 ERROR_COMMAND_NOT_READY:This command isn't ready yet. Try again in a moment.
 CLEARED_TODO_LIST:\u2705 Cleared your to-do list!

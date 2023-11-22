@@ -1,11 +1,8 @@
 #errorhandling.py: handles most errors. old and needs to be updated
 
-import traceback
-
-import discord
 import aiomysql
+import discord
 from discord.ext import commands
-
 
 class errorhandling(commands.Cog):
     def __init__(self, bot):
@@ -13,7 +10,7 @@ class errorhandling(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        owner = self.bot.get_user(538193752913608704)
+        owner = self.bot.get_user(self.bot.config['owner_id'])
         try:
             await owner.send(f"An error occurred in {ctx.guild.name} ({ctx.guild.id}): ")
             await self.bot.core.send_traceback(owner, error)
@@ -28,48 +25,36 @@ class errorhandling(commands.Cog):
                 return
         #check for database errors first, these should almost never happen
         if isinstance(error, aiomysql.OperationalError) or isinstance(error, aiomysql.ProgrammingError):
-            embed = discord.Embed(title="Fatal Error",description="\U0000274c You shouldn't see this message. If you do, an unexpected database error has occurred. \nContact my developer (tk___421) if you see this again.", color=self.bot.config['theme_color'])
+            embed = self.bot.core.ThemedEmbed(title=self.bot.strings["GENERIC_FATAL_ERROR_TITLE"],description=self.bot.strings["GENERIC_FATAL_ERROR"])
             if ctx.guild.me.guild_permissions.embed_links:
                 await ctx.send(embed=embed)
-            else:
-                await ctx.send("\U0000274c Something's gone terribly wrong on my end. If you were trying to create a custom command, change my prefix, or modify reaction roles, the changes might not have been saved. Try the command again, and if you encounter this issue again, please contact my developer (tk421#7244), and they'll look into it. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
-        if isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
+        elif isinstance(error, commands.BotMissingPermissions) or isinstance(error, discord.errors.Forbidden) or 'discord.errors.Forbidden' in str(error):
             try:
-                embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up or giving me the `{error.missing_perms[0]}` permission.", color=self.bot.config['theme_color'])
+                embed = self.bot.core.ThemedEmbed(title=self.bot.strings["ERROR_MISSING_PERMISSIONS_SPECIFIC"].format(error.missing_perms[0]))
             except AttributeError:
-                embed = discord.Embed(title=f"\U0000274c I don't have the permissions to run this command, try moving my role up.", color=self.bot.config['theme_color'])
+                embed = self.bot.core.ThemedEmbed(title=self.bot.strings["ERROR_MISSING_PERMISSIONS_GENERAL"])
             if ctx.guild.me.guild_permissions.embed_links:
                 await ctx.send(embed=embed)
-            else:
-                await ctx.send("\U0000274c I don't have the permissions to run this command, try moving my role up. I'm also not allowed to send embeds, which will make some responses look worse, and will prevent certain modules from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
-            return
-        if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
-            message = f"You don't have the permissions needed to run that command. Try using `{await self.bot.get_prefix(ctx.message)}help <command>` to get more info on that command, including the required permissions."
+        elif isinstance(error, commands.MissingPermissions) or isinstance(error, commands.NotOwner):
+            message = self.bot.strings["ERROR_USER_MISSING_PERMISSIONS"].format(await self.bot.get_prefix(ctx.message))
             await ctx.send(message)
-            return
-        if isinstance(error, commands.DisabledCommand):
-            return await ctx.send(embed=discord.Embed(title="\U0000274c Sorry, that command is disabled.", color=self.bot.config['theme_color']))
-        if isinstance(error, commands.MissingRequiredArgument):
+        elif isinstance(error, commands.DisabledCommand):
+            return await ctx.send(embed=self.bot.core.ThemedEmbed(title=self.bot.strings["ERROR_COMMAND_DISABLED"]))
+        elif isinstance(error, commands.MissingRequiredArgument):
             if ctx.guild.me.guild_permissions.embed_links:
-                embed = discord.Embed(title="\U0000274c You didn't provide the required parameter `" + error.param.name + "`. See the help entry for `" + ctx.command.name + "` to see what parameters this command takes.", color=self.bot.config['theme_color'])
+                embed = self.bot.core.ThemedEmbed(title=self.bot.strings["ERROR_MISSING_ARGUMENT"].format(error.param.name, ctx.command.name))
                 await ctx.send(embed=embed)
-                return
-            else:
-                await ctx.send(f"\U0000274c You didn't provide the required argument `{error.param.name}`. See the help entry for `{ctx.command.name}` to see what arguments this command takes. Currently, I'm not allowed to send embeds, which will make some responses look worse and prevent `userinfo` from functioning. To allow me to send embeds, go to Server Settings > Roles > Maximilian and turn on the 'Embed Links' permission.")
-                return
-        if isinstance(error, commands.CommandNotFound):
+        elif isinstance(error, commands.CommandNotFound):
             return
-        await ctx.send("There was an error. Please try again later.")
-        if not str(error):
-            error = error.__name__
-        await ctx.send(f"`{error}`")
+        else:
+            await ctx.send(embed=self.bot.core.ThemedEmbed(title=self.bot.strings["GENERIC_ERROR_TITLE"], description=self.bot.strings["GENERIC_ERROR"]))
+            if not str(error):
+                error = error.__name__
+            await ctx.send(f"`{error}`")
         await self.bot.core.send_debug(ctx)
 
 async def setup(bot):
     await bot.add_cog(errorhandling(bot))
-
-async def teardown(bot):
-    await bot.remove_cog(errorhandling(bot))
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
