@@ -56,7 +56,8 @@ class core(commands.Cog):
     async def getch_channel(self, channel_id):
         channel = self.bot.get_channel(channel_id)
         if not channel:
-            return await self.bot.fetch_channel(channel_id)
+            channel = await self.bot.fetch_channel(channel_id)
+        return channel
 
     async def send_paginated_embed(self, paginator, to_send, target):
         if to_send.description:

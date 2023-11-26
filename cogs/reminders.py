@@ -95,8 +95,6 @@ class reminders(commands.Cog):
             await channel.send(self.bot.strings["REMINDER"].format(user_id, hrtimedelta, remindertext))
         except OverflowError:
             await channel.send(self.bot.strings["REMINDER_OVERFLOW_ERROR"])
-        except:
-            pass
         #and delete it from the database
         await self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
