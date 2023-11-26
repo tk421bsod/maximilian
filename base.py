@@ -39,14 +39,21 @@ class CustomContext(commands.Context):
             ret = self.bot.settings.general.pagination.enabled(id)
             if ret:
                 #Get the name of our caller to prevent an infinite loop if we were called from send_paginated.
-                common.get_caller_name()
+                caller = common.get_caller_name()
                 if caller == "send_paginated" or caller == "send_paginated_embed":
                     skip_pagination = True
         except AttributeError:
             ret = False
+        if common.get_value(kwargs, "allowed_mentions"):
+            allowed_mentions = kwargs.pop("allowed_mentions")
+        else:
+            if self.bot.settings.general.mentions.enabled(id):
+                allowed_mentions = discord.AllowedMentions(everyone=False)
+            else:
+                allowed_mentions = discord.AllowedMentions(everyone=False, users=False, roles=False)
         if to_send and ret and not skip_pagination:
             return await self.bot.core.send_paginated(to_send, self, prefix="", suffix="")
-        return await super().send(*args, **kwargs)
+        return await super().send(*args, **kwargs, allowed_mentions=allowed_mentions)
 
 class maximilian(commands.Bot):
     __slots__ = ("PYTHON_MINOR_VERSION", "VER", "IS_DEBUG", "blocklist", "config", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "init_finished", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings")
@@ -70,9 +77,7 @@ class maximilian(commands.Bot):
             self.commit = common.get_latest_commit()
         if "--alt" in sys.argv:
             token = input("Enter a token to use: \n").strip()
-            logger.debug("Getting latest commit hash...")
             self.commit = common.get_latest_commit()
-            logger.debug("Done getting latest commit hash.")
         else:
             try:
                 self.commit
@@ -80,7 +85,7 @@ class maximilian(commands.Bot):
                 self.commit = ""
         #set up some attributes we'll need soon...
         logger.debug("Setting up some stuff")
-        super().__init__(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
+        super().__init__(allowed_mentions=discord.AllowedMentions(everyone=False), command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
         self.VER = VER
         self.init_finished = False
         self.logger = logger
@@ -217,7 +222,7 @@ class maximilian(commands.Bot):
 
     async def init_general_settings(self):
         #maybe we could make add_category itself a coro?
-        self.settings.add_category("general", {"debug":"Show additional error info", "pagination":"Experimental pagination features"}, {"debug":None, "pagination":None}, {"debug":"manage_guild", "pagination":None})
+        self.settings.add_category("general", {"debug":"Show additional error info", "pagination":"Experimental pagination features", "mentions":"User/role mentions in messages sent by the bot"}, {"debug":None, "pagination":None, "mentions":None}, {"debug":"manage_guild", "pagination":None, "mentions":"manage_guild"})
 
     async def start(self, *args, **kwargs):
         #Create our own ClientSession to prevent "Unclosed session" warnings at shutdown
