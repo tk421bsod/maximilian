@@ -1,6 +1,13 @@
 #main.py: loads core libraries and everything in the cogs folder, then starts Maximilian
 import sys
 
+#Text formatting things from common.py.
+#Reimplemented here to avoid costly imports (discord.py in particular)
+class Text:
+    NORMAL = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 #Version number. Please don't modify this.
 VER = "2.0.0-prerelease"
 
@@ -13,7 +20,7 @@ PYTHON_MINOR_VERSION = sys.version_info.minor
 #Are we being imported?
 if __name__ != "__main__":
     print("It looks like you're trying to import main.py.")
-    print("Please don't do that. Some code here relies on being ran directly through a command such as python3 main.py.")
+    print(f"{Text.BOLD}Please don't do that.{Text.NORMAL} Some code here relies on being ran directly through a command such as python3 main.py.")
     print("Need to access some Maximilian API? Just import the right file. Read HOSTING.md for an overview.")
     print("If you have a legitimate use case for this, I'd like to hear about it -- send me a DM at tk___421 on Discord.")
     print("Maximilian will now attempt to exit.")
@@ -21,8 +28,8 @@ if __name__ != "__main__":
 
 #Are we using an out-of-date Python?
 if sys.version_info.major == 3 and PYTHON_MINOR_VERSION < 8:
-    print("Hi there. It looks like you're trying to run maximilian with an older version of Python 3.")
-    print("Maximilian cannot run on Python versions older than 3.8.")
+    print("Hi there. It looks like you're trying to run Maximilian with an old version of Python 3.")
+    print(f"{Text.BOLD}Maximilian cannot run on Python versions older than 3.8.{Text.NORMAL}")
     print("You'll need to upgrade Python to continue.")
     quit()
 
@@ -36,19 +43,19 @@ if "--help" in sys.argv:
     print("main.py handles initializing core components, checking requirements, and launching Maximilian.\n")
     print("You can enable/disable features and modify Maximilian's behavior through the use of the following options.\nYou can use more than one option at a time.\n")
     print("Options:")
-    print("--enablejsk - Enables Jishaku, an extension used for debugging and code evaluation.")
-    print("--version - Shows version information and exits. New in version 2.0.")
-    print("--no-update - Skips update check on startup. Takes precendence over --update. Renamed from --noupdate in version 2.0.")
-    print("--update - Updates Maximilian and exits. Implicitly enables --force-update.")
-    print("--force-update - Forces update check on startup regardless of the time since last update.")
-    print("--no-load <extensions> - Skips loading the specified extensions. Renamed from --noload in version 2.0.")
-    print("--no-rich - Disables rich text. May be useful on older systems or smaller screens.")
-    print("-q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose - Sets the logging level. If not specified, defaults to logging.WARN. Debug logging (-v, --debug, --verbose) can cause a slight performance decrease and will make log files much larger.")
-    print("--ip <address> - Tries to connect to a database at the specified address instead of localhost.")
-    print("--help - Shows this message and exits.")
-    print("--language <language> - Sets the language to <language>. If not specified, defaults to 'en'. New in version 2.0.")
-    print("--alt - Prompts for a token to use. Also adds the latest commit hash to the default status.")
-    print("--no-file - Stops Maximilian from saving logs to a file. New in version 2.0.")
+    print(f"{Text.BOLD}--enablejsk{Text.NORMAL} - Enables Jishaku, an extension used for debugging and code evaluation.")
+    print(f"{Text.BOLD}--version{Text.NORMAL} - Shows version information and exits. New in version 2.0.")
+    print(f"{Text.BOLD}--no-update{Text.NORMAL} - Skips update check on startup. Takes precendence over --update. Renamed from --noupdate in version 2.0.")
+    print(f"{Text.BOLD}--update{Text.NORMAL} - Updates Maximilian and exits. Implicitly enables --force-update.")
+    print(f"{Text.BOLD}--force-update{Text.NORMAL} - Forces update check on startup regardless of the time since last update.")
+    print(f"{Text.BOLD}--no-load <extensions>{Text.NORMAL} - Skips loading the specified extensions. Renamed from --noload in version 2.0.")
+    print(f"{Text.BOLD}--no-rich{Text.NORMAL} - Disables rich text. May be useful on older systems or smaller screens.")
+    print(f"-{Text.BOLD}q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose{Text.NORMAL} - Sets the logging level. If not specified, defaults to logging.WARN. \nDebug logging (-v, --debug, --verbose) can cause a slight performance decrease and will make log files much larger.")
+    print(f"{Text.BOLD}--ip <address>{Text.NORMAL} - Tries to connect to a database at the specified address instead of localhost.")
+    print(f"{Text.BOLD}--help{Text.NORMAL} - Shows this message and exits.")
+    print(f"{Text.BOLD}--language <language>{Text.NORMAL} - Sets the language to <language>. If not specified, defaults to the language present in 'config', then 'en' if nothing is found. New in version 2.0.")
+    print(f"{Text.BOLD}--alt{Text.NORMAL} - Prompts for a token to use. Also adds the latest commit hash to the default status.")
+    print(f"{Text.BOLD}--no-file{Text.NORMAL} - Stops Maximilian from saving logs to a file. New in version 2.0.")
     quit()
 
 if "--version" in sys.argv:
@@ -57,8 +64,9 @@ if "--version" in sys.argv:
 
 #Did the user use any old arguments?
 for old_arg, new_arg in {"--noupdate":"--no-update", "--noload":"--no-load"}.items():
-    if old_arg in sys.argv:
-        print(f"You're using the old '{old_arg}' option.\nThis option was changed to '{new_arg}' in 2.0.\nUse the new option instead.")
+    if old_arg not in sys.argv:
+        continue
+    print(f"You're using the old '{old_arg}' option.\nThis option was changed to '{new_arg}' in 2.0.\nUse the new option instead.")
     quit()
 
 print("Loading components...")
@@ -83,7 +91,7 @@ try:
     from discord.ext import commands
     from discord.ext.commands.errors import NoEntryPointError
 except (ImportError, NameError, SyntaxError) as e:
-    print("Maximilian cannot start because an external dependency failed to load.\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
+    print(f"{Text.BOLD}Maximilian cannot start because an external dependency failed to load.{Text.NORMAL}\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
     print(e)
     if IS_DEBUG:
         traceback.print_exc()
@@ -92,14 +100,14 @@ except (ImportError, NameError, SyntaxError) as e:
 try:
     from db_utils import async_db
 except ImportError as e:
-    print("Maximilian cannot start because its database API failed to load.\nConsider running 'git submodule init' followed by 'git submodule update'.")
+    print("{Text.BOLD}Maximilian cannot start because its database API failed to load.{Text.NORMAL}\nConsider running 'git submodule init' followed by 'git submodule update'.")
     sys.exit(2)
 
 try:
     from base import maximilian
     import updater
 except (ImportError, NameError, SyntaxError) as e:
-    print("Maximilian cannot start because an internal module failed to load.\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk___421 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
+    print("{Text.BOLD}Maximilian cannot start because an internal module failed to load.{Text.NORMAL}\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk___421 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
     print(e)
     if IS_DEBUG:
         traceback.print_exc()
