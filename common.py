@@ -15,6 +15,11 @@ class Version:
         self.minor = 0
         self.micro = 0
 
+class Text:
+    NORMAL = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 #TimeConverter originally from cogs/reminders.py
 class TimeConverter(commands.Converter):
     """
