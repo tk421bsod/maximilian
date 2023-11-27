@@ -182,7 +182,7 @@ try:
             print("Updater interrupted. Exiting.")
             quit()
         print("Updater interrupted. Maximilian will start in a moment.")
-        time.sleep(1)
+    time.sleep(1)
     outer_logger.debug("Preparing to start the event loop...")
     #initialize stuff needed before we enter an async context
     bot = maximilian(outer_logger, VER)

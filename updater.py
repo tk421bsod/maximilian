@@ -36,22 +36,38 @@ def update():
     initial = common.get_latest_commit()
     #get current remote
     remote = common.run_command("git remote")['output'][0]
+    ret = common.run_command("git branch --show-current")
     #get current branch
-    branch = common.run_command("git branch --show-current")['output'][0]
+    branch = ret['output'][0]
     time.sleep(0.5)
+    if ret['returncode'] == 128:    
+        print("Maximilian is running under a different user than the one that owns its root directory!")
+        print("Git really doesn't like this.")
+        print("You may have run this as root or cloned the repository as root.")
+        print("Using Maximilian through a process manager? Run with --no-update.")
+        print("Something like `git config --system --add safe.directory \"/path/to/maximilian\"` should fix this.")
+        raise KeyboardInterrupt
+    if branch == "":
+        print("It doesn't look like you're on a branch.")
+        print("You may be in a 'detached HEAD' state.")
+        print("Consider checking out either the 'release' or 'development' branch.")
+        print("See https://stackoverflow.com/questions/10228760 for more information.")
+        raise KeyboardInterrupt
     print(f"You're currently on the '{branch}' branch.")
     if branch == 'development':
-        print("Updates on this branch may be unstable.")
+        print("Updates on this branch may break things.")
         print("You can switch back to the 'release' branch at any time using 'git checkout release'.")
         print("If an update breaks something, reset to the previous commit using 'git reset HEAD~1'.")
+        print("If you decide to revert, you may need to go back to the latest commit with `git reset --hard HEAD` before you can receive further updates.")
     elif branch == 'release':
         print("Updates on this branch are infrequent but stable.")
         print("You can switch to other branches at any time using 'git checkout <branch>'.")
         print("Use 'git branch' to view a list of branches.")
     else:
-        print("It looks like you're on a release snapshot branch for version 1.2 or later.")
-        print("This release no longer receives support and may stop working without notice.")
-        print("Consider switching to the `release` branch using `git checkout release`.")
+        print("I can't tell what kind of branch this is.")
+        print("You're either on a release snapshot branch for version 2.0 onward or your own custom branch.")
+        print("Old releases don't receive support and may stop working without notice.")
+        print("For the latest changes, consider switching to the `release` branch using `git checkout release`.")
     time.sleep(1)
     try:
         config = common.load_config()
