@@ -20,27 +20,28 @@ CLEAR_TODO_LIST_DESC:You've requested that I delete your to-do list. To prevent 
 CLEAR_TODO_LIST_TITLE:Delete your to-do list?
 DELETION_CONFIRMED:Proceeding with deletion...
 CONFIRMATION_OPTIONS_TITLE:Your options
-CONFIRMATION_OPTIONS:Click/tap \u2705 to delete your to-do list. \nClick/tap \u274e to cancel.
+CONFIRMATION_OPTIONS:Press \u2705 to delete your to-do list. \nPress \u274e to cancel.
 CLEAR_ALL_EFFECTS_DESC:If you proceed, all reaction roles and custom commands you've set up will be deleted, and my prefix will be reset to `!`. **THIS CANNOT BE UNDONE.**
-CLEAR_ALL_DESC:You've requested that I delete all the information I have stored about this server (use the `privacy` command to view details on the data I collect). I need you to confirm that you actually want to do this.
+CLEAR_ALL_DESC:You've requested that I delete all the information I have stored about this server. I need you to confirm that you actually want to do this.
 CLEAR_ALL_TITLE:Delete all data?
 DELETION_DENIED:Ok. I won't delete anything.
 DELETION_TIMEOUT:Deletion request timed out. I won't delete anything.
 DELETION_ACTIVE:A deletion request is already active.
 DEBUG_INFO:Here's some additional error info:
 DEBUG_DISABLE_REMINDER:*This behavior can be disabled through the command `<prefix> config general debug`.*
+PAGINATION_ADDITIONAL_PAGES: (page {})
 NOT_OWNER:How did you find these commands? These aren't supposed to be used by anyone but my owner. \nHosting this instance yourself? Change owner_id in config.
 #settings.py
 CONFLICT_STRING_MULTIPLE:{} and '*{}*'
 CURRENTSETTINGS_TITLE:Settings for category '{}'
 CURRENTSETTINGS_FOOTER:If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings only apply to your server.
 GENERAL_CATEGORY:General settings
-UNKNOWN_SETTING:Sorry, that setting doesn't exist. Check the spelling.
-UNKNOWN_CATEGORY:That category doesn't exist. Check the spelling.\nYou can choose from one of the following categories:\n{}
+UNKNOWN_SETTING:Sorry, that setting doesn't exist. You may have not spelled it correctly.
+UNKNOWN_CATEGORY:That category doesn't exist. You may have not spelled it correctly.\nYou can choose from one of the following categories:\n{}
 CATEGORY_NOT_SPECIFIED:You need to specify a setting category.\nYou can choose from one of the following:\n{}\nLooking for bot-wide settings? Use `config general`.
 CATEGORY_NOT_READY:Give me a moment to prepare...
 CATEGORY_LIST:You can choose from one of the following categories:{}
-SETTING_ERROR:Something went wrong while changing that setting. Try again in a moment. \nI've reported this to my owner. If this keeps happening, consider opening an issue on Github.
+SETTING_ERROR:Something went wrong while changing that setting. Try again in a moment. \nI've reported this to my owner.
 SETTING_CHANGED_TITLE:\u2705 Changes saved.
 SETTING_DISABLED:Disabled
 SETTING_ENABLED:Enabled
@@ -81,10 +82,15 @@ ABOUT_SUMMARY_TEXT:Quite a few things. In short, it's a versatile, multi-purpose
 ABOUT_HELP_TITLE:Useful stuff
 ABOUT_HELP_TEXT:Use `{}help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=335923264&scope=bot). \nIf you want to contribute to my development, visit my Github repository at https://github.com/tk421bsod/maximilian.
 ABOUT_COMMANDS_TITLE:Commands
-ABOUT_LATESTUPDATE_TITLE:Latest update - v1.1.0 (Feb 9, 2023)
-ABOUT_LATESTUPDATE_TEXT:Changes to reminders, custom commands, and the help command.\nWant to see changes from the last few updates? Use the `news` command.
+ABOUT_LATESTUPDATE_TITLE:Latest update - v2.0 (in active development)
+ABOUT_LATESTUPDATE_TEXT:Hybrid commands, improved performance, new settings, QoL features, and so much more.\nWant to see changes from the last few updates? Use the `news` command.
+PRERELEASE_TITLE:Important info about this version:
+PRERELEASE_TEXT:This is a pre-release version and may have major issues. This installation might not reflect the current state of the `development` branch. Currently on commit `{}`.
 NEWS_TITLE:News
 NEWS_DESC:**Feb 9, 2023 - 1.1.0**\n[Various changes to reminders, settings, custom commands, and the help command](https://gist.github.com/TK421bsod/51bc3910a32289da2e9905e20f7e0c2a)\n\n**Jan 31, 2023 - 1.0.4**\n[Another round of bug fixes](https://gist.github.com/TK421bsod/12d6f8d611f56552654301852ba72393)\n\n**Jan 26, 2023 - 1.0.3**\n[Just some bug fixes](https://gist.github.com/TK421bsod/c71364e2a10c10247ce3faede437e9a6)\n\n**Jan 17, 2023 - 1.0.2**\n[Bug fixes, `news` command](https://gist.github.com/TK421bsod/95663a2f5bde64e5fcb4bda9c8b82c05)\n\n**Jan 4, 2023 - 1.0.0**\n[The first major release since April 2021. Lots of changes.](https://gist.github.com/TK421bsod/2980fa67a9a5f925e7cdfb9f083a5c3b)
+VERSION_TITLE:Version information
+#bot.VER, bot.commit
+VERSION_TEXT:Currently running version {} (at commit {})
 #cogs/music.py
 SEEKING:\u23e9 Seeking to `{}`...
 SEEK_INVALID:I can't skip beyond the end of a song.
