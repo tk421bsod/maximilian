@@ -23,7 +23,7 @@ if __name__ != "__main__":
     print(f"{Text.BOLD}Please don't do that.{Text.NORMAL} Some code here relies on being ran directly through a command such as python3 main.py.")
     print("Need to access some Maximilian API? Just import the right file. Read HOSTING.md for an overview.")
     print("If you have a legitimate use case for this, I'd like to hear about it -- send me a DM at tk___421 on Discord.")
-    print("Maximilian will now attempt to exit.")
+    print("Maximilian will now exit.")
     quit()
 
 #Are we using an out-of-date Python?
@@ -100,14 +100,14 @@ except (ImportError, NameError, SyntaxError) as e:
 try:
     from db_utils import async_db
 except ImportError as e:
-    print("{Text.BOLD}Maximilian cannot start because its database API failed to load.{Text.NORMAL}\nConsider running 'git submodule init' followed by 'git submodule update'.")
+    print(f"{Text.BOLD}Maximilian cannot start because its database API failed to load.{Text.NORMAL}\nConsider running 'git submodule init' followed by 'git submodule update'.")
     sys.exit(2)
 
 try:
     from base import maximilian
     import updater
 except (ImportError, NameError, SyntaxError) as e:
-    print("{Text.BOLD}Maximilian cannot start because an internal module failed to load.{Text.NORMAL}\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk___421 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
+    print(f"{Text.BOLD}Maximilian cannot start because an internal module failed to load.{Text.NORMAL}\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk___421 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
     print(e)
     if IS_DEBUG:
         traceback.print_exc()

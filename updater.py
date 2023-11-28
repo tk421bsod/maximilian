@@ -6,6 +6,7 @@ import datetime
 import sys
 
 import common
+from common import Text
 
 def list_in_str(list, string):
     '''
@@ -41,7 +42,7 @@ def update():
     branch = ret['output'][0]
     time.sleep(0.5)
     if ret['returncode'] == 128:    
-        print("Maximilian is running under a different user than the one that owns its root directory!")
+        print(f"{Text.BOLD}Maximilian is running under a different user than the one that owns its root directory!{Text.NORMAL}")
         print("Git really doesn't like this.")
         print("You may have run this as root or cloned the repository as root.")
         print("Using Maximilian through a process manager? Run with --no-update.")
@@ -53,18 +54,18 @@ def update():
         print("Consider checking out either the 'release' or 'development' branch.")
         print("See https://stackoverflow.com/questions/10228760 for more information.")
         raise KeyboardInterrupt
-    print(f"You're currently on the '{branch}' branch.")
+    print(f"{Text.BOLD}You're currently on the '{branch}' branch.")
     if branch == 'development':
-        print("Updates on this branch may break things.")
+        print(f"Updates on this branch may break things.{Text.NORMAL}")
         print("You can switch back to the 'release' branch at any time using 'git checkout release'.")
         print("If an update breaks something, reset to the previous commit using 'git reset HEAD~1'.")
         print("If you decide to revert, you may need to go back to the latest commit with `git reset --hard HEAD` before you can receive further updates.")
     elif branch == 'release':
-        print("Updates on this branch are infrequent but stable.")
+        print(f"Updates on this branch are infrequent but stable.{Text.NORMAL}")
         print("You can switch to other branches at any time using 'git checkout <branch>'.")
         print("Use 'git branch' to view a list of branches.")
     else:
-        print("I can't tell what kind of branch this is.")
+        print(f"I can't tell what kind of branch this is.{Text.NORMAL}")
         print("You're either on a release snapshot branch for version 2.0 onward or your own custom branch.")
         print("Old releases don't receive support and may stop working without notice.")
         print("For the latest changes, consider switching to the `release` branch using `git checkout release`.")
@@ -77,8 +78,10 @@ def update():
         elif "--force-update" in sys.argv or "--update" in sys.argv:
             print("main.py was invoked with --force-update. Checking for updates now.")
         else:
+            #Convert our last update timestamp from a Unix timestamp to datetime 
             last = datetime.datetime.fromtimestamp(int(last_update))
-            print(f"\nLast check for updates was at {last.strftime('%-I:%M %p on %B %d, %Y.')}")
+            #                                      "was at HOUR:MINUTE <AM/PM> on MONTH DAY, YEAR."
+            print(f"\n{Text.BOLD}Last check for updates was at {last.strftime('%-I:%M %p on %B %d, %Y.')}{Text.NORMAL}")
             elapsed = (datetime.datetime.now()-last).days
             try:
                 automatic_updates = bool(config['automatic_updates'])
