@@ -79,10 +79,10 @@ class core(commands.Cog):
         for count, page in enumerate(paginator.pages):
             title = to_send.title
             if len(paginator.pages) > 1:
-                title += f" (page {count+1})"
+                title += self.bot.strings["PAGINATOR_ADDITIONAL_PAGES"].format(count+1)
             #TODO: This can break some embed layouts as we may be converting from separate fields to a description.
             embed = self.ThemedEmbed(title=title, description=page)
-            self.logger.debug(f"page {count} of {len(paginator.pages)}")
+            self.logger.debug(f"page {count+1} of {len(paginator.pages)}")
             if count+1 == len(paginator.pages) and to_send.footer:
                 embed.set_footer(text=to_send.footer.text)
             await target.send(embed=embed)
