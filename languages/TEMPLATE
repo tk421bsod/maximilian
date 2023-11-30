@@ -100,7 +100,7 @@ JOINING:Joining your voice channel...
 MUSIC_DISABLED:Sorry, music commands are disabled in this server. Ask a moderator to enable them through `<prefix> config music toggle`.\nIf I'm playing something, you can still use `<prefix> leave`.\nIf you just added me, music features are disabled by default.
 NO_URL:You need to specify a url or something to search for.
 PERFORMANCE_MODE_ENABLED:\u26a0\ufe0f Performance mode is enabled. Songs will load faster, but you may experience reduced audio quality.\nTo disable this, run `{}config music performance`.
-PERFORMANCE_MODE_REMINDER:*Songs taking forever to start playing?*\nTry the new performance mode by using `{await self.bot.get_prefix(ctx.message)}config music performance`.\nThis may reduce audio quality.\n
+PERFORMANCE_MODE_REMINDER:*Songs taking forever to start playing?*\nTry the new performance mode by using `{}config music performance`.\nThis may reduce audio quality.\n
 ALREADY_CONNECTED:I'm already in your voice channel, so I won't reconnect.
 QUEUE_ADD:Adding to your queue...
 MOVING_TIMEOUT:Moving to the `{}` voice channel timed out.
@@ -192,35 +192,35 @@ ROLE_LIST_TITLE:Reaction roles in this server:
 DOESNT_HAVE_ROLE:{} For some reason, you don't have the '{}' role, even though you reacted to the message. Try removing your reaction and adding it again. If this keeps happening, notify tk___421.
 ROLE_FORMAT: <@&{}>\nMessage ID: {} \nEmoji: {}\n\n
 #cogs/reminders.py
-TIMECONVERTER_INVALID_UNIT:Sorry, this command does not accept the unit '{}'. This command only accepts {}!
+TIMECONVERTER_INVALID_UNIT:Sorry, this command doesn't accept the unit '{}'. This command only accepts {}!
 TIMECONVERTER_NAN:Sorry, the amount of time provided must be a number.
 TIMECONVERTER_INVALID_TIME:Sorry, that amount of time is invalid.
 TIMECONVERTER_ADD_REMOVED:The 'add' option was removed in version 1.1.0. Remove it from the command so the time value gets interpreted correctly.
 SETTING_REMINDER:Setting your reminder...
-REMINDER_SET:Ok, in {} i'll remind you to: '{}'
+REMINDER_SET:Ok, in {}: '{}'
 REMINDER:<@{}> {} ago: '{}'
 REMINDER_OVERFLOW_ERROR:Sorry, it looks like you somehow set a reminder for wayyyyyyyyyyy too far in the future.\nI can't process reminders that far out.\nThat reminder will be automatically deleted shortly.
 COMMAND_HELP_TODO_ADD:Adds an item to your to-do list.
 ENTRY_NOT_SPECIFIED_ADD:You didn't say what you wanted to add to your to-do list. Run this command again with what you wanted to add. For example, you can add 'fix error handling' to your to-do list by using `{}todo add fix error handling`.
 ENTRY_ALREADY_EXISTS:That entry already exists.
-ENTRY_ADDED:\u2705 Successfully added that to your to-do list.\n
+ENTRY_ADDED:\u2705 Added that to your list.\n
 ENTRY_COUNT:You now have {} {} in your list.
 ENTRY_SINGLE:entry
 ENTRY_PLURAL:entries
-ERROR_ENTRY_ADD_FAILED:There was an error while adding that to your to-do list. Try again later. I've reported this error to my developer.
+ERROR_ENTRY_ADD_FAILED:I wasn't able to add that to your to-do list. Try again later. I've reported this error to my developer.
 ENTRY_NOT_SPECIFIED_DELETE:You didn't say what entry you wanted to delete.
 ENTRY_NAN_DELETE:You need to specify the number of the entry you want to delete. {}
-DELETION_EXAMPLE:For example, if 'fix to-do deletion' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.
+DELETION_EXAMPLE:For example, if 'order corn' was the first entry in your list and you wanted to delete it, you would use `todo delete 1`.
 ENTRY_DELETION_CONFIRMED:Alright, deleting that entry.
 ENTRY_DELETION_DENIED:Not deleting that entry.
 RAPID_DELETION_CONFIRMATION_TITLE:Are you sure you want to delete this entry?
-RAPID_DELETION_CONFIRMATION_DESCRIPTION:It looks like you're rapidly deleting entries from your to-do list.\nYour to-do list re-organizes as you delete entries, so this entry may not be the one you want to delete.\nReact with \u2705 to delete the following anyway:
+RAPID_DELETION_CONFIRMATION_DESCRIPTION:It looks like you're rapidly deleting entries from your to-do list.\nYour to-do list re-organizes as you delete entries, so this entry may not be the one you want to delete.\nPress \u2705 to delete the following anyway:
 RAPID_DELETION_CONFIRMATION_FOOTER:You're seeing this message because you deleted more than 2 entries within 1 minute.
-ENTRY_DELETED:\u2705 Successfully deleted that from your to-do list.\n
+ENTRY_DELETED:\u2705 Entry deleted.\n
 ENTRY_NOT_FOUND:Sorry, that entry couldn't be found.
 LIST_NOW_EMPTY:Your list is now empty.
-LIST_EMPTY:It doesn't look like you have anything in your to-do list.
-ERROR_ENTRY_DELETE_FAILED:Sorry, something went wrong while deleting that from your to-do list. Try again later. I've reported this to my developer.
+LIST_EMPTY:Your to-do list is empty.
+ERROR_ENTRY_DELETE_FAILED:I wasn't able to delete that from your to-do list. Try again later. I've reported this to my developer.
 LIST_TOO_LONG:Your to-do list is too long to show in a single message. Only showing entries 1 to {}.
 ENTRY:{}. `{}`\nCreated {} ago.\n\n
 LIST_HEADER:{}'s to-do list
