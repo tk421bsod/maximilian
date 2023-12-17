@@ -86,17 +86,16 @@ class maximilian(commands.Bot):
         #set up some attributes we'll need soon...
         logger.debug("Setting up some stuff")
         super().__init__(allowed_mentions=discord.AllowedMentions(everyone=False), command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
-        self.VER = VER
-        self.init_finished = False
-        self.logger = logger
         self.common = common 
         self.config = config
+        self.help_command = helpcommand.HelpCommand(verify_checks=False)
+        self.init_finished = False
+        self.logger = logger
         self.noload = [] #list of modules for load_extensions_async to skip, set by parse_arguments
         self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
         self.responses = [] #custom commands list. TODO: make this less baked in
         self.start_time = time.time()
-        self.help_command = helpcommand.HelpCommand(verify_checks=False)
-        self.set_database_name()
+        self.VER = VER
         startup.show_2_0_first_run_message(config)
         #parse additional arguments (ip, enablejsk, noload)
         self.logger.debug("Parsing command line arguments...")
@@ -242,6 +241,8 @@ class maximilian(commands.Bot):
         #register our on_message event...
         #TODO: Consider moving this to core
         await self.wrap_event()
+        #prepare for database initialization...
+        self.set_database_name()
         #initialize the database...
         await self.setup_db()
         #and initialize the settings api
