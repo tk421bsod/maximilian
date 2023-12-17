@@ -8,6 +8,7 @@ import sys
 from discord.ext import commands
 
 class Version:
+    """Represents a software version."""
     __slots__ = ("major", "minor", "micro")
 
     def __init__(self):
@@ -16,13 +17,16 @@ class Version:
         self.micro = 0
 
 class Text:
+    """Console text formatting utilities."""
+
     NORMAL = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
 #TimeConverter originally from cogs/reminders.py
 class TimeConverter(commands.Converter):
-    """
+    """Converts time values into an amount of seconds.
+
     A discord.ext.commands.Converter that converts time values into an amount of seconds.
     You can choose which units of time to accept.
 
@@ -39,9 +43,14 @@ class TimeConverter(commands.Converter):
     """
     __slots__ = ("TIME_REGEX", "TIME_DICT", "NAN", "INVALID_UNIT", "ADD_REMOVED", "allowed_units")
 
-    def __init__(self, bot, allowed_units):
+    def __init__(self, bot:commands.Bot, allowed_units:list):
         """
         Construct a new TimeConverter.
+
+        allowed_units must be a list/tuple of strings, each one representing the first letter of a unit of time.
+        To only allow hours, minutes, and seconds, something like `allowed_units=["h", "m", "s"]` will work.
+
+        See class documentation for example usage and help command integration.
         """
         self.TIME_REGEX = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhdw])")
         self.TIME_DICT = {"w":604800, "d":86400, "h":3600, "m":60, "s":1}
@@ -122,11 +131,15 @@ def load_config():
     return config
 
 def run_command(cmd):
+    """Run `cmd`. 
+    
+    Basically a pretty wrapper for `subprocess.run(cmd, shell=True, capture_output=True, encoding='utf-8')`
+    """
     #why have this check?
     #getting a new Logger on every run_command call could add some performance overhead.
     #(and I don't want to wrap this in a class just so I can add that as an attr)
     if logging.root.level == logging.DEBUG:
-        logging.getLogger('common').debug(f"Calling run_command with \"{cmd}\"")
+        logging.getLogger('common').debug(f"Running command \"{cmd}\"")
     p = subprocess.run(cmd, shell=True, capture_output=True, encoding="utf-8")
     if logging.root.level == logging.DEBUG:
         logging.getLogger('common').debug({"output":p.stdout.strip().split("\n"), "returncode":p.returncode})
