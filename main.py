@@ -198,7 +198,7 @@ except KeyError:
 except FileNotFoundError:
     outer_logger.error("No configuration file found. Run setup.sh.")
 except SystemExit: #raised on quit()
-    pass
+    print("Exiting.")
 except:
     #Unsure why this exists, maybe some errors get re-raised here??
     try:
