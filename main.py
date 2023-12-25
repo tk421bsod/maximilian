@@ -196,7 +196,7 @@ async def run(logger):
     else:
         commit = ""
     logger.debug("Setting up some stuff")
-    bot = commands.Bot(command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.1.0{f'-{commit}' if commit else ''}"))
+    bot = commands.Bot(command_prefix=core.get_prefix, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False), owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v1.1.1{f'-{commit}' if commit else ''}"))
     #set up some important stuff
     bot.database = "maximilian" #TODO: remove this
     #TODO: remove unused attrs
@@ -205,7 +205,7 @@ async def run(logger):
     bot.config = config
     await wrap_event(bot)
     #show version information
-    bot.logger.warning(f"Starting Maximilian v1.1.0{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
+    bot.logger.warning(f"Starting Maximilian v1.1.1{f'-{commit}' if commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{sys.version_info.minor} and discord.py {discord.__version__}) ")
     #parse additional arguments (ip, enablejsk, noload)
     bot.noload = []
     bot.logger.debug("Parsing command line arguments...")
