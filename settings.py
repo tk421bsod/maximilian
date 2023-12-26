@@ -39,9 +39,14 @@ class Setting():
         self.states = states
         self.description = category.settingdescmapping[name]
         self.name = name
-        self.unusablewith = category.unusablewithmapping[name]
         self.category = category
         self.permission = permission
+        try:
+            self.unusablewith = category.unusablewithmapping[name]
+        except KeyError:
+            category.logger.warn(f"Setting '{self.name}' doesn't have an entry in the parent Category's 'unusablewithmapping'!")
+            category.logger.warn("Defaulting to None.")
+            self.unusablewith = None
         #add this setting as an attr of category
         #one can access it via 'bot.settings.<category>.<setting>'
         setattr(category, name.strip().replace(" ", "_"), self)
@@ -193,8 +198,24 @@ class Category():
         self.logger.debug("Populating setting states...")
         for index, setting in enumerate(self.data):
             self.logger.debug(f"Processing entry {setting}")
+            try:
+                self.settingdescmapping[setting['setting']]
+            except KeyError:
+                self.logger.warn(f"Setting '{setting['setting']}' was removed from its parent Category but is still in the database.")
+                self.logger.warn(f"Removing it.")
+                try:
+                    await self.bot.db.exec("delete from config where category=%s and setting=%s", (self.name, setting['setting']))
+                except:
+                    self.logger.warn("Setting was already removed from the database.")
+                else:
+                    self.logger.warn("Removed that setting.")
+                continue
             if self.permissionmapping:
-                permission = self.permissionmapping[setting['setting']]
+                try:
+                    permission = self.permissionmapping[setting['setting']]
+                except KeyError:
+                    self.logger.debug(f"Setting {setting['setting']} not found in permissionmapping for its parent Category! Assuming a permission value of None.")
+                    permission = None
             else:
                 permission = None
             states[setting['guild_id']] = self.get_initial_state(setting)
