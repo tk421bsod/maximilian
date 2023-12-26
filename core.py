@@ -283,7 +283,7 @@ class core(commands.Cog):
         elif type.lower() == "playing":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=newstatus))
         elif type.lower() == "default":
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" v0.6 (stable)"))
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" v1.1.1 (stable)"))
         else:
             await ctx.send("oh :blobpaiN; invalid status! ¯\_(ツ)_/¯")
             return
