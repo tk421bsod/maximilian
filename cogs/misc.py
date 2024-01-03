@@ -86,6 +86,16 @@ class misc(commands.Cog):
             branch = "master"
         await ctx.send(f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>')
 
+    @commands.command()
+    async def version(self, ctx):
+        """Show version information."""
+        commit = self.bot.commit if self.bot.commit else self.bot.common.get_latest_commit()
+        desc = self.bot.strings["VERSION_TEXT"].format(self.bot.VER, commit)
+        embed = self.bot.core.ThemedEmbed(title="Version information", description=desc)
+        if "prerelease" in self.bot.VER:
+            embed.add_field(name=self.bot.strings["PRERELEASE_TITLE"], value=self.bot.strings["PRERELEASE_TEXT"].format(commit))
+        await ctx.send(embed=embed)
+
     @commands.command(aliases=["rm"])
     async def rolemembers(self, ctx, *, role:discord.Role):
         '''Show the names and discriminators of everyone who has the specified role.'''

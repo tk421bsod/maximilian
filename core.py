@@ -125,13 +125,6 @@ class core(commands.Cog):
     async def utils(self, ctx):
         pass
 
-    @utils.command(hidden=True)
-    async def version(self, ctx):
-        """Show version information."""
-        desc = f"Currently running version *{self.bot.VER}* at commit *{common.get_latest_commit()}*."
-        embed = self.ThemedEmbed(title="Version information", description=desc)
-        await ctx.send(embed=embed)
-
     @commands.is_owner()
     @utils.command(hidden=True)
     async def sync(self, ctx):
