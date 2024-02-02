@@ -862,3 +862,6 @@ async def setup(bot):
 
 async def teardown(bot):
     await bot.remove_cog(music(bot))
+
+def requirements():
+    return {"intents":("voice_states", "members"), "tables":{'songs':'name text, id text, duration varchar(8), thumbnail text, raw_duration mediumint unsigned'}}

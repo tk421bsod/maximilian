@@ -7,6 +7,7 @@ Also implements a subclass of discord.ext.commands.Context to allow for paginati
 """
 
 import asyncio
+import importlib
 import os
 import sys
 import time
@@ -56,7 +57,7 @@ class CustomContext(commands.Context):
         return await super().send(*args, **kwargs, allowed_mentions=allowed_mentions)
 
 class maximilian(commands.Bot):
-    __slots__ = ("PYTHON_MINOR_VERSION", "VER", "IS_DEBUG", "blocklist", "config", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "init_finished", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings")
+    __slots__ = ("PYTHON_MINOR_VERSION", "VER", "IS_DEBUG", "blocklist", "config", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "init_finished", "required_intents", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings", "tables")
 
     def __init__(self, logger, VER):
         #Now that we've checked basic requirements and ran the updater, we can
@@ -70,8 +71,6 @@ class maximilian(commands.Bot):
         #TODO: Consider moving this to main.py next to Python version checks
         logger.debug("Checking discord.py version...")
         startup.check_version()
-        #get our Intents...
-        intents = self.get_intents()
         #Is this a prerelease version? Add the latest commit to the status.
         if "prerelease" in VER:
             self.commit = common.get_latest_commit()
@@ -83,23 +82,29 @@ class maximilian(commands.Bot):
                 self.commit
             except AttributeError:
                 self.commit = ""
+        #parse additional arguments (ip, enablejsk, noload)
+        self.logger = logger
+        logger.debug("Parsing command line arguments...")
+        startup.parse_arguments(self, sys.argv)
+        self.tables = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting, category)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned, constraint users primary key (user_id)'}
+        self.required_intents = {"reactions":True, "members":True, "guilds":True, "message_content":True, "messages":True}
+        logger.info("Checking module requirements...")
+        self.get_extension_requirements()
+        #get our Intents...
+        intents = self.get_intents()
         #set up some attributes we'll need soon...
         logger.debug("Setting up some stuff")
         super().__init__(allowed_mentions=discord.AllowedMentions(everyone=False), command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
-        self.common = common 
+        self.common = common
         self.config = config
         self.help_command = helpcommand.HelpCommand(verify_checks=False)
         self.init_finished = False
-        self.logger = logger
         self.noload = [] #list of modules for load_extensions_async to skip, set by parse_arguments
         self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
         self.responses = [] #custom commands list. TODO: make this less baked in
         self.start_time = time.time()
         self.VER = VER
         startup.show_2_0_first_run_message(config)
-        #parse additional arguments (ip, enablejsk, noload)
-        self.logger.debug("Parsing command line arguments...")
-        startup.parse_arguments(self, sys.argv)
         logger.debug("Starting the event loop.")
 
     def set_database_name(self):
@@ -113,6 +118,54 @@ class maximilian(commands.Bot):
 
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
+
+    def extension_requires_intents(self, extension, intents):
+        for intent in intents:
+            self.logger.debug(f"Module '{extension}' requires Intent '{intent}'")
+            self.required_intents[intent] = True
+            if intent in ["members", "message_content", "presences"]:
+                self.logger.warn(f"Module '{extension}' is requesting privileged Intent '{intent}'!")
+                self.logger.warn("If these are not enabled in the Developer Portal, startup will fail.")
+
+    def extension_requires_tables(self, extension, tables):
+        if not isinstance(tables, dict):
+            self.logger.warn("Modules must provide table schemas as a dict!")
+        for table, schema in tables.items():
+            if table not in list(self.tables.keys()):
+                self.logger.debug(f"Module '{extension}' requires table '{table}'. Schema is '{schema}'")
+                self.tables[table] = schema
+
+    def parse_extension_requirements(self, extension, data):
+        """Interpret requirements for an extension and change stuff as needed."""
+        if not data:
+            return
+        #Data is a dict. It contains values that we add to our Bot instance.
+        for data_type, value in data.items():
+            if data_type == "intents":
+                self.extension_requires_intents(extension, value)
+            elif data_type == "tables":
+                self.extension_requires_tables(extension, value)
+
+    def get_extension_requirements(self):
+        """Obtain and process extension requirements."""
+        files = [f"cogs.{filename}" for filename in os.listdir("./cogs") if filename.endswith(".py")]
+        files.append("core.py"); files.append("errorhandling.py");
+        for file in files:
+            try:
+                cleanname = file[:-3]
+                if cleanname in self.noload or f"{cleanname}" in self.noload:
+                    continue
+                ext = importlib.import_module(cleanname)
+                ret = ext.requirements()
+                if not ret:
+                    self.logger.info(f"{cleanname}.requirements() returned nothing!")
+                    continue
+                self.logger.debug(f"{cleanname}.requirements() returned '{ret}'")
+                self.parse_extension_requirements(cleanname, ret)
+            except ImportError:
+                pass
+            except AttributeError:
+                self.logger.debug(f"Module '{cleanname}' does not have a 'requirements' method!")
 
     async def load(self, file):
         #strip file extension out of filename
@@ -205,8 +258,8 @@ class maximilian(commands.Bot):
         pass
 
     def get_intents(self):
-        intents = discord.Intents.none()
-        intents.reactions = True; intents.members = True; intents.guilds = True; intents.message_content = True; intents.messages = True; intents.voice_states = True;
+        #Unpack our dict of Intents into kwargs, and construct a discord.Intents containing the flags we want with it.
+        intents = discord.Intents(**self.required_intents)
         return intents
 
     async def setup_db(self):

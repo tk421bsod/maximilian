@@ -397,5 +397,8 @@ async def setup(bot):
 async def teardown(bot):
     await bot.remove_cog(core(bot))
 
+def requirements():
+    return {"intents":("messages", "reactions", "message_content", "guilds", "members")}
+
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
