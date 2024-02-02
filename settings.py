@@ -243,24 +243,21 @@ class Category():
         Resolves conflicts between settings.
         """
         resolved = []
-        if isinstance(setting.unusablewith, list):
-            for conflict in setting.unusablewith:
-                #get the Setting matching the name
-                conflict = self.get_setting(conflict)
-                if conflict.enabled(ctx.guild.id):
-                    await conflict.toggle(ctx)
-                    resolved.append(conflict)
-        else:
-            #no conflict? do nothing
-            if not setting.unusablewith:
-                return ""
-            #conflicting setting enabled? disable it
-            conflict = self.get_setting(setting.unusablewith)
+        if not setting.unusablewith:
+            return ""
+        #Make sure unusablewith is a list.
+        setting.unusablewith = [setting.unusablewith] if not isinstance(setting.unusablewith, list) else setting.unusablewith
+        for conflict in setting.unusablewith:
+            #Conflicting setting enabled? Disable it.
+            conflict = self.get_setting(conflict)
             if conflict.enabled(ctx.guild.id):
                 await conflict.toggle(ctx)
-                resolved = setting.unusablewith
-        length = len(resolved) if isinstance(resolved,list) else 1
-        if length == 1 and isinstance(resolved,list):
+                #conflict was replaced with a Setting. Only add the name to our list of resolved conflicts.
+                resolved.append(conflict.name)
+        #How many conflicts did we resolve?
+        length = len(resolved) if isinstance(resolved, list) else 1
+        #If we only resolved one conflict, don't wrap it in a list
+        if length == 1 and isinstance(resolved, list):
             resolved = resolved[0]
         if not resolved:
             return ""
