@@ -18,38 +18,21 @@ class prefixes(commands.Cog):
         if load:
             asyncio.create_task(self.update_prefix_cache())
 
-    def _get_prefix_if_exists(self, guild):
-        try:
-            return self.bot.prefix[guild.id]
-        except KeyError:
-            return "!"
-        
     def _is_prefix_same(self, guild, prefix):
-        return self._get_prefix_if_exists(guild) == prefix
-        
-    async def _fetch_prefix(self, guild_id):
-        '''Fetches a prefix corresponding to a guild id from the database'''
-        prefix = await self.bot.db.exec("select prefix from prefixes where guild_id = %s", (guild_id))
-        if not prefix and prefix != () and prefix != "()":
-            self.bot.prefix[guild_id] = '!'
-        else:
-            self.bot.prefix[guild_id] = prefix[0]['prefix']
+        return self.bot.common.get_value(self.bot.prefix, guild.id, "!") == prefix
 
     async def update_prefix_cache(self, guild_id=None):
         '''Builds/updates cache of prefixes'''
         await self.bot.wait_until_ready()
         self.logger.info("updating prefix cache...")
-        if guild_id:
-            await self._fetch_prefix(guild_id)
-        else:
-            for id in [guild.id for guild in self.bot.guilds]:
-                await self._fetch_prefix(id)
-                try:
-                    self.bot.prefix[id]
-                except KeyError:
-                    self.bot.prefix[id] = "!"
+        prefixes = await self.bot.db.exec("select * from prefixes", ())
+        for prefix in prefixes:
+            self.bot.prefix[prefix['guild_id']] = prefix['prefix']
+        for guild in self.bot.guilds:
+            if self.bot.common.get_value(self.bot.prefix, guild.id) is None:
+                self.bot.prefix[guild.id] = "!"
         self.logger.info("cache has been updated!")
-        
+
     @commands.has_permissions(manage_guild=True)
     @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission. ", aliases=['prefixes'])
     async def prefix(self, ctx, new_prefix):
