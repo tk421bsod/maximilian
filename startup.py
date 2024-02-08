@@ -8,6 +8,7 @@ import discord
 from aiomysql import OperationalError
 
 import common
+from common import Text
 from db_utils import async_db as db
 
 def set_bit(config : dict, name : str, write:bool=True):
@@ -27,15 +28,40 @@ def preprocess_config(config : dict):
     config['theme_color'] = int(config['theme_color'], 16)
     config = set_bit(config, "jsk_used", "--enablejsk" in sys.argv)
     #config = set_bit(config, "2.0_first_run_message")
+    default_cmdline = common.get_value(config, "default_cmdline")
+    if default_cmdline:
+        print("It looks like you've set some default command line options through the 'default_cmdline' field in 'config'.")
+        print(f"They are: {default_cmdline}")
+        print("Options passed at runtime may take priority.\n")
+        time.sleep(0.5)
+        for arg in default_cmdline.split(" "):
+            arg = arg.strip()
+            sys.argv.append(arg)
     return config
 
 def show_2_0_first_run_message(config : dict):
     """Shows the Maximilian 2.0 first run message."""
     if common.get_value(config, "2.0_first_run_message") == False:
-        print("\nUpdate finished.")
-        print("Welcome to Maximilian 2.0.")
-        print("This release includes hybrid commands, new components, performance improvements, API changes, new runtime options, a translation subsystem, and so much more.")
-        print("")
+        lines = []
+        lines.append(f"\n----\n{Text.BOLD}Update finished.")
+        lines.append(f"Welcome to Maximilian 2.0.{Text.NORMAL}")
+        lines.append("This release includes hybrid commands, new components, performance improvements, API changes, new runtime options, a translation subsystem, and so much more.")
+        lines.append("\nPlease take into account the following breaking API changes:")
+        lines.append("- Confirmations now handle sending messages. They require two follow-up messages (one for each state, contained in a list) and a prompt to send.")
+        lines.append("- db.exec() is now a coroutine, and only returns either an iterable or None.")
+        lines.append("- Most core modules do not allow for dynamic attribute creation. Your custom code must be self-contained and additions to a module's attributes require corresponding additions to __slots__.")
+        lines.append("- Custom code can now request required Intents or database tables through a 'requirements' method located outside the main Cog.")
+        lines.append("- Most strings sent by the bot are managed by the new translation subsystem.")
+        lines.append("See docs/API.md for an overview of the current API.")
+        lines.append("\n'Hybrid commands' are commands that work both as standard prefix commands and slash commands.")
+        lines.append(f"{Text.BOLD}TO ENABLE SLASH COMMAND FUNCTIONALITY, YOU MUST RUN `utils sync` AFTER LOGGING IN.{Text.NORMAL}")
+        lines.append("This sends Discord data used to provide slash commands on the client side.")
+        lines.append("Any changes to slash commands, including additions, removals, and changes to function signatures, will only take effect after running 'utils sync'.")
+        lines.append("\nNew components:")
+        lines.append("ThemedEmbed - A discord.Embed that automatically applies the theme_color attribute introduced in 1.0.")
+        lines.append("TimeConverter - A discord.ext.commands.Converter that converts an amount of time into seconds. Takes a list of allowed units and supports HelpCommand integration through a couple Command.extras flags.")
+        for line in lines:
+            print(line)
 
 def parse_version(versionstring):
     version = common.Version()
@@ -80,8 +106,7 @@ def parse_arguments(bot, args):
         bot.dbip = "localhost"
 
 async def initialize_db(bot, config):
-    tables = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting, category)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'songs':'name text, id text, duration varchar(8), thumbnail text, raw_duration mediumint unsigned', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned, constraint users primary key (user_id)'}
-    inst = db.async_db("maximilianbot", config['dbp'], bot.dbip, bot.database, tables)
+    inst = db.async_db("maximilianbot", config['dbp'], bot.dbip, bot.database, bot.tables)
     try:
         await inst.connect()
     except OperationalError:
@@ -127,12 +152,30 @@ async def get_language(logger, config, exit):
     logger.warning("If you wish to set a default language, add `language:<language>` to config.")
     return 'en'
 
+def missing_string(name):
+    return f"[{name}]"
+
+class StringDefaultDict(dict):
+    """A collections.defaultdict - like class that replaces missing strings with their identifiers."""
+
+    __slots__ = ("factory", "_fill_in_missing")
+    def __init__(self):
+        self.factory = missing_string
+        self._fill_in_missing = False
+
+    def __missing__(self, key):
+        if not self._fill_in_missing:
+            raise KeyError(key)
+        self[key] = self.factory(key)
+        return self[key]
+
 async def load_strings(language, logger):
     logger.debug('Loading strings from file...')
+    strings = StringDefaultDict()
     try:
         with open(f'languages/{language}') as data:
             logger.debug("Loading data...")
-            strings = json.load(data)
+            strings.update(json.load(data))
             logger.debug("Loaded data.")
     except FileNotFoundError:
         raise RuntimeError(f"Couldn't find the file containing strings for language '{language}'!")
@@ -151,9 +194,9 @@ async def load_strings(language, logger):
                 except KeyError:
                     logger.warn(f"The language file '{language}' is missing the string '{identifier}'!")
                     errors_found = True
-                    strings[identifier] = identifier
     if errors_found:
-        logger.warn("This language file is missing some strings found in 'en'. Some features may not work.")
+        logger.warn("This language file is missing some strings found in 'en'. Some text may not display correctly.")
+    strings._fill_in_missing = True
     logger.info('Strings loaded successfully.')
     return strings
 
