@@ -59,13 +59,8 @@ class CustomContext(commands.Context):
 class maximilian(commands.Bot):
     __slots__ = ("PYTHON_MINOR_VERSION", "VER", "IS_DEBUG", "blocklist", "config", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "init_finished", "required_intents", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings", "tables")
 
-    def __init__(self, logger, VER):
+    def __init__(self, config, logger, VER):
         #Now that we've checked basic requirements and ran the updater, we can
-        #load our config data...
-        logger.debug("Loading config...")
-        config = common.load_config()
-        logger.debug("Processing config...")
-        config = startup.preprocess_config(config)
         token = config['token']
         #check discord.py version...
         #TODO: Consider moving this to main.py next to Python version checks

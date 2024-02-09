@@ -105,6 +105,8 @@ except ImportError as e:
 
 try:
     from base import maximilian
+    import common
+    import startup
     import updater
 except (ImportError, NameError, SyntaxError) as e:
     print(f"{Text.BOLD}Maximilian cannot start because an internal module failed to load.{Text.NORMAL}\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk___421 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
@@ -161,7 +163,10 @@ def config_logging(args):
     logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
 
 print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
-print("setting up logging...")
+
+#Load config really early so we can append default_cmdline to our sys.argv before much of anything has been done
+config = common.load_config()
+config = startup.preprocess_config(config)
 # set a logging level
 config_logging(sys.argv)
 logging.getLogger('discord').setLevel(logging.INFO)
@@ -185,7 +190,7 @@ try:
     time.sleep(1)
     outer_logger.debug("Preparing to start the event loop...")
     #initialize stuff needed before we enter an async context
-    bot = maximilian(outer_logger, VER)
+    bot = maximilian(config, outer_logger, VER)
     bot.IS_DEBUG = IS_DEBUG
     bot.PYTHON_MINOR_VERSION = PYTHON_MINOR_VERSION
     #hand things over to base.maximilian.run
