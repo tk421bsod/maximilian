@@ -1,17 +1,14 @@
 import asyncio
 import datetime
-import time
-import inspect
 import logging
-import os
-import random
-import sys
+import time
 import traceback
-import uuid as uuid_generator #prevent conflict with the local variable 'uuid'
+import uuid as uuid_generator  # prevent conflict with the local variable 'uuid'
 
 import discord
 import humanize
 from discord.ext import commands
+
 
 class Deletion:
     __slots__ = ("timestamp")
@@ -41,7 +38,6 @@ class reminders(commands.Cog):
         self.deletions = {}
         #don't update cache on teardown (manual unload or automatic unload on shutdown)
         if load:
-            self.bot.settings.add_category("reminders", {"pagination":"Experimental embed pagination features"}, {"pagination":None}, {"pagination":None})
             asyncio.create_task(self.update_todo_cache())
             asyncio.create_task(self.update_reminder_cache(True))
 
@@ -137,21 +133,18 @@ class reminders(commands.Cog):
         await ctx.send(embed=discord.Embed(title=f"{ctx.author.name}'s reminders:", description=desc, color=self.bot.config['theme_color']))
 
     async def show_list(self, ctx):
-        await self.bot.settings.reminders.wait_ready()
         entrystring = ""
-        pagination_enabled = self.bot.settings.reminders.pagination.enabled(ctx.guild.id)
+        await self.bot.settings.general.wait_ready()
         try:
             if not self.todo_lists[ctx.author.id]:
                 return await ctx.send(self.bot.strings["LIST_EMPTY"])
             for count, value in enumerate(self.todo_lists[ctx.author.id]):
                 entrystring += self.bot.strings["ENTRY"].format(count+1, value['entry'], humanize.precisedelta(value['timestamp'], format='%0.0f'))
-                if len(entrystring) > 3800 and not pagination_enabled:
+                if len(entrystring) > 3800 and not self.bot.settings.general.pagination.enabled(ctx.guild.id):
                     await ctx.send(self.bot.strings["LIST_TOO_LONG"].format(count+1))
                     break
             if entrystring:
                 embed = discord.Embed(title=self.bot.strings["LIST_HEADER"].format(ctx.author), description=entrystring, color=self.bot.config['theme_color'])
-                if pagination_enabled:
-                    return await self.bot.core.send_paginated(embed, ctx, prefix="", suffix="")
                 return await ctx.send(embed=embed)
         except KeyError:
             return await ctx.send(self.bot.strings["LIST_EMPTY"])
