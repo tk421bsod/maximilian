@@ -169,65 +169,64 @@ class Category():
         """
         Fill a Category's settings cache with data.
         """
-        await self.bot.wait_until_ready()
-        self.logger.info(f"Filling cache for category {self.name}...")
-        self.filling = True
-        guilds = self.bot.guilds #stop state population from breaking if guilds change while filling cache
-        #step 1: get data for each setting, add settings to db if needed
         try:
+            await self.bot.wait_until_ready()
+            self.logger.info(f"Filling cache for category {self.name}...")
+            self.filling = True
+            guilds = self.bot.guilds #stop state population from breaking if guilds change while filling cache
+            #step 1: get data for each setting, add settings to db if needed
             self.data = await self.bot.db.exec('select * from config where category=%s order by setting', (self.name))
             if self.data is None:
                 self.data = []
             if not isinstance(self.data, list):
                 self.data = [self.data]
-        except:
-            traceback.print_exc()
-            self.logger.error(f"An error occurred while filling the setting cache for category {self.name}!")
-            self.logger.error("Settings in this category will not be registered.")
-            return
-        else:
             self.logger.info("Validating setting states...")
             #step 2: ensure each setting has an entry in the database for each guild
             for name in list(self.settingdescmapping):
                 if self.get_setting(name):
                     delattr(self, name.replace(" ", "_"))
                 await self._add_to_db(name, guilds)
-        #step 3: for each setting, get initial state and register it
-        states = {}
-        self.logger.debug("Populating setting states...")
-        for index, setting in enumerate(self.data):
-            self.logger.debug(f"Processing entry {setting}")
-            try:
-                if self.permissionmapping:
-                    permission = self.permissionmapping[setting['setting']]
-                else:
-                    permission = None
-            except KeyError:
-                self.logger.info(f"Setting '{setting['setting']}' was not included in permissionmapping for category '{self.name}'! Assuming a permission value of None.")
-                permission = None
-            try:
-                self.settingdescmapping[setting['setting']]
-            except KeyError:
-                self.logger.warn(f"Setting '{setting['setting']}' was removed from its parent Category but is still in the database.")
-                self.logger.warn(f"Removing it.")
+            #step 3: for each setting, get initial state and register it
+            states = {}
+            self.logger.debug("Populating setting states...")
+            for index, setting in enumerate(self.data):
+                self.logger.debug(f"Processing entry {setting}")
                 try:
-                    await self.bot.db.exec("delete from config where category=%s and setting=%s", (self.name, setting['setting']))
-                except:
-                    self.logger.warn("Setting was already removed from the database.")
-                else:
-                    self.logger.warn("Removed that setting.")
-                continue
-            states[setting['guild_id']] = self._get_initial_state(setting)
-            #if we've finished populating list of states for a setting...
-            #(we are on the last element of 'data' or the next element isn't for the same setting)
-            if index+1 == len(self.data) or self.data[index+1]['setting'] != setting['setting']:
-                #create new Setting, it automatically sets itself as an attr of this category
-                Setting(self, setting['setting'], states, permission)
-                states = {}
-        self.logger.info("Done filling settings cache.")
-        self._ready = True
-        self.filling = False
-        del self.data
+                    if self.permissionmapping:
+                        permission = self.permissionmapping[setting['setting']]
+                    else:
+                        permission = None
+                except KeyError:
+                    self.logger.info(f"Setting '{setting['setting']}' was not included in permissionmapping for category '{self.name}'! Assuming a permission value of None.")
+                    permission = None
+                try:
+                    self.settingdescmapping[setting['setting']]
+                except KeyError:
+                    self.logger.warn(f"Setting '{setting['setting']}' was removed from its parent Category but is still in the database.")
+                    self.logger.warn(f"Removing it.")
+                    try:
+                        await self.bot.db.exec("delete from config where category=%s and setting=%s", (self.name, setting['setting']))
+                    except:
+                        self.logger.warn("Setting was already removed from the database.")
+                    else:
+                        self.logger.warn("Removed that setting.")
+                    continue
+                states[setting['guild_id']] = self._get_initial_state(setting)
+                #if we've finished populating list of states for a setting...
+                #(we are on the last element of 'data' or the next element isn't for the same setting)
+                if index+1 == len(self.data) or self.data[index+1]['setting'] != setting['setting']:
+                    #create new Setting, it automatically sets itself as an attr of this category
+                    Setting(self, setting['setting'], states, permission)
+                    states = {}
+            self.logger.info("Done filling settings cache.")
+            self._ready = True
+            self.filling = False
+            del self.data
+        except:
+            traceback.print_exc()
+            self.logger.error(f"An error occurred while filling the setting cache for category {self.name}!")
+            self.logger.error("Settings in this category will not be registered.")
+            return
 
     async def _prepare_conflict_string(self, conflicts):
         """
