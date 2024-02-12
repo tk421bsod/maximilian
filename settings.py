@@ -1,11 +1,11 @@
-from aiomysql import IntegrityError
-
 import asyncio
 import logging
 import traceback
 
 import discord
+from aiomysql import IntegrityError
 from discord.ext import commands
+
 
 class Setting():
     """
@@ -107,7 +107,7 @@ class Category():
             If False, the behavior of calls to Setting.enabled() is unpredictable.
             Those calls could return None or even result in an AttributeError depending on the initialization state of the setting.
     """
-    __slots__ = ("_ready", "settingdescmapping", "unusablewithmapping", "name", "filling", "logger", "bot", "permissionmapping", "data", "__dict__")
+    __slots__ = ("_ready", "settingdescmapping", "unusablewithmapping", "name", "filling", "logger", "bot", "permissionmapping", "raw_data", "__dict__")
 
     def __init__(self, constructor, name, settingdescmapping, unusablewithmapping, permissionmapping):
         self._ready = False
@@ -152,9 +152,9 @@ class Category():
         Attempts to add a setting to the database.
         """
         target_guilds = []
-        #Compare stored states with actual state.
-        if self.data:
-            target_guilds = [i['guild_id'] for i in self.data if i['setting'] == name]
+        #Get the list of guilds that we're certain we currently have settings in.
+        if self.raw_data:
+            target_guilds = [i['guild_id'] for i in self.raw_data if i['setting'] == name]
         for guild in total_guilds:
             if guild.id in target_guilds:
                 continue
@@ -163,7 +163,8 @@ class Category():
                 await self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
                 continue
-            self.data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
+            #Equivalent to the result of SELECT * FROM config WHERE setting={name}, category={self.name}, guild_id={guild.id}
+            self.raw_data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
 
     async def _fill_cache(self):
         """
@@ -175,11 +176,11 @@ class Category():
             self.filling = True
             guilds = self.bot.guilds #stop state population from breaking if guilds change while filling cache
             #step 1: get data for each setting, add settings to db if needed
-            self.data = await self.bot.db.exec('select * from config where category=%s order by setting', (self.name))
-            if self.data is None:
-                self.data = []
-            if not isinstance(self.data, list):
-                self.data = [self.data]
+            self.raw_data = await self.bot.db.exec('select * from config where category=%s order by setting', (self.name))
+            if self.raw_data is None:
+                self.raw_data = []
+            if not isinstance(self.raw_data, list):
+                self.raw_data = [self.raw_data]
             self.logger.info("Validating setting states...")
             #step 2: ensure each setting has an entry in the database for each guild
             for name in list(self.settingdescmapping):
@@ -189,7 +190,7 @@ class Category():
             #step 3: for each setting, get initial state and register it
             states = {}
             self.logger.debug("Populating setting states...")
-            for index, setting in enumerate(self.data):
+            for index, setting in enumerate(self.raw_data):
                 self.logger.debug(f"Processing entry {setting}")
                 try:
                     if self.permissionmapping:
@@ -214,18 +215,20 @@ class Category():
                 states[setting['guild_id']] = self._get_initial_state(setting)
                 #if we've finished populating list of states for a setting...
                 #(we are on the last element of 'data' or the next element isn't for the same setting)
-                if index+1 == len(self.data) or self.data[index+1]['setting'] != setting['setting']:
+                if index+1 == len(self.raw_data) or self.raw_data[index+1]['setting'] != setting['setting']:
                     #create new Setting, it automatically sets itself as an attr of this category
                     Setting(self, setting['setting'], states, permission)
                     states = {}
             self.logger.info("Done filling settings cache.")
             self._ready = True
             self.filling = False
-            del self.data
+            del self.raw_data
         except:
             traceback.print_exc()
             self.logger.error(f"An error occurred while filling the setting cache for category {self.name}!")
             self.logger.error("Settings in this category will not be registered.")
+            self._ready = None
+            del self.raw_data
             return
 
     async def _prepare_conflict_string(self, conflicts):
