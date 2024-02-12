@@ -432,7 +432,11 @@ class settings():
             available = self._prepare_category_string()
             return await ctx.send(self.bot.strings["UNKNOWN_CATEGORY"].format(available))
         try:
-            if not category.ready:
+            if category.ready == None:
+                self.logger.error(f"It looks like cache fill for {category.name} failed!")
+                self.logger.error("Please report this issue and attach log files to the report.")
+                await ctx.send(self.bot.strings["CATEGORY_REGISTRATION_ERROR"])
+            elif category.ready == False:
                 self.logger.error(f"It looks like cache filling for category {category.name} is happening way too late!!!")
                 self.logger.error("please report this issue to tk421.")
                 self.logger.error("waiting until cache fill is complete...")

@@ -54,6 +54,7 @@ SETTING_AUTOMATICALLY_DISABLED:**Automatically disabled** {} due to a conflict.
 SETTINGS_AUTOMATICALLY_DISABLED:**Automatically disabled** {} due to conflicts.
 SETTING_UNUSABLE_WITH:Cannot be enabled at the same time as *{}*.
 SETTING_REQUIRES_PERMISSION:\nRequires the **{}** permission.
+CATEGORY_REGISTRATION_ERROR:Sorry, that category didn't initialize properly. Let tk___421 know about this.
 CATEGORY_INVALID:Sorry, that category wasn't set up properly. If you keep seeing this, let tk___421 know.
 SETTING_PERMISSION_DENIED:It looks like you don't have permission to change this setting.\nYou'll need the **{}** permission to change it.
 #cogs/misc.py
