@@ -120,6 +120,7 @@ class Category():
         self.logger = constructor.logger
         self.bot = constructor.bot
         self.permissionmapping = permissionmapping
+        self.raw_data = {}
         asyncio.create_task(self._fill_cache())
 
     @property
@@ -223,6 +224,8 @@ class Category():
             self._ready = True
             self.filling = False
             del self.raw_data
+        except (KeyboardInterrupt, asyncio.exceptions.CancelledError):
+            pass
         except:
             traceback.print_exc()
             self.logger.error(f"An error occurred while filling the setting cache for category {self.name}!")
