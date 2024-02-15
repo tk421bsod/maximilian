@@ -77,7 +77,7 @@ class reaction_roles(commands.Cog, name="reaction roles"):
     async def delete_role(self, ctx, role):
         self.bot.db.exec("delete from roles where guild_id=%s and role_id=%s", (ctx.guild.id, role.id))
         del self.roles[ctx.guild.id][role.id]
-        await ctx.send(embed=discord.Embed("\U00002705 Reaction role deleted.", color=self.bot.config['theme_color']))
+        await ctx.send(embed=discord.Embed(title="\U00002705 Reaction role deleted.", color=self.bot.config['theme_color']))
 
     @commands.command(help="Add, remove, or list reaction roles, only works if you have the 'Manage Roles' permission. This command takes 4 arguments (1 optional), action (the action to perform, either `add`, `delete`, or `list`), role (a role, you can either mention it or provide the id), messageid (the id of the message you want people to react to), and emoji (the emoji you want people to react with, it must be in a server Maximilian is in or a default emoji, this can be blank if you want people to react with any emoji)", aliases=['reaction_role'])
     @commands.has_guild_permissions(manage_roles=True)
