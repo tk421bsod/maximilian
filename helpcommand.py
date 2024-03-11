@@ -71,6 +71,8 @@ class HelpCommand(commands.HelpCommand):
             self.context.bot.logger.debug(f"No help string found for command {name.strip().replace(' ', '_').upper()} in the command's localized_help. Searching in bot.strings.")
             try:
                 help = self.context.bot.strings[f"COMMAND_HELP_{name.strip().replace(' ', '_').upper()}"]
+                if "COMMAND_HELP" in help:
+                    raise KeyError
             except KeyError:
                 self.context.bot.logger.debug(f"No help string found for command {name.strip().replace(' ', '_').upper()} in bot.strings. Falling back to provided help string.")
                 if command.help:
