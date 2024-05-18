@@ -3,7 +3,7 @@
 Implements a subclass of discord.ext.commands.Bot with some custom attributes.
 main.py creates an instance of this subclass and calls its run() method.
 
-Also implements a subclass of discord.ext.commands.Context to allow for pagination across all messages and perhaps other things in the future.
+Also implements a subclass of discord.ext.commands.Context to allow for pagination across all messages, allowed mentions, and perhaps other things in the future.
 """
 
 import asyncio
@@ -13,8 +13,8 @@ import sys
 import time
 import traceback
 
-import aiomysql
 import aiohttp
+import aiomysql
 import discord
 from discord.ext import commands
 
@@ -23,6 +23,7 @@ import core
 import helpcommand
 import settings
 import startup
+
 
 class CustomContext(commands.Context):
 
