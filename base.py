@@ -30,30 +30,45 @@ class CustomContext(commands.Context):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def send(self, *args, **kwargs):
-        skip_pagination = False
-        to_send = common.get_value(args, 0)
-        if not to_send:
-            to_send = kwargs.get("embed")
-        id = self.guild.id if self.guild else 0
+    async def _get_pagination_state(self):
         try:
+            id = self.guild.id if self.guild else 0
             await self.bot.settings.general.wait_ready()
             ret = self.bot.settings.general.pagination.enabled(id)
             if ret:
                 #Get the name of our caller to prevent an infinite loop if we were called from send_paginated.
                 caller = common.get_caller_name()
                 if caller == "send_paginated" or caller == "send_paginated_embed":
-                    skip_pagination = True
-        except AttributeError:
-            ret = False
+                    #Just return False to skip pagination.
+                    return False
+            return ret
+        except AttributeError: #Category/Setting doesn't exist for some reason?
+            return False
+
+    #yeah apparently you *can* unpack an arbitrary number of kwargs w/o args
+    async def _get_allowed_mentions_state(self, **kwargs):
+        #allowed_mentions passed to send() always overrides the setting.
         if common.get_value(kwargs, "allowed_mentions"):
-            allowed_mentions = kwargs.pop("allowed_mentions")
+            return kwargs.pop("allowed_mentions")
         else:
-            if self.bot.settings.general.mentions.enabled(id):
-                allowed_mentions = discord.AllowedMentions(everyone=False)
-            else:
-                allowed_mentions = discord.AllowedMentions(everyone=False, users=False, roles=False)
-        if to_send and ret and not skip_pagination:
+            try:
+                id = self.guild.id if self.guild else 0
+                if self.bot.settings.general.mentions.enabled(id):
+                    return discord.AllowedMentions(everyone=False)
+                else:
+                    return discord.AllowedMentions(everyone=False, users=False, roles=False)
+            except AttributeError:
+                pass
+        #Just assume the setting's disabled.
+        return discord.AllowedMentions(everyone=False, users=False, roles=False)
+
+    async def send(self, *args, **kwargs):
+        to_send = common.get_value(args, 0)
+        if not to_send:
+            to_send = kwargs.get("embed")
+        pagination_enabled = await self._get_pagination_state()
+        allowed_mentions = await self._get_allowed_mentions_state(**kwargs)
+        if to_send and pagination_enabled:
             return await self.bot.core.send_paginated(to_send, self, prefix="", suffix="")
         return await super().send(*args, **kwargs, allowed_mentions=allowed_mentions)
 
