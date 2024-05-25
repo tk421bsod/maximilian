@@ -5,7 +5,28 @@ import re
 import subprocess
 import sys
 
-from discord.ext import commands
+def get_current_frame():
+    """Get the current stack frame.
+
+    See docstring for `common.get_caller_name` for implementation notes.
+    """
+    #Raise an exception to gain access to stack information.
+    try:
+        raise Exception
+    except Exception as exc:
+        #We are in our own stack frame, so go back a frame.
+        #Exception object -> Traceback object -> Stack frame where traceback occurred -> Previous stack frame (our caller)
+        return exc.__traceback__.tb_frame.f_back
+
+try:
+    #Hack to omit imports of external modules if loaded from setup.py
+    #We have to go back a bunch of stack frames to get the correct frame.
+    IMPORTER_PATH = get_current_frame().f_back.f_back.f_back.f_back.f_back.f_back.f_code.co_filename
+except AttributeError:
+    IMPORTER_PATH = ""
+
+if not IMPORTER_PATH.endswith("setup.py"):
+    from discord.ext import commands
 
 class Version:
     """Represents a software version."""
@@ -23,63 +44,64 @@ class Text:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-#TimeConverter originally from cogs/reminders.py
-class TimeConverter(commands.Converter):
-    """Converts time values into an amount of seconds.
+if not IMPORTER_PATH.endswith("setup.py"):
+    #TimeConverter originally from cogs/reminders.py
+    class TimeConverter(commands.Converter):
+        """Converts time values into an amount of seconds.
 
-    A discord.ext.commands.Converter that converts time values into an amount of seconds.
-    You can choose which units of time to accept.
+        A discord.ext.commands.Converter that converts time values into an amount of seconds.
+        You can choose which units of time to accept.
 
-    Example usage:  
-        #Create a new TimeConverter with only hours, minutes, and seconds allowed  
-        a = TimeConverter(self.bot, ("h", "m", "s"))  
-        a.convert(ctx, "5m")  
-        #Returns 300  
-  
-    For help command integration:  
-        1. Add `'uses_timeconverter':True` to Command.extras  
-        2. Add `'timeconverter_allowed_units':(<allowed_units>)` to Command.extras  
-    Use the 'remind' command from cogs/reminders.py as a reference.
-    """
-    __slots__ = ("TIME_REGEX", "TIME_DICT", "NAN", "INVALID_UNIT", "ADD_REMOVED", "allowed_units")
-
-    def __init__(self, bot:commands.Bot, allowed_units:list):
+        Example usage:  
+            #Create a new TimeConverter with only hours, minutes, and seconds allowed  
+            a = TimeConverter(self.bot, ("h", "m", "s"))  
+            a.convert(ctx, "5m")  
+            #Returns 300  
+      
+        For help command integration:  
+            1. Add `'uses_timeconverter':True` to Command.extras  
+            2. Add `'timeconverter_allowed_units':(<allowed_units>)` to Command.extras  
+        Use the 'remind' command from cogs/reminders.py as a reference.
         """
-        Construct a new TimeConverter.
+        __slots__ = ("TIME_REGEX", "TIME_DICT", "NAN", "INVALID_UNIT", "ADD_REMOVED", "allowed_units")
 
-        allowed_units must be a list/tuple of strings, each one representing the first letter of a unit of time.
-        To only allow hours, minutes, and seconds, something like `allowed_units=["h", "m", "s"]` will work.
+        def __init__(self, bot:commands.Bot, allowed_units:list):
+            """
+            Construct a new TimeConverter.
 
-        See class documentation for example usage and help command integration.
-        """
-        self.TIME_REGEX = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhdw])")
-        self.TIME_DICT = {"w":604800, "d":86400, "h":3600, "m":60, "s":1}
-        self.NAN = bot.strings["TIMECONVERTER_NAN"]
-        self.INVALID_UNIT = bot.strings["TIMECONVERTER_INVALID_UNIT"]
-        self.INVALID_TIME = bot.strings["TIMECONVERTER_INVALID_TIME"]
-        self.ADD_REMOVED = bot.strings["TIMECONVERTER_ADD_REMOVED"]
-        self.allowed_units = allowed_units
-        time_dict_copy = self.TIME_DICT.copy() 
-        self.TIME_DICT = {}
-        #Only include allowed units in TIME_DICT.
-        for unit in self.allowed_units:
-            self.TIME_DICT[unit] = time_dict_copy[unit]
+            allowed_units must be a list/tuple of strings, each one representing the first letter of a unit of time.
+            To only allow hours, minutes, and seconds, something like `allowed_units=["h", "m", "s"]` will work.
 
-    async def convert(self, ctx, argument):
-        matches = self.TIME_REGEX.findall(argument.lower())
-        time = 0
-        if argument == "add":
-            await ctx.send(self.ADD_REMOVED)
-        for v, k in matches:
-            try:
-                time += self.TIME_DICT[k]*float(v)
-            except KeyError:
-                raise commands.BadArgument(self.INVALID_UNIT.format(k, '/'.join(self.allowed_units)))
-            except ValueError:
-                raise commands.BadArgument(self.NAN)
-        if time == 0:
-            raise commands.BadArgument(self.INVALID_TIME)
-        return time
+            See class documentation for example usage and help command integration.
+            """
+            self.TIME_REGEX = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhdw])")
+            self.TIME_DICT = {"w":604800, "d":86400, "h":3600, "m":60, "s":1}
+            self.NAN = bot.strings["TIMECONVERTER_NAN"]
+            self.INVALID_UNIT = bot.strings["TIMECONVERTER_INVALID_UNIT"]
+            self.INVALID_TIME = bot.strings["TIMECONVERTER_INVALID_TIME"]
+            self.ADD_REMOVED = bot.strings["TIMECONVERTER_ADD_REMOVED"]
+            self.allowed_units = allowed_units
+            time_dict_copy = self.TIME_DICT.copy() 
+            self.TIME_DICT = {}
+            #Only include allowed units in TIME_DICT.
+            for unit in self.allowed_units:
+                self.TIME_DICT[unit] = time_dict_copy[unit]
+
+        async def convert(self, ctx, argument):
+            matches = self.TIME_REGEX.findall(argument.lower())
+            time = 0
+            if argument == "add":
+                await ctx.send(self.ADD_REMOVED)
+            for v, k in matches:
+                try:
+                    time += self.TIME_DICT[k]*float(v)
+                except KeyError:
+                    raise commands.BadArgument(self.INVALID_UNIT.format(k, '/'.join(self.allowed_units)))
+                except ValueError:
+                    raise commands.BadArgument(self.NAN)
+            if time == 0:
+                raise commands.BadArgument(self.INVALID_TIME)
+            return time
 
 async def _new_run_now(*coros):
     """Run 'coros' concurrently without delay. Uses python 3.11 features like asyncio.TaskGroup and ExceptionGroup"""
@@ -108,14 +130,9 @@ def get_caller_name():
     Not implementation dependent unlike calls to `sys._getframe`.
     See https://docs.python.org/3/library/inspect.html#types-and-members and https://docs.python.org/3/library/sys.html#sys._getframe
     """
-    #Raise an exception to gain access to stack information.
-    try:
-        raise Exception
-    except Exception as exc:
-        #We are in our own stack frame, so go back two frames.
-        #Exception object -> Traceback object -> Stack frame where traceback occurred -> Previous stack frame (our caller) -> Previous stack frame (Caller's caller)
-        #-> Code object attached to that frame -> name pertaining to code object
-        return exc.__traceback__.tb_frame.f_back.f_back.f_code.co_name
+    #Once we've obtained a stack frame of our caller, we need to go back another frame.
+    #Caller's stack frame -> Previous stack frame (Caller's caller) -> Code object attached to that frame -> name pertaining to code object
+    return get_current_frame().f_back.f_back.f_code.co_name
 
 def load_config():
     '''Loads configuration data from the config file generated by setup.sh.'''
