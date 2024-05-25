@@ -32,6 +32,8 @@ class prefixes(commands.Cog):
             if self.bot.common.get_value(self.bot.prefix, guild.id) is None:
                 self.bot.prefix[guild.id] = "!"
         self.logger.info("cache has been updated!")
+        self.logger.debug("Current prefix cache content:")
+        self.logger.debug(self.bot.prefix)
 
     @commands.has_permissions(manage_guild=True)
     @commands.command(help="Set Maximilian's prefix, only works if you have the Manage Server permission. ", aliases=['prefixes'])
