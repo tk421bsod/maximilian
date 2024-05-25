@@ -1,6 +1,3 @@
-import logging
-import os
-import subprocess
 import time
 import datetime
 import sys
@@ -128,7 +125,7 @@ def _fetch_changes_from_remote(remote):
     #Set last update timestamp to the current time.
     common.run_command(f"sed -i \"s/last_update:.*/last_update:{round(time.time())}/\" config")
 
-def _apply_update():
+def _apply_update(initial, branch):
     time.sleep(0.3)
     #Run 'git pull' to merge changes into our local copy. 
     #Additional changes are fetched if necessary.
@@ -185,7 +182,7 @@ def _update():
         resp = input(f"\nUpdate available. \nTake a moment to review the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.\nWould you like to apply the update? Y/N\n").lower().strip()
         if resp == "y":
             print("\nApplying update...")
-            _apply_update()
+            _apply_update(initial, branch)
         else:
             print("\nNot applying the update.")
     else:
