@@ -30,16 +30,15 @@ class CustomContext(commands.Context):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def _get_pagination_state(self):
+    async def _get_pagination_state(self, caller):
         try:
             id = self.guild.id if self.guild else 0
             await self.bot.settings.general.wait_ready()
             ret = self.bot.settings.general.pagination.enabled(id)
             if ret:
-                #Get the name of our caller to prevent an infinite loop if we were called from send_paginated.
-                caller = common.get_caller_name()
                 if caller == "send_paginated" or caller == "send_paginated_embed":
                     #Just return False to skip pagination.
+                    self.bot.logger.debug("Skipping CustomContext pagination.")
                     return False
             return ret
         except AttributeError: #Category/Setting doesn't exist for some reason?
@@ -66,7 +65,10 @@ class CustomContext(commands.Context):
         to_send = common.get_value(args, 0)
         if not to_send:
             to_send = kwargs.get("embed")
-        pagination_enabled = await self._get_pagination_state()
+        #Get the name of our caller to prevent an infinite loop if we were called from send_paginated.
+        caller = common.get_caller_name()
+        self.bot.logger.debug(f"CustomContext.send called from '{caller}'")
+        pagination_enabled = await self._get_pagination_state(caller)
         allowed_mentions = await self._get_allowed_mentions_state(**kwargs)
         if to_send and pagination_enabled:
             return await self.bot.core.send_paginated(to_send, self, prefix="", suffix="")
@@ -93,8 +95,9 @@ class maximilian(commands.Bot):
                 self.commit
             except AttributeError:
                 self.commit = ""
-        #parse additional arguments (ip, enablejsk, noload)
+        #Set our global logger.
         self.logger = logger
+        self.noload = [] #list of modules for load_extensions_async to skip. Set by parse_arguments
         logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
         self.tables = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting, category)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned, constraint users primary key (user_id)'}
@@ -103,20 +106,24 @@ class maximilian(commands.Bot):
         self.get_extension_requirements()
         #get our Intents...
         intents = self.get_intents()
-        #set up some attributes we'll need soon...
-        logger.debug("Setting up some stuff")
+        #Now that we're mostly set up, we can fully initialize.
+        #TODO: Change default allowed_mentions policy to reflect default behavior declared in CustomContext...
+        #We may be able to then remove defaults from CustomContext.
         super().__init__(allowed_mentions=discord.AllowedMentions(everyone=False), command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
+        #Initialize some needed attributes.
+        self._initialize_attrs(common=common, config=config, VER=VER)
+        startup.show_2_0_first_run_message(config)
+        logger.debug("Starting the event loop.")
+
+    def _initialize_attrs(self, *, common, config, VER):
         self.common = common
         self.config = config
         self.help_command = helpcommand.HelpCommand(verify_checks=False)
         self.init_finished = False
-        self.noload = [] #list of modules for load_extensions_async to skip, set by parse_arguments
         self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
         self.responses = [] #custom commands list. TODO: make this less baked in
         self.start_time = time.time()
         self.VER = VER
-        startup.show_2_0_first_run_message(config)
-        logger.debug("Starting the event loop.")
 
     def set_database_name(self):
         self.database = "maximilian"
@@ -274,9 +281,9 @@ class maximilian(commands.Bot):
         return intents
 
     async def setup_db(self):
-        #try to connect to database, exit if it fails
+        #Initialize the database.
         self.db = await startup.initialize_db(self, self.config)
-        #make sure all tables exist
+        #Then make sure all tables exist
         try:
             await self.db.ensure_tables()
         except aiomysql.OperationalError:
