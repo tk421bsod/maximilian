@@ -186,7 +186,6 @@ class reminders(commands.Cog):
 
     async def check_deletions(self, ctx, entry, count):
         await self.prune_deletions(ctx)
-        await self.bot.settings.reminders.wait_ready()
         if self.deletions[ctx.author.id].amount < 2:
             return False
         embed = discord.Embed(title=self.bot.strings["RAPID_DELETION_CONFIRMATION_TITLE"], description=self.bot.strings["RAPID_DELETION_CONFIRMATION_DESCRIPTION"], color=self.bot.config['theme_color'])
