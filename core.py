@@ -76,6 +76,7 @@ class core(commands.Cog):
         #Used in some status messages.
         if not paginator.pages:
             return await target.send(embed=to_send)
+        ret = None
         for count, page in enumerate(paginator.pages):
             title = to_send.title
             if len(paginator.pages) > 1:
@@ -85,19 +86,22 @@ class core(commands.Cog):
             self.logger.debug(f"page {count+1} of {len(paginator.pages)}")
             if count+1 == len(paginator.pages) and to_send.footer:
                 embed.set_footer(text=to_send.footer.text)
-            await target.send(embed=embed, **kwargs)
+            ret = await target.send(embed=embed, **kwargs)
+        return ret
 
     #TODO: View-based paginator
     async def send_paginated(self, to_send, target, prefix="```", suffix="```", **kwargs):
         self.logger.debug(f"send_paginated called with ({type(to_send)}, {target}, {prefix}, {suffix})")
         paginator = commands.Paginator(prefix=prefix, suffix=suffix)
+        ret = None
         if isinstance(to_send, discord.Embed):
-            await self.send_paginated_embed(paginator, to_send, target, **kwargs)
+            return await self.send_paginated_embed(paginator, to_send, target, **kwargs)
         else:
             for line in to_send.split("\n"):
                 paginator.add_line(line)
             for page in paginator.pages:
-                await target.send(page, **kwargs)
+                ret = await target.send(page, **kwargs)
+        return ret
 
     async def send_debug(self, ctx):
         try:
