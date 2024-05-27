@@ -59,7 +59,7 @@ class core(commands.Cog):
             channel = await self.bot.fetch_channel(channel_id)
         return channel
 
-    async def send_paginated_embed(self, paginator, to_send, target):
+    async def send_paginated_embed(self, paginator, to_send, target, **kwargs):
         if to_send.description:
             self.logger.debug("Sourcing paginated embed content from description")
             #TODO: On some special embeds e.g todo lists this can break groups of text in half.
@@ -85,19 +85,19 @@ class core(commands.Cog):
             self.logger.debug(f"page {count+1} of {len(paginator.pages)}")
             if count+1 == len(paginator.pages) and to_send.footer:
                 embed.set_footer(text=to_send.footer.text)
-            await target.send(embed=embed)
+            await target.send(embed=embed, **kwargs)
 
     #TODO: View-based paginator
-    async def send_paginated(self, to_send, target, prefix="```", suffix="```"):
+    async def send_paginated(self, to_send, target, prefix="```", suffix="```", **kwargs):
         self.logger.debug(f"send_paginated called with ({type(to_send)}, {target}, {prefix}, {suffix})")
         paginator = commands.Paginator(prefix=prefix, suffix=suffix)
         if isinstance(to_send, discord.Embed):
-            await self.send_paginated_embed(paginator, to_send, target)
+            await self.send_paginated_embed(paginator, to_send, target, **kwargs)
         else:
             for line in to_send.split("\n"):
                 paginator.add_line(line)
             for page in paginator.pages:
-                await target.send(page)
+                await target.send(page, **kwargs)
 
     async def send_debug(self, ctx):
         try:

@@ -71,7 +71,11 @@ class CustomContext(commands.Context):
         pagination_enabled = await self._get_pagination_state(caller)
         allowed_mentions = await self._get_allowed_mentions_state(**kwargs)
         if to_send and pagination_enabled:
-            return await self.bot.core.send_paginated(to_send, self, prefix="", suffix="")
+            #Remove the embed kwarg so we can pass everything else to send_paginated.
+            #This lets files, views, etc work properly.
+            if isinstance(to_send, discord.Embed):
+                kwargs.pop("embed")
+            return await self.bot.core.send_paginated(to_send, self, prefix="", suffix="", **kwargs)
         return await super().send(*args, **kwargs, allowed_mentions=allowed_mentions)
 
 class maximilian(commands.Bot):
