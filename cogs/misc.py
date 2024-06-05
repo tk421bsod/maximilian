@@ -32,7 +32,7 @@ class misc(commands.Cog):
     async def about(self, ctx):
         embed = discord.Embed(title=self.bot.strings["ABOUT_TITLE"], color=self.bot.config['theme_color'])
         embed.add_field(name=self.bot.strings["ABOUT_SUMMARY_TITLE"], value=self.bot.strings["ABOUT_SUMMARY_TEXT"])
-        embed.add_field(name=self.bot.strings["ABOUT_LATESTUPDATE_TITLE"], value=self.bot.strings["ABOUT_LATESTUPDATE_TEXT"])
+        embed.add_field(name=self.bot.strings["ABOUT_LATESTUPDATE_TITLE"], value=self.bot.strings["ABOUT_LATESTUPDATE_TEXT"]+self.bot.strings["ABOUT_LATESTCHANGES_HELP"])
         embed.add_field(name=self.bot.strings["ABOUT_HELP_TITLE"], value=self.bot.strings["ABOUT_HELP_TEXT"].format(str(await self.bot.get_prefix(ctx.message))), inline=False)
         embed.add_field(name=self.bot.strings["ABOUT_COMMANDS_TITLE"], value=f" ".join(f'`{i.name}`' for i in self.bot.commands if not i.hidden and not i.parent and i.name != 'jishaku'))
         await ctx.send(embed=embed)

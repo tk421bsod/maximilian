@@ -84,7 +84,8 @@ ABOUT_HELP_TITLE:Useful stuff
 ABOUT_HELP_TEXT:Use `{}help command` for more info on a certain command. \n For more help, join the support server at https://discord.gg/PJ94gft. \n To add Maximilian to your server, with only the required permissions, click [here](https://discord.com/api/oauth2/authorize?client_id=620022782016618528&permissions=335923264&scope=bot). \nIf you want to contribute to my development, visit my Github repository at https://github.com/tk421bsod/maximilian.
 ABOUT_COMMANDS_TITLE:Commands
 ABOUT_LATESTUPDATE_TITLE:Latest update - v2.0 (in active development)
-ABOUT_LATESTUPDATE_TEXT:Hybrid commands, improved performance, new settings, QoL features, and so much more.\nWant to see changes from the last few updates? Use the `news` command.
+ABOUT_LATESTUPDATE_TEXT:Hybrid commands, improved performance, new settings, QoL features, and so much more.
+ABOUT_LATESTCHANGES_HELP:Use the `version` command to see details on the latest changes.\nWant to see changes from the last few updates? Use the `news` command.
 PRERELEASE_TITLE:Important info about this version:
 PRERELEASE_TEXT:This is a pre-release version and may have major issues. This installation might not reflect the current state of the `development` branch. Currently on commit `{}`.
 NEWS_TITLE:News
