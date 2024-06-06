@@ -85,7 +85,7 @@ ABOUT_HELP_TEXT:Use `{}help command` for more info on a certain command. \n For 
 ABOUT_COMMANDS_TITLE:Commands
 ABOUT_LATESTUPDATE_TITLE:Latest update - v2.0 (in active development)
 ABOUT_LATESTUPDATE_TEXT:Hybrid commands, improved performance, new settings, QoL features, and so much more.
-ABOUT_LATESTCHANGES_HELP:Use the `version` command to see details on the latest changes.\nWant to see changes from the last few updates? Use the `news` command.
+ABOUT_LATESTCHANGES_HELP:\nUse the `version` command to see details on the latest changes.\nWant to see changes from the last few updates? Use the `news` command.
 PRERELEASE_TITLE:Important info about this version:
 PRERELEASE_TEXT:This is a pre-release version and may have major issues. This installation might not reflect the current state of the `development` branch. Currently on commit `{}`.
 LATEST_CHANGES_TITLE:Latest changes
