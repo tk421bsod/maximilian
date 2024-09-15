@@ -1,5 +1,11 @@
-#main.py: loads core libraries and everything in the cogs folder, then starts Maximilian
+"""Launches Maximilian. This is usually what you want to run.
+Alternatively, you can create an instance of base.maximilian and run its 'run' method.
+
+This configures logging, does basic environment checks, loads configuration data, processes it, then runs the updater and hands control over to base.py, which handles everything from then on.
+"""
+
 import sys
+from constants import GlobalConstants
 
 #Text formatting things from common.py.
 #Reimplemented here to avoid costly imports (discord.py in particular)
@@ -8,14 +14,12 @@ class Text:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-#Version number. Please don't modify this.
-VER = "2.0.0-prerelease"
-
-#Are we using or going to use debug logging?
-IS_DEBUG = bool([i for i in sys.argv if i in ['-v', '--verbose', '--debug']])
-
-#Python minor version. Used for some compatibility checks.
-PYTHON_MINOR_VERSION = sys.version_info.minor
+#If not, make text formatting strings empty.
+if not GlobalConstants.TEXT_FORMATTING_ENABLED: 
+    print("Text formatting disabled.")
+    Text.NORMAL = ''
+    Text.BOLD = ''
+    Text.UNDERLINE = ''
 
 #Are we being imported?
 if __name__ != "__main__":
@@ -27,14 +31,14 @@ if __name__ != "__main__":
     quit()
 
 #Are we using an out-of-date Python?
-if sys.version_info.major == 3 and PYTHON_MINOR_VERSION < 8:
+if sys.version_info.major == 3 and GlobalConstants.PYTHON_MINOR_VERSION < 8:
     print("Hi there. It looks like you're trying to run Maximilian with an old version of Python 3.")
     print(f"{Text.BOLD}Maximilian cannot run on Python versions older than 3.8.{Text.NORMAL}")
     print("You'll need to upgrade Python to continue.")
     quit()
 
 #Are we using a very new Python?
-if PYTHON_MINOR_VERSION > 11:
+if GlobalConstants.PYTHON_MINOR_VERSION > GlobalConstants.PYTHON_MAX_APPROVED_MAJOR_VERSION:
     print("Hi there. It looks like your Python installation is newer than version 3.11.")
     print("You may experience issues as Maximilian has not yet been tested on newer versions of Python.\n")
 
@@ -56,10 +60,11 @@ if "--help" in sys.argv:
     print(f"{Text.BOLD}--language <language>{Text.NORMAL} - Sets the language to <language>. If not specified, defaults to the language present in 'config', then 'en' if nothing is found. New in version 2.0.")
     print(f"{Text.BOLD}--alt{Text.NORMAL} - Prompts for a token to use. Also adds the latest commit hash to the default status.")
     print(f"{Text.BOLD}--no-file{Text.NORMAL} - Stops Maximilian from saving logs to a file. New in version 2.0.")
+    print(f"{Text.BOLD}--no-text-formatting, --no-fmt{Text.NORMAL} - Stops Maximilian from showing bold/underlined text. May be useful on some systems. New in version 2.0.")
     quit()
 
 if "--version" in sys.argv:
-    print(f"You are using version {VER}.")
+    print(f"You are using version {GlobalConstants.VER}.")
     quit()
 
 #Did the user use any old arguments?
@@ -114,6 +119,11 @@ except (ImportError, NameError, SyntaxError) as e:
     if IS_DEBUG:
         traceback.print_exc()
     sys.exit(2)
+
+if not GlobalConstants.TEXT_FORMATTING_ENABLED: 
+    common.Text.NORMAL = ''
+    common.Text.BOLD = ''
+    common.Text.UNDERLINE = ''
 
 if not "--no-rich" in sys.argv:
     try:
@@ -190,9 +200,9 @@ try:
     time.sleep(1)
     outer_logger.debug("Preparing to start the event loop...")
     #initialize stuff needed before we enter an async context
-    bot = maximilian(config, outer_logger, VER)
-    bot.IS_DEBUG = IS_DEBUG
-    bot.PYTHON_MINOR_VERSION = PYTHON_MINOR_VERSION
+    bot = maximilian(config, outer_logger, GlobalConstants.VER)
+    bot.IS_DEBUG = GlobalConstants.IS_DEBUG
+    bot.PYTHON_MINOR_VERSION = GlobalConstants.PYTHON_MINOR_VERSION
     #hand things over to base.maximilian.run
     asyncio.run(bot.run())
 except KeyboardInterrupt:
