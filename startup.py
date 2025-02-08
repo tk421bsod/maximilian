@@ -26,8 +26,6 @@ def preprocess_config(config : dict):
     """Processes configuration data and sets flags if needed. Returns the processed data."""
     #convert hex color to int
     config['theme_color'] = int(config['theme_color'], 16)
-    config = set_bit(config, "jsk_used", "--enablejsk" in sys.argv)
-    #config = set_bit(config, "2.0_first_run_message")
     default_cmdline = common.get_value(config, "default_cmdline")
     if default_cmdline:
         print("It looks like you've set some default command line options through the 'default_cmdline' field in 'config'.")
@@ -37,29 +35,44 @@ def preprocess_config(config : dict):
         for arg in default_cmdline.split(" "):
             arg = arg.strip()
             sys.argv.append(arg)
+    #to you, 2000 years from now
+    #set_bit calls should not be placed before default_cmdline is applied.
+    #that could break calls relying on something in argv like the following
+    config = set_bit(config, "jsk_used", "--enablejsk" in sys.argv)
+    #To be uncommented when 2.0 is released
+    #config = set_bit(config, "2.0_first_run_message")
     return config
 
 def show_2_0_first_run_message(config : dict):
     """Shows the Maximilian 2.0 first run message."""
     if common.get_value(config, "2.0_first_run_message") == False:
         lines = []
-        lines.append(f"\n----\n{Text.BOLD}Update finished.")
-        lines.append(f"Welcome to Maximilian 2.0.{Text.NORMAL}")
-        lines.append("This release includes hybrid commands, new components, performance improvements, API changes, new runtime options, a translation subsystem, and so much more.")
-        lines.append("\nPlease take into account the following breaking API changes:")
-        lines.append("- Confirmations now handle sending messages. They require two follow-up messages (one for each state, contained in a list) and a prompt to send.")
-        lines.append("- db.exec() is now a coroutine, and only returns either an iterable or None.")
-        lines.append("- Most core modules do not allow for dynamic attribute creation. Your custom code must be self-contained and additions to a module's attributes require corresponding additions to __slots__.")
-        lines.append("- Custom code can now request required Intents or database tables through a 'requirements' method located outside the main Cog.")
-        lines.append("- Most strings sent by the bot are managed by the new translation subsystem.")
-        lines.append("See docs/API.md for an overview of the current API.")
-        lines.append("\n'Hybrid commands' are commands that work both as standard prefix commands and slash commands.")
+        lines.append(f"\n----\n{Text.BOLD}Update finished.\nStartup temporarily paused.\n")
+        lines.append(f"Welcome to Maximilian 2.0.\nA lot has changed:\n{Text.NORMAL}")
+        lines.append("Hybrid commands, performance improvements, API changes, new runtime options, a translation subsystem, an improved setup process, and so much more.")
+        lines.append("For an overview of the current API, including breaking changes from the 1.x API, take a look at docs/API.md.")
+         
+        lines.append("\nHybrid commands:")
+        lines.append("'Hybrid commands' are commands that work both as standard prefix commands and slash commands.")
         lines.append(f"{Text.BOLD}TO ENABLE SLASH COMMAND FUNCTIONALITY, YOU MUST RUN `utils sync` AFTER LOGGING IN.{Text.NORMAL}")
         lines.append("This sends Discord data used to provide slash commands on the client side.")
         lines.append("Any changes to slash commands, including additions, removals, and changes to function signatures, will only take effect after running 'utils sync'.")
         lines.append("\nNew components:")
         lines.append("ThemedEmbed - A discord.Embed that automatically applies the theme_color attribute introduced in 1.0.")
         lines.append("TimeConverter - A discord.ext.commands.Converter that converts an amount of time into seconds. Takes a list of allowed units and supports HelpCommand integration through a couple Command.extras flags.")
+        lines.append("\nPerformance improvements:")
+        lines.append("Memory usage has been reduced by around 20 percent through a few different optimizations.")
+        lines.append("Scalablility has been (in theory) greatly improved through limiting data Maximilian requests from Discord.")
+        lines.append("Data storage has been made faster and more reliable through the use of a connection pool and an asynchronous database driver.")
+        lines.append("\nSetup improvements:")
+        lines.append("The setup script has been rewritten in Python.")
+        lines.append("You'll notice a completely new interface (powered by code from another project under development) and better functionality all around.")
+        lines.append("It's also platform independent and comes with a few extra features!")
+        lines.append()
+        lines.append("\nFor the full changelog for this release, see <gist link>.")
+        lines.append("\nThanks for reading, and thank you for using Maximilian.")
+        lines.append("\nWhen you're ready to continue with startup, press Enter.")
+        lines.append("To view this message again, open 'config' and remove the line beginning with '2.0_first_run_message'.")
         for line in lines:
             print(line)
 
