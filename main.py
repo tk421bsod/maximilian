@@ -98,7 +98,7 @@ try:
 except (ImportError, NameError, SyntaxError) as e:
     print(f"{Text.BOLD}Maximilian cannot start because an external dependency failed to load.{Text.NORMAL}\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
     print(e)
-    if IS_DEBUG:
+    if GlobalConstants.IS_DEBUG:
         traceback.print_exc()
     sys.exit(2)
 
@@ -116,7 +116,7 @@ try:
 except (ImportError, NameError, SyntaxError) as e:
     print(f"{Text.BOLD}Maximilian cannot start because an internal module failed to load.{Text.NORMAL}\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk___421 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
     print(e)
-    if IS_DEBUG:
+    if GlobalConstants.IS_DEBUG:
         traceback.print_exc()
     sys.exit(2)
 
