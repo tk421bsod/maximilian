@@ -2,9 +2,11 @@
 Will replace setup.sh for easier maintenance and platform independence in the future.
 """
 
-print("Setup is starting.")
+print("Setup is starting.\n")
 
 import functools
+import getpass
+import importlib
 import logging
 import os
 import sys
@@ -13,26 +15,25 @@ import traceback
 import typing
 
 import common
-import updater
-
-#This is here to make our typehints work, sorry.
-#We don't actually import it here just in case submodules haven't been initialized.
-if __name__ == "":
-    from db_utils import db
+import updater  
 
 OS_TYPE = os.name
 
-#Some declarations
+#Declaration hell :)
 original_print = print
 TEXT_END = "\x1b[0m"
 TEXT_STYLES = {"none":0, "bold":1, "underline":2, "negative1":3, "negative2":5, "black":30, "red":31, "green":32, "yellow":33, "blue":34, "purple":35, "cyan":36, "white":37}
 FORMATTING_ENABLED = True
+IS_DEBUG = "-v" in sys.argv
 
-logging.basicConfig(level=logging.WARN)
+if IS_DEBUG:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.WARN)
+
 root_logger = logging.getLogger("setup")
 
 class MarkdownUtils():
-
     @staticmethod
     def _find_separator_pairs(source : str, separator : str):
         """Find all pairs of `separator` in the string `source`.
@@ -110,7 +111,7 @@ class TaskFailure(BaseException):
     
     __slots__ = ("ret")
     
-    def __init__(self, ret):
+    def __init__(self, ret=None):
         self.ret = ret
 
 class TaskExitStatus:
@@ -175,11 +176,28 @@ Want to return to the main menu? Choose **Main Menu**.
 class SetupUtils:
     """Various utilities used by Setup."""
 
+    @staticmethod
+    def convert_config():
+        "Convert configuration data from a dict to a string to write."
+        config = ""
+        for k, v in SetupGlobalState.config.items():
+            config += f"{k}:{v}\n"
+        return config
+
+    @staticmethod
+    def write_config(path):
+        "Write configuration data from convert_config to a file at 'path'. Overwrites config file contents."
+        config = SetupUtils.convert_config()
+        with open(path, "w") as configfile:
+            configfile.write(config)
+
+    @staticmethod
     def load_database_api():
         """Attempt to import the database API. If the import fails, returns False. Upon success, returns True."""
         try:
-            from db_utils import db
+            SetupDatabaseClient.db = importlib.import_module("db_utils.db")
         except:
+            traceback.print_exc()
             return False
         return True
 
@@ -191,12 +209,16 @@ class SetupUtils:
             return common.run_command(linux_command)
         
     @staticmethod
-    def check_for_git():
-        """Check for an active Git repo in the current working directory. Use before tasks that perform Git operations."""
-        ret = common.run_command("git status")
+    def run_git_command(cmd):
+        ret = common.run_command(cmd)
         if ret["returncode"]:
             raise GitCommandFailed(ret)
-        return True
+        return ret
+
+    @staticmethod
+    def check_for_git():
+        """Check for an active Git repository in the current working directory. Use before tasks that perform Git operations."""
+        ret = SetupUtils.run_git_command("git status")
 
     class MenuWithCallbacks:
         """
@@ -253,7 +275,8 @@ class SetupUtils:
             super().__init__()
 
         def _handle_input(self):
-            ret = input(self.prompt+":\n").strip().lower()
+            ret = input().strip().lower()
+            print("")
             if self.allow_all and ret == "all":
                 return -1
             try:
@@ -267,9 +290,13 @@ class SetupUtils:
             return -2
         
         def handle_menu(self):
+            print(self.prompt)
             print("---------------")
             for index, option in enumerate(self.options):
-                print(f"{index+1}) {option}")
+                if self._has_callback(option):
+                    print(f"{index+1}) {list(option.keys())[0       ]}")
+                else:
+                    print(f"{index+1}) {option}")
             print("---------------")
             if len(self.options) == 1:
                 print("Automatically selecting the only option available.")
@@ -285,7 +312,6 @@ class SetupUtils:
         """A menu for choosing between 'Yes' and 'No'."""
 
         #We need NO_CALLBACK to default to a dummy callback to allow for only specifying YES_CALLBACK.
-        #TODO This seems weird to me but we'll keep it for now. Why should we keep the second case here that removes callbacks instead of just using dummy callbacks?
         def __init__(self, prompt, YES_CALLBACK=dummy_callback, NO_CALLBACK=dummy_callback):
             options = [{"Yes":YES_CALLBACK}, {"No":NO_CALLBACK}]
             super().__init__(options, prompt, False)
@@ -299,14 +325,141 @@ class SetupUtils:
             ret["choice"] = not ret["choice"]
             return ret
 
-#TODO: Resolve circular dependencies here.
-#Some tasks may depend on other tasks (e.g full_install depending on start_database, install_database, update, etc) that aren't defined until later on.
+class InstallUtils:
+    
+    @staticmethod
+    def get_token():
+        print("Enter a token. This allows Maximilian to log in to Discord.")
+        print("Your input will be hidden to keep it secret.")
+        print("(Unsure? Enter ? for help.)")
+        while True:
+            token = getpass.getpass("").strip()
+            if token == "?":
+                print("\nA token allows a bot to log in under a special account.")
+                print("Need one? Open the Discord Developer Portal, create an application, go to the Bot tab, create a bot account, and copy the token.")
+                print("Then paste it here.")
+                print("When you're ready, enter your token below.")
+                continue
+            elif token == "":
+                print("\nYou must enter a token to continue.")
+                continue
+            print("\nToken set.")
+            break
+        return token
+
+    @staticmethod
+    def get_database_password():
+        print("\nNext, enter a database password. This will be what Maximilian uses to access the database.")
+        if SetupGlobalState.remote:
+            print("Since the database is set up on a different computer, enter the password for that database.")
+        print("Your input will be hidden to keep it secret.")
+        while True:
+            dbp = getpass.getpass("").strip()
+            if dbp == "":
+                print("\nYou must enter a password to continue.")
+                continue
+            print("\nGreat. Enter the same password again to confirm it.")
+            dbp_confirmation = getpass.getpass("").strip()
+            if dbp_confirmation != dbp:
+                print("\nThe two passwords didn't match. You'll need to enter the password again.")
+                continue
+            print("Database password set.")
+            break
+        return dbp
+
+    @staticmethod
+    def get_owner_id():
+        print("Enter the ID for your Discord account. This enables error reporting and gives you more control over Maximilian.")
+        print("You *can* leave this blank, but your experience will be better if you include it.")
+        print("(Unsure of how to get your ID or just want some more info? Enter ?.)")
+        while True:
+            owner_id = input().strip()
+            if owner_id == "?":
+                print("\nA user ID is a unique number that identifies a specific Discord account.")
+                print("Maximilian uses this ID to determine where to send error messages.")
+                print("This ID is also used to enable some more advanced commands.")
+                print("These commands allow you to perform maintenance and debugging without access to the command line.")
+                print("This also allows you to use the Jishaku module. See HOSTING.md for more details on that.")
+                print("When you're ready, enter your ID below.")
+                continue
+            elif owner_id == "":
+                print("\nError reporting, 'utils' commands, and Jishaku have been disabled.") 
+                print("")
+                break
+            print("\nOwner ID set.")
+            break
+        return owner_id
+
+class InstallHandler:
+
+    def __init__(self):
+        self.overwrite_config = False
+        self.overwrite_config_menu = SetupUtils.BooleanMenu("It looks like you already have configuration data saved.\nDo you want to overwrite it?")
+        self.dbp = None
+        self.owner_id = None
+        self.token = None
+        self.automatic_updates_enabled = None
+        if SetupGlobalState.remote is None:
+            SetupGlobalState.remote = SetupUtils.BooleanMenu("Is the database already set up on a different computer?").handle_menu()["choice"]
+
+    def set_config_value(self, k, v):
+        if self.overwrite_config:
+            SetupGlobalState.config[k] = v
+        else:
+            root_logger.debug(f"Not overwriting config key '{k}' with '{v}'")
+
+    def prepare(self):
+        """Prepare for the install."""
+        if SetupGlobalState.config:
+            self.overwrite_config = self.overwrite_config_menu.handle_menu()["choice"]
+        if OS_TYPE == "nt":
+            print("Since you're on Windows, you'll need to install some software on your own.", style=TEXT_STYLES["bold"])
+            print("Please install:\n*Python 3.9 or above, ensure it's on your PATH and that 'Install pip' is checked during installation\n*MySQL / MariaDB server\n*FFmpeg (must be on PATH, only for music features)")
+            if not SetupGlobalState.remote:
+                print("Also, please complete the initial setup process for your database software, and start the database server.")
+            print("Once you're finished, press Enter to continue with setup.")
+            input()
+        
+    def prep_initial_config(self):
+        #A pound sign in a key is interpreted as a comment when loading configuration data.
+        #This is a little janky but it should work?
+        self.set_config_value("# Configuration data for Maximilian.\n# This file was automatically generated. Editing may break stuff unless you know what you're doing.\n# This file contains sensitive information that could compromise your account. Do not share it with anyone. ", "")
+        self.set_config_value("theme_color", "0x3498db")
+        #Create a file to indicate that configuration data needs to be saved.
+        open("config.tmp", "x")
+        print("")
+        print("Initial configuration data created.", style=TEXT_STYLES["bold"])
+        print("This will be saved after the setup process finishes.")
+
+    def gather_information(self):
+        """Gather information used later on."""
+        if not self.overwrite_config:
+            print("\nYou chose to not overwrite configuration data.")
+            print("Skipping the information gathering step.")
+            return
+        self.prep_initial_config()
+        print("")
+        print("There's a few things Setup needs from you.\n", style=TEXT_STYLES["bold"])
+        self.token = InstallUtils.get_token()
+        self.dbp = InstallUtils.get_database_password()
+        self.owner_id = InstallUtils.get_owner_id()
+        
+        print("Would you like to enable automatic updates?")
+        self.automatic_updates_enabled = SetupUtils.BooleanMenu("Would you like to enable automatic updates?\nIf enabled, Maximilian will attempt to update itself on startup once every 14 days.").handle_menu()["choice"]
+        
+
 class SetupTasks:
     """Container for various tasks performed by Setup."""
 
     @staticmethod
     def full_install():
-        pass
+        root_logger.debug("Starting full install task.")
+        root_logger.debug("Initializing InstallHandler")
+        installer = InstallHandler()
+        root_logger.debug("Preparing for install")
+        installer.prepare()
+        root_logger.debug("Gathering installation info")
+        installer.gather_information()
 
     @staticmethod
     def install_no_database():
@@ -322,7 +475,11 @@ class SetupTasks:
 
     @staticmethod
     def update():
-        pass
+        import updater
+        #Force update check
+        sys.argv.append("--force-update")
+        updater.update()
+        sys.argv.remove("--force-update")
 
     @staticmethod
     def backup():
@@ -346,11 +503,14 @@ class SetupTasks:
 
     @staticmethod
     def launch_database_client():
-        pass
+        return SetupDatabaseClient.main()
 
     @staticmethod
     def update_submodules():
-        pass
+        SetupUtils.check_for_git()
+        ret = common.run_command("git submodule update")
+        if ret["returncode"]:
+            raise GitCommandFailed(ret)
 
     @staticmethod
     def start_database():
@@ -365,16 +525,21 @@ class SetupTasks:
                 print("Waiting 5 seconds for database to initialize...")
                 sleep(5)
                 return True
-        print("Couldn't start the database.")
-        return False
+        print("All options for starting the database were exhausted.")
+        print("The database software may not be fully installed, or the command isn't included in the set used here.")
+        print("Consult your database software's documentation for information on the correct procedure.")
+        raise TaskFailure()
     
     @staticmethod
     def initialize_submodules():
-        if not SetupUtils.check_for_git():
-            raise GitCommandFailed()
-
+        SetupUtils.check_for_git()
         print("Initializing submodules...")
-        ret = common.run_command("")
+        ret = common.run_command("git submodule init")
+        ret = common.run_command("git submodule update")
+
+    @staticmethod
+    def migrate():
+        pass
 
 class SetupTaskHandler:
     """Wraps and handles individual tasks. Returns task output as a TaskResults instance."""
@@ -382,14 +547,19 @@ class SetupTaskHandler:
     @staticmethod
     def run_task(task):
         try:
+            root_logger.debug(f"Running task '{task.__name__}'")
             ret = task()
         except TaskFailure as exc:
+            root_logger.debug(f"Task '{task.__name__}' exited with TaskExitStatus.FAILURE, returned '{exc.ret}'")
             return TaskResults(status=TaskExitStatus.FAILURE, ret=exc.ret, context=exc)
         except Exception as exc:
             if type(exc) == GitCommandFailed:
                 print(SetupStrings.GIT_COMMAND_FAILED_WITHIN_TASK)
                 print(exc.context["output"])
+            root_logger.debug(f"Task '{task.__name__}' exited with TaskExitStatus.EXCEPTION:")
+            root_logger.debug(traceback.format_exc())
             return TaskResults(status=TaskExitStatus.EXCEPTION, ret=None, context=exc)
+        root_logger.debug(f"Task '{task.__name__}' exited successfully ")
         return TaskResults(status=TaskExitStatus.SUCCESS, ret=ret)
 
     #TODO: Generate run_task callbacks at runtime instead of this? This may not be the *best* way to do this but it'll stay for now.
@@ -408,17 +578,21 @@ class SetupTaskHandler:
     RUN_CLEAR_CACHES_TASK = functools.partial(run_task, SetupTasks.clear_caches)
     RUN_LAUNCH_DATABASE_CLIENT_TASK = functools.partial(run_task, SetupTasks.launch_database_client)
     RUN_SET_DATABASE_PASSWORD_TASK = functools.partial(run_task, SetupTasks.set_database_password)
+    RUN_MIGRATE_TASK = functools.partial(run_task, SetupTasks.migrate)
 
 class SetupConstants:
-    """Various non-string constants used by Setup."""
+    """Various non-string constants used by Setup."""   
     
-    MAIN_MENU_OPTIONS = [{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Repair":SetupTaskHandler.RUN_REPAIR_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, "Help", "More"]
+    MAIN_MENU_OPTIONS = [{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Repair":SetupTaskHandler.RUN_REPAIR_TASK}, {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, "Help", "More"]
     MORE_OPTIONS = [{"Re-run database setup":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Change database password":SetupTaskHandler.RUN_SET_DATABASE_PASSWORD_TASK}, {"Clear caches":SetupTaskHandler.RUN_CLEAR_CACHES_TASK}, {"Start database":SetupTaskHandler.RUN_START_DATABASE_TASK}, {"Restore database":SetupTaskHandler.RUN_RESTORE_TASK}, {"Launch database client":SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK}, "Help", "Main Menu"]
-    
+    MAIN_MENU = SetupUtils.IntMenu(options=MAIN_MENU_OPTIONS, prompt=SetupStrings.MAIN_MENU_PROMPT)
+    MORE_MENU = SetupUtils.IntMenu(options=MORE_OPTIONS, prompt=SetupStrings.MORE_PROMPT)    
+
 class SetupDatabaseClient:
     """A simple database client born from the ashes of a test written for db_utils
         Very limited and only allows operations permitted under the maximilianbot user."""
-    conn : db.db = None
+    db = None
+    conn = None
     ip : str = None
     pw : str = None
     name : str = None
@@ -427,9 +601,11 @@ class SetupDatabaseClient:
     RUN_INITIALIZE_SUBMODULES_TASK_MENU = SetupUtils.BooleanMenu(prompt="Would you like to run that now?", YES_CALLBACK=SetupTaskHandler.RUN_INITIALIZE_SUBMODULES_TASK)
     RECONNECT_MENU = SetupUtils.BooleanMenu(prompt="Would you like to re-initialize the database client?", YES_CALLBACK=SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK)
 
+    @staticmethod
     def _initialize():
         """Do most of the initialization work. Load API, obtain credentials and IP address, other things."""
         if not SetupDatabaseClient.conn:
+            root_logger.debug("Not connected, attempting to load api")
             ret = SetupUtils.load_database_api()
             if not ret:
                 print("The database API couldn't be loaded.")
@@ -454,39 +630,81 @@ class SetupDatabaseClient:
             if not SetupDatabaseClient.name:
                 SetupDatabaseClient.name = "maximilian"
             SetupDatabaseClient.pw = input("Please enter the database password:\n").strip()
+            print("\r ")
             is_remote = SetupDatabaseClient.IS_REMOTE_MENU.handle_menu()
-            if is_remote:
+            if is_remote["choice"]:
                 SetupDatabaseClient.ip = input("Enter the IP address of the remote database:\n").strip()
             else:
                 SetupDatabaseClient.ip = "localhost"
 
+    @staticmethod
+    def _create_connection():
+        SetupDatabaseClient.conn = SetupDatabaseClient.db.db(user="maximilianbot", password=SetupDatabaseClient.pw, ip=SetupDatabaseClient.ip, database=SetupDatabaseClient.name)
+
+    @staticmethod
     def initialize():
         """Initialize the database client. Handle initialization failure and establish connection."""
+        print("Initializing database client.")
         try:
             SetupDatabaseClient._initialize()
-            SetupDatabaseClient.conn = db.db(user="maximilianbot", password=SetupDatabaseClient.pw, ip=SetupDatabaseClient.ip, database=SetupDatabaseClient.name)
+            SetupDatabaseClient._create_connection()
         except CleanExit:
             raise CleanExit
-        except:
+        except Exception as exc:
+            if not SetupGlobalState.db_available:
+                root_logger.debug("db not available, starting it.")
+                ret = SetupTaskHandler.RUN_START_DATABASE_TASK()
+                if ret.status == TaskExitStatus.FAILURE:
+                    return False
+                SetupGlobalState.db_available = True
+                try:
+                    SetupDatabaseClient._create_connection()
+                    return
+                except Exception as ex:
+                    traceback.print_exc()
+                    raise ex
             print("The database client wasn't able to initialize. Here's some more details about the error.")
             traceback.print_exc()
+            raise exc
 
-
+    @staticmethod
     def main_loop():
+        print("")
         while True:
-            
-
+            try:
+                root_logger.debug("Entering DatabaseClient prompt")
+                cmd = input("> ").strip()
+                if cmd == "help":
+                    pass
+                elif cmd == "quit":
+                    raise CleanExit
+                else:
+                    root_logger.debug(f"Running command '{cmd}'")
+                    out = SetupDatabaseClient.conn.exec(cmd, ())
+                    if out:
+                        print(out)
+            except KeyboardInterrupt:
+                print("\nCtrl-C pressed - exiting!")
+                raise CleanExit
+            except CleanExit:
+                raise CleanExit
+            except:
+                print("Command raised an exception:")
+                traceback.print_exc()
 
     def end():
-        """"""
+        """Exit the database client."""
+        root_logger.debug("Closing database connection")
         SetupDatabaseClient.conn.conn.close()
+        SetupDatabaseClient.conn = None
 
-
-    def run():
+    def main():
         """Initialize the database client and start its main loop."""
         try:
             SetupDatabaseClient.initialize()
         except CleanExit:
+            if SetupDatabaseClient.conn:
+                SetupDatabaseClient.end()
             #Return without exception? Task technically succeeded.
             return
         #Unhandled exceptions are handled one level up by SetupTaskHandler
@@ -494,21 +712,40 @@ class SetupDatabaseClient:
         try:
             SetupDatabaseClient.main_loop()
         except CleanExit:
-            print("Exiting the database client.")
-            pass
-
-
+            print("Cleaning up.")
+            SetupDatabaseClient.end()
 
 class SetupGlobalState:
     pw = ""
-    ip = "%"
-    MAIN_MENU = SetupUtils.IntMenu(options=SetupConstants.MAIN_MENU_OPTIONS, prompt=SetupStrings.MAIN_MENU_PROMPT)
-    MORE_MENU = SetupUtils.IntMenu(options=SetupConstants.MORE_OPTIONS, prompt=SetupStrings.MORE_PROMPT)
-    current_menu = MAIN_MENU
+    ip = "%"        
+    current_menu = SetupConstants.MAIN_MENU
+    LOCK_FILE_HANDLER = None
+    install_in_progress = None
+    db_available = False
+    remote = None
     try:
+        if os.path.exists("setup.lock"):
+            print("Setup exited unexpectedly.", style=TEXT_STYLES["bold"])
+            if os.path.exists("config.tmp"):
+                print("Your configuration data from that session was lost.", style=TEXT_STYLES["bold"])
+                print("You must finish the setup process to save your configuration data.")
+                os.unlink("config.tmp")
+            else:
+                print("No configuration data was lost.")
+        elif os.path.exists("config.tmp"):
+            print("You exited Setup before a task was finished.\nYour configuration data from that session was lost.", style=TEXT_STYLES["bold"])
+            print("You must finish the setup process to save your configuration data.")
+            os.unlink("config.tmp")
+        root_logger.debug("Loading config.")
         config = common.load_config()
+        root_logger.debug("Creating lock file.")
+        LOCK_FILE_HANDLER = open("setup.lock", "w")
     except FileNotFoundError:
+        root_logger.debug("Config not found.")
         config = None
+    except:
+        root_logger.debug("Could not load/parse config. See exc info below")
+        root_logger.debug(traceback.format_exc())
 
 #TODO: Write preferences to config and keep them between sessions
 def pre_setup():
@@ -518,7 +755,7 @@ def pre_setup():
     FORMATTING_MENU = SetupUtils.BooleanMenu(prompt="Do you want to enable text formatting? This makes output prettier but may not work on some systems.\nChoose 'No' if the above text isn't displaying correctly.")
     print("\nThis is a test of text formatting.", fg=TEXT_STYLES["cyan"], style=TEXT_STYLES["bold"])
     response = FORMATTING_MENU.handle_menu()
-    if response["choice"] == 0:
+    if response["choice"]:
         print("Text formatting enabled.", style=TEXT_STYLES["bold"])
     else:
         #Linter is dumb AF, this should not be limited to this scope 
@@ -527,14 +764,14 @@ def pre_setup():
     #Then ask about debug logging.
     DEBUG_MENU = SetupUtils.BooleanMenu(prompt="Would you like to show debugging information? This may make output a little harder to read.")
     response = DEBUG_MENU.handle_menu()
-    if response["choice"] == 0:
+    if response["choice"]:
         logging.basicConfig(level=logging.DEBUG)
-        print("Debug logging enabled.", style=TEXT_STYLES["bold"])
 
 def setup_main():
     """Main method for Setup."""
     #Ask a few questions before entering the main loop.
     pre_setup()
+    os.system("cls" if OS_TYPE == "nt" else "clear")
     #Then show the introduction message
     print(SetupStrings.INTRO_HEADER, style=TEXT_STYLES["bold"])
     print(SetupStrings.INTRO_DESC)
@@ -542,32 +779,57 @@ def setup_main():
 
     while True:
         #Show the menu and handle input.
+        root_logger.debug("Showing current main menu.")
         ret = SetupGlobalState.current_menu.handle_menu()
         chosen_option = SetupGlobalState.current_menu.options[ret["choice"]]
 
         #Check if the user requested help.
         #This check is intended to be index-agnostic in case options change in the future.
-        if SetupGlobalState.current_menu == SetupGlobalState.MAIN_MENU and chosen_option == "Help":
+        if SetupGlobalState.current_menu == SetupConstants.MAIN_MENU and chosen_option == "Help":
             print(SetupStrings.MAIN_MENU_HELP)
-        elif SetupGlobalState.current_menu == SetupGlobalState.MORE_MENU and chosen_option == "Help":
+        elif SetupGlobalState.current_menu == SetupConstants.MORE_MENU and chosen_option == "Help":
             print(SetupStrings.MORE_HELP)
         
         #Check for menu changes.
-        if SetupGlobalState.current_menu == SetupGlobalState.MAIN_MENU and chosen_option == "More":
-            SetupGlobalState.current_menu = SetupGlobalState.MORE_MENU
-        elif SetupGlobalState.current_menu == SetupGlobalState.MORE_MENU and chosen_option == "Main Menu":
-            SetupGlobalState.current_menu = SetupGlobalState.MAIN_MENU
+        if SetupGlobalState.current_menu == SetupConstants.MAIN_MENU and chosen_option == "More":
+            SetupGlobalState.current_menu = SetupConstants.MORE_MENU
+        elif SetupGlobalState.current_menu == SetupConstants.MORE_MENU and chosen_option == "Main Menu":
+            SetupGlobalState.current_menu = SetupConstants.MAIN_MENU
 
         #TODO: What do we do after a task exits? This might be too high up for exception handling.
         if type(ret["return"]) == TaskResults:
             if ret["return"].status == TaskExitStatus.FAILURE:
-                pass
+                print("\nSorry, looks like a task failed. Returning to the menu.", style=TEXT_STYLES["bold"])
+            elif ret["return"].status == TaskExitStatus.EXCEPTION:
+                root_logger.debug("Uncaught exception in menu callback!")
+                root_logger.debug(traceback.format_exc())
+                print("\nSorry, a task exited with an error. Returning to the menu.", style=TEXT_STYLES["bold"])
+            else:
+                print("\nReturning to the menu.")
+        print("")
+
+def cleanup():
+    #Clean up dangling file handlers and delete temporary files
+    root_logger.debug("Cleaning up.")
+    if SetupGlobalState.LOCK_FILE_HANDLER:
+        SetupGlobalState.LOCK_FILE_HANDLER.close()
+        os.unlink("setup.lock")
 
 if not "-u" in sys.argv:
     print("Hi!\nThis setup script is a re-implementation of the current setup script.\nIt's not at all ready for use yet.")
-    print("Many things will not exist, the things that do are most likely broken and could break your installation.\n)
+    print("Many things will not exist, the things that do are most likely broken and could break your installation.\n")
     print("For setup, repairs, and other tasks, please continue to use setup.sh for the time being.")
     print("If you wish to test this out, run it with -u.")
+    quit()
 
 if __name__ == "__main__":
-    setup_main()
+    try:
+        setup_main()
+    except (KeyboardInterrupt, CleanExit):
+        print("\nExiting setup.")
+        cleanup()
+    except Exception as exc:
+        print("Setup exited unexpectedly! Please report this error.")
+        traceback.print_exc()
+        cleanup()
+
