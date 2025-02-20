@@ -26,7 +26,7 @@ Run `pip3 install -r requirements-extra.txt`.
 
 # additional command line arguments 
 
-To enable special debugging commands through an extension called `jishaku` (https://github.com/Gorialis/jishaku), run `main.py` with `--enablejsk`.
+To enable special debugging commands through a module called `jishaku` (https://github.com/Gorialis/jishaku), run `main.py` with `--enablejsk`.
 While Jishaku is an invaluable tool for debugging and development, it can be very dangerous. If your Discord account is compromised, an attacker can have almost complete access to your computer through Jishaku.
 The first time you run Maximilian with Jishaku enabled and a logging level at or below `-w`, startup will be temporarily paused and you'll see a warning with this same information.
 Want to see the warning again later? Remove the `jsk_used` line from `config`.
@@ -34,15 +34,13 @@ I recommend enabling two factor authentication for your Discord account before u
 
 If you're hosting the database on another computer, you'll need to run `main.py` with `--ip <database_ip>`, replacing `<database_ip>` with the IP address of your database.
 
-To skip loading a specific extension, use the `--no-load` argument. Follow it up with the names of the extensions you don't want loaded. for example, `python3 main.py --no-load cogs.userinfo` will make Maximilian not load the userinfo extension.
+To skip loading a specific module, use the `--no-load` argument. Follow it up with the names of the modules you don't want loaded. for example, `python3 main.py --no-load cogs.userinfo` will make Maximilian skip loading the userinfo module.
 
-You can specify a logging level (which filters the information Maximilian outputs) through command line arguments after `main.py`; the logging levels are -q (disables logging), -e (errors only), -w (warnings + errors, default), -i (warnings + errors + info, recommended), -v (warnings + errors + info + debugging info).
+You can specify a logging level (which filters the information Maximilian outputs) through command line arguments after `main.py`; the logging levels are -q (disables logging), -e (errors only), -w (warnings + errors, default), -i (warnings + errors + info), -v (warnings + errors + info + debugging info).
 It defaults to -w if nothing's specified.
 For example, `python3 main.py -i` will start Maximilian with the INFO logging level.
-I recommend using `-i` as it outputs some information you wouldn't see at other logging levels.
 
 Using `-v`, `--verbose`, or `--debug` will result in larger log file sizes and much more output to the console, especially on the first run.
-You may also see a small decrease in performance.
 If you choose to use it, you'll see a small warning on startup.
 
 To bypass the updater on startup, run main.py with `--no-update`.
@@ -51,14 +49,18 @@ This can save some startup time if you're restarting Maximilian frequently.
 Want to make Maximilian check for updates each time it starts, regardless of the time since the last update?
 Run main.py with `--force-update`.
 
-Want to attempt an update and exit? Use `--update`. This implicitly enables `--force-update`.
+Want to attempt an update and exit? Use `--update`. This implies `--force-update`.
 
 Run main.py with `--help` to view more information on valid arguments.
 Anything not documented either here or in `--help` is not stable and can change at any time.
 
-# can I run Maximilian on Windows?
-At the moment, no.
-I'm considering it and may make it an option in the future.
+# so much typing!! can i save a list of arguments to apply each time Maximilian is run?
+Yes! Just create a new line in config with 'default_cmdline:' followed by whatever you prefer.
+Something like 'default_cmdline: --enablejsk --no-rich' would work.
+
+# can i run Maximilian on Windows?
+Technically maybe, but a lot of things (config data writing, updates. etc.) have not been tested and are probably completely broken.
+I'm testing solutions for this, starting with a platform independent re-implementation of the setup script, but for now you should use WSL instead.
 
 # i wanna contribute, wtf is up with all these files?
 Maximilian is broken up into a number of different Python modules to make development and maintenance easier.
@@ -156,13 +158,18 @@ Let `tk___421` know. They probably messed something up.
 Try updating your Python. If you built Python from source, you may need to install additional dependencies and recompile.  
 
 `One or more Git commands failed. The updater cannot continue.`
+or
+`A Git command failed. This setup task cannot continue.`
+or
+`A Git command failed. Setup cannot continue.`
+
 Carefully read the output above the error message to figure out what to do next.
-The updater can't automatically determine the issue because Git doesn't provide enough info.
+The issue can't be determined automatically because Git doesn't provide enough info.
 Here are some common issues to be aware of.
 
 Seeing something about "dubious ownership"?
 You may have run Maximilian as root or cloned the repository as root.
-Using Maximilian through a process manager? Run with --no-update.
+Starting Maximilian automatically (e.g with systemd)? Run it with --no-update.
 Something like `git config --system --add safe.directory \"/path/to/maximilian\"` can fix this, but be aware of the security implications.
 This will allow any user on your system to modify the repository (and even push to a remote!)
 
