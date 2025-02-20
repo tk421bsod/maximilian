@@ -92,7 +92,7 @@ class misc(commands.Cog):
         commit = self.bot.commit if self.bot.commit else self.bot.common.get_latest_commit()
         desc = self.bot.strings["VERSION_TEXT"].format(self.bot.VER, commit)
         embed = self.bot.core.ThemedEmbed(title="Version information", description=desc)
-        embed.add_field(name=self.bot.strings["LATEST_CHANGES_TITLE"], value=self.bot.strings["LATEST_CHANGES_TEXT"])
+        embed.add_field(name=self.bot.strings["LATEST_CHANGES_TITLE"], value=self.bot.strings["LATEST_CHANGES_TEXT"], inline=False)
         if "prerelease" in self.bot.VER:
             embed.add_field(name=self.bot.strings["PRERELEASE_TITLE"], value=self.bot.strings["PRERELEASE_TEXT"].format(commit))
         await ctx.send(embed=embed)
