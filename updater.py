@@ -76,44 +76,51 @@ def _clean_exit():
     raise CleanExit
 
 def _process_last_update_timestamp(config):
-    """Obtains and converts the last update timestamp, then exits if conditions for an update check are not met."""
+    """Obtain and convert the last update timestamp, then exit if conditions for an update check are not met."""
     #Get our last update timestamp.
     last_update = common.get_value(config, 'last_update')
+    #Default elapsed days to None (for later) in case we don't have a timestamp or we want to force an update check.
+    elapsed = None
     #No timestamp? Either this is a new install or we were interrupted.
     if not last_update:
-        print("Updater was interrupted or last update failed. Checking for updates now.")
+        print("Updater was interrupted, the last update failed, or this is a new install.")
     elif "--force-update" in sys.argv or "--update" in sys.argv:
-        print("main.py was invoked with --force-update. Checking for updates now.")
+        print("Updater invoked with --force-update.")
     else:
         #Convert our last update timestamp from a Unix timestamp to a datetime.
         last = datetime.datetime.fromtimestamp(int(last_update))
+        #TODO: check for strftime platform independence
         #Then format it nicely:
         # ...                                      "was at HOUR:MINUTE <AM/PM> on MONTH DAY, YEAR."
         print(f"{Text.BOLD}Last check for updates was at {last.strftime('%-I:%M %p on %B %d, %Y.')}{Text.NORMAL}")
+        #Find delta between the two timestamps and get the days elapsed
         elapsed = (datetime.datetime.now()-last).days
-        #Do we have automatic updates enabled? Default to True
-        automatic_updates = common.get_value(config, 'automatic_updates', True)
-        #If we don't, politely ask if the user wants to check for updates.
-        if not automatic_updates:
-            print("Automatic updates aren't enabled. Would you like to check for updates? Y/N\n")
-            if input().strip().lower() == "y":
-                print("Ok, checking for updates...")
-            else:
-                print("Ok, not checking for updates.")
-                time.sleep(0.5)
-                _clean_exit()
-        elif elapsed > 14:
-            print("It's been more than 14 days since the last update. Updating now.")
-        #Exit if it's been less than 14 days.
+    #Once we've processed the timestamp, check automatic update behavior.
+    #Do we have automatic updates enabled? Default to True
+    automatic_updates = common.get_value(config, 'automatic_updates', True)
+    #If we don't, ask if the user wants to check for updates.
+    if not automatic_updates:
+        print("Automatic updates aren't enabled. Would you like to check for updates? Y/N\n")
+        if input().strip().lower() == "y":
+            print("Ok, checking for updates...")
         else:
-            print(f"It's been {elapsed} days since the last update. To force an update, run main.py with --force-update.")
-            time.sleep(1)
+            print("Ok, not checking for updates.")
+            time.sleep(0.5)
             _clean_exit()
+    elif elapsed == None:
+        print("Checking for updates now.")
+    elif elapsed > 14:
+        print("It's been more than 14 days since the last update. Checking for updates now.")
+    #Exit if it's been less than 14 days.
+    else:
+        print(f"It's been {elapsed} days since the last update. To force an update, run main.py with --force-update.")
+        time.sleep(1)
+        _clean_exit()
 
 def _fetch_changes_from_remote(remote):
     """Attempts to fetch changes from `remote`. Exits the updater if unsuccessful."""
     #Remove last update timestamp.
-    #Interrupting the updater before we set it again will result in an immediate update check next time.
+    #Interrupting the updater before we set it again will result in an immediate update check the next time it's launched.
     common.run_command("sed -i \"s/last_update:.*/last_update:/\" config")
     #Fetch changes from the remote.
     #Cleanly exit and display a non-generic message if the fetch fails. 
@@ -125,19 +132,18 @@ def _fetch_changes_from_remote(remote):
     #Set last update timestamp to the current time.
     common.run_command(f"sed -i \"s/last_update:.*/last_update:{round(time.time())}/\" config")
 
-def _apply_update(initial, branch):
+def _apply_update(initial, remote, branch):
     time.sleep(0.3)
-    #Run 'git pull' to merge changes into our local copy. 
-    #Additional changes are fetched if necessary.
+    #Merge the changes we fetched into our local copy. 
     #In the future, maybe we could use `git merge {remote}/{branch} {branch}`?
-    pull = _run_git_command("git pull", exit=False)
+    pull = _run_git_command("git merge {remote}/{branch} {branch}", exit=False)
     _print_git_output(pull['output'])
     if pull['returncode']:
         print(f"{Text.BOLD}Something went wrong while applying the update. Take a look at the above output for details.{Text.NORMAL}")
         sys.exit(124)
     print("Updating submodules...")
     #Attempt to update all submodules.
-    submodule_update = common.run_command("git submodule update --remote")
+    submodule_update = common.run_command("git submodule update")
     _print_git_output(submodule_update['output'])
     if submodule_update['returncode']:
         print(f"{Text.BOLD}Something went wrong while updating submodules. The above output may contain more details.{Text.NORMAL}")
@@ -155,9 +161,12 @@ def _apply_update(initial, branch):
 def _update():
     """
     Checks for updates if needed. Applies update if one is found.
+
+    DO NOT RUN THIS. USE `update()` INSTEAD.
+    It handles clean exits for you.
     """
     #loggers aren't used here as we want all this to show regardless of logging level
-    print("initializing updater\n")
+    print("\nInitializing updater...\n")
     #Load configuration data. Used for last update timestamp and the automatic updates setting.
     config = common.load_config()
     #Get our current HEAD commit.
@@ -182,7 +191,7 @@ def _update():
         resp = input(f"\nUpdate available. \nTake a moment to review the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.\nWould you like to apply the update? Y/N\n").lower().strip()
         if resp == "y":
             print("\nApplying update...")
-            _apply_update(initial, branch)
+            _apply_update(initial, remote, branch)
         else:
             print("\nNot applying the update.")
     else:
@@ -190,10 +199,7 @@ def _update():
     time.sleep(1)
 
 def update():
-    """Checks for updates if needed. Applies updates if found.
-    
-    Wraps `updater._update`
-    """
+    """Checks for updates if needed. Applies updates if found."""
     try:
         _update()
     except CleanExit:
