@@ -78,12 +78,15 @@ def _clean_exit():
 def _process_last_update_timestamp(config):
     """Obtain and convert the last update timestamp, then exit if conditions for an update check are not met."""
     #Get our last update timestamp.
-    last_update = common.get_value(config, 'last_update')
+    last_update = common.get_value(config, 'last_update', None)
     #Default elapsed days to None (for later) in case we don't have a timestamp or we want to force an update check.
     elapsed = None
-    #No timestamp? Either this is a new install or we were interrupted.
-    if not last_update:
-        print("Updater was interrupted, the last update failed, or this is a new install.")
+    #Timestamp field doesn't exist? This is a new install. Append it to config.
+    if last_update == None:
+        print("Looks like this is a new install.")
+        common.run_command("echo \"last_update:\" >> config")
+    elif last_update == "":
+        print("Updater was interrupted or the last update failed.")
     elif "--force-update" in sys.argv or "--update" in sys.argv:
         print("Updater invoked with --force-update.")
     else:
