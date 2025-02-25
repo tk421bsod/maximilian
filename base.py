@@ -187,7 +187,7 @@ class maximilian(commands.Bot):
             except ImportError:
                 pass
             except AttributeError:
-                self.logger.debug(f"Module '{cleanname}' does not have a 'requirements' method!")
+                self.logger.info(f"Module '{cleanname}' does not have a 'requirements' method!")
 
     async def load(self, file):
         #strip file extension out of filename
