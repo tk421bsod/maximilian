@@ -41,10 +41,9 @@ class CustomContext(commands.Context):
                     self.bot.logger.debug("Skipping CustomContext pagination.")
                     return False
             return ret
-        except AttributeError: #Category/Setting doesn't exist for some reason?
+        except AttributeError: #Category/Setting doesn't exist for some reason? Use the usual default behavior (disabled)
             return False
 
-    #yeah apparently you *can* unpack an arbitrary number of kwargs w/o args
     async def _get_allowed_mentions_state(self, **kwargs):
         #allowed_mentions passed to send() always overrides the setting.
         if common.get_value(kwargs, "allowed_mentions"):
@@ -52,13 +51,14 @@ class CustomContext(commands.Context):
         else:
             try:
                 id = self.guild.id if self.guild else 0
+                await self.bot.settings.general.wait_ready()
                 if self.bot.settings.general.mentions.enabled(id):
                     return discord.AllowedMentions(everyone=False)
                 else:
                     return discord.AllowedMentions(everyone=False, users=False, roles=False)
             except AttributeError:
                 pass
-        #Just assume the setting's disabled.
+        #If we haven't returned yet, just assume the setting is disabled.
         return discord.AllowedMentions(everyone=False, users=False, roles=False)
 
     async def send(self, *args, **kwargs):
@@ -69,13 +69,14 @@ class CustomContext(commands.Context):
         caller = common.get_caller_name()
         self.bot.logger.debug(f"CustomContext.send called from '{caller}'")
         pagination_enabled = await self._get_pagination_state(caller)
-        allowed_mentions = await self._get_allowed_mentions_state(**kwargs)
+        #Don't try to paginate if we don't have anything to paginate.
         if to_send and pagination_enabled:
             #Remove the embed kwarg so we can pass everything else to send_paginated.
             #This lets files, views, etc work properly.
             if isinstance(to_send, discord.Embed):
                 kwargs.pop("embed")
             return await self.bot.core.send_paginated(to_send, self, prefix="", suffix="", **kwargs)
+        allowed_mentions = await self._get_allowed_mentions_state(**kwargs)
         return await super().send(*args, **kwargs, allowed_mentions=allowed_mentions)
 
 class maximilian(commands.Bot):
@@ -161,7 +162,7 @@ class maximilian(commands.Bot):
         """Interpret requirements for an extension and change stuff as needed."""
         if not data:
             return
-        #Data is a dict. It contains values that we add to our Bot instance.
+        #Data contains values that we add to our Bot instance.
         for data_type, value in data.items():
             if data_type == "intents":
                 self.extension_requires_intents(extension, value)
