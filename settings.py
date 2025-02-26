@@ -117,7 +117,7 @@ class Category():
         setattr(constructor, name, self)
         self.name = name
         self.filling = False
-        self.logger = constructor.logger
+        self.logger = logging.getLogger(f"settings.{name}")
         self.bot = constructor.bot
         self.permissionmapping = permissionmapping
         self.raw_data = {}
