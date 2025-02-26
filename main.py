@@ -114,7 +114,7 @@ try:
     import startup
     import updater
 except (ImportError, NameError, SyntaxError) as e:
-    print(f"{Text.BOLD}Maximilian cannot start because an internal module failed to load.{Text.NORMAL}\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk___421 know and consider publicly shaming them as this should never have gotten through testing in the first place.")
+    print(f"{Text.BOLD}Maximilian cannot start because an internal module failed to load.{Text.NORMAL}\nIf you made changes, please review them. You may want to use `git restore <file>` to revert your changes.\nIf you just updated to a new Maximilian version, let tk___421 know.")
     print(e)
     if GlobalConstants.IS_DEBUG:
         traceback.print_exc()
@@ -156,7 +156,7 @@ def config_logging(args):
             if value[0] == logging.DEBUG:
                 print("This may cause a small performance decrease for some operations.")
                 print("It can also result in very large log files.")
-                print("Debug logging is not recommended for production use.")
+                print("Debug logging is not recommended for continuous use.")
                 time.sleep(2)
             logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
             return
