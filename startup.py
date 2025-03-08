@@ -123,10 +123,12 @@ async def initialize_db(bot, config):
     try:
         await inst.connect()
     except OperationalError:
-        bot.logger.error("Couldn't connect to database. Trying to start it...")
-        os.system("bash setup.sh start")
-        bot.logger.error("Waiting 5 seconds for database to settle...")
-        time.sleep(5)
+        bot.logger.error("Couldn't connect to the database. Trying to start it...")
+        import setup
+        ret = setup.SetupTaskHandler.RUN_START_DATABASE_TASK()
+        if ret.status == setup.TaskExitStatus.FAILURE:
+            sys.exit(76)
+        bot.logger.error("Trying to connect again.")
         try:
             await inst.connect()
         except OperationalError:
@@ -165,7 +167,7 @@ async def get_language(logger, config, exit):
     logger.warning("If you wish to set a default language, add `language:<language>` to config.")
     return 'en'
 
-def missing_string(name):
+def _missing_string(name):
     return f"[{name}]"
 
 class StringDefaultDict(dict):
@@ -173,7 +175,7 @@ class StringDefaultDict(dict):
 
     __slots__ = ("factory", "_fill_in_missing")
     def __init__(self):
-        self.factory = missing_string
+        self.factory = _missing_string
         self._fill_in_missing = False
 
     def __missing__(self, key):
