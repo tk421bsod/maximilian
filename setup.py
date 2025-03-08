@@ -609,13 +609,13 @@ class SetupDatabaseClient:
     def _initialize():
         """Do most of the initialization work. Load API, obtain credentials and IP address, other things."""
         if not SetupDatabaseClient.conn:
-            root_logger.debug("Not connected, attempting to load api")
+            root_logger.debug("Not connected, loading db api")
             ret = SetupUtils.load_database_api()
             if not ret:
                 print("The database API couldn't be loaded.")
                 print("If Maximilian is already installed, try running the 'Initialize submodules' task.")
                 ret = SetupDatabaseClient.RUN_INITIALIZE_SUBMODULES_TASK_MENU.handle_menu()
-                #If we ran the task
+                #Did we run the task?
                 if type(ret["return"]) == TaskResults:
                     if ret["return"].status == TaskExitStatus.SUCCESS:
                         print("Submodule initialization succeeded. Launch the database client again.")
@@ -623,10 +623,13 @@ class SetupDatabaseClient:
                         if ret["return"].status == TaskExitStatus.EXCEPTION:
                             print(traceback.format_exception(ret["return"].context))
                         print("Submodule initialization failed. See the output above.")
+                else:
+                    print("Alright. Maximilian's submodules and dependencies must be installed for the database client to work.")
+                    print("You may want to run the 'Install without database' task.")
                 raise CleanExit
             if SetupDatabaseClient.pw is not None and SetupDatabaseClient.ip is not None and SetupDatabaseClient.name is not None:
                 ret = SetupDatabaseClient.OPTIONS_IN_MEMORY_MENU.handle_menu()
-                if ret["choice"]:
+                if ret["choice"]: #The user chose to re-use their previous credentials.
                     return
                 print("Ok.")
             print("Enter the name of the database to connect to (defaults to 'maximilian'):")
