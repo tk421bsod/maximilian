@@ -2,7 +2,8 @@
 Will replace setup.sh for easier maintenance and platform independence in the future.
 """
 
-print("Setup is starting.\n")
+if __name__ == "__main__":
+    print("Setup is starting.\n")
 
 import functools
 import getpass
@@ -25,12 +26,14 @@ TEXT_END = "\x1b[0m"
 TEXT_STYLES = {"none":0, "bold":1, "underline":2, "negative1":3, "negative2":5, "black":30, "red":31, "green":32, "yellow":33, "blue":34, "purple":35, "cyan":36, "white":37}
 FORMATTING_ENABLED = True
 IS_DEBUG = "-v" in sys.argv
+LOG_FORMAT = "%(levelname)s:%(name)s:%(funcName)s:%(message)s"
 
 if IS_DEBUG:
-    logging.basicConfig(level=logging.DEBUG)
+    log_level = logging.DEBUG
 else:
-    logging.basicConfig(level=logging.WARN)
+    log_level = logging.WARN
 
+logging.basicConfig(level=log_level, format=LOG_FORMAT)
 root_logger = logging.getLogger("setup")
 
 class MarkdownUtils():
@@ -519,6 +522,7 @@ class SetupTasks:
         #TODO: Don't hardcode the MySQL Server path. 
         DATABASE_START_COMMANDS["nt"] = ["C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqld", "net start mysql", "net start MariaDB"]
         for command in DATABASE_START_COMMANDS[OS_TYPE]:
+            break
             ret = common.run_command(command)
             if not ret['returncode']:
                 print("Started the database.")
@@ -736,10 +740,13 @@ class SetupGlobalState:
             print("You exited Setup before a task was finished.\nYour configuration data from that session was lost.", style=TEXT_STYLES["bold"])
             print("You must finish the setup process to save your configuration data.")
             os.unlink("config.tmp")
-        root_logger.debug("Loading config.")
-        config = common.load_config()
-        root_logger.debug("Creating lock file.")
-        LOCK_FILE_HANDLER = open("setup.lock", "w")
+        if __name__ == "__main__":
+            root_logger.debug("Loading config.")
+            config = common.load_config()
+            root_logger.debug("Creating lock file.")
+            LOCK_FILE_HANDLER = open("setup.lock", "w")
+        else:
+            config = None
     except FileNotFoundError:
         root_logger.debug("Config not found.")
         config = None
@@ -765,7 +772,7 @@ def pre_setup():
     DEBUG_MENU = SetupUtils.BooleanMenu(prompt="Would you like to show debugging information? This may make output a little harder to read.")
     response = DEBUG_MENU.handle_menu()
     if response["choice"]:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
 def setup_main():
     """Main method for Setup."""
@@ -815,14 +822,13 @@ def cleanup():
         SetupGlobalState.LOCK_FILE_HANDLER.close()
         os.unlink("setup.lock")
 
-if not "-u" in sys.argv:
-    print("Hi!\nThis setup script is a re-implementation of the current setup script.\nIt's not at all ready for use yet.")
-    print("Many things will not exist, the things that do are most likely broken and could break your installation.\n")
-    print("For setup, repairs, and other tasks, please continue to use setup.sh for the time being.")
-    print("If you wish to test this out, run it with -u.")
-    quit()
-
 if __name__ == "__main__":
+    if not "-u" in sys.argv:
+        print("Hi!\nThis setup script is a re-implementation of the current setup script.\nIt's not at all ready for use yet.")
+        print("Many things will not exist, the things that do are most likely broken and could break your installation.\n")
+        print("For setup, repairs, and other tasks, please continue to use setup.sh for the time being.")
+        print("If you wish to test this out, run it with -u.")
+        quit()
     try:
         setup_main()
     except (KeyboardInterrupt, CleanExit):
