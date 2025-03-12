@@ -20,7 +20,6 @@ import updater
 
 OS_TYPE = os.name
 
-#Declaration hell :)
 original_print = print
 TEXT_END = "\x1b[0m"
 TEXT_STYLES = {"none":0, "bold":1, "underline":2, "negative1":3, "negative2":5, "black":30, "red":31, "green":32, "yellow":33, "blue":34, "purple":35, "cyan":36, "white":37}
@@ -130,8 +129,7 @@ class TaskResults:
         self.ret = ret
         self.context : typing.Optional[Exception] = context
 
-#TODO do we need this
-def dummy_callback():
+def empty_callback():
     return None
 
 class SetupStrings:
@@ -230,15 +228,17 @@ class SetupUtils:
         """
 
         def _has_callback(self, option):
+            """Check if a menu option has a callback attached to it."""
             if type(option) != dict:
                 return False
             return True
 
-        def handle_callback(self, option):
+        def _handle_callback(self, option):
             """Handle a callback mapped to a menu option.
 
-            Returns the return value of the callback. This can be None.
+            Returns the return value of the callback if available, otherwise returns None.
             """
+            #Return None if there isn't an attached callback.
             if not self._has_callback(option):
                 return None
             #Get the attached callback.
@@ -246,6 +246,7 @@ class SetupUtils:
             if not callable(callback):
                 print("Menu callbacks must be callable! Returning None.", fg=TEXT_STYLES["red"])
                 return None
+            #Run the callback and return its return value.
             ret = callback()
             return ret
 
@@ -297,25 +298,25 @@ class SetupUtils:
             print("---------------")
             for index, option in enumerate(self.options):
                 if self._has_callback(option):
-                    print(f"{index+1}) {list(option.keys())[0       ]}")
+                    print(f"{index+1}) {list(option.keys())[0]}")
                 else:
                     print(f"{index+1}) {option}")
             print("---------------")
             if len(self.options) == 1:
                 print("Automatically selecting the only option available.")
-                ret = self.handle_callback(self.options[0])
+                ret = self._handle_callback(self.options[0])
                 return {"choice":0, "return":ret}
             while True:
                 index = self._handle_input()
                 if index != -2:
-                    ret = self.handle_callback(self.options[index])
+                    ret = self._handle_callback(self.options[index])
                     return {"choice":index, "return":ret}
                 
     class BooleanMenu(IntMenu):
         """A menu for choosing between 'Yes' and 'No'."""
 
-        #We need NO_CALLBACK to default to a dummy callback to allow for only specifying YES_CALLBACK.
-        def __init__(self, prompt, YES_CALLBACK=dummy_callback, NO_CALLBACK=dummy_callback):
+        #We need NO_CALLBACK to default to an empty callback to allow for only specifying YES_CALLBACK.
+        def __init__(self, prompt, YES_CALLBACK=empty_callback, NO_CALLBACK=empty_callback):
             options = [{"Yes":YES_CALLBACK}, {"No":NO_CALLBACK}]
             super().__init__(options, prompt, False)
 
