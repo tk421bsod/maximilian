@@ -399,7 +399,7 @@ class InstallHandler:
     """Container for methods used by the installation process.
     
     Set single_use upon initialization if only using the instance once.
-    This prevents methods from outputting contextual information used during a full install
+    This prevents methods from outputting contextual information used during a full install.
     """
 
     def __init__(self, single_use=False):
@@ -796,7 +796,7 @@ def pre_setup():
     if response["choice"]:
         print("Text formatting enabled.", style=TEXT_STYLES["bold"])
     else:
-        #Linter is dumb AF, this should not be limited to this scope 
+        #This should not be limited to this scope. Linter is stupid
         FORMATTING_ENABLED = False
         print("Text formatting disabled.")
     #Then ask about debug logging.
@@ -834,16 +834,18 @@ def setup_main():
         elif SetupGlobalState.current_menu == SetupConstants.MORE_MENU and chosen_option == "Main Menu":
             SetupGlobalState.current_menu = SetupConstants.MAIN_MENU
 
-        #TODO: What do we do after a task exits? This might be too high up for exception handling.
-        if type(ret["return"]) == TaskResults:
-            if ret["return"].status == TaskExitStatus.FAILURE:
-                print("\nSorry, looks like a task failed. Returning to the menu.", style=TEXT_STYLES["bold"])
-            elif ret["return"].status == TaskExitStatus.EXCEPTION:
+        #Why are we returning to the menu?
+        menu_callback_return = ret["return"]
+        if type(menu_callback_return) == TaskResults:
+            if menu_callback_return.status == TaskExitStatus.FAILURE:
+                print("\nSorry, looks like a task failed.", style=TEXT_STYLES["bold"])
+            elif menu_callback_return.status == TaskExitStatus.EXCEPTION:
                 root_logger.debug("Uncaught exception in menu callback!")
                 root_logger.debug(traceback.format_exc())
-                print("\nSorry, a task exited with an error. Returning to the menu.", style=TEXT_STYLES["bold"])
-            else:
-                print("\nReturning to the menu.")
+                print("\nSorry, a task exited with an error.", style=TEXT_STYLES["bold"])
+            elif menu_callback_return.status == TaskExitStatus.SUCCESS:
+                print("Task completed.", style=TEXT_STYLES["bold"])
+            print("\nReturning to the menu.")
         print("")
 
 def cleanup():
