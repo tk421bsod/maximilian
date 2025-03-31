@@ -387,9 +387,12 @@ class InstallUtils:
                 print("When you're ready, enter your ID below.")
                 continue
             elif owner_id == "":
-                print("\nError reporting, 'utils' commands, and Jishaku have been disabled.") 
+                print("\nOwner ID not set.\nError reporting, 'utils' commands, and Jishaku have been disabled.") 
                 print("")
                 break
+            if not owner_id.isnumeric():
+                print("The ID must be a number.")
+                continue
             print("\nOwner ID set.")
             break
         return owner_id
