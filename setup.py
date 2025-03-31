@@ -396,13 +396,20 @@ class InstallUtils:
 
 class InstallHandler:
 
-    def __init__(self):
+    """Container for methods used by the installation process.
+    
+    Set single_use upon initialization if only using the instance once.
+    This prevents methods from outputting contextual information used during a full install
+    """
+
+    def __init__(self, single_use=False):
         self.overwrite_config = False
         self.overwrite_config_menu = SetupUtils.BooleanMenu("It looks like you already have configuration data saved.\nDo you want to overwrite it?")
         self.dbp = None
         self.owner_id = None
         self.token = None
         self.automatic_updates_enabled = None
+        self.single_use = single_use
         if SetupGlobalState.remote is None:
             SetupGlobalState.remote = SetupUtils.BooleanMenu("Is the database already set up on a different computer?").handle_menu()["choice"]
 
@@ -451,6 +458,26 @@ class InstallHandler:
         print("Would you like to enable automatic updates?")
         self.automatic_updates_enabled = SetupUtils.BooleanMenu("Would you like to enable automatic updates?\nIf enabled, Maximilian will attempt to update itself on startup once every 14 days.").handle_menu()["choice"]
         
+    def install_packages(self):
+        if OS_TYPE == "posix":
+            print("Updating package index...")
+            print("You may be prompted to enter your password.")
+            ret = common.run_command("sudo apt-get update")
+            if ret["returncode"] == 127:
+                print("Your Linux distribution doesn't use the 'apt' package manager.")
+                print("You'll need to install the required packages manually to get started.")
+                print(f"Install {','.join(SetupConstants.REQUIRED_PACKAGES[:-1])}, and {SetupConstants.REQUIRED_PACKAGES[-1]}.") 
+                if not self.single_use:
+                    print("Then press Enter to continue.")
+                    input()
+                    print("Great. Continuing with the installation.")
+                return
+            print("Installing required packages...")
+            ret = common.run_command(f"sudo apt-get install {SetupConstants.REQUIRED_PACKAGES}")
+            if ret["returncode"]:
+                print("")
+            return
+        print("This is a Windows environment, not installing packages.")
 
 class SetupTasks:
     """Container for various tasks performed by Setup."""
@@ -523,7 +550,6 @@ class SetupTasks:
         #TODO: Don't hardcode the MySQL Server path. 
         DATABASE_START_COMMANDS["nt"] = ["C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqld", "net start mysql", "net start MariaDB"]
         for command in DATABASE_START_COMMANDS[OS_TYPE]:
-            break
             ret = common.run_command(command)
             if not ret['returncode']:
                 print("Started the database.")
@@ -588,6 +614,7 @@ class SetupTaskHandler:
 class SetupConstants:
     """Various non-string constants used by Setup."""   
     
+    REQUIRED_PACKAGES = ["mariadb-server", "python3-pip", "ffmpeg", "g++"]
     MAIN_MENU_OPTIONS = [{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Repair":SetupTaskHandler.RUN_REPAIR_TASK}, {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, "Help", "More"]
     MORE_OPTIONS = [{"Re-run database setup":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Change database password":SetupTaskHandler.RUN_SET_DATABASE_PASSWORD_TASK}, {"Clear caches":SetupTaskHandler.RUN_CLEAR_CACHES_TASK}, {"Start database":SetupTaskHandler.RUN_START_DATABASE_TASK}, {"Restore database":SetupTaskHandler.RUN_RESTORE_TASK}, {"Launch database client":SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK}, "Help", "Main Menu"]
     MAIN_MENU = SetupUtils.IntMenu(options=MAIN_MENU_OPTIONS, prompt=SetupStrings.MAIN_MENU_PROMPT)
