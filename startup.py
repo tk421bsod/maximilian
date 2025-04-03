@@ -210,7 +210,7 @@ async def load_strings(language, logger):
                     logger.warn(f"The language file '{language}' is missing the string '{identifier}'!")
                     errors_found = True
     if errors_found:
-        logger.warn("This language file is missing some strings found in 'en'. Some text may not display correctly.")
+        logger.warn("This language file is missing some strings that are present in the default language file. Some text may not display correctly.")
     strings._fill_in_missing = True
     logger.info('Strings loaded successfully.')
     return strings
