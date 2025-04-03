@@ -424,8 +424,10 @@ class InstallHandler:
 
     def prepare(self):
         """Prepare for the install."""
-        if SetupGlobalState.config:
+        if SetupGlobalState.config_found:
             self.overwrite_config = self.overwrite_config_menu.handle_menu()["choice"]
+        else:
+            self.overwrite_config = True
         if OS_TYPE == "nt":
             print("Since you're on Windows, you'll need to install some software on your own.", style=TEXT_STYLES["bold"])
             print("Please install:\n*Python 3.9 or above, ensure it's on your PATH and that 'Install pip' is checked during installation\n*MySQL / MariaDB server\n*FFmpeg (must be on PATH, only for music features)")
@@ -460,7 +462,11 @@ class InstallHandler:
         
         print("Would you like to enable automatic updates?")
         self.automatic_updates_enabled = SetupUtils.BooleanMenu("Would you like to enable automatic updates?\nIf enabled, Maximilian will attempt to update itself on startup once every 14 days.").handle_menu()["choice"]
-        
+        if self.automatic_updates_enabled:
+            print("Automatic updates enabled.")
+        else:
+            print("Automatic updates disabled.")
+
     def install_packages(self):
         if OS_TYPE == "posix":
             print("Updating package index...")
@@ -476,9 +482,10 @@ class InstallHandler:
                     print("Great. Continuing with the installation.")
                 return
             print("Installing required packages...")
-            ret = common.run_command(f"sudo apt-get install {SetupConstants.REQUIRED_PACKAGES}")
+            ret = common.run_command(f"sudo apt-get install -y {" ".join(SetupConstants.REQUIRED_PACKAGES)}")
             if ret["returncode"]:
-                print("")
+                print("Package installation failed! Read the above output for more information.")
+                raise TaskFailure()
             return
         print("This is a Windows environment, not installing packages.")
 
@@ -617,7 +624,7 @@ class SetupTaskHandler:
 class SetupConstants:
     """Various non-string constants used by Setup."""   
     
-    REQUIRED_PACKAGES = ["mariadb-server", "python3-pip", "ffmpeg", "g++"]
+    REQUIRED_PACKAGES = ["mariadb-server", "python3-pip", "ffmpeg", "python3-venv"]
     MAIN_MENU_OPTIONS = [{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Repair":SetupTaskHandler.RUN_REPAIR_TASK}, {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, "Help", "More"]
     MORE_OPTIONS = [{"Re-run database setup":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Change database password":SetupTaskHandler.RUN_SET_DATABASE_PASSWORD_TASK}, {"Clear caches":SetupTaskHandler.RUN_CLEAR_CACHES_TASK}, {"Start database":SetupTaskHandler.RUN_START_DATABASE_TASK}, {"Restore database":SetupTaskHandler.RUN_RESTORE_TASK}, {"Launch database client":SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK}, "Help", "Main Menu"]
     MAIN_MENU = SetupUtils.IntMenu(options=MAIN_MENU_OPTIONS, prompt=SetupStrings.MAIN_MENU_PROMPT)
@@ -761,6 +768,7 @@ class SetupGlobalState:
     install_in_progress = None
     db_available = False
     remote = None
+    config_found = True
     try:
         if os.path.exists("setup.lock"):
             print("Setup exited unexpectedly.", style=TEXT_STYLES["bold"])
@@ -783,10 +791,12 @@ class SetupGlobalState:
             config = None
     except FileNotFoundError:
         root_logger.debug("Config not found.")
-        config = None
+        config = {}
+        config_found = False
     except:
         root_logger.debug("Could not load/parse config. See exc info below")
         root_logger.debug(traceback.format_exc())
+        config_found = False
 
 #TODO: Write preferences to config and keep them between sessions
 def pre_setup():
