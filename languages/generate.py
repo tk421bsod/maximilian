@@ -8,7 +8,9 @@ import os
 try:
     sys.argv[1]
 except IndexError:
-    print("You need to specify a file.")
+    print("You must specify a file to convert.")
+    print("This file must be of the same format as the template and have the same name as the language file you want to generate.")
+    print("See README.md in this directory for more information.")
     quit()
 
 if sys.argv[1] == 'TEMPLATE':
