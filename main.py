@@ -186,7 +186,10 @@ try:
     outer_logger.info("Running updater")
     try:
         if "--no-update" not in sys.argv:
-            updater.update()
+            #Updater returns whether to exit
+            ret = updater.update()
+            if not ret:
+                sys.exit(110)
         else:
             print("main.py invoked with '--no-update', skipping update check")
         if "--update" in sys.argv:

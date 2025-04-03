@@ -138,12 +138,11 @@ def _fetch_changes_from_remote(remote):
 def _apply_update(initial, remote, branch):
     time.sleep(0.3)
     #Merge the changes we fetched into our local copy. 
-    #In the future, maybe we could use `git merge {remote}/{branch} {branch}`?
-    pull = _run_git_command("git merge {remote}/{branch} {branch}", exit=False)
+    pull = _run_git_command(f"git merge {remote}/{branch} {branch}", exit=False)
     _print_git_output(pull['output'])
     if pull['returncode']:
         print(f"{Text.BOLD}Something went wrong while applying the update. Take a look at the above output for details.{Text.NORMAL}")
-        sys.exit(124)
+        return None
     print("Updating submodules...")
     #Attempt to update all submodules.
     submodule_update = common.run_command("git submodule update")
@@ -159,7 +158,8 @@ def _apply_update(initial, remote, branch):
     #Exit if we had changes to any files already loaded.
     if list_in_str(['main.py', 'common.py', 'db.py', 'settings.py', 'base.py', 'startup.py', 'core.py'], "\n".join(pull['output'])):
         print(f"\n{Text.BOLD}This update changed some important files that can't be reloaded while Maximilian is running.\nPlease restart Maximilian to finish the update.{Text.NORMAL}")
-        sys.exit(111)
+        return False
+    return True
 
 def _update():
     """
@@ -194,19 +194,20 @@ def _update():
         resp = input(f"\nUpdate available. \nTake a moment to review the changes at 'https://github.com/TK421bsod/maximilian/compare/{initial}...{branch}'.\nWould you like to apply the update? Y/N\n").lower().strip()
         if resp == "y":
             print("\nApplying update...")
-            _apply_update(initial, remote, branch)
+            return _apply_update(initial, remote, branch)
         else:
             print("\nNot applying the update.")
     else:
         print("No updates available.")
     time.sleep(1)
+    return True
 
 def update():
     """Checks for updates if needed. Applies updates if found."""
     try:
-        _update()
+        return _update()
     except CleanExit:
-        pass
+        return True
 
 if __name__ == "__main__":
     print("It looks like you're trying to run the updater directly.")
