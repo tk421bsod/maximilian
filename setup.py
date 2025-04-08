@@ -5,6 +5,7 @@ Will replace setup.sh for easier maintenance and platform independence in the fu
 if __name__ == "__main__":
     print("Setup is starting.\n")
 
+import copy
 import functools
 import getpass
 import importlib
@@ -18,11 +19,15 @@ import typing
 import common
 import updater  
 
-OS_TYPE = os.name
+#deep copy from builtins to ensure we have a copy of the original print()
+#This is to prevent infinite original_print calls if calling importlib.reload(setup)
+original_print = copy.deepcopy(__builtins__["print"])
 
-original_print = print
+#Special control characters for text formatting
 TEXT_END = "\x1b[0m"
 TEXT_STYLES = {"none":0, "bold":1, "underline":2, "negative1":3, "negative2":5, "black":30, "red":31, "green":32, "yellow":33, "blue":34, "purple":35, "cyan":36, "white":37}
+
+OS_TYPE = os.name
 FORMATTING_ENABLED = True
 IS_DEBUG = "-v" in sys.argv
 LOG_FORMAT = "%(levelname)s:%(name)s:%(funcName)s:%(message)s"
