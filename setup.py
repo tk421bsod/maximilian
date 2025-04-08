@@ -65,7 +65,6 @@ class MarkdownUtils():
     def apply_markdown(text : str):
         """Apply markdown in strings to be printed. Just makes it a little easier to write things that require formatting, ya know?
         Like instead of adding style=TEXT_STYLES['bold'] to EVERY SINGLE print() call I can just put asterisks around the text I want formatted :)
-        
     """
         while text:
             #Check for separators in our text. Replace separators with their style, then print the resulting string.
@@ -101,9 +100,12 @@ def print(text, *, ignore_markdown=True, end=TEXT_END+"\n", fg=39, style=0, bg=4
 def potentially_destructive(func):
     def potentially_destructive_inner(*args, **kwargs):
         """Warn about a potentially destructive operation"""
-        print(f"\nAre you sure you want to do this?")
-        print("If you don't know what you are doing, it's best not to do this.")
-        #TODO IntMenu here
+        print(f"\nAre you sure you want to do this?", style=TEXT_STYLES["bold"])
+        print("If you don't know what you are doing, this option may cause a loss of data or break your installation.")
+        potentially_destructive_menu = SetupUtils.BooleanMenu(prompt="")
+        ret = potentially_destructive_menu.handle_menu()
+        if ret["choice"]:
+            func(*args, **kwargs)
     return potentially_destructive_inner
 
 class CleanExit(BaseException):
@@ -152,18 +154,13 @@ class SetupStrings:
 
     MAIN_MENU_HELP = """\n---- Setup Help ----
 Want to install Maximilian? Choose **Install**.
-
-Have an issue? Try **Repair**.
+For database maintenance, choose **Database options**.
 Want to check for updates now? Choose **Run updater**.
 Something else? Choose **More**.
 """
     MORE_HELP = """\n---- More Help ----
-Need to re-initialize the database? Choose **Re-run database setup**.
-Have a different database password in mind? Choose **Change database password**.
 Want to free up some space? Choose **Clear caches**. Some things may take longer to load afterwards.
-Database not started? Choose **Start database**. This usually isn't necessary.
-Have a backup you want to restore? Choose **Restore database**. Ensure your backup is in the .sql format.
-Need to manually modify the database? Choose **Launch database client**. Only use this option if you know what you're doing.
+Have an issue? Try **Repair**.
 Want to return to the main menu? Choose **Main Menu**.
 """
 
@@ -490,7 +487,7 @@ class InstallHandler:
                     print("Great. Continuing with the installation.")
                 return
             print("Installing required packages...")
-            ret = common.run_command(f"sudo apt-get install -y {" ".join(SetupConstants.REQUIRED_PACKAGES)}")
+            ret = common.run_command(f"sudo apt-get install -y {' '.join(SetupConstants.REQUIRED_PACKAGES)}")
             if ret["returncode"]:
                 print("Package installation failed! Read the above output for more information.")
                 raise TaskFailure()
@@ -587,6 +584,12 @@ class SetupTasks:
         ret = common.run_command("git submodule update")
 
     @staticmethod
+    @potentially_destructive
+    def reset():
+        print("Reset task was run")
+        pass
+
+    @staticmethod
     def migrate():
         pass
 
@@ -624,6 +627,7 @@ class SetupTaskHandler:
     RUN_FULL_INSTALL_TASK = functools.partial(run_task, SetupTasks.full_install)
     RUN_INSTALL_NO_DATABASE_TASK = functools.partial(run_task, SetupTasks.install_no_database)
     RUN_INSTALL_DATABASE_TASK = functools.partial(run_task, SetupTasks.install_database)
+    RUN_RESET_TASK = functools.partial(run_task, SetupTasks.reset)
     RUN_CLEAR_CACHES_TASK = functools.partial(run_task, SetupTasks.clear_caches)
     RUN_LAUNCH_DATABASE_CLIENT_TASK = functools.partial(run_task, SetupTasks.launch_database_client)
     RUN_SET_DATABASE_PASSWORD_TASK = functools.partial(run_task, SetupTasks.set_database_password)
@@ -633,12 +637,14 @@ class SetupConstants:
     """Various non-string constants used by Setup."""   
     
     REQUIRED_PACKAGES = ["mariadb-server", "python3-pip", "ffmpeg", "python3-venv"]
-    MAIN_MENU_OPTIONS = ["Install", {"Repair":SetupTaskHandler.RUN_REPAIR_TASK}, {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, "Help", "More"]
-    MORE_OPTIONS = [{"Re-run database setup":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Change database password":SetupTaskHandler.RUN_SET_DATABASE_PASSWORD_TASK}, {"Clear caches":SetupTaskHandler.RUN_CLEAR_CACHES_TASK}, {"Start database":SetupTaskHandler.RUN_START_DATABASE_TASK}, {"Restore database":SetupTaskHandler.RUN_RESTORE_TASK}, {"Launch database client":SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK}, "Help", "Main Menu"]
+    MAIN_MENU_OPTIONS = ["Install", "Repair", {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, "Help", "More", "Exit"]
+    MORE_OPTIONS = [{"Clear caches":SetupTaskHandler.RUN_CLEAR_CACHES_TASK}, "Help", "Main Menu"]
+    INSTALL_OPTIONS = [{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, "Help"]
+    DATABASE_OPTIONS = [{"Reinstall database":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Change database password":SetupTaskHandler.RUN_SET_DATABASE_PASSWORD_TASK}, {"Start database":SetupTaskHandler.RUN_START_DATABASE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, {"Restore database":SetupTaskHandler.RUN_RESTORE_TASK}, {"Launch database client":SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK}, "Help"]
     MAIN_MENU = SetupUtils.IntMenu(options=MAIN_MENU_OPTIONS, prompt=SetupStrings.MAIN_MENU_PROMPT)
     MORE_MENU = SetupUtils.IntMenu(options=MORE_OPTIONS, prompt=SetupStrings.MORE_PROMPT)
-    DATABASE_MENU = SetupUtils.IntMenu()
-    INSTALL_MENU = SetupUtils.IntMenu(options=[{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}], prompt=SetupStrings.INSTALL_MENU_PROMPT)
+    DATABASE_MENU = SetupUtils.IntMenu(options=DATABASE_OPTIONS, prompt=SetupStrings.DATABASE_MENU_PROMPT)
+    INSTALL_MENU = SetupUtils.IntMenu(options=INSTALL_OPTIONS, prompt=SetupStrings.INSTALL_MENU_PROMPT)
 
 class SetupDatabaseClient:
     """A simple database client born from the ashes of a test written for db_utils
@@ -648,7 +654,6 @@ class SetupDatabaseClient:
     ip : str = None
     pw : str = None
     name : str = None
-    IS_REMOTE_MENU = SetupUtils.BooleanMenu(prompt="Is the database set up on a different computer?")
     OPTIONS_IN_MEMORY_MENU = SetupUtils.BooleanMenu(prompt="It looks like you've already used the database client in this session. \nDo you want to re-use the credentials provided earlier?")
     RUN_INITIALIZE_SUBMODULES_TASK_MENU = SetupUtils.BooleanMenu(prompt="Would you like to run that now?", YES_CALLBACK=SetupTaskHandler.RUN_INITIALIZE_SUBMODULES_TASK)
     RECONNECT_MENU = SetupUtils.BooleanMenu(prompt="Would you like to re-initialize the database client?", YES_CALLBACK=SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK)
@@ -680,17 +685,12 @@ class SetupDatabaseClient:
                 if ret["choice"]: #The user chose to re-use their previous credentials.
                     return
                 print("Ok.")
-            print("Enter the name of the database to connect to (defaults to 'maximilian'):")
+            print("Enter the name of the database to connect to. This is not the IP address. Press 'Enter' to use the default ('maximilian'):")
             SetupDatabaseClient.name = input().strip()
             if not SetupDatabaseClient.name:
                 SetupDatabaseClient.name = "maximilian"
             SetupDatabaseClient.pw = input("Please enter the database password:\n").strip()
-            print("\r ")
-            is_remote = SetupDatabaseClient.IS_REMOTE_MENU.handle_menu()
-            if is_remote["choice"]:
-                SetupDatabaseClient.ip = input("Enter the IP address of the remote database:\n").strip()
-            else:
-                SetupDatabaseClient.ip = "localhost"
+            SetupDatabaseClient.ip = SetupGlobalState.ip
 
     @staticmethod
     def _create_connection():
@@ -778,6 +778,7 @@ class SetupGlobalState:
     install_in_progress = None
     db_available = False
     remote = None
+    ip = "localhost"
     config_found = True
     try:
         if os.path.exists("setup.lock"):
@@ -806,6 +807,9 @@ class SetupGlobalState:
     except:
         root_logger.debug("Could not load/parse config. See exc info below")
         root_logger.debug(traceback.format_exc())
+        print("The configuration file couldn't be loaded. Run setup.py with -v to show more information.")
+        print("This file will be overwritten if you use any options from the 'Install' menu.")
+        config = {}
         config_found = False
 
 #TODO: Write preferences to config and keep them between sessions
@@ -822,11 +826,16 @@ def pre_setup():
         #This should not be limited to this scope. Linter is stupid
         FORMATTING_ENABLED = False
         print("Text formatting disabled.")
-    #Then ask about debug logging.
-    DEBUG_MENU = SetupUtils.BooleanMenu(prompt="Would you like to show debugging information? This may make output a little harder to read.")
-    response = DEBUG_MENU.handle_menu()
+    #Then ask about whether the database server is not local.
+    REMOTE_MENU = SetupUtils.BooleanMenu(prompt="Is the database set up on a different computer?\nCareful, your answer will affect some options during this session. For example, database setup will be skipped during a full install.\nUnsure? Choose 'No'.")
+    response = REMOTE_MENU.handle_menu()
     if response["choice"]:
-        logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
+        SetupGlobalState.remote = True
+        SetupGlobalState.ip = input("Enter the IP address of the remote database:\n").strip()
+        print(f"\nRemote database IP address set to '{SetupGlobalState.ip}'.\n", style=TEXT_STYLES["bold"])
+    else:
+        SetupGlobalState.remote = False
+        SetupGlobalState.ip = "localhost"
 
 def setup_main():
     """Main method for Setup."""
@@ -845,6 +854,7 @@ def setup_main():
         chosen_option = SetupGlobalState.current_menu.options[ret["choice"]]
 
         #Check if the user requested help.
+        #Getattr and __name__ shenanigans resolve to SetupStrings.{<Menu name>}_HELP
         #This check is intended to be index-agnostic in case options change in the future.
         if SetupGlobalState.current_menu == SetupConstants.MAIN_MENU and chosen_option == "Help":
             print(SetupStrings.MAIN_MENU_HELP)
