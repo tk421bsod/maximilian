@@ -21,7 +21,11 @@ import updater
 
 #Deep copy from builtins to ensure we have a copy of the original print()
 #This is to prevent infinite original_print calls if calling importlib.reload(setup) when testing
-original_print = copy.deepcopy(__builtins__["print"])
+if __name__ == "__main__":
+    original_print = copy.deepcopy(__builtins__.print)
+else:
+    #builtins is a dict for some reason when running in interactive mode
+    original_print = copy.deepcopy(__builtins__["print"])
 
 #Special control characters for text formatting
 TEXT_END = "\x1b[0m"
@@ -34,7 +38,7 @@ IS_DEBUG = "-v" in sys.argv
 #Configure logging
 DEBUG_LOG_FORMAT = "%(levelname)s:%(name)s:%(funcName)s:%(message)s"
 INFO_FORMAT = "%(message)s"
-#              Begin styling, make text white on black + bold, {levelName} - {funcName}:{message}
+#            Begin styling, make text white on black + bold, {levelName} - {funcName}:{message}, clear styling.
 ERROR_FORMAT = f"\x1b[{TEXT_STYLES['bold']};39;59m%(levelname)s - %(funcName)s:%(message)s{TEXT_END}"
 if IS_DEBUG:
     log_level = logging.DEBUG
