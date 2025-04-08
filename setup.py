@@ -98,6 +98,14 @@ def print(text, *, ignore_markdown=True, end=TEXT_END+"\n", fg=39, style=0, bg=4
     text = f"\x1b[{style};{fg};{bg}m{text}"
     original_print(text, end=end)
 
+def potentially_destructive(func):
+    def potentially_destructive_inner(*args, **kwargs):
+        """Warn about a potentially destructive operation"""
+        print(f"\nAre you sure you want to do this?")
+        print("If you don't know what you are doing, it's best not to do this.")
+        #TODO IntMenu here
+    return potentially_destructive_inner
+
 class CleanExit(BaseException):
     """Raised to break out of higher level loops."""
     pass
@@ -138,15 +146,15 @@ class SetupStrings:
     INTRO_HEADER = "---- Maximilian Setup ----"
     INTRO_DESC = "This script helps automate Maximilian's initial setup process. \nIt can also assist with a few common maintenance tasks."
     MAIN_MENU_PROMPT = "Choose an option from the list below, or 'Help' for explanations:"
-    MORE_PROMPT = "These aren't used very often but may be able to help.\nChoose one from the list below, 'Help' for assistance, or 'Main Menu' to go back:"
+    MORE_PROMPT = "These options aren't used very often but may be able to help.\nChoose one from the list below, 'Help' for assistance, or 'Main Menu' to go back:"
+    INSTALL_MENU_PROMPT = "Choose an installation type, 'Help' for assistance, or 'Main Menu' to go back:"
+    DATABASE_MENU_PROMPT = "Choose a database action to perform, 'Help' for assistance, or 'Main Menu' to go back:"
 
     MAIN_MENU_HELP = """\n---- Setup Help ----
-Looking to install Maximilian? Choose the **Full install** option.
-Already have a database server set up on another computer? Choose **Install without database**.
-Want to set up the database server by itself? Choose **Install database only**.
+Want to install Maximilian? Choose **Install**.
+
 Have an issue? Try **Repair**.
 Want to check for updates now? Choose **Run updater**.
-Need to back up the database? Choose **Back up database**.
 Something else? Choose **More**.
 """
     MORE_HELP = """\n---- More Help ----
@@ -286,7 +294,7 @@ class SetupUtils:
             try:
                 ret = int(ret)
                 if ret < 1 or ret > len(self.options):
-                    print(f"Enter a number between 1 and {len(self.options)}.\n")
+                    print(f"Enter a number between 1 and {len(self.options)}.\n ")
                     return -2
                 return ret-1
             except ValueError:
@@ -625,10 +633,12 @@ class SetupConstants:
     """Various non-string constants used by Setup."""   
     
     REQUIRED_PACKAGES = ["mariadb-server", "python3-pip", "ffmpeg", "python3-venv"]
-    MAIN_MENU_OPTIONS = [{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Repair":SetupTaskHandler.RUN_REPAIR_TASK}, {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, "Help", "More"]
+    MAIN_MENU_OPTIONS = ["Install", {"Repair":SetupTaskHandler.RUN_REPAIR_TASK}, {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, "Help", "More"]
     MORE_OPTIONS = [{"Re-run database setup":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Change database password":SetupTaskHandler.RUN_SET_DATABASE_PASSWORD_TASK}, {"Clear caches":SetupTaskHandler.RUN_CLEAR_CACHES_TASK}, {"Start database":SetupTaskHandler.RUN_START_DATABASE_TASK}, {"Restore database":SetupTaskHandler.RUN_RESTORE_TASK}, {"Launch database client":SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK}, "Help", "Main Menu"]
     MAIN_MENU = SetupUtils.IntMenu(options=MAIN_MENU_OPTIONS, prompt=SetupStrings.MAIN_MENU_PROMPT)
-    MORE_MENU = SetupUtils.IntMenu(options=MORE_OPTIONS, prompt=SetupStrings.MORE_PROMPT)    
+    MORE_MENU = SetupUtils.IntMenu(options=MORE_OPTIONS, prompt=SetupStrings.MORE_PROMPT)
+    DATABASE_MENU = SetupUtils.IntMenu()
+    INSTALL_MENU = SetupUtils.IntMenu(options=[{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}], prompt=SetupStrings.INSTALL_MENU_PROMPT)
 
 class SetupDatabaseClient:
     """A simple database client born from the ashes of a test written for db_utils

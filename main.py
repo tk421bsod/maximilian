@@ -96,7 +96,13 @@ try:
     from discord.ext import commands
     from discord.ext.commands.errors import NoEntryPointError
 except (ImportError, NameError, SyntaxError) as e:
-    print(f"{Text.BOLD}Maximilian cannot start because an external dependency failed to load.{Text.NORMAL}\nTry running 'pip3 install -U -r requirements.txt' and ensuring Maximilian is using the correct Python installation.\nHere's some more error info:")
+    print(f"{Text.BOLD}Maximilian cannot start because an external dependency failed to load.{Text.NORMAL}")
+    print(f"\nInstalled Maximilian recently? {Text.BOLD}The new setup process separates dependencies used by Maximilian from other Python packages installed on your system.{Text.NORMAL}")
+    print(f"This is done through a {Text.BOLD}virtual environment{Text.NORMAL}, and the environment needs to be 'activated' every time you open a new command prompt.")
+    print("You can activate the environment through setup.py (the 'Activate virtual environment' option) or by running the environment's activation script (something like .venv/bin/activate).")
+    print("\nIf you chose not to set up a virtual environment during setup, installed Maximilian before the release of 2.0, or are still experiencing this error after activating the environment:")
+    print("Some dependencies changed between 1.x and 2.0. Use the 'Install dependencies' option in setup.py.")
+    print("Here's some more error info:")
     print(e)
     if GlobalConstants.IS_DEBUG:
         traceback.print_exc()
