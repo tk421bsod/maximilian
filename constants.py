@@ -5,7 +5,7 @@ import sys
 class GlobalConstants:
 
     #Version string.
-    VER = "2.0.0-prerelease"
+    VERSION = "2.0.0-prerelease"
 
     #Whether text formatting is enabled.
     TEXT_FORMATTING_ENABLED = not (("--no-text-formatting" in sys.argv) or ("-no-fmt" in sys.argv))

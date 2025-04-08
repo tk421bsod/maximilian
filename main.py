@@ -64,7 +64,7 @@ if "--help" in sys.argv:
     quit()
 
 if "--version" in sys.argv:
-    print(f"You are using version {GlobalConstants.VER}.")
+    print(f"You are using version {GlobalConstants.VERSION}.")
     quit()
 
 #Did the user use any old arguments?
@@ -209,7 +209,7 @@ try:
     time.sleep(1)
     outer_logger.debug("Preparing to start the event loop...")
     #initialize stuff needed before we enter an async context
-    bot = maximilian(config, outer_logger, GlobalConstants.VER)
+    bot = maximilian(config, outer_logger, GlobalConstants.VERSION)
     bot.IS_DEBUG = GlobalConstants.IS_DEBUG
     bot.PYTHON_MINOR_VERSION = GlobalConstants.PYTHON_MINOR_VERSION
     #hand things over to base.maximilian.run
