@@ -19,8 +19,8 @@ import typing
 import common
 import updater  
 
-#deep copy from builtins to ensure we have a copy of the original print()
-#This is to prevent infinite original_print calls if calling importlib.reload(setup)
+#Deep copy from builtins to ensure we have a copy of the original print()
+#This is to prevent infinite original_print calls if calling importlib.reload(setup) when testing
 original_print = copy.deepcopy(__builtins__["print"])
 
 #Special control characters for text formatting
@@ -30,14 +30,17 @@ TEXT_STYLES = {"none":0, "bold":1, "underline":2, "negative1":3, "negative2":5, 
 OS_TYPE = os.name
 FORMATTING_ENABLED = True
 IS_DEBUG = "-v" in sys.argv
-LOG_FORMAT = "%(levelname)s:%(name)s:%(funcName)s:%(message)s"
 
+#Configure logging
+DEBUG_LOG_FORMAT = "%(levelname)s:%(name)s:%(funcName)s:%(message)s"
+INFO_FORMAT = "%(message)s"
+#              Begin styling, make text white on black + bold, {levelName} - {funcName}:{message}
+ERROR_FORMAT = f"\x1b[{TEXT_STYLES['bold']};39;59m%(levelname)s - %(funcName)s:%(message)s{TEXT_END}"
 if IS_DEBUG:
     log_level = logging.DEBUG
 else:
     log_level = logging.WARN
-
-logging.basicConfig(level=log_level, format=LOG_FORMAT)
+logging.basicConfig(level=log_level, format=DEBUG_LOG_FORMAT)
 root_logger = logging.getLogger("setup")
 
 class MarkdownUtils():
@@ -168,6 +171,13 @@ Want to free up some space? Choose **Clear caches**. Some things may take longer
 Have an issue? Try **Repair**.
 Want to return to the main menu? Choose **Main Menu**.
 """
+    DATABASE_MENU_HELP = """\n---- Database Options Help ----
+Having an issue and need to reinstall the database? Choose **Reinstall database**. This will not clear your data.
+Need to start the database? Choose **Start database**.
+Want to back up your data? Choose **Back up database**.
+Restoring from a backup? Choose **Restore database**.
+Want to uninstall? Choose **Uninstall options** from the main menu.
+    """
 
     POSIX_HELP_STRINGS = {
         "DATABASE_NOT_STARTED":"Did you enter the correct password when prompted?"
@@ -861,15 +871,28 @@ def setup_main():
         #Check if the user requested help.
         #Getattr and __name__ shenanigans resolve to SetupStrings.{<Menu name>}_HELP
         #This check is intended to be index-agnostic in case options change in the future.
-        if SetupGlobalState.current_menu == SetupConstants.MAIN_MENU and chosen_option == "Help":
-            print(SetupStrings.MAIN_MENU_HELP)
-        elif SetupGlobalState.current_menu == SetupConstants.MORE_MENU and chosen_option == "Help":
-            print(SetupStrings.MORE_HELP)
-        
+        if chosen_option == "Help":
+            if SetupGlobalState.current_menu == SetupConstants.MAIN_MENU:
+                print(SetupStrings.MAIN_MENU_HELP)
+            elif SetupGlobalState.current_menu == SetupConstants.MORE_MENU:
+                print(SetupStrings.MORE_MENU_HELP)
+            elif SetupGlobalState.current_menu == SetupConstants.DATABASE_MENU:
+                print(SetupStrings.DATABASE_MENU_HELP)
+            elif SetupGlobalState.current_menu == SetupConstants.INSTALL_MENU:
+                print(SetupStrings.INSTALL_MENU_HELP)
+
         #Check for menu changes.
-        if SetupGlobalState.current_menu == SetupConstants.MAIN_MENU and chosen_option == "More":
+        if chosen_option == "More":
+            root_logger.debug("Showing additional options.")
             SetupGlobalState.current_menu = SetupConstants.MORE_MENU
-        elif SetupGlobalState.current_menu == SetupConstants.MORE_MENU and chosen_option == "Main Menu":
+        elif chosen_option == "Install":
+            root_logger.debug("Showing installation options.")
+            SetupGlobalState.current_menu = SetupConstants.INSTALL_MENU
+        elif chosen_option == "Database options":
+            root_logger.debug("Showing database options.")
+            SetupGlobalState.current_menu = SetupConstants.DATABASE_MENU
+        elif chosen_option == "Main Menu":
+            print("Returning to the main menu.")
             SetupGlobalState.current_menu = SetupConstants.MAIN_MENU
 
         #Why are we returning to the menu?
