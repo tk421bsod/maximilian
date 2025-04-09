@@ -35,17 +35,37 @@ OS_TYPE = os.name
 FORMATTING_ENABLED = True
 IS_DEBUG = "-v" in sys.argv
 
-#Configure logging
-DEBUG_LOG_FORMAT = "%(levelname)s:%(name)s:%(funcName)s:%(message)s"
-INFO_FORMAT = "%(message)s"
-#            Begin styling, make text white on black + bold, {levelName} - {funcName}:{message}, clear styling.
-ERROR_FORMAT = f"\x1b[{TEXT_STYLES['bold']};39;59m%(levelname)s - %(funcName)s:%(message)s{TEXT_END}"
+class SetupLogFormatter(logging.Formatter):
+
+    def __init__(self):
+        self.DEBUG_LOG_FORMAT = "%(levelname)s:%(name)s:%(funcName)s:%(message)s"
+        self.INFO_LOG_FORMAT = "%(message)s"
+        #            Begin styling, make text white on black + bold, {levelName} - {funcName}:{message}, clear styling.
+        self.ERROR_LOG_FORMAT = f"\x1b[{TEXT_STYLES['bold']};39;59m%(levelname)s - %(funcName)s:%(message)s{TEXT_END}"
+        super().__init__()
+    
+    def format(self, record):
+        if record.levelno == logging.DEBUG:
+            self._style._fmt = self.DEBUG_LOG_FORMAT
+        elif record.levelno == logging.INFO:
+            self._style._fmt = self.INFO_LOG_FORMAT
+        else:
+            self._style._fmt = self.ERROR_LOG_FORMAT
+        return super().format(record)
+
 if IS_DEBUG:
     log_level = logging.DEBUG
 else:
     log_level = logging.WARN
-logging.basicConfig(level=log_level, format=DEBUG_LOG_FORMAT)
+
+#Initialize loggers
 root_logger = logging.getLogger("setup")
+root_logger.setLevel(log_level)
+log_handler = logging.StreamHandler(sys.stdout)
+log_formatter = SetupLogFormatter()
+log_handler.setFormatter(log_formatter)
+log_handler.setLevel(log_level)
+root_logger.addHandler(log_handler)
 
 class MarkdownUtils():
     @staticmethod
@@ -834,7 +854,7 @@ class SetupGlobalState:
 #TODO: Write preferences to config and keep them between sessions
 def pre_setup():
     """Ask a couple questions before starting Setup."""
-    print("A couple questions before starting setup:")
+    root_logger.info("A couple questions before starting setup:")
     #Ask about text formatting.
     FORMATTING_MENU = SetupUtils.BooleanMenu(prompt="Do you want to enable text formatting? This makes output prettier but may not work on some systems.\nChoose 'No' if the above text isn't displaying correctly.")
     print("\nThis is a test of text formatting.", fg=TEXT_STYLES["cyan"], style=TEXT_STYLES["bold"])
