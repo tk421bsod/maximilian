@@ -40,18 +40,19 @@ class Setting():
         self.states = states
         self.description = category.settingdescmapping[name]
         self.name = name
+        logger = logging.getLogger(category.logger_name)
         try:
             self.unusablewith = category.unusablewithmapping[name]
         except KeyError:
-            category.logger.warn(f"Setting '{self.name}' doesn't have an entry in the parent Category's 'unusablewithmapping'!")
-            category.logger.warn("Defaulting to None.")
+            logger.warning(f"Setting '{self.name}' doesn't have an entry in the parent Category's 'unusablewithmapping'!")
+            logger.warning("Defaulting to None.")
             self.unusablewith = None
         self.category = category
         self.permission = permission
         #add this setting as an attr of category
         #one can access it via 'bot.settings.<category>.<setting>'
         setattr(category, name.strip().replace(" ", "_"), self)
-        category.logger.info(f"Registered setting {name}")
+        logger.info(f"Registered setting {name}")
 
     def enabled(self, guild_id:int):
         """
@@ -72,8 +73,9 @@ class Setting():
 
         """
         if not self.category.ready:
-            self.category.logger.warn(f"{self.name}.enabled was called before its parent category was ready!")
-            self.category.logger.warn("This may cause issues. Consider awaiting Category.wait_ready before anything that depends on setting states.")
+            logger = logging.getLogger(self.category.logger_name)
+            logger.warning(f"{self.name}.enabled was called before its parent category was ready!")
+            logger.warning("This may cause issues. Consider awaiting Category.wait_ready before anything that depends on setting states.")
         try:
             return self.states[guild_id]
         except:
@@ -107,7 +109,7 @@ class Category():
             If False, the behavior of calls to Setting.enabled() is unpredictable.
             Those calls could return None or even result in an AttributeError depending on the initialization state of the setting.
     """
-    __slots__ = ("_ready", "settingdescmapping", "unusablewithmapping", "name", "filling", "logger", "bot", "permissionmapping", "raw_data", "__dict__")
+    __slots__ = ("_ready", "settingdescmapping", "unusablewithmapping", "name", "filling", "logger_name", "bot", "permissionmapping", "raw_data", "__dict__")
 
     def __init__(self, constructor, name, settingdescmapping, unusablewithmapping, permissionmapping):
         self._ready = False
@@ -117,7 +119,7 @@ class Category():
         setattr(constructor, name, self)
         self.name = name
         self.filling = False
-        self.logger = logging.getLogger(f"settings.{name}")
+        self.logger_name = f"settings.{name}"
         self.bot = constructor.bot
         self.permissionmapping = permissionmapping
         self.raw_data = {}
@@ -153,6 +155,7 @@ class Category():
         Attempts to add a setting to the database.
         """
         target_guilds = []
+        logger = logging.getLogger(self.logger_name)
         #Get the list of guilds that we're certain we currently have settings in.
         if self.raw_data:
             target_guilds = [i['guild_id'] for i in self.raw_data if i['setting'] == name]
@@ -160,7 +163,7 @@ class Category():
             if guild.id in target_guilds:
                 continue
             try:
-                self.logger.debug(f"state not found for setting {name} in guild {guild.id}, adding it to database")
+                logger.debug(f"state not found for setting {name} in guild {guild.id}, adding it to database")
                 await self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
             except IntegrityError:
                 continue
@@ -172,8 +175,9 @@ class Category():
         Fill a Category's settings cache with data.
         """
         try:
+            logger = logging.getLogger(self.logger_name)
             await self.bot.wait_until_ready()
-            self.logger.info(f"Filling cache for category {self.name}...")
+            logger.info(f"Filling cache for category {self.name}...")
             self.filling = True
             guilds = self.bot.guilds #stop state population from breaking if guilds change while filling cache
             #step 1: get data for each setting, add settings to db if needed
@@ -182,7 +186,7 @@ class Category():
                 self.raw_data = []
             if not isinstance(self.raw_data, list):
                 self.raw_data = [self.raw_data]
-            self.logger.info("Validating setting states...")
+            logger.info("Validating setting states...")
             #step 2: ensure each setting has an entry in the database for each guild
             for name in list(self.settingdescmapping):
                 if self.get_setting(name):
@@ -190,28 +194,28 @@ class Category():
                 await self._add_to_db(name, guilds)
             #step 3: for each setting, get initial state and register it
             states = {}
-            self.logger.debug("Populating setting states...")
+            logger.debug("Populating setting states...")
             for index, setting in enumerate(self.raw_data):
-                self.logger.debug(f"Processing entry {setting}")
+                logger.debug(f"Processing entry {setting}")
                 try:
                     if self.permissionmapping:
                         permission = self.permissionmapping[setting['setting']]
                     else:
                         permission = None
                 except KeyError:
-                    self.logger.info(f"Setting '{setting['setting']}' was not included in permissionmapping for category '{self.name}'! Assuming a permission value of None.")
+                    logger.info(f"Setting '{setting['setting']}' was not included in permissionmapping for category '{self.name}'! Assuming a permission value of None.")
                     permission = None
                 try:
                     self.settingdescmapping[setting['setting']]
                 except KeyError:
-                    self.logger.warn(f"Setting '{setting['setting']}' was removed from its parent Category but is still in the database.")
-                    self.logger.warn(f"Removing it.")
+                    logger.warning(f"Setting '{setting['setting']}' was removed from its parent Category but is still in the database.")
+                    logger.warning(f"Removing it.")
                     try:
                         await self.bot.db.exec("delete from config where category=%s and setting=%s", (self.name, setting['setting']))
                     except:
-                        self.logger.warn("Setting was already removed from the database.")
+                        logger.warning("Setting was already removed from the database.")
                     else:
-                        self.logger.warn("Removed that setting.")
+                        logger.warning("Removed that setting.")
                     continue
                 states[setting['guild_id']] = self._get_initial_state(setting)
                 #if we've finished populating list of states for a setting...
@@ -220,7 +224,7 @@ class Category():
                     #create new Setting, it automatically sets itself as an attr of this category
                     Setting(self, setting['setting'], states, permission)
                     states = {}
-            self.logger.info("Done filling settings cache.")
+            logger.info("Done filling settings cache.")
             self._ready = True
             self.filling = False
             del self.raw_data
@@ -228,8 +232,8 @@ class Category():
             pass
         except:
             traceback.print_exc()
-            self.logger.error(f"An error occurred while filling the setting cache for category {self.name}!")
-            self.logger.error("Settings in this category will not be registered.")
+            logger.error(f"An error occurred while filling the setting cache for category {self.name}!")
+            logger.error("Settings in this category will not be registered.")
             self._ready = None
             del self.raw_data
             return
@@ -339,8 +343,7 @@ class settings():
             The main Bot instance.
         """
         self.bot = bot
-        self.logger = logging.getLogger("settings")
-        self.logger.info(f"Settings module initialized.")
+        logging.getLogger("settings").info(f"Settings module initialized.")
         self.categorynames = []
 
     def add_category(self, category, settingdescmapping, unusablewithmapping, permissionmapping):
@@ -396,22 +399,23 @@ class settings():
                 Setting 'a' requires the 'Manage Server' permission.
                 Setting 'b' doesn't require any permissions.
         """
-        self.logger.info(f"Registering category '{category}`...")
+        logger = logging.getLogger("settings")
+        logger.info(f"Registering category '{category}`...")
         #Does a Category with this name already exist??
         if getattr(self, category, None) != None:
-            self.logger.warn("----")
-            self.logger.warn(f"add_category was called twice for category '{category}'!!")
-            self.logger.warn("Don't try to update a category after creation. Doing so may break stuff.")
-            self.logger.warn("Seeing this message after reloading a module? Add a check for bot.init_finished in __init__.")
-            self.logger.warn("----")
+            logger.warning("----")
+            logger.warning(f"add_category was called twice for category '{category}'!!")
+            logger.warning("Don't try to update a category after creation. Doing so may break stuff.")
+            logger.warning("Seeing this message after reloading a module? Add a check for bot.init_finished in __init__.")
+            logger.warning("----")
             return
         try:
             Category(self, category, settingdescmapping, unusablewithmapping, permissionmapping)
         except Exception as e:
-            self.logger.error(f"Category registration failed for category '{category}'!")
+            logger.error(f"Category registration failed for category '{category}'!")
             raise e
         self.categorynames.append(category)
-        self.logger.info(f"Category '{category}' registered.")
+        logger.info(f"Category '{category}' registered.")
 
     def _prepare_category_string(self):
         if self.categorynames:
@@ -425,6 +429,7 @@ class settings():
         """
         A command that changes settings.
         """
+        logger = logging.getLogger("settings")
         #figure out what category we're using
         if not category:
             available = self._prepare_category_string()
@@ -436,16 +441,16 @@ class settings():
             return await ctx.send(self.bot.strings["UNKNOWN_CATEGORY"].format(available))
         try:
             if category.ready == None:
-                self.logger.error(f"It looks like cache fill for {category.name} failed!")
-                self.logger.error("Please report this issue and attach log files to the report.")
+                logger.error(f"It looks like cache fill for {category.name} failed!")
+                logger.error("Please report this issue and attach log files to the report.")
                 await ctx.send(self.bot.strings["CATEGORY_REGISTRATION_ERROR"])
             elif category.ready == False:
-                self.logger.error(f"It looks like cache filling for category {category.name} is happening way too late!!!")
-                self.logger.error("please report this issue to tk421.")
-                self.logger.error("waiting until cache fill is complete...")
+                logger.error(f"It looks like cache filling for category {category.name} is happening way too late!!!")
+                logger.error("please report this issue to tk421.")
+                logger.error("waiting until cache fill is complete...")
                 await ctx.send(self.bot.strings["CATEGORY_NOT_READY"])
                 await category.wait_ready()
-                self.logger.error("cache fill complete, continuing :)")
+                logger.error("cache fill complete, continuing :)")
             await category.config(ctx, setting)
         except AttributeError: #category wasn't configured properly
             traceback.print_exc()
