@@ -13,7 +13,7 @@ class GlobalConstants:
     #Whether debug logging is enabled.
     IS_DEBUG = bool([i for i in sys.argv if i in ['-v', '--verbose', '--debug']])
 
-    #The minor version of the Python we're running under.
+    #The minor version of the Python install we're running under.
     #Used for some compatibility checks.
     PYTHON_MINOR_VERSION = sys.version_info.minor
 
@@ -21,10 +21,16 @@ class GlobalConstants:
     #Sane default only, actual value is obtained from either arguments or config
     LANGUAGE = "en"
 
-    #Minimum major/minor version for discord.py.
+    #The name for the root logger.
+    ROOT_LOGGER_NAME = "maximilian"
+
+    #Whether we're in a virtual environment. See https://docs.python.org/3/library/sys.html#sys.exec_prefix
+    WITHIN_VENV = (sys.exec_prefix != sys.base_exec_prefix)
+
+    #Minimum major/minor versions for things
     #Used for checking compatiblity in startup.check_version
     DPY_MIN_MAJOR_VERSION = 2
     DPY_MIN_MINOR_VERSION = 3
 
     PYTHON_MIN_MINOR_VERSION = 8
-    PYTHON_MAX_APPROVED_MAJOR_VERSION = 11
+    PYTHON_MAX_APPROVED_MINOR_VERSION = 11
