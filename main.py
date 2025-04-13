@@ -8,7 +8,7 @@ import sys
 from constants import GlobalConstants
 
 #Text formatting things from common.py.
-#Reimplemented here to avoid costly imports (discord.py in particular)
+#Reimplemented here to avoid external dependencies for now.
 class Text:
     NORMAL = '\033[0m'
     BOLD = '\033[1m'
@@ -38,7 +38,7 @@ if sys.version_info.major == 3 and GlobalConstants.PYTHON_MINOR_VERSION < 8:
     quit()
 
 #Are we using a very new Python?
-if GlobalConstants.PYTHON_MINOR_VERSION > GlobalConstants.PYTHON_MAX_APPROVED_MAJOR_VERSION:
+if GlobalConstants.PYTHON_MINOR_VERSION > GlobalConstants.PYTHON_MAX_APPROVED_MINOR_VERSION:
     print("Hi there. It looks like your Python installation is newer than version 3.11.")
     print("You may experience issues as Maximilian has not yet been tested on newer versions of Python.\n")
 
@@ -164,7 +164,7 @@ def config_logging(args):
                 print("It can also result in very large log files.")
                 print("Debug logging is not recommended for continuous use.")
                 time.sleep(2)
-            logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
+            logging.getLogger(f"{GlobalConstants.ROOT_LOGGER_NAME}.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
             return
         else:
             logging.disable()
@@ -176,7 +176,7 @@ def config_logging(args):
     except NameError: #rich not imported
         logging.basicConfig(level=logging.WARN, handlers=_handlers)
     print("No logging level specified, falling back to WARN.")
-    logging.getLogger("maximilian.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
+    logging.getLogger(f"{GlobalConstants.ROOT_LOGGER_NAME}.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
 
 print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
 
@@ -186,7 +186,7 @@ config = startup.preprocess_config(config)
 # set a logging level
 config_logging(sys.argv)
 logging.getLogger('discord').setLevel(logging.INFO)
-outer_logger = logging.getLogger(f'maximilian') #different name than inside run for readability
+outer_logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME) #different name than inside run for readability
 try:
     #run updater
     outer_logger.info("Running updater")
@@ -209,7 +209,7 @@ try:
     time.sleep(1)
     outer_logger.debug("Preparing to start the event loop...")
     #initialize stuff needed before we enter an async context
-    bot = maximilian(config, outer_logger, GlobalConstants.VERSION)
+    bot = maximilian(config)
     bot.IS_DEBUG = GlobalConstants.IS_DEBUG
     bot.PYTHON_MINOR_VERSION = GlobalConstants.PYTHON_MINOR_VERSION
     #hand things over to base.maximilian.run

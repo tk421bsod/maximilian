@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import sys
 import time
@@ -9,6 +10,7 @@ from aiomysql import OperationalError
 
 import common
 from common import Text
+from constants import GlobalConstants
 from db_utils import async_db as db
 
 def set_bit(config : dict, name : str, write:bool=True):
@@ -99,47 +101,50 @@ def check_version():
         time.sleep(5) #TODO: consider moving this outside of main.run() as keeping it there may cause some scary "Heartbeat blocked" warnings!
 
 def parse_arguments(bot, args):
+    logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
     if len(args) > 1:
         if "--ip" in args:
             try:
                 bot.dbip = args[args.index("--ip")+1]
-                bot.logger.info(f"Set database IP address to {bot.dbip}.")
+                logger.info(f"Set database IP address to {bot.dbip}.")
             except ValueError:
-                bot.logger.warning("You need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost.")
+                logger.warning("You need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost.")
                 bot.dbip = "localhost"
         else:
-            bot.logger.warning("No database IP address provided. Falling back to localhost.")
+            logger.warning("No database IP address provided. Falling back to localhost.")
             bot.dbip = "localhost"
         if "--no-load" in args:
             bot.noload = common.consume_all(args, args.index("--no-load"), "-")
         else:
             bot.noload = []
     else:
-        bot.logger.warning("No arguments provided.")
+        logger.warning("No arguments provided.")
         bot.dbip = "localhost"
 
 async def initialize_db(bot, config):
+    logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
     inst = db.async_db("maximilianbot", config['dbp'], bot.dbip, bot.database, bot.tables)
     try:
         await inst.connect()
     except OperationalError:
-        bot.logger.error("Couldn't connect to the database. Trying to start it...")
+        logger.error("Couldn't connect to the database. Trying to start it...")
         import setup
         ret = setup.SetupTaskHandler.RUN_START_DATABASE_TASK()
         if ret.status == setup.TaskExitStatus.FAILURE:
             sys.exit(76)
-        bot.logger.error("Trying to connect again.")
+        logger.error("Trying to connect again.")
         try:
             await inst.connect()
         except OperationalError:
-            bot.logger.debug(traceback.format_exc())
-            bot.logger.critical(f"Couldn't connect to database! \nTry running 'bash setup.sh fix'.")
+            logger.debug(traceback.format_exc())
+            logger.critical(f"Couldn't connect to database! \nTry running 'bash setup.sh fix'.")
             sys.exit(96)
-    bot.logger.info("Connected to database.")
+    logger.info("Connected to database.")
     return inst
 
-async def get_language(logger, config, exit):
+async def get_language(config, exit):
     """Gets the language to use (as a string)"""
+    logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
     #try to get language from config
     language = common.get_value(config, 'language')
     #do we have anything that overrides our default language?
@@ -184,7 +189,8 @@ class StringDefaultDict(dict):
         self[key] = self.factory(key)
         return self[key]
 
-async def load_strings(language, logger):
+async def load_strings(language):
+    logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
     logger.debug('Loading strings from file...')
     strings = StringDefaultDict()
     try:
@@ -210,7 +216,7 @@ async def load_strings(language, logger):
                     logger.warn(f"The language file '{language}' is missing the string '{identifier}'!")
                     errors_found = True
     if errors_found:
-        logger.warn("This language file is missing some strings that are present in the default language file. Some text may not display correctly.")
+        logger.warning("This language file is missing some strings that are present in the default language file. Some text may not display correctly.")
     strings._fill_in_missing = True
     logger.info('Strings loaded successfully.')
     return strings

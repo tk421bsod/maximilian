@@ -20,7 +20,9 @@ from discord.ext import commands
 
 import common
 import core
+from constants import GlobalConstants
 import helpcommand
+import logging
 import settings
 import startup
 
@@ -38,7 +40,7 @@ class CustomContext(commands.Context):
             if ret:
                 if caller == "send_paginated" or caller == "send_paginated_embed":
                     #Just return False to skip pagination.
-                    self.bot.logger.debug("Skipping CustomContext pagination.")
+                    logging.getLogger(self.bot.constants.ROOT_LOGGER_NAME).debug("Skipping CustomContext pagination.")
                     return False
             return ret
         except AttributeError: #Category/Setting doesn't exist for some reason? Use the usual default behavior (disabled)
@@ -67,7 +69,7 @@ class CustomContext(commands.Context):
             to_send = kwargs.get("embed")
         #Get the name of our caller to prevent an infinite loop if we were called from send_paginated.
         caller = common.get_caller_name()
-        self.bot.logger.debug(f"CustomContext.send called from '{caller}'")
+        logging.getLogger(self.bot.constants.ROOT_LOGGER_NAME).debug(f"CustomContext.send called from '{caller}'")
         pagination_enabled = await self._get_pagination_state(caller)
         #Don't try to paginate if we don't have anything to paginate.
         if to_send and pagination_enabled:
@@ -80,9 +82,11 @@ class CustomContext(commands.Context):
         return await super().send(*args, **kwargs, allowed_mentions=allowed_mentions)
 
 class maximilian(commands.Bot):
-    __slots__ = ("PYTHON_MINOR_VERSION", "VER", "IS_DEBUG", "blocklist", "config", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "init_finished", "required_intents", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings", "tables")
+    __slots__ = ("blocklist", "config", "constants", "common", "commit", "confirmation", "core", "database", "db", "deletion_request", "DeletionRequestAlreadyActive", "init_finished", "required_intents", "language", "logger", "noload", "prefix", "responses", "strings", "start_time", "settings", "tables")
 
-    def __init__(self, config, logger, VER):
+    def __init__(self, config):
+        self.constants = GlobalConstants
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
         #Now that we've checked basic requirements and ran the updater, we can
         token = config['token']
         #check discord.py version...
@@ -90,7 +94,7 @@ class maximilian(commands.Bot):
         logger.debug("Checking discord.py version...")
         startup.check_version()
         #Is this a prerelease version? Add the latest commit to the status.
-        if "prerelease" in VER:
+        if "prerelease" in self.constants.VERSION:
             self.commit = common.get_latest_commit()
         if "--alt" in sys.argv:
             token = input("Enter a token to use: \n").strip()
@@ -101,6 +105,7 @@ class maximilian(commands.Bot):
             except AttributeError:
                 self.commit = ""
         #Set our global logger.
+        #TODO: Move away from doing this, it is discouraged. Calling getLogger('maximilian') is the recommended usage.
         self.logger = logger
         self.noload = [] #list of modules for load_extensions_async to skip. Set by parse_arguments
         logger.debug("Parsing command line arguments...")
@@ -114,13 +119,13 @@ class maximilian(commands.Bot):
         #Now that we're mostly set up, we can fully initialize.
         #TODO: Change default allowed_mentions policy to reflect default behavior declared in CustomContext...
         #We may be able to then remove defaults from CustomContext.
-        super().__init__(allowed_mentions=discord.AllowedMentions(everyone=False), command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{VER}{f'-{self.commit}' if self.commit else ''}"))
+        super().__init__(allowed_mentions=discord.AllowedMentions(everyone=False), command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{self.constants.VERSION}{f'-{self.commit}' if self.commit else ''}"))
         #Initialize some needed attributes.
-        self._initialize_attrs(common=common, config=config, VER=VER)
+        self._initialize_attrs(common=common, config=config)
         startup.show_2_0_first_run_message(config)
         logger.debug("Starting the event loop.")
 
-    def _initialize_attrs(self, *, common, config, VER):
+    def _initialize_attrs(self, *, common, config):
         self.common = common
         self.config = config
         self.help_command = helpcommand.HelpCommand(verify_checks=False)
@@ -128,34 +133,36 @@ class maximilian(commands.Bot):
         self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
         self.responses = [] #custom commands list. TODO: make this less baked in
         self.start_time = time.time()
-        self.VER = VER
 
     def set_database_name(self):
         self.database = "maximilian"
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
         try:
             self.database = self.config["database"]
-            self.logger.warning("Sourced database name from config.")
-            self.logger.warning(f"Using database '{self.database}'.")
+            logger.warning("Sourced database name from config.")
+            logger.warning(f"Using database '{self.database}'.")
         except:
-            self.logger.warning("No database name found in config.")
+            logger.warning("No database name found in config.")
 
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
 
     def extension_requires_intents(self, extension, intents):
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
         for intent in intents:
-            self.logger.debug(f"Module '{extension}' requires Intent '{intent}'")
+            logger.debug(f"Module '{extension}' requires Intent '{intent}'")
             self.required_intents[intent] = True
             if intent in ["members", "message_content", "presences"]:
-                self.logger.warn(f"Module '{extension}' is requesting privileged Intent '{intent}'!")
-                self.logger.warn("If these are not enabled in the Developer Portal, startup will fail.")
+                logger.warning(f"Module '{extension}' is requesting privileged Intent '{intent}'!")
+                logger.warning("If these are not enabled in the Developer Portal, startup will fail.")
 
     def extension_requires_tables(self, extension, tables):
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
         if not isinstance(tables, dict):
-            self.logger.warn("Modules must provide table schemas as a dict!")
+            logger.warning("Modules must provide table schemas as a dict!")
         for table, schema in tables.items():
             if table not in list(self.tables.keys()):
-                self.logger.debug(f"Module '{extension}' requires table '{table}'. Schema is '{schema}'")
+                logger.debug(f"Module '{extension}' requires table '{table}'. Schema is '{schema}'")
                 self.tables[table] = schema
 
     def parse_extension_requirements(self, extension, data):
@@ -172,6 +179,8 @@ class maximilian(commands.Bot):
     def get_extension_requirements(self):
         """Obtain and process extension requirements."""
         files = [f"cogs.{filename}" for filename in os.listdir("./cogs") if filename.endswith(".py")]
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
+        #We have a couple extensions in this dir, add those too.
         files.append("core.py"); files.append("errorhandling.py");
         for file in files:
             try:
@@ -181,38 +190,39 @@ class maximilian(commands.Bot):
                 ext = importlib.import_module(cleanname)
                 ret = ext.requirements()
                 if not ret:
-                    self.logger.info(f"{cleanname}.requirements() returned nothing!")
+                    logger.info(f"{cleanname}.requirements() returned nothing!")
                     continue
-                self.logger.debug(f"{cleanname}.requirements() returned '{ret}'")
+                logger.debug(f"{cleanname}.requirements() returned '{ret}'")
                 self.parse_extension_requirements(cleanname, ret)
             except ImportError:
                 pass
             except AttributeError:
-                self.logger.info(f"Module '{cleanname}' does not have a 'requirements' method!")
+                logger.info(f"Module '{cleanname}' does not have a 'requirements' method!")
 
     async def load(self, file):
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
         #strip file extension out of filename
         cleanname = file[:-3]
         #ignore anything that isn't a python file
         #check if we're not loading this extension
         if cleanname in self.noload or f"cogs.{cleanname}" in self.noload:
-            self.logger.info(f"Not loading module cogs.{cleanname}.")
+            logger.info(f"Not loading module cogs.{cleanname}.")
             return
         #actually load the extension
         try:
             await self.load_extension(f"cogs.{cleanname}")
-            self.logger.info(f"Loaded module cogs.{cleanname}!")
+            logger.info(f"Loaded module cogs.{cleanname}!")
         except commands.ExtensionAlreadyLoaded:
-            self.logger.info(f"{cleanname} is already loaded, skipping")
+            logger.info(f"{cleanname} is already loaded, skipping")
         except (commands.ExtensionFailed, commands.errors.NoEntryPointError) as error:
             if not hasattr(error, 'original'):
                 #only NoEntryPointError doesn't have original
                 error.original = commands.errors.NoEntryPointError('')
-            self.logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This module won't be loaded.")
+            logger.error(f"{type(error.original).__name__} while loading '{error.name}'! This module won't be loaded.")
             if isinstance(error.original, ModuleNotFoundError) or isinstance(error.original, ImportError):
-                self.logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -U -r requirements.txt.'")
+                logger.error(f"'{error.original.name}' isn't installed. Consider running 'pip3 install -U -r requirements.txt.'")
             else:
-                self.logger.error(traceback.format_exc())
+                logger.error(traceback.format_exc())
                 await self.try_exit()
         except Exception as e:
             traceback.print_exc()
@@ -221,19 +231,20 @@ class maximilian(commands.Bot):
     async def try_exit(self):
         if not common.get_value(self.config, 'exit_on_error', False):
             return
-        self.logger.warning("Extension error occurred, exiting")
+        logging.getLogger(self.constants.ROOT_LOGGER_NAME).warning("Extension error occurred, exiting")
         await sys.exit(4)
 
     async def load_jishaku(self):
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
         if "--enablejsk" in sys.argv:
             await self.load_extension("jishaku")
             self.logger.info("Loaded Jishaku!")
             if not self.config['jsk_used']:
-                self.logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's an invaluable tool for debugging and development, but can be quite dangerous in the wrong hands.")
-                self.logger.warning(f"If your account (or the account with the ID {self.owner_id}) gets compromised, the attacker will have direct access to your computer.")
-                self.logger.warning("Don't want to use Jishaku? Stop Maximilian now with CTRL-C and run main.py WITHOUT --enablejsk.")
-                self.logger.warning("If you keep using Jishaku, I recommend that you enable 2FA and/or run Maximilian in a VM.")
-                self.logger.warning("Startup will continue in 10 seconds.")
+                logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's an invaluable tool for debugging and development, but can be quite dangerous in the wrong hands.")
+                logger.warning(f"If your account (or the account with the ID {self.owner_id}) gets compromised, the attacker will have direct access to your computer.")
+                logger.warning("Don't want to use Jishaku? Stop Maximilian now with CTRL-C and run main.py WITHOUT --enablejsk.")
+                logger.warning("If you keep using Jishaku, I recommend that you enable 2FA and/or run Maximilian in a VM.")
+                logger.warning("Startup will continue in 10 seconds.")
                 time.sleep(10)  # block here so we don't do anything else (e.g login, cache filling) in the meantime
 
     async def load_required(self):
@@ -241,13 +252,14 @@ class maximilian(commands.Bot):
             await self.load_extension("core")
             await self.load_extension("errorhandling")
         except:
-            self.logger.critical("Failed to load required modules.")
+            logging.getLogger(self.constants.ROOT_LOGGER_NAME).critical("Failed to load required modules.")
             traceback.print_exc()
             quit()
 
     async def load_extensions_async(self):
         """Loads modules during startup."""
-        self.logger.info("Loading modules...")
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
+        logger.info("Loading modules...")
         await self.load_jishaku()
         print("Loading required modules...")
         await self.load_required()
@@ -268,7 +280,7 @@ class maximilian(commands.Bot):
                 await self.load(each)
         total = len([i for i in list(self.extensions) if i not in list(exts)])
         diff = (len(files))-total
-        self.logger.info(f"Loaded {total} modules successfully. {diff} module{'s' if diff != 1 else ''} not loaded.")
+        logger.info(f"Loaded {total} modules successfully. {diff} module{'s' if diff != 1 else ''} not loaded.")
         print("Done loading modules. Finishing startup...")
 
     #wrap the main on_message event in a function for prettiness
@@ -292,8 +304,9 @@ class maximilian(commands.Bot):
         try:
             await self.db.ensure_tables()
         except aiomysql.OperationalError:
-            self.logger.debug(traceback.format_exc())
-            self.logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
+            logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
+            logger.debug(traceback.format_exc())
+            logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
 
     async def init_general_settings(self):
         #maybe we could make add_category itself a coro?
@@ -305,15 +318,16 @@ class maximilian(commands.Bot):
             await super().start(*args, **kwargs)
 
     async def run(self):
-        self.logger.debug("Async context entered.")
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
+        logger.debug("Async context entered.")
         if "--experimental-concurrency" in sys.argv:
-            self.logger.warning("Experimental concurrency features enabled.")
+            logger.warning("Experimental concurrency features enabled.")
         #now that we're in an async context, we can show version information...
-        self.logger.warning(f"Starting Maximilian v{self.VER}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{self.PYTHON_MINOR_VERSION} and discord.py {discord.__version__}) ")
+        logger.warning(f"Starting Maximilian v{self.constants.VERSION}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{self.PYTHON_MINOR_VERSION} and discord.py {discord.__version__}) ")
         #initialize our translation layer...
-        self.language = await startup.get_language(self.logger, self.config, exit = True)
-        self.logger.info(f"Set language to {self.language}")
-        self.strings = await startup.load_strings(self.language, self.logger)
+        self.language = await startup.get_language(self.config, exit = True)
+        logger.info(f"Set language to {self.language}")
+        self.strings = await startup.load_strings(self.language)
         #register our on_message event...
         #TODO: Consider moving this to core
         await self.wrap_event()
@@ -327,10 +341,10 @@ class maximilian(commands.Bot):
         #TODO: Fix RuntimeErrors if exiting before Bot.start runs, e.g "Exception ignored in: <function Connection.__del__ at 0x7ddc7b348220>"
         if not "--no-login" in sys.argv:
             #Remove sensitive data from 'config' and 'db'.
-            self.logger.debug("Removing sensitive data from global objects.")
+            logger.debug("Removing sensitive data from global objects.")
             token = self.config['token']
             del self.config['token'], self.config['dbp'], self.db.p, self.db.ip
-            self.logger.debug("Done.")
+            logger.debug("Done.")
             #TODO: Eliminate potential for race conditions here:
             #Either load_extensions_async or init_general_settings could run before Bot.start runs,
             #which can cause a RuntimeError if an extension's cache fill method starts early.
@@ -338,16 +352,16 @@ class maximilian(commands.Bot):
             #extension load is time-consuming and
             #any commands received during that window of time will fail
             asyncio.create_task(self.load_extensions_async())
-            self.logger.debug("load_extensions_async has been scheduled.")
+            logger.debug("load_extensions_async has been scheduled.")
             asyncio.create_task(self.init_general_settings()) 
-            self.logger.debug("init_general_settings has been scheduled.")
+            logger.debug("init_general_settings has been scheduled.")
             print("Logging in...")
             await self.start(token)
         else:
-            self.logger.warn("Invoked with --nologin, exiting and not calling start()")
+            logger.warning("Invoked with --nologin, exiting and not calling start()")
             return
-        self.logger.warn("start() returned without raising an exception!!")
-        self.logger.warn("Please let tk421 know about this.")
+        logger.warning("start() returned without raising an exception!!")
+        logger.warning("Please let tk421 know about this.")
 
 if __name__ == "__main__":
     print("Sorry, this file cannot be run directly. Run main.py instead.")
