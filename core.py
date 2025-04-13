@@ -323,7 +323,7 @@ class core(commands.Cog):
         elif type.lower() == "playing":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=newstatus))
         elif type.lower() == "default":
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{self.bot.VER}"))
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{self.bot.constants.VERSION}"))
         else:
             return await ctx.send("Sorry, that's an invalid status type.\nYou can choose from one of the following:\n`listening`\n`watching`\n`playing\n`default`")
         await ctx.send("Changed status!")

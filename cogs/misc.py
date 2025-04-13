@@ -90,10 +90,10 @@ class misc(commands.Cog):
     async def version(self, ctx):
         """Show version information."""
         commit = self.bot.commit if self.bot.commit else self.bot.common.get_latest_commit()
-        desc = self.bot.strings["VERSION_TEXT"].format(self.bot.VER, commit)
+        desc = self.bot.strings["VERSION_TEXT"].format(self.bot.constants.VERSION, commit)
         embed = self.bot.core.ThemedEmbed(title="Version information", description=desc)
         embed.add_field(name=self.bot.strings["LATEST_CHANGES_TITLE"], value=self.bot.strings["LATEST_CHANGES_TEXT"], inline=False)
-        if "prerelease" in self.bot.VER:
+        if "prerelease" in self.bot.constants.VERSION:
             embed.add_field(name=self.bot.strings["PRERELEASE_TITLE"], value=self.bot.strings["PRERELEASE_TEXT"].format(commit))
         await ctx.send(embed=embed)
 
