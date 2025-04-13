@@ -4,6 +4,9 @@ import sys
 #Some values are determined on startup and only have sane defaults here.
 class GlobalConstants:
 
+    #Default path for the virtual environment created by setup.py
+    DEFAULT_VENV_DIR = ".venv"
+
     #Version string.
     VERSION = "2.0.0-prerelease"
 
