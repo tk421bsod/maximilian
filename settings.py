@@ -91,6 +91,7 @@ class Setting():
         """
         Flips this setting's state in both the database and cache.
         """
+        logging.getLogger(self.category.logger_name).debug(f"Toggling setting {self.category.name}.{self.name}")
         await self._update_database_state(ctx)
         await self._update_cached_state(ctx)
 
@@ -154,21 +155,24 @@ class Category():
         """
         Attempts to add a setting to the database.
         """
-        target_guilds = []
+        known_good_guilds = []
         logger = logging.getLogger(self.logger_name)
         #Get the list of guilds that we're certain we currently have settings in.
         if self.raw_data:
-            target_guilds = [i['guild_id'] for i in self.raw_data if i['setting'] == name]
+            known_good_guilds = [i['guild_id'] for i in self.raw_data if i['setting'] == name]
         for guild in total_guilds:
-            if guild.id in target_guilds:
+            #If this guild is one we know we have a setting state in already, skip it.
+            if guild.id in known_good_guilds:
                 continue
             try:
-                logger.debug(f"state not found for setting {name} in guild {guild.id}, adding it to database")
+                logger.debug(f"State not found for setting {name} in guild {guild.id}, adding it to database")
                 await self.bot.db.exec('insert into config values(%s, %s, %s, %s)', (guild.id, self.name, name, False))
-            except IntegrityError:
+            except IntegrityError as exc:
+                logger.debug("We already have a setting state saved for this guild")
                 continue
             #Equivalent to the result of SELECT * FROM config WHERE setting={name}, category={self.name}, guild_id={guild.id}
             self.raw_data.append({'setting':name, 'category':self.name, 'guild_id':guild.id, 'enabled':False})
+            logger.debug("Added raw data for the new setting entry.")
 
     async def _fill_cache(self):
         """
@@ -176,23 +180,27 @@ class Category():
         """
         try:
             logger = logging.getLogger(self.logger_name)
+            logger.debug(f"Waiting to fill cache for category {self.name} until bot is ready.")
             await self.bot.wait_until_ready()
             logger.info(f"Filling cache for category {self.name}...")
             self.filling = True
             guilds = self.bot.guilds #stop state population from breaking if guilds change while filling cache
             #step 1: get data for each setting, add settings to db if needed
+            logger.debug(f"Getting raw settings data for category {self.name}")
             self.raw_data = await self.bot.db.exec('select * from config where category=%s order by setting', (self.name))
             if self.raw_data is None:
                 self.raw_data = []
             if not isinstance(self.raw_data, list):
                 self.raw_data = [self.raw_data]
+            logger.debug(self.raw_data)
             logger.info("Validating setting states...")
             #step 2: ensure each setting has an entry in the database for each guild
             for name in list(self.settingdescmapping):
                 if self.get_setting(name):
                     delattr(self, name.replace(" ", "_"))
+                    logger.debug(f"Removed {name} from setting set")
                 await self._add_to_db(name, guilds)
-            #step 3: for each setting, get initial state and register it
+            #step 3: for each setting, get initial state and register the setting
             states = {}
             logger.debug("Populating setting states...")
             for index, setting in enumerate(self.raw_data):
@@ -217,6 +225,7 @@ class Category():
                     else:
                         logger.warning("Removed that setting.")
                     continue
+                logger.debug("Getting initial setting state.")
                 states[setting['guild_id']] = self._get_initial_state(setting)
                 #if we've finished populating list of states for a setting...
                 #(we are on the last element of 'data' or the next element isn't for the same setting)
@@ -251,25 +260,38 @@ class Category():
         """
         Resolves conflicts between settings.
         """
+        logger = logging.getLogger(self.logger_name)
         resolved = []
         if not setting.unusablewith:
+            logger.debug("Setting does not have conflicts.")
             return ""
         #Make sure unusablewith is a list.
         setting.unusablewith = [setting.unusablewith] if not isinstance(setting.unusablewith, list) else setting.unusablewith
         for conflict in setting.unusablewith:
+            logger.debug(f"Setting conflicts with '{conflict}'")
             #Conflicting setting enabled? Disable it.
+            conflict_name = conflict
             conflict = self.get_setting(conflict)
+            if not conflict:
+                logger.warning(f"The setting '{setting.name}' has a conflicting setting listed that doesn't exist!")
+                logger.warning(f"The conflicting setting name is '{conflict_name}'.")
+                logger.warning("Consider removing that conflict from the setting's unusablewithmapping.")
+                continue
             if conflict.enabled(ctx.guild.id):
+                logger.debug("Conflicting setting is enabled. Disabling it.")
                 await conflict.toggle(ctx)
                 #conflict was replaced with a Setting. Only add the name to our list of resolved conflicts.
                 resolved.append(conflict.name)
+                logger.debug("Added the conflicting setting to resolved conflicts.")
         #How many conflicts did we resolve?
         length = len(resolved) if isinstance(resolved, list) else 1
+        logger.debug(f"Resolved {length} setting conflict{'s' if length != 1 else ''}")
         #If we only resolved one conflict, don't wrap it in a list
         if length == 1 and isinstance(resolved, list):
             resolved = resolved[0]
         if not resolved:
             return ""
+        logger.debug("Notifying user of conflict resolution")
         resolved = await self._prepare_conflict_string(resolved)
         if length == 1:
             return self.bot.strings["SETTING_AUTOMATICALLY_DISABLED"].format(resolved)
@@ -307,18 +329,27 @@ class Category():
     async def config(self, ctx, name=None):
         """Toggles the specified setting. Settings are off by default. Lists settings in this Category if nothing's specified."""
         #setting not specified? show list of settings
+        logger = logging.getLogger(self.logger_name)
         if not name:
+            logger.debug("Setting name not provided, showing setting list")
             return await self._show_setting_list(ctx)
+        logger.debug(f"Attempting to get setting '{name}'")
         setting = self.get_setting(name)
         if not setting:
+            logger.debug("Unknown setting")
             return await ctx.send(self.bot.strings["UNKNOWN_SETTING"])
         if setting.permission:
+            logger.debug(f"This setting requires {setting.permission}")
             if not getattr(ctx.channel.permissions_for(ctx.author), setting.permission):
+                logger.debug("User does not have permission to change setting")
                 return await ctx.send(self.bot.strings["SETTING_PERMISSION_DENIED"].format(self.normalize_permission(setting.permission)))
+            logger.debug("User has permission to change setting")
         try:
+            logger.debug("Toggling setting state")
             #update setting state
             await setting.toggle(ctx)
             #check for conflicts and resolve them
+            logger.debug("Resolving setting conflicts")
             unusablewithmessage = await self._resolve_conflicts(ctx, setting)
         except:
             await self.bot.core.send_traceback()
