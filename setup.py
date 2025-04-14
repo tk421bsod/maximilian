@@ -98,22 +98,19 @@ class MarkdownUtils():
         """Apply markdown in strings to be printed. Just makes it a little easier to write things that require formatting, ya know?
         Like instead of adding style=TEXT_STYLES['bold'] to EVERY SINGLE print() call I can just put asterisks around the text I want formatted :)
     """
-        while text:
+        while True:
+            final = ""
             #Check for separators in our text. Replace separators with their style, then print the resulting string.
-            for separator, style in [("**", TEXT_STYLES["bold"]), ("~~", TEXT_STYLES["underline"]), ("[red]", TEXT_STYLES["red"]), ("[green]", TEXT_STYLES["green"])]:
+            for separator, style in [("**", f"\x1b[{TEXT_STYLES['bold']};39;59m"), ("~~", f"\x1b[{TEXT_STYLES['underline']};39;59m"), ("[red]", f"\x1b[0;{TEXT_STYLES['red']};59m"), ("[green]", f"\x1b[0;{TEXT_STYLES['green']};59m")]:
                 pairs = MarkdownUtils._find_separator_pairs(text, separator)
                 processed = ""
                 for pair in pairs:
                     #Replace the first part of the pair with a separator.
-                    processed += text[:pair[0]] + style
-                    #Add the text in between the pairs.
-                    processed += text[pair[0]+len(separator):pair[1]]
+                    processed += style + text[pair[0]+len(separator):pair[1]]
                     #End the styled portion.
                     processed += TEXT_END
-                    #TODO really not sure how to implement this! If we add the rest of the text we might end up with duplicate strings!!!!
-                    #Come back to this later thank you future me
-                    processed += text[pair[1]]
-            return
+                    final += processed
+            return final
 
 #Yes, we're modifying builtins.
 #Sorry
@@ -132,7 +129,7 @@ def print(text, *, ignore_markdown=True, end=TEXT_END+"\n", fg=39, style=0, bg=4
 def potentially_destructive(func):
     def potentially_destructive_inner(*args, **kwargs):
         """Warn about a potentially destructive operation"""
-        print(f"\nAre you sure you want to do this?", style=TEXT_STYLES["bold"])
+        print(f"\nAre you sure that you want to do this?", style=TEXT_STYLES["bold"])
         print("If you don't know what you are doing, this option may cause a loss of data or break your installation.")
         potentially_destructive_menu = SetupUtils.BooleanMenu(prompt="")
         ret = potentially_destructive_menu.handle_menu()
@@ -187,6 +184,7 @@ class SetupStrings:
     MAIN_MENU_HELP = """\n---- Setup Help ----
 Want to install Maximilian? Choose **Install**.
 For database maintenance, choose **Database options**.
+Migrating to 2.0? Choose **Migrate to 2.0.**
 Want to check for updates now? Choose **Run updater**.
 Something else? Choose **More**.
 """
@@ -201,7 +199,16 @@ Need to start the database? Choose **Start database**.
 Want to back up your data? Choose **Back up database**.
 Restoring from a backup? Choose **Restore database**.
 Want to uninstall? Choose **Uninstall options** from the main menu.
-    """
+"""
+    INSTALL_MENU_HELP = """\n---- Install Help ----
+**Full install** will install Maximilian and its database.
+**Install without database** will only install Maximilian.
+**Install database only** will only set up the database.
+Want to uninstall? Choose **Uninstall options** from the main menu.
+"""
+    UNINSTALL_MENU_HELP = """\n---- Uninstall Help ----
+**    
+"""
 
     POSIX_HELP_STRINGS = {
         "DATABASE_NOT_STARTED":"Did you enter the correct password when prompted?"
@@ -338,6 +345,8 @@ class SetupUtils:
             return -2
         
         def handle_menu(self):
+            if self.prompt:
+                self.prompt = "\n" + self.prompt
             print(self.prompt)
             print("---------------")
             for index, option in enumerate(self.options):
@@ -555,10 +564,6 @@ class SetupTasks:
         pass
 
     @staticmethod
-    def repair():
-        pass
-
-    @staticmethod
     def update():
         import updater
         #Force update check
@@ -575,7 +580,7 @@ class SetupTasks:
         pass
 
     @staticmethod
-    def set_database_password():
+    def change_database_password():
         pass
 
     @staticmethod
@@ -587,6 +592,7 @@ class SetupTasks:
         pass
 
     @staticmethod
+    @potentially_destructive
     def launch_database_client():
         return SetupDatabaseClient.main()
 
@@ -623,12 +629,6 @@ class SetupTasks:
         ret = common.run_command("git submodule update")
 
     @staticmethod
-    @potentially_destructive
-    def reset():
-        print("Reset task was run")
-        pass
-
-    @staticmethod
     def migrate():
         pass
 
@@ -661,25 +661,23 @@ class SetupTaskHandler:
     RUN_UPDATE_SUBMODULES_TASK = functools.partial(run_task, SetupTasks.update_submodules)
     RUN_BACKUP_TASK = functools.partial(run_task, SetupTasks.backup)
     RUN_RESTORE_TASK = functools.partial(run_task, SetupTasks.restore)
-    RUN_REPAIR_TASK = functools.partial(run_task, SetupTasks.repair)
     RUN_UPDATE_TASK = functools.partial(run_task, SetupTasks.update)
     RUN_FULL_INSTALL_TASK = functools.partial(run_task, SetupTasks.full_install)
     RUN_INSTALL_NO_DATABASE_TASK = functools.partial(run_task, SetupTasks.install_no_database)
     RUN_INSTALL_DATABASE_TASK = functools.partial(run_task, SetupTasks.install_database)
-    RUN_RESET_TASK = functools.partial(run_task, SetupTasks.reset)
     RUN_CLEAR_CACHES_TASK = functools.partial(run_task, SetupTasks.clear_caches)
     RUN_LAUNCH_DATABASE_CLIENT_TASK = functools.partial(run_task, SetupTasks.launch_database_client)
-    RUN_SET_DATABASE_PASSWORD_TASK = functools.partial(run_task, SetupTasks.set_database_password)
+    RUN_CHANGE_DATABASE_PASSWORD_TASK = functools.partial(run_task, SetupTasks.change_database_password)
     RUN_MIGRATE_TASK = functools.partial(run_task, SetupTasks.migrate)
 
 class SetupConstants:
     """Various non-string constants used by Setup."""   
     
     REQUIRED_PACKAGES = ["mariadb-server", "python3-pip", "ffmpeg", "python3-venv"]
-    MAIN_MENU_OPTIONS = ["Install", "Repair", {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, "Help", "More", "Exit"]
+    MAIN_MENU_OPTIONS = ["Install", "Database options", {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, "Help", "More", "Exit"]
     MORE_OPTIONS = [{"Clear caches":SetupTaskHandler.RUN_CLEAR_CACHES_TASK}, "Help", "Main Menu"]
-    INSTALL_OPTIONS = [{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, "Help"]
-    DATABASE_OPTIONS = [{"Reinstall database":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Change database password":SetupTaskHandler.RUN_SET_DATABASE_PASSWORD_TASK}, {"Start database":SetupTaskHandler.RUN_START_DATABASE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, {"Restore database":SetupTaskHandler.RUN_RESTORE_TASK}, {"Launch database client":SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK}, "Help"]
+    INSTALL_OPTIONS = [{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, "Help", "Main Menu"]
+    DATABASE_OPTIONS = [{"Reinstall database":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Change database password":SetupTaskHandler.RUN_CHANGE_DATABASE_PASSWORD_TASK}, {"Start database":SetupTaskHandler.RUN_START_DATABASE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, {"Restore database":SetupTaskHandler.RUN_RESTORE_TASK}, {"Launch database client":SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK}, "Help", "Main Menu"]
     MAIN_MENU = SetupUtils.IntMenu(options=MAIN_MENU_OPTIONS, prompt=SetupStrings.MAIN_MENU_PROMPT)
     MORE_MENU = SetupUtils.IntMenu(options=MORE_OPTIONS, prompt=SetupStrings.MORE_PROMPT)
     DATABASE_MENU = SetupUtils.IntMenu(options=DATABASE_OPTIONS, prompt=SetupStrings.DATABASE_MENU_PROMPT)
@@ -892,8 +890,10 @@ def setup_main():
         ret = SetupGlobalState.current_menu.handle_menu()
         chosen_option = SetupGlobalState.current_menu.options[ret["choice"]]
 
+        if chosen_option == "Exit":
+            raise KeyboardInterrupt
+
         #Check if the user requested help.
-        #Getattr and __name__ shenanigans resolve to SetupStrings.{<Menu name>}_HELP
         #This check is intended to be index-agnostic in case options change in the future.
         if chosen_option == "Help":
             if SetupGlobalState.current_menu == SetupConstants.MAIN_MENU:
@@ -929,7 +929,7 @@ def setup_main():
                 root_logger.debug(traceback.format_exc())
                 print("\nSorry, a task exited with an error.", style=TEXT_STYLES["bold"])
             elif menu_callback_return.status == TaskExitStatus.SUCCESS:
-                print("Task completed.", style=TEXT_STYLES["bold"])
+                pass
             print("\nReturning to the menu.")
         print("")
 
@@ -946,6 +946,7 @@ if __name__ == "__main__":
         print("Many things will not exist, the things that do are most likely broken and could break your installation.\n")
         print("For setup, repairs, and other tasks, please continue to use setup.sh for the time being.")
         print("If you wish to test this out, run it with -u.")
+        cleanup()
         quit()
     try:
         setup_main()
