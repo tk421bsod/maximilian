@@ -95,21 +95,69 @@ class reminders(commands.Cog):
         await self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
 
-    @commands.command(aliases=['reminder'], extras={'localized_help':{}, 'uses_timeconverter':True, 'timeconverter_allowed_units':("w", "d", "h", "m", "s")})
-    async def remind(self, ctx, time, *, reminder):
-        """Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted."""
-        time = await self.bot.common.TimeConverter(self.bot, ("w", "d", "h", "m", "s")).convert(ctx, time)
-        await ctx.send(self.bot.strings["SETTING_REMINDER"])
-        #get the date the reminder will fire at
+    async def _get_target_relative_time(self, ctx, time_string):
+        #Obtain our time offset in seconds.
+        target_time = await self.bot.common.RelativeTimeConverter(self.bot, ("w", "d", "h", "m", "s")).convert(ctx, time_string)
+        #Make a datetime representing when this reminder will fire.
         currenttime = datetime.datetime.now()
-        remindertime = currenttime+datetime.timedelta(0, round(time))
+        target_time = currenttime + datetime.timedelta(0, round(target_time))
+        return target_time
+
+    @commands.command(aliases=['reminder'], extras={'localized_help':{}, 'uses_relativetimeconverter':True, 'uses_absolutetimeconverter':True, 'relativetimeconverter_allowed_units':("w", "d", "h", "m", "s")})
+    async def remind(self, ctx, time_string, *, reminder):
+        """Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted."""
+        logger = logging.getLogger(__name__)
+        #First, convert the time string into a datetime.
+        #Did we receive an absolute time? We can make a good guess, but we can't be 100% sure. 
+        #Something like "20d 4h" could get interpreted as an absolute time.
+        processed_as_absolute = False
+        if [marker in time_string for marker in [' ', ',', '/', ':']]:
+            #Try to convert the given time.
+            logger.debug("Time is probably absolute, trying to convert to datetime")
+            target_time = self.bot.common.AbsoluteTimeConverter.convert(time_string)
+            #If we couldn't convert, try to process it like a relative time.
+            if not target_time:
+                try:
+                    logger.debug("Trying to process as relative time")
+                    target_time = await self._get_target_relative_time(ctx, time_string)
+                    logger.debug("Processed as relative time")
+                except:
+                    import traceback;traceback.print_exc()
+                    return await ctx.send(self.bot.strings["TIMECONVERTER_FALLBACK_FAILED"])
+            else:
+                logger.debug("Conversion finished")
+                processed_as_absolute = True
+        else:
+            logger.debug("Time is probably relative, converting to datetime")
+            target_time = await self._get_target_relative_time(ctx, time_string)
+        if target_time < datetime.datetime.now():
+            return await ctx.send(self.bot.strings["REMINDER_IN_PAST"])
+        #Now, ask if this time was correct.
+        #If confirmed, calls set_reminder with our new datetime and reminder.
+        #Build the message to send:
+        if processed_as_absolute:
+            desc = self.bot.strings["REMINDER_TIME_CONFIRMATION_DESCRIPTION_ABSOLUTE"]
+        else:
+            desc = self.bot.strings["REMINDER_TIME_CONFIRMATION_DESCRIPTION_RELATIVE"]
+        #Add the target time to the confirmation.
+        desc += self.bot.strings["REMINDER_TIME_CONFIRMATION_DESCRIPTION"].format(str(target_time))
+        reminder_confirmation_embed = self.bot.core.ThemedEmbed(title=self.bot.strings["REMINDER_TIME_CONFIRMATION_TITLE"], description=desc)
+        reminder_confirmation_embed.set_footer(text=self.bot.strings["REMINDER_TIME_CONFIRMATION_FOOTER"])
+        followups = [self.bot.strings["SETTING_REMINDER"], self.bot.strings["NOT_SETTING_REMINDER"]]
+        logger.debug("Sending confirmation")
+        self.bot.confirmation(self.bot, followups, reminder_confirmation_embed, ctx, self.set_reminder, target_time, reminder)
+
+    async def set_reminder(self, confirmation_message, ctx, confirmed, target_time, reminder):
+        if not confirmed:
+            return
+        currenttime = datetime.datetime.now()
         #generate uuid
         uuid = str(uuid_generator.uuid4())
         #add the reminder to the database
-        await self.bot.db.exec(f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder, uuid))
+        await self.bot.db.exec(f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, target_time, datetime.datetime.now(), reminder, uuid))
         await self.update_reminder_cache()
-        await ctx.send(self.bot.strings["REMINDER_SET"].format(humanize.precisedelta(remindertime-currenttime, format='%0.0f'), reminder))
-        await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder, uuid)
+        await ctx.send(self.bot.strings["REMINDER_SET"].format(humanize.precisedelta(target_time-currenttime, format='%0.0f'), reminder))
+        await self.handle_reminder(ctx.author.id, ctx.channel.id, target_time, currenttime, reminder, uuid)
 
     @commands.command(hidden=True)
     async def reminders(self, ctx):

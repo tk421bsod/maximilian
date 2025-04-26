@@ -1,9 +1,11 @@
 #common.py: a shared library containing a bunch of useful stuff
 import asyncio
+import datetime
 import logging
 import re
 import subprocess
 import sys
+from typing import Optional
 
 def get_current_frame():
     """Get the current stack frame.
@@ -42,44 +44,44 @@ class Text:
 
     NORMAL = '\033[0m'
     BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
 
 if not IMPORTER_PATH.endswith("setup.py"):
-    #TimeConverter originally from cogs/reminders.py
-    class TimeConverter(commands.Converter):
-        """Converts time values into an amount of seconds.
+    #Pre 2.0, TimeConverter in cogs/reminders.py
+    class RelativeTimeConverter():
+        """Converts relative time values into an amount of seconds.
 
         A discord.ext.commands.Converter that converts time values into an amount of seconds.
         You can choose which units of time to accept.
 
         Example usage:  
-            #Create a new TimeConverter with only hours, minutes, and seconds allowed  
-            a = TimeConverter(self.bot, ("h", "m", "s"))  
+            #Create a new RelativeTimeConverter with only hours, minutes, and seconds allowed  
+            a = RelativeTimeConverter(self.bot, ["h", "m", "s"])  
             a.convert(ctx, "5m")  
             #Returns 300  
       
         For help command integration:  
-            1. Add `'uses_timeconverter':True` to Command.extras  
-            2. Add `'timeconverter_allowed_units':(<allowed_units>)` to Command.extras  
+            1. Add `'uses_relativetimeconverter':True` to Command.extras  
+            2. Add `'relativetimeconverter_allowed_units':(<allowed_units>)` to Command.extras  
         Use the 'remind' command from cogs/reminders.py as a reference.
         """
-        __slots__ = ("TIME_REGEX", "TIME_DICT", "NAN", "INVALID_UNIT", "ADD_REMOVED", "allowed_units")
+        __slots__ = ("TIME_REGEX", "TIME_DICT", "NAN", "INVALID_UNIT", "ADD_REMOVED", "INVALID_TIME", "allowed_units")
 
-        def __init__(self, bot:commands.Bot, allowed_units:list):
+        def __init__(self, bot:commands.Bot, allowed_units:Optional[list]=['w', 'd', 'h', 'm', 's']):
             """
-            Construct a new TimeConverter.
+            Construct a new RelativeTimeConverter.
 
-            allowed_units must be a list/tuple of strings, each one representing the first letter of a unit of time.
+            allowed_units must be a list of strings, each one representing the first letter of a unit of time.
             To only allow hours, minutes, and seconds, something like `allowed_units=["h", "m", "s"]` will work.
+            If not specified, allowed_units defaults to ['w', 'd', 'h', 'm', 's'].
 
             See class documentation for example usage and help command integration.
             """
             self.TIME_REGEX = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhdw])")
             self.TIME_DICT = {"w":604800, "d":86400, "h":3600, "m":60, "s":1}
-            self.NAN = bot.strings["TIMECONVERTER_NAN"]
-            self.INVALID_UNIT = bot.strings["TIMECONVERTER_INVALID_UNIT"]
-            self.INVALID_TIME = bot.strings["TIMECONVERTER_INVALID_TIME"]
-            self.ADD_REMOVED = bot.strings["TIMECONVERTER_ADD_REMOVED"]
+            self.NAN = bot.strings["RELATIVETIMECONVERTER_NAN"]
+            self.INVALID_UNIT = bot.strings["RELATIVETIMECONVERTER_INVALID_UNIT"]
+            self.INVALID_TIME = bot.strings["RELATIVETIMECONVERTER_INVALID_TIME"]
+            self.ADD_REMOVED = bot.strings["RELATIVETIMECONVERTER_ADD_REMOVED"]
             self.allowed_units = allowed_units
             time_dict_copy = self.TIME_DICT.copy() 
             self.TIME_DICT = {}
@@ -102,6 +104,66 @@ if not IMPORTER_PATH.endswith("setup.py"):
             if time == 0:
                 raise commands.BadArgument(self.INVALID_TIME)
             return time
+                           
+class AbsoluteTimeConverter:
+
+    """Convert an absolute date & time to a datetime."""
+
+    FORMAT_STRINGS = {"NUMERIC_MONTH_DAY_YEAR":"%m/%d/%Y,%H:%M:%S", "NUMERIC_DAY_MONTH_YEAR":"%d/%m/%Y,%H:%M:%S", "ABBREVIATED_MONTH_DAY_YEAR":"%b,%d,%Y,%H:%M:%S", "ABBREVIATED_DAY_MONTH_YEAR":"%d,%b,%Y,%H:%M:%S", "FULL_MONTH_DAY_YEAR":"%B,%d,%Y,%H:%M:%S", "FULL_DAY_MONTH_YEAR":"%d,%B,%Y,%H:%M:%S"}
+
+    @staticmethod
+    def _preprocess(t):
+        logger = logging.getLogger("common")
+        t = t.strip()
+        #Replace all spaces with commas w/o putting 2 commas next to each other
+        t = t.replace(', ', ',').replace(' ', ',')
+        #Remove punctuation from abbreviations and remove date suffixes (3rd, 4th, 1st, etc)
+        for item in ['.', 'st', 'nd', 'rd', 'th']:
+            t_replaced = t.replace(item, '')
+            if t_replaced != t:
+                logger.debug(f"Removed '{item}'")
+            t = t_replaced
+        #If there's no time, append a default time
+        if ":" not in t:
+            logger.debug("No time provided, assuming noon")
+            t += ",12:00:00"
+        #Pad time value with seconds if needed
+        if len(t.split(":")) == 2:
+            logger.debug("Adding seconds to time")
+            parts = t.split(":")
+            #Is this 12 hour time?
+            if ',' in parts[1]:
+                m, p = parts[1].split(",")
+                parts[1] = f':{m}:00,{p}'
+            else:
+                parts[1] = f':{parts[1]}:00'
+            t = parts[0] + parts[1]
+        return t
+
+    @staticmethod
+    def convert(t):
+        logger = logging.getLogger("common")
+        logger.debug(f"Trying to convert provided absolute time {t}")
+        #Get the time value into a format we can apply our format strings to
+        t = AbsoluteTimeConverter._preprocess(t)
+        logger.debug(f"Time string after preprocessing: {t}")
+        for format_type, format_string in AbsoluteTimeConverter.FORMAT_STRINGS.items():
+            logger.debug(f"Trying format {format_type}")
+            try:
+                ret = datetime.datetime.strptime(t, format_string)
+            except ValueError:
+                logger.debug("Trying 12 hour time")
+                try:
+                    format_string_12hr = format_string.replace("%H", "%I") + ",%p"
+                    ret = datetime.datetime.strptime(t, format_string_12hr)
+                except ValueError:
+                    continue
+            logger.debug("Converted time string to datetime.")
+            return ret 
+        logger.debug("Couldn't convert the provided time.")
+        return None
+                
+            
 
 async def _new_run_now(*coros):
     """Run 'coros' concurrently without delay. Uses python 3.11 features like asyncio.TaskGroup and ExceptionGroup"""
