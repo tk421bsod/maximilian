@@ -79,13 +79,15 @@ class HelpCommand(commands.HelpCommand):
                     help = command.help
         try:
             command.extras
-            if self.context.bot.common.get_value(command.extras, "uses_timeconverter"):
-                help += self.context.bot.strings["COMMAND_USES_TIMECONVERTER"]
+            if self.context.bot.common.get_value(command.extras, "uses_relativetimeconverter"):
+                help += self.context.bot.strings["COMMAND_USES_RELATIVETIMECONVERTER"]
                 UNITS = {"w":"[w]eeks", "d":"[d]ays", "h":"[h]ours", "m":"[m]inutes", "s":"[s]econds"}
                 unit_string = ""
-                for unit in self.context.bot.common.get_value(command.extras, "timeconverter_allowed_units", ("d","h","m","s")):
+                for unit in self.context.bot.common.get_value(command.extras, "relativetimeconverter_allowed_units", ("d","h","m","s")):
                     unit_string += f"\n`{unit}` : `{UNITS[unit]}`"
-                help += self.context.bot.strings["TIMECONVERTER_ALLOWED_UNITS"].format(unit_string)
+                help += self.context.bot.strings["RELATIVETIMECONVERTER_ALLOWED_UNITS"].format(unit_string)
+            if self.context.bot.common.get_value(command.extras, "uses_absolutetimeconverter"):
+                help += self.context.bot.strings["COMMAND_USES_ABSOLUTETIMECONVERTER"]
         except AttributeError:
             pass
         parent = ""
