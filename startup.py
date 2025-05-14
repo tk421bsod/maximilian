@@ -100,6 +100,13 @@ def check_version():
         print("Startup will continue in 5 seconds.")
         time.sleep(5) #TODO: consider moving this outside of main.run() as keeping it there may cause some scary "Heartbeat blocked" warnings!
 
+def _use_default_dbip(bot):
+    """Use the default database IP address if one hasn't been provided yet."""
+    if bot.dbip:
+        logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME).warning("IP address specified through config, not changing it.")
+        return
+    bot.dbip = "localhost"
+
 def parse_arguments(bot, args):
     logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
     if len(args) > 1:
@@ -108,18 +115,20 @@ def parse_arguments(bot, args):
                 bot.dbip = args[args.index("--ip")+1]
                 logger.info(f"Set database IP address to {bot.dbip}.")
             except ValueError:
-                logger.warning("You need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost.")
-                bot.dbip = "localhost"
+                if bot.dbip:
+                    pass
+                logger.warning("You need to specify what ip address you want to use with the database. Since you didn't specify an IP address, I'll fall back to using localhost if one isn't set through config already.")
+                _use_default_dbip(bot)
         else:
-            logger.warning("No database IP address provided. Falling back to localhost.")
-            bot.dbip = "localhost"
+            logger.warning("No database IP address provided. Will default to localhost if one is not provided via config.")
+            _use_default_dbip(bot)
         if "--no-load" in args:
             bot.noload = common.consume_all(args, args.index("--no-load"), "-")
         else:
             bot.noload = []
     else:
-        logger.warning("No arguments provided.")
-        bot.dbip = "localhost"
+        logger.warning("No arguments provided. Database IP address will default to localhost if one is not provided via config.")
+        _use_default_dbip(bot)
 
 async def initialize_db(bot, config):
     logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)

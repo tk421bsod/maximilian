@@ -86,9 +86,11 @@ class maximilian(commands.Bot):
 
     def __init__(self, config):
         self.constants = GlobalConstants
+        self.common = common
+        self.config = config
         logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
         #Now that we've checked basic requirements and ran the updater, we can
-        token = config['token']
+        token = self.config['token']
         #check discord.py version...
         #TODO: Consider moving this to main.py next to Python version checks
         logger.debug("Checking discord.py version...")
@@ -108,6 +110,8 @@ class maximilian(commands.Bot):
         #TODO: Move away from doing this, it is discouraged. Calling getLogger('maximilian') is the recommended usage.
         self.logger = logger
         self.noload = [] #list of modules for load_extensions_async to skip. Set by parse_arguments
+        self.dbip = None
+        self.get_database_ip()
         logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
         self.tables = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting, category)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned, constraint users primary key (user_id)'}
@@ -121,13 +125,20 @@ class maximilian(commands.Bot):
         #We may be able to then remove defaults from CustomContext.
         super().__init__(allowed_mentions=discord.AllowedMentions(everyone=False), command_prefix=core.get_prefix, owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name=f" v{self.constants.VERSION}{f'-{self.commit}' if self.commit else ''}"))
         #Initialize some needed attributes.
-        self._initialize_attrs(common=common, config=config)
+        self._initialize_attrs()
         startup.show_2_0_first_run_message(config)
         logger.debug("Starting the event loop.")
 
-    def _initialize_attrs(self, *, common, config):
-        self.common = common
-        self.config = config
+    def get_database_ip(self):
+        #Pull our database IP address from config.
+        dbip = common.get_value(self.config, "dbip")
+        if dbip:
+            logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
+            logger.debug("Sourcing database IP address from config.")
+            logger.debug(f"Setting database IP address to {dbip}")
+            self.dbip = dbip
+
+    def _initialize_attrs(self):
         self.help_command = helpcommand.HelpCommand(verify_checks=False)
         self.init_finished = False
         self.prefix = {} #map of prefix to server id. cogs/prefixes.py hooks into this to allow for server-specific prefixes
