@@ -17,6 +17,7 @@ import traceback
 import typing
 
 import common
+import constants
 import updater  
 
 #Deep copy from builtins to ensure we have a copy of the original print()
@@ -34,6 +35,7 @@ TEXT_STYLES = {"none":0, "bold":1, "underline":2, "negative1":3, "negative2":5, 
 OS_TYPE = os.name
 FORMATTING_ENABLED = True
 IS_DEBUG = "-v" in sys.argv
+skip_pre_setup = False
 
 class SetupLogFormatter(logging.Formatter):
 
@@ -53,19 +55,76 @@ class SetupLogFormatter(logging.Formatter):
             self._style._fmt = self.ERROR_LOG_FORMAT
         return super().format(record)
 
-if IS_DEBUG:
-    log_level = logging.DEBUG
-else:
-    log_level = logging.WARN
+class SetupState:
 
-#Initialize loggers
-root_logger = logging.getLogger("setup")
-root_logger.setLevel(log_level)
-log_handler = logging.StreamHandler(sys.stdout)
-log_formatter = SetupLogFormatter()
-log_handler.setFormatter(log_formatter)
-log_handler.setLevel(log_level)
-root_logger.addHandler(log_handler)
+    def __init__(self):
+        root_logger.debug("Initializing global state")
+        self.pw = ""
+        self.ip = "%"        
+        self.current_menu = SetupConstants.MAIN_MENU
+        self.menu_stack = [SetupConstants.MAIN_MENU]
+        self.LOCK_FILE_HANDLER = None
+        self.install_in_progress = None
+        self.db_available = False
+        self.remote = None
+        self.ip = "localhost"
+        self.config_found = True
+        temp_config_exists = os.path.exists("config.tmp")
+        lock_file_exists = os.path.exists("setup.lock")
+        setup_state_exists = os.path.exists("setup_state.tmp")
+        root_logger.debug(f"Temp config: {temp_config_exists} | Lock file: {lock_file_exists} | Saved state: {setup_state_exists}")
+        if setup_state_exists:
+            self.config = common.load_config("setup_state.tmp")
+            root_logger.debug(self.config)
+            root_logger.debug(f"Saved state detected. Restart reason: {self.config['restart_reason']}")
+            os.unlink("setup_state.tmp")
+            return
+        try:
+            if lock_file_exists:
+                print("Setup exited unexpectedly.", style=TEXT_STYLES["bold"])
+                if temp_config_exists and not setup_state_exists:
+                    print("Your configuration data from that session was lost.", style=TEXT_STYLES["bold"])
+                    print("You must finish the setup process to save your configuration data.")
+                    os.unlink("config.tmp")
+                else:
+                    print("No configuration data was lost.")
+            elif temp_config_exists and not setup_state_exists:
+                print("You exited Setup before a task was finished.\nYour configuration data from that session was lost.", style=TEXT_STYLES["bold"])
+                print("You must finish the setup process to save your configuration data.")
+                os.unlink("config.tmp")
+            if __name__ == "__main__":
+                root_logger.debug("Loading config.")
+                self.config = common.load_config()
+                root_logger.debug("Creating lock file.")
+                self.LOCK_FILE_HANDLER = open("setup.lock", "w")
+            else:
+                self.config = {}
+        except FileNotFoundError:
+            root_logger.debug("Config not found.")
+            self.config = {}
+            self.config_found = False
+        except:
+            root_logger.debug("Could not load/parse config. See exc info below")
+            root_logger.debug(traceback.format_exc())
+            print("The configuration file couldn't be loaded. Run setup.py with -v to show more information.")
+            print("This file will be overwritten if you use any options from the 'Install' menu.")
+            self.config = {}
+            self.config_found = False
+
+    def save_state(self, reason="None"):
+        """Save the current config to setup_state.tmp"""
+        root_logger.debug(f"Temporarily saving current config with reason '{reason}'.")
+        self.config["restart_reason"] = reason
+        SetupUtils.write_config("setup_state.tmp")
+        root_logger.debug("Temporary config saved")
+
+    def load_state(self):
+        """Load saved temporary config from setup_state.tmp"""
+        if not os.path.isfile("setup_state.tmp"):
+            root_logger.debug("No saved temporary config found")
+            return None
+        config = common.load_config('setup_state.tmp')
+        self.config.update(config)
 
 class MarkdownUtils():
     @staticmethod
@@ -180,6 +239,7 @@ class SetupStrings:
     MORE_PROMPT = "These options aren't used very often but may be able to help.\nChoose one from the list below, 'Help' for assistance, or 'Main Menu' to go back:"
     INSTALL_MENU_PROMPT = "Choose an installation type, 'Help' for assistance, or 'Main Menu' to go back:"
     DATABASE_MENU_PROMPT = "Choose a database action to perform, 'Help' for assistance, or 'Main Menu' to go back:"
+    REPAIR_MENU_PROMPT = "Choose an option, 'Help' for assistance, or 'Main Menu' to go back:"
 
     MAIN_MENU_HELP = """\n---- Setup Help ----
 Want to install Maximilian? Choose **Install**.
@@ -224,7 +284,6 @@ Want to uninstall? Choose **Uninstall options** from the main menu.
     GIT_COMMAND_FAILED_FATAL = "A Git command failed. Setup cannot continue."
     GIT_COMMAND_FAILED_MORE = "Read the above output carefully, then check HOSTING.md for more information."
 
-
 class SetupUtils:
     """Various utilities used by Setup."""
 
@@ -232,14 +291,17 @@ class SetupUtils:
     def convert_config():
         "Convert configuration data from a dict to a string to write."
         config = ""
+        root_logger.debug("Converting config to string")
         for k, v in SetupGlobalState.config.items():
             config += f"{k}:{v}\n"
+        root_logger.debug(f"Resulting config string: {config}")
         return config
 
     @staticmethod
     def write_config(path):
         "Write configuration data from convert_config to a file at 'path'. Overwrites config file contents."
         config = SetupUtils.convert_config()
+        root_logger.debug(f"Writing config to file {path}")
         with open(path, "w") as configfile:
             configfile.write(config)
 
@@ -252,9 +314,15 @@ class SetupUtils:
             traceback.print_exc()
             return False
         return True
+    
+    @staticmethod
+    def get_venv_working_directory():
+        venv_dir = common.get_value(SetupGlobalState.config, "venv_dir")
+        return venv_dir if os.path.exists(venv_dir) else constants.GlobalConstants.DEFAULT_VENV_DIR
 
     @staticmethod
     def run_os_dependent_command(linux_command, windows_command):
+        root_logger.debug(f"Running OS dependent command, linux: {linux_command} windows: {windows_command}")
         if OS_TYPE == "nt":
             return common.run_command(windows_command)
         elif OS_TYPE == "posix":
@@ -262,6 +330,8 @@ class SetupUtils:
         
     @staticmethod
     def run_git_command(cmd):
+        """Run a Git command and raise GitCommandFailed if it fails."""
+        root_logger.debug("Running Git command")
         ret = common.run_command(cmd)
         if ret["returncode"]:
             raise GitCommandFailed(ret)
@@ -381,7 +451,7 @@ class SetupUtils:
             #Converting to a boolean, then getting its inverse, converts the answer to its boolean counterpart.
             ret["choice"] = not ret["choice"]
             return ret
-
+        
 class InstallUtils:
     
     @staticmethod
@@ -466,6 +536,7 @@ class InstallHandler:
         self.token = None
         self.automatic_updates_enabled = None
         self.single_use = single_use
+        SetupGlobalState.install_in_progress = self
         if SetupGlobalState.remote is None:
             SetupGlobalState.remote = SetupUtils.BooleanMenu("Is the database already set up on a different computer?").handle_menu()["choice"]
 
@@ -516,8 +587,10 @@ class InstallHandler:
         print("Would you like to enable automatic updates?")
         self.automatic_updates_enabled = SetupUtils.BooleanMenu("Would you like to enable automatic updates?\nIf enabled, Maximilian will attempt to update itself on startup once every 14 days.").handle_menu()["choice"]
         if self.automatic_updates_enabled:
+            self.set_config_value("automatic_updates", "1")
             print("Automatic updates enabled.")
         else:
+            self.set_config_value("automatic_updates", "0")
             print("Automatic updates disabled.")
 
     def install_packages(self):
@@ -542,6 +615,161 @@ class InstallHandler:
             return
         print("This is a Windows environment, not installing packages.")
 
+    def _test_for_venv(self, venv_working_directory):
+        """Test if a venv is present at the provided working directory (root dir of venv).
+        Checks for the existence of {venv_working_directory}/bin/activate or {venv_working_directory}/Scripts/activate.bat"""
+        root_logger.debug(f"Checking for venv at {venv_working_directory}")
+        #Presence of $DIR/bin/activate indicates a venv is installed here
+        if os.path.isfile(f"{venv_working_directory}/bin/activate") or os.path.isfile(f"{venv_working_directory}\\Scripts\\activate.bat"):
+            root_logger.debug(f"venv found")
+            return True
+        root_logger.debug("venv not found")
+        return False
+
+    def change_venv_dir(self):
+        """Change virtual environment directory."""
+        root_logger.debug("Changing venv directory")
+        DEFAULT_VENV_DIR = constants.GlobalConstants.DEFAULT_VENV_DIR
+        while True:
+            print("Where do you want the virtual environment to be created?")
+            print("Enter a path relative to Maximilian's root directory.")
+            print(f"Press Enter to use the default path ({DEFAULT_VENV_DIR}).")
+            creation_dir = input().strip()
+            if not creation_dir:
+                creation_dir = DEFAULT_VENV_DIR
+            root_logger.debug(f"venv dir set to {creation_dir}")
+            if os.path.exists(creation_dir):
+                print("This location already exists and may have data stored in it.")
+                print("Do you want to overwrite it?")
+                print("You will lose that data if you continue!")
+                root_logger.debug("Path already exists!")
+                overwrite = SetupUtils.BooleanMenu("").handle_menu()['choice']
+                if overwrite:
+                    root_logger.debug("Overwriting venv path contents")
+                    print("Alright, overwriting that location.")
+                    os.unlink(creation_dir)
+                    return creation_dir
+                else:
+                    print("Not overwriting that location.")
+                    print("You'll need to choose a path again.\n--------")
+                    continue
+            return creation_dir
+
+    def _force_venv_dir_change(self, target_dir):
+        #Change the venv_dir field regardless of the config overwrite preference
+        #Save chosen value for restoring later
+        self.overwrite_config_copy = copy.deepcopy(self.overwrite_config)
+        self.overwrite_config = True
+        root_logger.debug(f"Changing config venv_dir from '{common.get_value(SetupGlobalState.config, 'venv_dir')}' to '{target_dir}'")
+        self.set_config_value("venv_dir", target_dir)
+        #Restore chosen config overwrite preference
+        self.overwrite_config = self.overwrite_config_copy
+
+    def _check_venv_exists(self):
+        """Check if a virtual environment already exists at either the path specified in 'config' or the default path. Returns the path of the existing venv, None if none exists."""
+        DEFAULT_VENV_DIR = constants.GlobalConstants.DEFAULT_VENV_DIR
+        current_venv_dir = common.get_value(SetupGlobalState.config, 'venv_dir')
+        #Do we have something in either config or our default directory?
+        if os.path.exists(DEFAULT_VENV_DIR) or current_venv_dir:
+            #Does config contain a valid path?
+            if not os.path.exists(current_venv_dir):
+                print("The virtual environment location specified in config does not exist.")
+                print(f"Currently, it's set to '{current_venv_dir}'.")
+                print("Would you like to change this? You'll be prompted to create a virtual environment if you decide not to change it. \nYou'll be brought back to this prompt if you enter a location that doesn't contain a virtual environment.")
+                choice = SetupUtils.BooleanMenu("").handle_menu()["choice"]
+                if choice:
+                    new_dir = self.change_venv_dir()
+                    self._force_venv_dir_change(new_dir)
+                    return self._check_venv_exists()
+                else:
+                    print("Ok. You now can choose whether to use a virtual environment.")
+                    return None
+            #venv dir field in config will override default if it exists
+            venv_working_directory = SetupUtils.get_venv_working_directory()
+            if self._test_for_venv(venv_working_directory):
+                return venv_working_directory
+        return None
+
+    def _acquire_target_venv_dir(self):
+        """Get the directory the virtual environment should be installed to and ensure we can install to it. Returns None if a virtual environment should not be installed."""
+        ret = self._check_venv_exists()
+        if ret:
+            print(f"You already have a virtual environment set up at '{ret}'.", style=TEXT_STYLES["bold"])
+            print("Would you like to recreate it? This may take some time.")
+            venv_recreate_choice = SetupUtils.BooleanMenu("").handle_menu()["choice"]
+            if not venv_recreate_choice:
+                print("Alright, not recreating the virtual environment.")
+                return None
+            print(f"Recreating the virtual environment at '{ret}'. Please be patient, this may take some time.", style=TEXT_STYLES["bold"])
+            return ret
+        else:
+            print("From Maximilian version 2.0 onwards, Python dependencies for Maximilian are recommended to be installed in a 'virtual environment'.")
+            print("This separates dependencies from your global Python packages and is required on many Linux systems.")
+            print("The only downside is that the environment must be activated every time you open a new command prompt.")
+            print("With this in mind, would you like to create a virtual environment for Maximilian? ('Yes' recommended)")
+            venv_choice = SetupUtils.BooleanMenu("").handle_menu()["choice"]
+            if not venv_choice:
+                print("Alright, not installing to a virtual environment.")
+                print("Choose 'Create virtual environment' in the Install menu if you want to do this later.")
+                return None
+            print("Alright, installing to a virtual environment.")
+            current_venv_dir = common.get_value(SetupGlobalState.config, 'venv_dir')
+            if current_venv_dir:
+                print("A virtual environment location is already specified in config.")
+                print(f"The location is '{current_venv_dir}'.")
+                print("Creating the virtual environment at that location.")
+                return current_venv_dir
+            creation_dir = self.change_venv_dir()
+            print(f"Creating the virtual environment at '{creation_dir}'. Please be patient, this may take some time.", style=TEXT_STYLES["bold"])
+            return creation_dir
+
+    def create_venv(self):
+        """Prompt for venv creation, create if requested. Returns whether the venv was created and sets config['venv_dir'] if so. """
+        import venv
+        #Get the directory to install to.
+        target_dir = self._acquire_target_venv_dir()
+        #Did we choose not to install?
+        if not target_dir:
+            root_logger.debug("Not installing to a virtual environment.")
+            return False
+        root_logger.debug(f"Creating venv in directory '{target_dir}'")
+        venv.create(target_dir, with_pip=True)
+        self._force_venv_dir_change(target_dir)
+        return True
+    
+    def actually_install_python_dependencies(self):
+        pass
+
+    def install_python_dependencies_venv_phase_2(self):
+        self.actually_install_python_dependencies()
+        pass
+
+    def install_python_dependencies_venv_phase_1(self, continue_install_with=None):
+        """Activate the virtual environment if not already activated, then quit Setup. Once Setup is restarted, run the SetupTaskHandler classmethod named {continue_install_with} to continue the installation"""
+        root_logger.debug("Installing Python dependencies")
+        venv_working_directory = SetupUtils.get_venv_working_directory()
+        root_logger.debug(f"venv working dir is {venv_working_directory}")
+        if self._test_for_venv(venv_working_directory):
+            if not constants.GlobalConstants.WITHIN_VENV:
+                root_logger.debug("Activating venv")
+                SetupTaskHandler.RUN_ACTIVATE_VENV_TASK()
+                print("You'll need to restart setup.py to continue.")
+                print("The installation process will automatically resume from this point.")
+                if continue_install_with:
+                    continue_install_with = "," + continue_install_with
+                SetupGlobalState.save_state(reason=f"activated_venv{continue_install_with}")
+                quit()
+            else:
+                root_logger.debug("venv already activated")
+                continue_install_with = getattr(SetupTaskHandler, continue_install_with, None)
+                if not continue_install_with:
+                    root_logger.debug("Not sure how to continue, we'll just jump to phase 2")
+                    self.install_python_dependencies_venv_phase_2()
+                return continue_install_with()
+
+    def initial_database_setup():
+        pass
+
 class SetupTasks:
     """Container for various tasks performed by Setup."""
 
@@ -554,6 +782,12 @@ class SetupTasks:
         installer.prepare()
         root_logger.debug("Gathering installation info")
         installer.gather_information()
+        root_logger.debug("Installing required packages")
+        installer.install_packages()
+    
+    @staticmethod
+    def full_install_phase_2():
+        root_logger.debug("Starting second phase of full install")
 
     @staticmethod
     def install_no_database():
@@ -632,6 +866,44 @@ class SetupTasks:
     def migrate():
         pass
 
+    @staticmethod
+    def activate_venv():
+        venv_working_directory = SetupUtils.get_venv_working_directory()
+        #this is slightly better looking garbage than a reimpl of _test_for_venv, will keep for now?
+        if not InstallHandler._test_for_venv(InstallHandler, venv_working_directory):
+            print("A virtual environment hasn't been set up or couldn't be found.", style=TEXT_STYLES["bold"])
+            print("You may have chosen not to set up a virtual environment during initial setup or you're running this script from somewhere other than Maximilian's root directory.")
+            print("You'll need to choose 'Install dependencies only' in the 'Install' menu to set one up.")
+            return
+        if constants.GlobalConstants.WITHIN_VENV:
+            print("A virtual environment is already activated.")
+            return
+        root_logger.debug(f"Attempting to activate virtual environment at {venv_working_directory}")
+        ret = SetupUtils.run_os_dependent_command(f"source {venv_working_directory}/bin/activate", f"{venv_working_directory}\\Scripts\\activate.bat")
+        if ret["returncode"]:
+            print("Couldn't activate the virtual environment. More details:")
+            print(ret["output"])
+            print("-----")
+            raise TaskFailure()
+        print("Activated the virtual environment.")
+
+    @staticmethod
+    def create_venv():
+        venv_creation_handler = InstallHandler(single_use=True)
+        ret = venv_creation_handler.create_venv()
+        if ret:
+            print("Virtual environment created.")
+        else:
+            print("Not creating a virtual environment.")
+        
+    @staticmethod
+    def install_dependencies():
+        pass
+
+    @staticmethod
+    def test_task():
+        print("Test task ran")
+
 class SetupTaskHandler:
     """Wraps and handles individual tasks. Returns task output as a TaskResults instance."""
 
@@ -669,19 +941,25 @@ class SetupTaskHandler:
     RUN_LAUNCH_DATABASE_CLIENT_TASK = functools.partial(run_task, SetupTasks.launch_database_client)
     RUN_CHANGE_DATABASE_PASSWORD_TASK = functools.partial(run_task, SetupTasks.change_database_password)
     RUN_MIGRATE_TASK = functools.partial(run_task, SetupTasks.migrate)
+    RUN_ACTIVATE_VENV_TASK = functools.partial(run_task, SetupTasks.activate_venv)
+    RUN_INSTALL_DEPENDENCIES_TASK = functools.partial(run_task, SetupTasks.install_dependencies)
+    RUN_CREATE_VENV_TASK = functools.partial(run_task, SetupTasks.create_venv)
+    RUN_TEST_TASK = functools.partial(run_task, SetupTasks.test_task)
 
 class SetupConstants:
     """Various non-string constants used by Setup."""   
     
     REQUIRED_PACKAGES = ["mariadb-server", "python3-pip", "ffmpeg", "python3-venv"]
-    MAIN_MENU_OPTIONS = ["Install", "Database options", {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, "Help", "More", "Exit"]
-    MORE_OPTIONS = [{"Clear caches":SetupTaskHandler.RUN_CLEAR_CACHES_TASK}, "Help", "Main Menu"]
+    MAIN_MENU_OPTIONS = ["Install", "Database options", "Repair", {"Migrate to 2.0":SetupTaskHandler.RUN_MIGRATE_TASK}, {"Run updater":SetupTaskHandler.RUN_UPDATE_TASK}, "Help", "More", "Exit"]
+    MORE_OPTIONS = [{"Clear caches":SetupTaskHandler.RUN_CLEAR_CACHES_TASK}, {"Activate virtual environment":SetupTaskHandler.RUN_ACTIVATE_VENV_TASK}, "Help", "Main Menu"]
     INSTALL_OPTIONS = [{"Full install (recommended)":SetupTaskHandler.RUN_FULL_INSTALL_TASK}, {"Install without database":SetupTaskHandler.RUN_INSTALL_NO_DATABASE_TASK}, {"Install database only":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, "Help", "Main Menu"]
     DATABASE_OPTIONS = [{"Reinstall database":SetupTaskHandler.RUN_INSTALL_DATABASE_TASK}, {"Change database password":SetupTaskHandler.RUN_CHANGE_DATABASE_PASSWORD_TASK}, {"Start database":SetupTaskHandler.RUN_START_DATABASE_TASK}, {"Back up database":SetupTaskHandler.RUN_BACKUP_TASK}, {"Restore database":SetupTaskHandler.RUN_RESTORE_TASK}, {"Launch database client":SetupTaskHandler.RUN_LAUNCH_DATABASE_CLIENT_TASK}, "Help", "Main Menu"]
+    REPAIR_OPTIONS = [{"Install dependencies":SetupTaskHandler.RUN_INSTALL_DEPENDENCIES_TASK}, {"Create virtual environment":SetupTaskHandler.RUN_CREATE_VENV_TASK}, "Main Menu"]
     MAIN_MENU = SetupUtils.IntMenu(options=MAIN_MENU_OPTIONS, prompt=SetupStrings.MAIN_MENU_PROMPT)
     MORE_MENU = SetupUtils.IntMenu(options=MORE_OPTIONS, prompt=SetupStrings.MORE_PROMPT)
     DATABASE_MENU = SetupUtils.IntMenu(options=DATABASE_OPTIONS, prompt=SetupStrings.DATABASE_MENU_PROMPT)
     INSTALL_MENU = SetupUtils.IntMenu(options=INSTALL_OPTIONS, prompt=SetupStrings.INSTALL_MENU_PROMPT)
+    REPAIR_MENU = SetupUtils.IntMenu(options=REPAIR_OPTIONS, prompt=SetupStrings.REPAIR_MENU_PROMPT)
 
 class SetupDatabaseClient:
     """A simple database client born from the ashes of a test written for db_utils
@@ -726,7 +1004,8 @@ class SetupDatabaseClient:
             SetupDatabaseClient.name = input().strip()
             if not SetupDatabaseClient.name:
                 SetupDatabaseClient.name = "maximilian"
-            SetupDatabaseClient.pw = input("Please enter the database password:\n").strip()
+            print("Please enter the database password:")
+            SetupDatabaseClient.pw = getpass.getpass().strip()
             SetupDatabaseClient.ip = SetupGlobalState.ip
 
     @staticmethod
@@ -807,48 +1086,6 @@ class SetupDatabaseClient:
             print("Cleaning up.")
             SetupDatabaseClient.end()
 
-class SetupGlobalState:
-    pw = ""
-    ip = "%"        
-    current_menu = SetupConstants.MAIN_MENU
-    LOCK_FILE_HANDLER = None
-    install_in_progress = None
-    db_available = False
-    remote = None
-    ip = "localhost"
-    config_found = True
-    try:
-        if os.path.exists("setup.lock"):
-            print("Setup exited unexpectedly.", style=TEXT_STYLES["bold"])
-            if os.path.exists("config.tmp"):
-                print("Your configuration data from that session was lost.", style=TEXT_STYLES["bold"])
-                print("You must finish the setup process to save your configuration data.")
-                os.unlink("config.tmp")
-            else:
-                print("No configuration data was lost.")
-        elif os.path.exists("config.tmp"):
-            print("You exited Setup before a task was finished.\nYour configuration data from that session was lost.", style=TEXT_STYLES["bold"])
-            print("You must finish the setup process to save your configuration data.")
-            os.unlink("config.tmp")
-        if __name__ == "__main__":
-            root_logger.debug("Loading config.")
-            config = common.load_config()
-            root_logger.debug("Creating lock file.")
-            LOCK_FILE_HANDLER = open("setup.lock", "w")
-        else:
-            config = None
-    except FileNotFoundError:
-        root_logger.debug("Config not found.")
-        config = {}
-        config_found = False
-    except:
-        root_logger.debug("Could not load/parse config. See exc info below")
-        root_logger.debug(traceback.format_exc())
-        print("The configuration file couldn't be loaded. Run setup.py with -v to show more information.")
-        print("This file will be overwritten if you use any options from the 'Install' menu.")
-        config = {}
-        config_found = False
-
 #TODO: Write preferences to config and keep them between sessions
 def pre_setup():
     """Ask a couple questions before starting Setup."""
@@ -863,6 +1100,15 @@ def pre_setup():
         #This should not be limited to this scope. Linter is stupid
         FORMATTING_ENABLED = False
         print("Text formatting disabled.")
+    
+    dbip = common.get_value(SetupGlobalState.config, "dbip")
+    if dbip:
+        print("\nLooks like your database is set up on a different computer.", style=TEXT_STYLES["bold"])
+        print(f"The IP address is '{dbip}'.")
+        print("If this isn't correct, remove the 'dbip' field from 'config' and restart Setup.\n")
+        SetupGlobalState.remote = True
+        SetupGlobalState.ip = dbip
+        return
     #Then ask about whether the database server is not local.
     REMOTE_MENU = SetupUtils.BooleanMenu(prompt="Is the database set up on a different computer?\nCareful, your answer will affect some options during this session. For example, database setup will be skipped during a full install.\nUnsure? Choose 'No'.")
     response = REMOTE_MENU.handle_menu()
@@ -874,11 +1120,18 @@ def pre_setup():
         SetupGlobalState.remote = False
         SetupGlobalState.ip = "localhost"
 
+def _forward_menu(menu):
+    SetupGlobalState.menu_stack.append(menu)
+    SetupGlobalState.current_menu = menu
+
+def _back_menu():
+    SetupGlobalState.menu_stack.pop()
+    SetupGlobalState.current_menu = SetupGlobalState.menu_stack[-1]
+
 def setup_main():
     """Main method for Setup."""
     #Ask a few questions before entering the main loop.
     pre_setup()
-    os.system("cls" if OS_TYPE == "nt" else "clear")
     #Then show the introduction message
     print(SetupStrings.INTRO_HEADER, style=TEXT_STYLES["bold"])
     print(SetupStrings.INTRO_DESC)
@@ -886,7 +1139,7 @@ def setup_main():
 
     while True:
         #Show the menu and handle input.
-        root_logger.debug("Showing current main menu.")
+        root_logger.debug("Showing current menu.")
         ret = SetupGlobalState.current_menu.handle_menu()
         chosen_option = SetupGlobalState.current_menu.options[ret["choice"]]
 
@@ -908,16 +1161,19 @@ def setup_main():
         #Check for menu changes.
         if chosen_option == "More":
             root_logger.debug("Showing additional options.")
-            SetupGlobalState.current_menu = SetupConstants.MORE_MENU
+            _forward_menu(SetupConstants.MORE_MENU)
         elif chosen_option == "Install":
             root_logger.debug("Showing installation options.")
-            SetupGlobalState.current_menu = SetupConstants.INSTALL_MENU
+            _forward_menu(SetupConstants.INSTALL_MENU)
         elif chosen_option == "Database options":
             root_logger.debug("Showing database options.")
-            SetupGlobalState.current_menu = SetupConstants.DATABASE_MENU
-        elif chosen_option == "Main Menu":
-            print("Returning to the main menu.")
-            SetupGlobalState.current_menu = SetupConstants.MAIN_MENU
+            _forward_menu(SetupConstants.DATABASE_MENU)
+        elif chosen_option == "Repair":
+            root_logger.debug("Showing repair options.")
+            _forward_menu(SetupConstants.REPAIR_MENU)
+        elif chosen_option == "Main Menu" or chosen_option == "Back":
+            print("Returning to the previous menu.")
+            _back_menu()
 
         #Why are we returning to the menu?
         menu_callback_return = ret["return"]
@@ -939,6 +1195,63 @@ def cleanup():
     if SetupGlobalState.LOCK_FILE_HANDLER:
         SetupGlobalState.LOCK_FILE_HANDLER.close()
         os.unlink("setup.lock")
+    if SetupGlobalState.config_found and SetupGlobalState.config:
+        SetupUtils.write_config("config")
+
+def _handle_restart(reason):
+    if reason.startswith("activated_venv"):
+        root_logger.debug("Determining how to continue install")
+        pts = reason.split(",")
+        if len(pts) < 2:
+            root_logger.debug("No continue_install_with specified.")
+            return ""
+        continue_install_with = getattr(SetupTaskHandler, pts[1], None)
+        if not continue_install_with:
+            root_logger.debug(f"continue_install_with was set to '{pts[1]}' but was not defined. It must be a SetupTaskHandler classmethod!")
+            return None
+        if not callable(continue_install_with):
+            root_logger.debug(f"continue_install_with must be callable!")
+            return None
+        print("Now that your virtual environment is activated, installation can continue.", style=TEXT_STYLES["bold"])
+        return continue_install_with()
+    else:
+        root_logger.debug("This restart reason is not handled!")
+        return ""
+
+#Definitions finished, let's initialize :)
+
+#Determine the initial logging level
+if IS_DEBUG:
+    log_level = logging.DEBUG
+else:
+    log_level = logging.WARN
+
+#Initialize loggers
+root_logger = logging.getLogger("setup")
+root_logger.setLevel(log_level)
+log_handler = logging.StreamHandler(sys.stdout)
+log_formatter = SetupLogFormatter()
+log_handler.setFormatter(log_formatter)
+log_handler.setLevel(log_level)
+root_logger.addHandler(log_handler)
+
+#Initialize our global state.
+SetupGlobalState = SetupState()
+
+restart_reason = common.get_value(SetupGlobalState.config, "restart_reason", 0)
+if restart_reason:
+    ret = _handle_restart(restart_reason)
+    if ret is None:
+        print("Sorry, Setup wasn't able to continue where you left off.", style=TEXT_STYLES["bold"])
+        print("If this happens again, run setup.py with -v and report the error.")
+    elif ret == "":
+        print("Sorry, Setup wasn't able to figure out where you left off.", style=TEXT_STYLES["bold"])
+        print("If this happens again, run setup.py with -v and report the error.")
+    elif type(ret) == TaskResults:
+        if not "-u" in sys.argv:
+            sys.argv = sys.argv.append("-u")
+        FORMATTING_ENABLED = True
+
 
 if __name__ == "__main__":
     if not "-u" in sys.argv:
