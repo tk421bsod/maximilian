@@ -13,11 +13,10 @@ import discord
 import humanize
 from discord.ext import commands
 
-#Thanks to Vexs for help with this.
 time_regex = re.compile(r"(\d{1,5}(?:[.,]?\d{1,5})?)([smhd])")
 time_dict = {"h":3600, "s":1, "m":60, "d":86400}
 
-class TimeConverter(commands.Converter):
+class RelativeTimeConverter(commands.Converter):
     async def convert(self, ctx, argument):
         matches = time_regex.findall(argument.lower())
         time = 0
@@ -33,6 +32,63 @@ class TimeConverter(commands.Converter):
         if time == 0:
             raise commands.BadArgument("Sorry, that amount of time is invalid.")
         return time
+    
+class AbsoluteTimeConverter:
+    """Convert an absolute date & time to a datetime."""
+
+    FORMAT_STRINGS = {"NUMERIC_MONTH_DAY_YEAR":"%m/%d/%Y,%H:%M:%S", "NUMERIC_DAY_MONTH_YEAR":"%d/%m/%Y,%H:%M:%S", "ABBREVIATED_MONTH_DAY_YEAR":"%b,%d,%Y,%H:%M:%S", "ABBREVIATED_DAY_MONTH_YEAR":"%d,%b,%Y,%H:%M:%S", "FULL_MONTH_DAY_YEAR":"%B,%d,%Y,%H:%M:%S", "FULL_DAY_MONTH_YEAR":"%d,%B,%Y,%H:%M:%S"}
+
+    @staticmethod
+    def _preprocess(t):
+        logger = logging.getLogger("common")
+        t = t.strip()
+        #Replace all spaces with commas w/o putting 2 commas next to each other
+        t = t.replace(', ', ',').replace(' ', ',')
+        #Remove punctuation from abbreviations and remove date suffixes (3rd, 4th, 1st, etc)
+        for item in ['.', 'st', 'nd', 'rd', 'th']:
+            t_replaced = t.replace(item, '')
+            if t_replaced != t:
+                logger.debug(f"Removed '{item}'")
+            t = t_replaced
+        #If there's no time, append a default time
+        if ":" not in t:
+            logger.debug("No time provided, assuming noon")
+            t += ",12:00:00"
+        #Pad time value with seconds if needed
+        if len(t.split(":")) == 2:
+            logger.debug("Adding seconds to time")
+            parts = t.split(":")
+            #Is this 12 hour time?
+            if ',' in parts[1]:
+                m, p = parts[1].split(",")
+                parts[1] = f':{m}:00,{p}'
+            else:
+                parts[1] = f':{parts[1]}:00'
+            t = parts[0] + parts[1]
+        return t
+
+    @staticmethod
+    def convert(t):
+        logger = logging.getLogger("common")
+        logger.debug(f"Trying to convert provided absolute time {t}")
+        #Get the time value into a format we can apply our format strings to
+        t = AbsoluteTimeConverter._preprocess(t)
+        logger.debug(f"Time string after preprocessing: {t}")
+        for format_type, format_string in AbsoluteTimeConverter.FORMAT_STRINGS.items():
+            logger.debug(f"Trying format {format_type}")
+            try:
+                ret = datetime.datetime.strptime(t, format_string)
+            except ValueError:
+                logger.debug("Trying 12 hour time")
+                try:
+                    format_string_12hr = format_string.replace("%H", "%I") + ",%p"
+                    ret = datetime.datetime.strptime(t, format_string_12hr)
+                except ValueError:
+                    continue
+            logger.debug("Converted time string to datetime.")
+            return ret 
+        logger.debug("Couldn't convert the provided time.")
+        return None
 
 class reminders(commands.Cog):
     '''Reminders to do stuff. (and to-do lists!)'''
@@ -98,20 +154,91 @@ class reminders(commands.Cog):
         self.bot.db.exec(f"delete from reminders where uuid=%s", (uuid))
         await self.update_reminder_cache()
 
-
-    @commands.command(aliases=['reminders', 'reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.")
-    async def remind(self, ctx, time:TimeConverter, *, reminder):
-        await ctx.send("Setting your reminder...")
-        #get the date the reminder will fire at
+    async def _get_target_relative_time(self, ctx, time_string):
+        #Obtain our time offset in seconds.
+        target_time = await RelativeTimeConverter().convert(ctx, time_string)
+        #Make a datetime representing when this reminder will fire.
         currenttime = datetime.datetime.now()
-        remindertime = currenttime+datetime.timedelta(0, round(time))
+        target_time = currenttime + datetime.timedelta(0, round(target_time))
+        return target_time
+
+    @commands.command(aliases=['reminder'], help="Set a reminder for sometime in the future. This reminder will persist even if the bot is restarted.\n\nThis command lets you specify a moment in time through its `time` or `target_time` parameter.\nThe following formats are supported:\nMM/DD/YYYY,HH:MM - `04/26/2025,13:50`\nMonth names (abbreviated or full) followed by day and year - `April 26 2025 23:00`\nDay/Month/Year also works, as well as 12 hour time.\nYou can also specify seconds if you want to be extra precise.\nYour specified time will need to be put in quotes if there are spaces in it.\nSomething like `\"26 April 2025 1:50 PM\"` would work perfectly fine.")
+    async def remind(self, ctx, time_string, *, reminder):
+        logger = logging.getLogger(__name__)
+        #First, convert the time string into a datetime.
+        #Did we receive an absolute time? We can make a good guess, but we can't be 100% sure. 
+        #Something like "20d 4h" could get interpreted as an absolute time.
+        processed_as_absolute = False
+        time_string = time_string.strip()
+        if [marker in time_string for marker in [' ', ',', '/', ':']]:
+            #Try to convert the given time.
+            logger.debug("Time is probably absolute, trying to convert to datetime")
+            target_time = AbsoluteTimeConverter.convert(time_string)
+            #If we couldn't convert, try to process it like a relative time.
+            if not target_time:
+                try:
+                    logger.debug("Trying to process as relative time")
+                    target_time = await self._get_target_relative_time(ctx, time_string)
+                    logger.debug("Processed as relative time")
+                except:
+                    import traceback;traceback.print_exc()
+                    return await ctx.send("Sorry, the amount of time you provided couldn't be interpreted. You'll need to provide it in a format I can understand.\nCheck the help entry for this command for details on the accepted formats.")
+            else:
+                logger.debug("Conversion finished")
+                processed_as_absolute = True
+        else:
+            logger.debug("Time is probably relative, converting to datetime")
+            target_time = await self._get_target_relative_time(ctx, time_string)
+        if target_time < datetime.datetime.now():
+            return await ctx.send("Your reminder can't be set for a date/time in the past.")
+        #Now, ask if this time was correct.
+        #If confirmed, calls set_reminder with our new datetime and reminder.
+        #Build the message to send:
+        if processed_as_absolute:
+            desc = "The amount of time you provided was interpreted as a specific point in time.\n"
+        else:
+            desc = "The amount of time you provided was added to the current time to get a new time.\n"
+        #Add the target time to the confirmation.
+        desc += f"Your reminder is going to be set for: \n**{target_time}**\nIf this looks correct, press \u2705 to finish setting your reminder."
+        reminder_confirmation_embed = discord.Embed(title="Does this time look right?", description=desc, color=self.bot.config['theme_color'])
+        reminder_confirmation_embed.set_footer(text="If this isn't correct, try a different date/time format. Check the help entry for this command for details. Still not correct? Consider reporting the issue.")
+        logger.debug("Sending confirmation")
+        msg = await ctx.send(embed=reminder_confirmation_embed)
+        self.bot.confirmation(self.bot, msg, ctx, self.set_reminder, target_time, reminder)
+
+    async def set_reminder(self, reaction, confirmation_message, ctx, confirmed, target_time, reminder):
+        if not confirmed:
+            return await ctx.send("Not setting the reminder.")
+        await ctx.send("Setting your reminder...")
+        currenttime = datetime.datetime.now()
         #generate uuid
         uuid = str(uuid_generator.uuid4())
         #add the reminder to the database
-        self.bot.db.exec(f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, remindertime, datetime.datetime.now(), reminder, uuid))
+        self.bot.db.exec(f"insert into reminders(user_id, channel_id, reminder_time, now, reminder_text, uuid) values(%s, %s, %s, %s, %s, %s)", (ctx.author.id, ctx.channel.id, target_time, datetime.datetime.now(), reminder, uuid))
         await self.update_reminder_cache()
-        await ctx.send(f"Ok, in {humanize.precisedelta(remindertime-currenttime, format='%0.0f')}: '{reminder}'")
-        await self.handle_reminder(ctx.author.id, ctx.channel.id, remindertime, currenttime, reminder, uuid)
+        await ctx.send("Ok, in {}: '{}'".format(humanize.precisedelta(target_time-currenttime, format='%0.0f'), reminder))
+        await self.handle_reminder(ctx.author.id, ctx.channel.id, target_time, currenttime, reminder, uuid)
+
+    @commands.command(hidden=True)
+    async def reminders(self, ctx):
+        #Display a list of reminders.
+        try:
+            active_reminders = self.bot.reminders[ctx.author.id]
+            if not active_reminders:
+                return await ctx.send("You don't have any reminders set.")
+        except KeyError:
+            return await ctx.send("You don't have any reminders set.")
+        desc = ""
+        for count, reminder in enumerate(active_reminders):
+            desc += f"**{count+1}:**\n"
+            desc += f"*Created {humanize.naturaldelta(datetime.datetime.now()-reminder['now'])} ago.*\n"
+            try:
+                scheduled = humanize.naturaltime(reminder['reminder_time'],future=True)
+            except OverflowError:
+                scheduled = "wayyyyyyyyyy too far in the future to display"
+            desc += f"*Scheduled for {scheduled}.*\n"
+            desc += f"*Message: `{reminder['reminder_text']}`*\n\n"
+        await ctx.send(embed=discord.Embed(title=f"{ctx.author.name}'s reminders:", description=desc, color=self.bot.config['theme_color']))
 
     @commands.command(aliases=["to-do", "todos"], help=f"A list of stuff to do. You can view your to-do list by using `<prefix>todo` and add stuff to it using `<prefix>todo add <thing>`. You can delete stuff from the list using `<prefix>todo delete <thing>`.")
     async def todo(self, ctx, action="list", *, entry=None):
