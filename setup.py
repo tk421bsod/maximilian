@@ -507,6 +507,8 @@ class InstallUtils:
                 print("This ID is also used to enable some more advanced commands.")
                 print("These commands allow you to perform maintenance and debugging without access to the command line.")
                 print("This also allows you to use the Jishaku module. See HOSTING.md for more details on that.")
+                print("You can get your ID by right-clicking on yourself in the member list, then clicking 'Copy User ID' in the context menu.")
+                print("If you don't see this option, enable 'Developer Mode' in Settings -> Advanced, and try again.")
                 print("When you're ready, enter your ID below.")
                 continue
             elif owner_id == "":
@@ -581,9 +583,12 @@ class InstallHandler:
         print("")
         print("There's a few things Setup needs from you.\n", style=TEXT_STYLES["bold"])
         self.token = InstallUtils.get_token()
+        self.set_config_value("token", self.token)
         self.dbp = InstallUtils.get_database_password()
+        self.set_config_value("dbp", self.dbp)
         self.owner_id = InstallUtils.get_owner_id()
-        
+        self.set_config_value("owner_id", self.owner_id)
+
         print("Would you like to enable automatic updates?")
         self.automatic_updates_enabled = SetupUtils.BooleanMenu("Would you like to enable automatic updates?\nIf enabled, Maximilian will attempt to update itself on startup once every 14 days.").handle_menu()["choice"]
         if self.automatic_updates_enabled:
