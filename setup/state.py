@@ -1,0 +1,99 @@
+import logging
+
+from shared_utils import SetupUtils
+from constants import SetupConstants
+
+from .. import common
+
+class SetupState:
+    _current_instance = None
+
+    def __new__(cls):
+        root_logger = logging.getLogger('setup')
+        root_logger.debug("Checking for existing SetupState.")
+        if not _current_instance:
+            root_logger.debug("Initializing new SetupState.")
+            _current_instance = super().__new__(cls)
+        else:
+            root_logger.debug("A SetupState already exists. Call SetupState().destroy to clear the current instance.")
+        return _current_instance
+
+    def __init__(self):
+        root_logger = logging.getLogger('setup')
+        root_logger.debug("Initializing global state")
+        self.pw = ""
+        self.ip = "%"
+        self.current_menu = SetupConstants.MAIN_MENU
+        self.menu_stack = [SetupConstants.MAIN_MENU]
+        self.LOCK_FILE_HANDLER = None
+        self.install_in_progress = None
+        self.db_available = False
+        self.remote = None
+        self.ip = "localhost"
+        self.config_found = True
+        temp_config_exists = os.path.exists("config.tmp")
+        lock_file_exists = os.path.exists("setup.lock")
+        setup_state_exists = os.path.exists("setup_state.tmp")
+        root_logger.debug(f"Temp config: {temp_config_exists} | Lock file: {lock_file_exists} | Saved state: {setup_state_exists}")
+        if setup_state_exists:
+            self.config = common.load_config("setup_state.tmp")
+            root_logger.debug(self.config)
+            root_logger.debug(f"Saved state detected. Restart reason: {self.config['restart_reason']}")
+            os.unlink("setup_state.tmp")
+            return
+        try:
+            if lock_file_exists:
+                print("Setup exited unexpectedly.", style=TEXT_STYLES["bold"])
+                if temp_config_exists and not setup_state_exists:
+                    print("Your configuration data from that session was lost.", style=TEXT_STYLES["bold"])
+                    print("You must finish the setup process to save your configuration data.")
+                    os.unlink("config.tmp")
+                else:
+                    print("No configuration data was lost.")
+            elif temp_config_exists and not setup_state_exists:
+                print("You exited Setup before a task was finished.\nYour configuration data from that session was lost.", style=TEXT_STYLES["bold"])
+                print("You must finish the setup process to save your configuration data.")
+                os.unlink("config.tmp")
+            if __name__ == "__main__":
+                root_logger.debug("Loading config.")
+                self.config = common.load_config()
+                root_logger.debug("Creating lock file.")
+                self.LOCK_FILE_HANDLER = open("setup.lock", "w")
+            else:
+                self.config = {}
+        except FileNotFoundError:
+            root_logger.debug("Config not found.")
+            self.config = {}
+            self.config_found = False
+        except:
+            root_logger.debug("Could not load/parse config. See exc info below")
+            root_logger.debug(traceback.format_exc())
+            print("The configuration file couldn't be loaded. Run setup.py with -v to show more information.")
+            print("This file will be overwritten if you use any options from the 'Install' menu.")
+            self.config = {}
+            self.config_found = False
+
+    @staticmethod
+    def destroy():
+        logging.getLogger('setup').debug("Destroying SetupState!")
+        self._current_instance = None
+
+    @staticmethod
+    def save_state(self, reason="None"):
+        """Save the current config to setup_state.tmp"""
+        root_logger = logging.getLogger('setup')
+        root_logger.debug(f"Temporarily saving current config with reason '{reason}'.")
+        self.config["restart_reason"] = reason
+        SetupUtils.write_config("setup_state.tmp")
+        root_logger.debug("Temporary config saved")
+
+    @staticmethod
+    def load_state(self):
+        """Load saved temporary config from setup_state.tmp"""
+        root_logger = logging.getLogger('setup')
+        if not os.path.isfile("setup_state.tmp"):
+            root_logger.debug("No saved temporary config found")
+            return None
+        config = common.load_config('setup_state.tmp')
+        root_logger.debug("Loaded saved temporary config.")
+        self.config.update(config)
