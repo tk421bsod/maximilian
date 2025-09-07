@@ -1,30 +1,38 @@
 import logging
+import os
+import traceback
 
-from shared_utils import SetupUtils
-from constants import SetupConstants
+import common
 
-from .. import common
+from setup import shared_utils
 
 class SetupState:
     _current_instance = None
 
     def __new__(cls):
         root_logger = logging.getLogger('setup')
-        root_logger.debug("Checking for existing SetupState.")
-        if not _current_instance:
+        #root_logger.debug("Checking for existing SetupState.")
+        if not SetupState._current_instance:
             root_logger.debug("Initializing new SetupState.")
-            _current_instance = super().__new__(cls)
+            SetupState._current_instance = super().__new__(cls)
         else:
-            root_logger.debug("A SetupState already exists. Call SetupState().destroy to clear the current instance.")
-        return _current_instance
+            pass #root_logger.debug("A SetupState already exists. Call SetupState().destroy to clear the current instance.")
+        return SetupState._current_instance
 
     def __init__(self):
+        if hasattr(self, "_initialized"): #Do not perform initialization if we've already initialized
+            return
+        
+        #This import is deferred until SetupState instance creation to prevent circular imports
+        from setup import constants
+
         root_logger = logging.getLogger('setup')
         root_logger.debug("Initializing global state")
+        self._initialized = True
         self.pw = ""
         self.ip = "%"
-        self.current_menu = SetupConstants.MAIN_MENU
-        self.menu_stack = [SetupConstants.MAIN_MENU]
+        self.current_menu = constants.MAIN_MENU
+        self.menu_stack = [constants.MAIN_MENU]
         self.LOCK_FILE_HANDLER = None
         self.install_in_progress = None
         self.db_available = False
@@ -43,15 +51,15 @@ class SetupState:
             return
         try:
             if lock_file_exists:
-                print("Setup exited unexpectedly.", style=TEXT_STYLES["bold"])
+                print("Setup exited unexpectedly.", style=constants.TEXT_STYLES["bold"])
                 if temp_config_exists and not setup_state_exists:
-                    print("Your configuration data from that session was lost.", style=TEXT_STYLES["bold"])
+                    print("Your configuration data from that session was lost.", style=constants.TEXT_STYLES["bold"])
                     print("You must finish the setup process to save your configuration data.")
                     os.unlink("config.tmp")
                 else:
                     print("No configuration data was lost.")
             elif temp_config_exists and not setup_state_exists:
-                print("You exited Setup before a task was finished.\nYour configuration data from that session was lost.", style=TEXT_STYLES["bold"])
+                print("You exited Setup before a task was finished.\nYour configuration data from that session was lost.", style=constants.TEXT_STYLES["bold"])
                 print("You must finish the setup process to save your configuration data.")
                 os.unlink("config.tmp")
             if __name__ == "__main__":
@@ -73,21 +81,35 @@ class SetupState:
             self.config = {}
             self.config_found = False
 
-    @staticmethod
-    def destroy():
+    def destroy(self):
         logging.getLogger('setup').debug("Destroying SetupState!")
-        self._current_instance = None
+        SetupState._current_instance = None
 
-    @staticmethod
+    def convert_config(self):
+        "Convert configuration data from a dict to a string to write."
+        root_logger = shared_utils.get_root_logger()
+        config = ""
+        root_logger.debug("Converting config to string")
+        for k, v in self.config.items():
+            config += f"{k}:{v}\n"
+        root_logger.debug(f"Resulting config string: {config}")
+        return config
+
+    def write_config(self, path):
+        "Write configuration data from convert_config to a file at 'path'. Overwrites config file contents."
+        config = self.convert_config()
+        shared_utils.get_root_logger().debug(f"Writing config to file {path}")
+        with open(path, "w") as configfile:
+            configfile.write(config)
+
     def save_state(self, reason="None"):
         """Save the current config to setup_state.tmp"""
         root_logger = logging.getLogger('setup')
         root_logger.debug(f"Temporarily saving current config with reason '{reason}'.")
         self.config["restart_reason"] = reason
-        SetupUtils.write_config("setup_state.tmp")
+        self.write_config("setup_state.tmp")
         root_logger.debug("Temporary config saved")
 
-    @staticmethod
     def load_state(self):
         """Load saved temporary config from setup_state.tmp"""
         root_logger = logging.getLogger('setup')

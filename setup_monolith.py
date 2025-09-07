@@ -1261,7 +1261,7 @@ if restart_reason:
 if __name__ == "__main__":
     if not "-u" in sys.argv:
         print("Hi!\nThis setup script is a re-implementation of the current setup script.\nIt's not at all ready for use yet.")
-        print("Many things will not exist, the things that do are most likely broken and could break your installation.\n")
+        print("It offers a refreshed user experience and a few more features, but it could break your installation.\n")
         print("For setup, repairs, and other tasks, please continue to use setup.sh for the time being.")
         print("If you wish to test this out, run it with -u.")
         cleanup()
@@ -1271,6 +1271,8 @@ if __name__ == "__main__":
     except (KeyboardInterrupt, CleanExit):
         print("\nExiting setup.")
         cleanup()
+    except SystemExit:
+        pass
     except Exception as exc:
         print("Setup exited unexpectedly! Please report this error.")
         traceback.print_exc()

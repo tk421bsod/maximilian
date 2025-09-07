@@ -2,6 +2,7 @@
 import asyncio
 import datetime
 import logging
+import os
 import re
 import subprocess
 import sys
@@ -27,7 +28,7 @@ try:
 except AttributeError:
     IMPORTER_PATH = ""
 
-if not IMPORTER_PATH.endswith("setup.py"):
+if not "setup" in IMPORTER_PATH:
     from discord.ext import commands
 
 class Version:
@@ -45,7 +46,7 @@ class Text:
     NORMAL = '\033[0m'
     BOLD = '\033[1m'
 
-if not IMPORTER_PATH.endswith("setup.py"):
+if not "setup" in IMPORTER_PATH:
     #Pre 2.0, TimeConverter in cogs/reminders.py
     class RelativeTimeConverter():
         """Converts relative time values into an amount of seconds.
@@ -163,8 +164,6 @@ class AbsoluteTimeConverter:
         logger.debug("Couldn't convert the provided time.")
         return None
                 
-            
-
 async def _new_run_now(*coros):
     """Run 'coros' concurrently without delay. Uses python 3.11 features like asyncio.TaskGroup and ExceptionGroup"""
     try:
@@ -211,14 +210,9 @@ def load_config(path='config'):
                 config[i[0]] = i[1]
     return config
 
-def run_command(cmd):
-    """Run `cmd`. 
-    
-    Basically a pretty wrapper for `subprocess.run(cmd, shell=True, capture_output=True, encoding='utf-8')`
+def run_command(cmd, use_subprocess=True):
+    """Run `cmd` and return its output + exit code in a dict.
     """
-    #why have this check?
-    #getting a new Logger on every run_command call could add some performance overhead.
-    #(and I don't want to wrap this in a class just so I can add that as an attr)
     if logging.root.level == logging.DEBUG:
         logging.getLogger('common').debug(f"Running command \"{cmd}\"")
     p = subprocess.run(cmd, shell=True, capture_output=True, encoding="utf-8")

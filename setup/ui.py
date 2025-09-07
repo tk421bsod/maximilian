@@ -1,3 +1,38 @@
+from setup import constants
+from setup import markdown_utils
+from setup.state import SetupState
+
+import copy
+
+builtins_is_dict = False
+#Deep copy from builtins to ensure we have a copy of the original print()
+#This is to prevent infinite original_print calls if calling importlib.reload(setup) when testing
+try:
+    original_print = copy.deepcopy(__builtins__.print)
+except:
+    #builtins is a dict for some reason when running in interactive mode
+    original_print = copy.deepcopy(__builtins__["print"])
+    builtins_is_dict = True
+
+#Yes, we're modifying builtins.
+#Sorry
+def print(text, *args, ignore_markdown=True, end=constants.TEXT_END+"\n", fg=39, style=0, bg=49, **kwargs):
+    if not constants.FORMATTING_ENABLED:
+        original_print(text, end=end)
+        return
+    if not ignore_markdown:
+        ret = markdown_utils.apply_markdown()
+        if ret: #some markdown was applied?
+            return #don't care about styling.
+    bg = bg + 10
+    text = f"\x1b[{style};{fg};{bg}m{text}"
+    original_print(text, end=end, *args, **kwargs)
+
+if builtins_is_dict:
+    __builtins__["print"] = print
+else:
+    __builtins__.print = print
+
 def _empty_callback():
     return None
 
@@ -24,7 +59,7 @@ class MenuWithCallbacks:
         #Get the attached callback.
         callback = list(option.values())[0]
         if not callable(callback):
-            print("Menu callbacks must be callable! Returning None.", fg=TEXT_STYLES["red"])
+            print("Menu callbacks must be callable! Returning None.", fg=constants.TEXT_STYLES["red"])
             return None
         #Run the callback and return its return value.
         ret = callback()
@@ -110,3 +145,11 @@ class BooleanMenu(IntMenu):
         #Converting to a boolean, then getting its inverse, converts the answer to its boolean counterpart.
         ret["choice"] = not ret["choice"]
         return ret
+
+def forward_menu(menu):
+    SetupState().menu_stack.append(menu)
+    SetupState().current_menu = menu
+
+def back_menu():
+    SetupState().menu_stack.pop()
+    SetupState().current_menu = SetupState().menu_stack[-1]

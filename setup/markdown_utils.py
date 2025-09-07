@@ -1,4 +1,4 @@
-from .. import text
+from setup import constants
 
 def _find_separator_pairs(source : str, separator : str):
     """Find all pairs of `separator` in the string `source`.
@@ -31,13 +31,13 @@ def apply_markdown(text : str):
     while True:
         final = ""
         #Check for separators in our text. Replace separators with their style, then print the resulting string.
-        for separator, style in [("**", f"\x1b[{text.TEXT_STYLES['bold']};39;59m"), ("~~", f"\x1b[{text.TEXT_STYLES['underline']};39;59m"), ("[red]", f"\x1b[0;{text.TEXT_STYLES['red']};59m"), ("[green]", f"\x1b[0;{text.TEXT_STYLES['green']};59m")]:
+        for separator, style in [("**", f"\x1b[{constants.TEXT_STYLES['bold']};39;59m"), ("~~", f"\x1b[{constants.TEXT_STYLES['underline']};39;59m"), ("[red]", f"\x1b[0;{constants.TEXT_STYLES['red']};59m"), ("[green]", f"\x1b[0;{constants.TEXT_STYLES['green']};59m")]:
             pairs = _find_separator_pairs(text, separator)
             processed = ""
             for pair in pairs:
                 #Replace the first part of the pair with a separator.
                 processed += style + text[pair[0]+len(separator):pair[1]]
                 #End the styled portion.
-                processed += TEXT_END
+                processed += constants.TEXT_END
                 final += processed
         return final
