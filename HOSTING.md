@@ -15,12 +15,11 @@ Then, run the setup script (`bash setup.sh`) and follow the prompts it gives you
 It'll install almost everything Maximilian needs (python, mariadb, pip, python packages, etc) and set them up.
 
 Now you're ready to run Maximilian. Just run `python3 main.py`.
-If you see an "Invalid syntax" error when starting Maximilian, make sure you're running it on Python 3.8 or above. 
-On some older versions of Linux you might need to compile a newer version of Python yourself.
+You can customize behavior using the options below.
 
-If you get some weird output and can't see it anymore, check the log file. It's located in `./logs/maximilian-<date>.log`.
+If needed, log files are located in `./logs/maximilian-<date>.log`.
 
-# additional command line arguments 
+# additional command line options
 
 To enable special debugging commands through a module called `jishaku` (https://github.com/Gorialis/jishaku), run `main.py` with `--enablejsk`.
 While Jishaku is an invaluable tool for debugging and development, it can be very dangerous. If your Discord account is compromised, an attacker can have almost complete access to your computer through Jishaku.
@@ -30,7 +29,7 @@ I recommend enabling two factor authentication for your Discord account before u
 
 If you're hosting the database on another computer, you'll need to run `main.py` with `--ip <database_ip>`, replacing `<database_ip>` with the IP address of your database.
 
-To skip loading a specific module, use the `--no-load` argument. Follow it up with the names of the modules you don't want loaded. for example, `python3 main.py --no-load cogs.userinfo` will make Maximilian skip loading the userinfo module.
+To skip loading a specific module, use the `--no-load` argument immediately followed with the names of the modules you don't want loaded. for example, `python3 main.py --no-load cogs.userinfo` will make Maximilian skip loading cogs/userinfo.py.
 
 You can specify a logging level (which filters the information Maximilian outputs) through command line arguments after `main.py`; the logging levels are -q (disables logging), -e (errors only), -w (warnings + errors, default), -i (warnings + errors + info), -v (warnings + errors + info + debugging info).
 It defaults to -w if nothing's specified.
@@ -40,15 +39,17 @@ Using `-v`, `--verbose`, or `--debug` will result in larger log file sizes and m
 If you choose to use it, you'll see a small warning on startup.
 
 To bypass the updater on startup, run main.py with `--no-update`.
-This can save some startup time if you're restarting Maximilian frequently.
+This can save some startup time.
 
 Want to make Maximilian check for updates each time it starts, regardless of the time since the last update?
 Run main.py with `--force-update`.
 
 Want to attempt an update and exit? Use `--update`. This implies `--force-update`.
 
-Run main.py with `--help` to view more information on valid arguments.
-Anything not documented either here or in `--help` is not stable and can change at any time.
+Having issues with text formatting? `--no-rich` disables all fancy output besides bold / underlined text. `--no-text-formatting` and `--no-fmt` disable bold / underlined text too.
+
+Run main.py with `--help` to view more information on valid options.
+Anything not documented either here or in `--help` is not for general use and can change at any time.
 
 # so much typing!! can i save a list of arguments to apply each time Maximilian is run?
 Yes! Just create a new line in config with 'default_cmdline:' followed by whatever you prefer.
@@ -131,8 +132,25 @@ This includes, but is not limited to, user IDs, prefixes, todo lists, custom com
 You can restore the backup by running `bash setup.sh restore`.
 
 # troubleshooting
-As much as I try to make Maximilian easy to install and use, you may run into some issues.
 Below are some common errors and steps to resolve them.
+
+`The current database version is higher than what is available!`
+Your database version is newer than the newest your installation has on file.
+This was probably caused by a switch between the `development` and `release` branches.
+To prevent issues, it's best to roll your database back to the newest version on file by running Maximilian with `--allow-rollback`.
+This process will cause data loss.
+
+`Database rollback (...) failed!`
+or
+`Database patch (...) failed!`
+The versioning system was unable to apply a set of database changes. Maximilian will still run but you may run into issues with data storage.
+Contact tk___421 for assistance.
+Run Maximilian with debug logging enabled and attach the resulting logs to aid in investigation.
+
+`The database update could not be recorded!`
+The versioning system could not create a record for a database change.
+This will not cause immediate issues, but you won't be able to roll back changes if you switch source branches.
+Contact tk___421 for assistance.
 
 `Maximilian cannot start because an external dependency failed to load.`  
 A dependency installed separate from Maximilian didn't load.  
@@ -140,17 +158,15 @@ Running `pip3 install -U -r requirements.txt` should fix this.
   
 `Maximilian cannot start because an internal module failed to load.`
 One of Maximilian's core files didn't load correctly.  
-This usually is caused by invalid syntax or the file simply not existing.  
 Just updated after modifying some files? Git may have broken something in an attempt to merge the two versions.  
-Modified some files? You may have broken something.  
-If there are no merge conflicts, just run `git restore <file>`.  
+Modified some files but didn't update? You may have broken something.  
+`git restore <file>` may suffice.
 You can find the file name and some extra error info in the last line of output from Maximilian.  
-If you introduced merge conflicts, you probably know how to fix them already.  
 Updated to a newer version of Maximilian and haven't modified anything?  
 Let `tk___421` know. They probably messed something up.  
 
 `It looks like your Python installation is missing some features.`  
-Try updating your Python. If you built Python from source, you may need to install additional dependencies and recompile.  
+Try updating your Python installation. If you built Python from source, you may need to install additional dependencies and recompile.  
 
 `One or more Git commands failed. The updater cannot continue.`
 or
@@ -158,9 +174,8 @@ or
 or
 `A Git command failed. Setup cannot continue.`
 
-Carefully read the output above the error message to figure out what to do next.
-The issue can't be determined automatically because Git doesn't provide enough info.
-Here are some common issues to be aware of.
+Carefully read the output to determine what to do next.
+Annoyingly, the issue can't be determined automatically because Git doesn't provide enough info.
 
 Seeing something about "dubious ownership"?
 You may have run Maximilian as root or cloned the repository as root.
@@ -171,7 +186,7 @@ This will allow any user on your system to modify the repository (and even push 
 Seeing something like "I need to know who you are"?
 You need to configure Git with your email and name to be able to perform some commands.
 Run `git config --global user.email "<email>"` and `git config --global user.name "<name>"` to set those up globally.
-If you want to keep your email private, use your GitHub private email (usually under Settings -> Emails, formatted as `<id>+<username>@users.noreply.github.com`)
+If you wish to keep your email private, use your GitHub private email (usually under Settings -> Emails, formatted as `<id>+<username>@users.noreply.github.com`)
 
 `It doesn't look like you're on a branch.`
 You may have checked out an old commit.

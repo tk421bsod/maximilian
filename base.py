@@ -25,7 +25,7 @@ import helpcommand
 import logging
 import settings
 import startup
-
+import versioning
 
 class CustomContext(commands.Context):
 
@@ -114,7 +114,7 @@ class maximilian(commands.Bot):
         self.get_database_ip()
         logger.debug("Parsing command line arguments...")
         startup.parse_arguments(self, sys.argv)
-        self.tables = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting, category)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'chainstats':'user_id bigint, breaks tinyint unsigned, starts tinyint unsigned, constraint users primary key (user_id)'}
+        self.tables = {'mute_roles':'guild_id bigint, role_id bigint', 'reminders':'user_id bigint, channel_id bigint, reminder_time datetime, now datetime, reminder_text text, uuid text', 'prefixes':'guild_id bigint, prefix text', 'responses':'guild_id bigint, response_trigger varchar(255), response_text text, constraint pk_responses primary key (guild_id, response_trigger)', 'config':'guild_id bigint, category varchar(255), setting varchar(255), enabled tinyint, constraint pk_config primary key (guild_id, setting, category)', 'blocked':'user_id bigint', 'roles':'guild_id bigint, role_id bigint, message_id bigint, emoji text', 'todo':'user_id bigint, entry text, timestamp datetime', 'active_requests':'id bigint', 'version':'current tinyint not null, rollback text'}
         self.required_intents = {"reactions":True, "members":True, "guilds":True, "message_content":True, "messages":True}
         logger.info("Checking module requirements...")
         self.get_extension_requirements()
@@ -318,6 +318,8 @@ class maximilian(commands.Bot):
             logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
             logger.debug(traceback.format_exc())
             logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
+        #And check the database version
+        await versioning.eval_db_version(self.db)
 
     async def init_general_settings(self):
         #maybe we could make add_category itself a coro?
