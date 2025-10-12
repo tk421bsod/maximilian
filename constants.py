@@ -30,6 +30,9 @@ class GlobalConstants:
     #Whether we're in a virtual environment. See https://docs.python.org/3/library/sys.html#sys.exec_prefix
     WITHIN_VENV = (sys.exec_prefix != sys.base_exec_prefix)
 
+    POTENTIALLY_DESTRUCTIVE_ARGS = []
+    CHANGED_ARGS = {"--noupdate":"--no-update", "--noload":"--no-load"}
+
     #Minimum major/minor versions for things
     #Used for checking compatiblity in startup.check_version
     DPY_MIN_MAJOR_VERSION = 2
