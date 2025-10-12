@@ -14,7 +14,7 @@ class Text:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-#If not, make text formatting strings empty.
+#Check the text formatting preference.
 if not GlobalConstants.TEXT_FORMATTING_ENABLED: 
     print("Text formatting disabled.")
     Text.NORMAL = ''
@@ -32,35 +32,36 @@ if __name__ != "__main__":
 
 #Are we using an out-of-date Python?
 if sys.version_info.major == 3 and GlobalConstants.PYTHON_MINOR_VERSION < 8:
-    print("Hi there. It looks like you're trying to run Maximilian with an old version of Python 3.")
+    print("Your Python installation seems to be quite old.")
     print(f"{Text.BOLD}Maximilian cannot run on Python versions older than 3.8.{Text.NORMAL}")
-    print("You'll need to upgrade Python to continue.")
+    print("You need to install a newer version to continue.")
     quit()
 
 #Are we using a very new Python?
 if GlobalConstants.PYTHON_MINOR_VERSION > GlobalConstants.PYTHON_MAX_APPROVED_MINOR_VERSION:
-    print("Hi there. It looks like your Python installation is newer than version 3.11.")
-    print("You may experience issues as Maximilian has not yet been tested on newer versions of Python.\n")
+    print(f"You're using a Python version greater than 3.{GlobalConstants.PYTHON_MAX_APPROVED_MINOR_VERSION}.")
+    print("You may experience warnings or issues as Maximilian has not yet been tested on newer versions of Python.\n")
 
 if "--help" in sys.argv:
     print("main.py usage: python3 main.py [OPTIONS]\n")
     print("main.py handles initializing core components, checking requirements, and launching Maximilian.\n")
     print("You can enable/disable features and modify Maximilian's behavior through the use of the following options.\nYou can use more than one option at a time.\n")
     print("Options:")
-    print(f"{Text.BOLD}--enablejsk{Text.NORMAL} - Enables Jishaku, an extension used for debugging and code evaluation.")
+    print(f"{Text.BOLD}--enablejsk{Text.NORMAL} - Enables Jishaku, a module used for debugging and code evaluation.")
     print(f"{Text.BOLD}--version{Text.NORMAL} - Shows version information and exits. New in version 2.0.")
     print(f"{Text.BOLD}--no-update{Text.NORMAL} - Skips update check on startup. Takes precendence over --update. Renamed from --noupdate in version 2.0.")
     print(f"{Text.BOLD}--update{Text.NORMAL} - Updates Maximilian and exits. Implicitly enables --force-update.")
     print(f"{Text.BOLD}--force-update{Text.NORMAL} - Forces update check on startup regardless of the time since last update.")
     print(f"{Text.BOLD}--no-load <extensions>{Text.NORMAL} - Skips loading the specified extensions. Renamed from --noload in version 2.0.")
     print(f"{Text.BOLD}--no-rich{Text.NORMAL} - Disables rich text. May be useful on older systems or smaller screens.")
-    print(f"-{Text.BOLD}q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose{Text.NORMAL} - Sets the logging level. If not specified, defaults to logging.WARN. \nDebug logging (-v, --debug, --verbose) can cause a slight performance decrease and will make log files much larger.")
+    print(f"-{Text.BOLD}q, --quiet, -e, --error, -w, --warn, -i, --info, -v, --debug, --verbose{Text.NORMAL} - Sets the logging level. If not specified, defaults to logging.WARN. \nDebug logging (-v, --debug, --verbose) will make log files much larger and is generally not recommended.")
     print(f"{Text.BOLD}--ip <address>{Text.NORMAL} - Tries to connect to a database at the specified address instead of localhost.")
     print(f"{Text.BOLD}--help{Text.NORMAL} - Shows this message and exits.")
     print(f"{Text.BOLD}--language <language>{Text.NORMAL} - Sets the language to <language>. If not specified, defaults to the language present in 'config', then 'en' if nothing is found. New in version 2.0.")
     print(f"{Text.BOLD}--alt{Text.NORMAL} - Prompts for a token to use. Also adds the latest commit hash to the default status.")
     print(f"{Text.BOLD}--no-file{Text.NORMAL} - Stops Maximilian from saving logs to a file. New in version 2.0.")
-    print(f"{Text.BOLD}--no-text-formatting, --no-fmt{Text.NORMAL} - Stops Maximilian from showing bold/underlined text. May be useful on some systems. New in version 2.0.")
+    print(f"{Text.BOLD}--no-text-formatting, --no-fmt{Text.NORMAL} - Stops Maximilian from showing bold/underlined text. Implicitly enables --no-rich. May be useful on some systems. New in version 2.0.")
+    print(f"{Text.BOLD}--allow-rollback, -r{Text.NORMAL} - Allows the database versioning system to downgrade the database to earlier versions. New in version 2.0.")
     quit()
 
 if "--version" in sys.argv:
@@ -68,7 +69,7 @@ if "--version" in sys.argv:
     quit()
 
 #Did the user use any old arguments?
-for old_arg, new_arg in {"--noupdate":"--no-update", "--noload":"--no-load"}.items():
+for old_arg, new_arg in GlobalConstants.CHANGED_ARGS.items():
     if old_arg not in sys.argv:
         continue
     print(f"You're using the old '{old_arg}' option.\nThis option was changed to '{new_arg}' in 2.0.\nUse the new option instead.")
@@ -97,9 +98,10 @@ try:
     from discord.ext.commands.errors import NoEntryPointError
 except (ImportError, NameError, SyntaxError) as e:
     print(f"{Text.BOLD}Maximilian cannot start because an external dependency failed to load.{Text.NORMAL}")
-    print(f"\nInstalled Maximilian recently? {Text.BOLD}The new setup process separates dependencies used by Maximilian from other Python packages installed on your system.{Text.NORMAL}")
+    print(f"\nInstalled Maximilian recently? {Text.BOLD}Dependencies used by Maximilian might be separated from other Python packages installed on your system.{Text.NORMAL}")
     print(f"This is done through a {Text.BOLD}virtual environment{Text.NORMAL}, and the environment needs to be 'activated' every time you open a new command prompt.")
-    print("You can activate the environment through setup.py (the 'Activate virtual environment' option) or by running the environment's activation script (something like .venv/bin/activate).")
+    print("To launch Maximilian, activate the virtual environment by running the environment's activation script (something like .venv/bin/activate), then try again.")
+    print("For help, run the setup utility, open the 'Virtual environment options' menu, and choose the 'Show virtual environment activation help' option.")
     print("\nIf you chose not to set up a virtual environment during setup, installed Maximilian before the release of 2.0, or are still experiencing this error after activating the environment:")
     print("Some dependencies changed between 1.x and 2.0. Use the 'Install dependencies' option in setup.py.")
     print("Here's some more error info:")
@@ -131,7 +133,7 @@ if not GlobalConstants.TEXT_FORMATTING_ENABLED:
     common.Text.BOLD = ''
     common.Text.UNDERLINE = ''
 
-if not "--no-rich" in sys.argv:
+if not "--no-rich" in sys.argv and GlobalConstants.TEXT_FORMATTING_ENABLED:
     try:
         from rich.logging import RichHandler
     except ImportError:
@@ -150,7 +152,7 @@ def config_logging(args):
     if os.path.isdir('logs') and "--no-file" not in sys.argv:
         _handlers.append(logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"))
     elif "--no-file" in sys.argv:
-        print("main.py was invoked with --no-file, not logging to a file")
+        print("main.py was invoked with --no-file. Not logging to a file.")
     else:
         print("The 'logs' directory doesn't exist! Not logging to a file.")
     for key, value in levelmapping.items():
@@ -160,8 +162,7 @@ def config_logging(args):
             logging.basicConfig(level=value[0], handlers=_handlers)
             print("\n"+value[1])
             if value[0] == logging.DEBUG:
-                print("This may cause a small performance decrease for some operations.")
-                print("It can also result in very large log files.")
+                print("This setting can result in very large log files.")
                 print("Debug logging is not recommended for continuous use.")
                 time.sleep(2)
             logging.getLogger(f"{GlobalConstants.ROOT_LOGGER_NAME}.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
@@ -183,6 +184,7 @@ print("Starting Maximilian...\nPress Ctrl-C at any time to quit.\n")
 #Load config really early so we can append default_cmdline to our sys.argv before much of anything has been done
 config = common.load_config()
 config = startup.preprocess_config(config)
+
 # set a logging level
 config_logging(sys.argv)
 logging.getLogger('discord').setLevel(logging.INFO)
