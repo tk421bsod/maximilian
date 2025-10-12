@@ -5,6 +5,7 @@ import traceback
 import common
 
 from setup import shared_utils
+from setup import constants
 
 class SetupState:
     _current_instance = None
@@ -22,17 +23,16 @@ class SetupState:
     def __init__(self):
         if hasattr(self, "_initialized"): #Do not perform initialization if we've already initialized
             return
-        
-        #This import is deferred until SetupState instance creation to prevent circular imports
-        from setup import constants
 
+        from setup import deferred_constants
+        
         root_logger = logging.getLogger('setup')
         root_logger.debug("Initializing global state")
         self._initialized = True
         self.pw = ""
         self.ip = "%"
-        self.current_menu = constants.MAIN_MENU
-        self.menu_stack = [constants.MAIN_MENU]
+        self.current_menu = deferred_constants.MAIN_MENU
+        self.menu_stack = [deferred_constants.MAIN_MENU]
         self.LOCK_FILE_HANDLER = None
         self.install_in_progress = None
         self.db_available = False
@@ -62,13 +62,10 @@ class SetupState:
                 print("You exited Setup before a task was finished.\nYour configuration data from that session was lost.", style=constants.TEXT_STYLES["bold"])
                 print("You must finish the setup process to save your configuration data.")
                 os.unlink("config.tmp")
-            if __name__ == "__main__":
-                root_logger.debug("Loading config.")
-                self.config = common.load_config()
-                root_logger.debug("Creating lock file.")
-                self.LOCK_FILE_HANDLER = open("setup.lock", "w")
-            else:
-                self.config = {}
+            root_logger.debug("Loading config.")
+            self.config = common.load_config()
+            root_logger.debug("Creating lock file.")
+            self.LOCK_FILE_HANDLER = open("setup.lock", "w")
         except FileNotFoundError:
             root_logger.debug("Config not found.")
             self.config = {}
@@ -84,6 +81,13 @@ class SetupState:
     def destroy(self):
         logging.getLogger('setup').debug("Destroying SetupState!")
         SetupState._current_instance = None
+
+    def was_config_changed(self):
+        "Return whether config has changed during this session."
+        on_disk = common.load_config()
+        diff = not (self.config == on_disk)
+        shared_utils.get_root_logger().debug(f"Config changed: {diff}")
+        return diff
 
     def convert_config(self):
         "Convert configuration data from a dict to a string to write."

@@ -4,12 +4,14 @@ from setup import ui
 from setup import install_utils
 from setup import strings
 from setup import constants
-from setup import task_handler
 from setup.task_models import TaskFailure, TaskResults
 from setup import venv_utils
 
+import constants as maximilian_constants
+
 import common
 import sys
+import os
 
 class InstallHandler:
 
@@ -109,18 +111,21 @@ class InstallHandler:
             return
         print("This is a Windows environment, not installing packages.")
 
+    def _check_venv_dir_writable(self, dir):
+        return os.access(dir, os.W_OK)
+
     def _acquire_target_venv_dir(self):
         """Get the directory the virtual environment should be installed to and ensure we can install to it. Returns None if a virtual environment should not be installed."""
-        ret = venv_utils.check_venv_exists(self)
-        if ret:
-            print(f"You already have a virtual environment set up at '{ret}'.", style=constants.TEXT_STYLES["bold"])
+        existing_venv_dir = venv_utils.check_venv_exists(self)
+        if existing_venv_dir:
+            print(f"You already have a virtual environment set up at '{existing_venv_dir}'.", style=constants.TEXT_STYLES["bold"])
             print("Would you like to recreate it? This may take some time.")
             venv_recreate_choice = ui.BooleanMenu("").handle_menu()["choice"]
             if not venv_recreate_choice:
                 print("Alright, not recreating the virtual environment.")
                 return None
-            print(f"Recreating the virtual environment at '{ret}'. Please be patient, this may take some time.", style=constants.TEXT_STYLES["bold"])
-            return ret
+            print(f"Recreating the virtual environment at '{existing_venv_dir}'. Please be patient, this may take some time.", style=constants.TEXT_STYLES["bold"])
+            return existing_venv_dir
         else:
             print("From Maximilian version 2.0 onwards, Python dependencies for Maximilian are recommended to be installed in a 'virtual environment'.")
             print("This separates dependencies from your global Python packages and is required on many Linux systems.")
@@ -145,6 +150,9 @@ class InstallHandler:
     def create_venv(self):
         """Prompt for venv creation, create if requested. Return whether the venv was created and set config['venv_dir'] if so. """
         root_logger = shared_utils.get_root_logger()
+        if maximilian_constants.GlobalConstants.WITHIN_VENV and not self.single_use:
+            print("Your virtual environment is already active.")
+            print("")
         import venv
         #Get the directory to install to.
         target_dir = self._acquire_target_venv_dir()
@@ -173,12 +181,13 @@ class InstallHandler:
 
     def install_python_dependencies_venv_phase_1(self, continue_install_with=None):
         """Display virtual environment activation help if not already activated, then quit Setup. Once Setup is restarted, run the task_handler classmethod named {continue_install_with} to continue the installation"""
+        import task_handler
         root_logger = shared_utils.get_root_logger()
         root_logger.debug("Installing Python dependencies")
         venv_working_directory = venv_utils.get_venv_working_directory()
         root_logger.debug(f"venv working dir is {venv_working_directory}")
         if self._test_for_venv(venv_working_directory):
-            if not constants.GlobalConstants.WITHIN_VENV:
+            if not maximilian_constants.GlobalConstants.WITHIN_VENV:
                 if not self.single_use:
                     print("Your virtual environment needs to be activated to continue the installation process.")
                 else:
@@ -195,8 +204,8 @@ class InstallHandler:
                 print("Your virtual environment is already activated.")
                 continue_install_with = getattr(task_handler, continue_install_with, None)
                 if not continue_install_with:
-                    root_logger.debug("Not sure how to continue, we'll just jump to phase 2")
-                    return self.install_python_dependencies_venv_phase_2()
+                    print("No continue_install_with callable specified! Report this error.")
+                    raise RuntimeError()
                 return continue_install_with()
 
     def initial_database_setup():

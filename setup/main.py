@@ -1,5 +1,7 @@
-from setup.state import SetupState
+from setup import task_logic
+
 from setup import constants
+from setup.state import SetupState
 from setup import strings
 from setup.task_models import TaskExitStatus, TaskResults, GitCommandFailed, TaskFailure, CleanExit
 from setup import task_handler
@@ -12,6 +14,41 @@ from time import sleep
 import traceback
 import sys
 import os
+
+from setup import deferred_constants
+
+def get_submenu_help(menu_type):
+    submenu_help_string = common.get_value(strings.SUBMENU_HELP, menu_type, "additional options")
+    print(f"{strings.SUBMENU_HELP_PREFIX}{submenu_help_string}.")
+
+def get_menu_help():
+    menu = SetupState().current_menu
+    print("---- Help for the current menu ----")
+    for num, option in enumerate(menu.options):
+        if not type(option) == dict:
+            print(f"{num+1}) {option}", style=constants.TEXT_STYLES["bold"])
+            submenu_type = option.split(" ")[0].lower()
+        if type(option) == dict:
+            print(f"{num+1}) {list(option.keys())[0]}", style=constants.TEXT_STYLES["bold"])
+            task = list(option.values())[0]
+            #Grab the docstring from the partial function. (shared_utils.partial_with_doc sets this)
+            doc = getattr(task, "__doc__", "No help text provided.")
+            if not doc:
+                doc = "No help text provided."
+            print(f"    {doc}")
+        elif option == "Main Menu":
+            print(strings.MAIN_MENU_RETURN_HELP)
+        elif option == "Exit":
+            print(strings.EXIT_HELP)
+        elif option == "Back":
+            print(strings.PREVIOUS_MENU_HELP)
+        elif option == "Help":
+            print(strings.HELP_HELP)
+        elif submenu_type in constants.MENU_LIST:
+            get_submenu_help(submenu_type)
+        else:
+            print("Help text not implemented for this option, sorry")
+    print("----")
 
 def _setup_main_loop():
     root_logger = shared_utils.get_root_logger()
@@ -27,28 +64,24 @@ def _setup_main_loop():
         #Check if the user requested help.
         #This check is intended to be index-agnostic in case options change in the future.
         if chosen_option == "Help":
-            if SetupState().current_menu == constants.MAIN_MENU:
-                print(strings.MAIN_MENU_HELP)
-            elif SetupState().current_menu == constants.MORE_MENU:
-                print(strings.MORE_MENU_HELP)
-            elif SetupState().current_menu == constants.DATABASE_MENU:
-                print(strings.DATABASE_MENU_HELP)
-            elif SetupState().current_menu == constants.INSTALL_MENU:
-                print(strings.INSTALL_MENU_HELP)
+            get_menu_help()
 
         #Check for menu changes.
         if chosen_option == "More":
             root_logger.debug("Showing additional options.")
-            ui.forward_menu(constants.MORE_MENU)
+            ui.forward_menu(deferred_constants.MORE_MENU)
         elif chosen_option == "Install":
             root_logger.debug("Showing installation options.")
-            ui.forward_menu(constants.INSTALL_MENU)
+            ui.forward_menu(deferred_constants.INSTALL_MENU)
+        elif chosen_option == "Virtual environment options":
+            root_logger.debug("Showing virtual environment options.")
+            ui.forward_menu(deferred_constants.VENV_MENU)
         elif chosen_option == "Database options":
             root_logger.debug("Showing database options.")
-            ui.forward_menu(constants.DATABASE_MENU)
+            ui.forward_menu(deferred_constants.DATABASE_MENU)
         elif chosen_option == "Repair":
             root_logger.debug("Showing repair options.")
-            ui.forward_menu(constants.REPAIR_MENU)
+            ui.forward_menu(deferred_constants.REPAIR_MENU)
         elif chosen_option == "Main Menu" or chosen_option == "Back":
             print("Returning to the previous menu.")
             ui.back_menu()
@@ -64,6 +97,7 @@ def _setup_main_loop():
                 print("\nSorry, a task exited with an error. Run setup with -v, or enable debugging information, to show details.", style=constants.TEXT_STYLES["bold"])
             elif menu_callback_return.status == TaskExitStatus.SUCCESS:
                 pass
+            input("Press Enter to return to the menu.")
             print("\nReturning to the menu.")
 
 def _pre_setup():
@@ -102,12 +136,19 @@ def _pre_setup():
 
 def cleanup():
     #Clean up dangling file handlers and delete temporary files
-    shared_utils.get_root_logger().debug("Cleaning up.")
+    root_logger = shared_utils.get_root_logger()
+    root_logger.debug("Cleaning up.")
     if SetupState().LOCK_FILE_HANDLER:
         SetupState().LOCK_FILE_HANDLER.close()
         os.unlink("setup.lock")
+        root_logger.debug("Removed lock file.")
     if SetupState().config_found and SetupState().config:
-        SetupState().write_config("config")
+        if SetupState().was_config_changed():
+            SetupState().write_config("config")
+        else:
+            root_logger.debug("Config has not changed, skipping write")
+    else:
+        root_logger.debug("No config to write.")
 
 def _handle_restart(reason):
     root_logger = shared_utils.get_root_logger()
@@ -160,8 +201,8 @@ def setup_main():
     #Were we ran with the intention of testing this script?
     if not "-u" in sys.argv:
         print("Hi!\nThis setup script is a re-implementation of the current setup script.\nIt's not at all ready for use yet.")
-        print("It offers a refreshed user experience and a few more features, but it could break your installation.\n")
-        print("For setup, repairs, and other tasks, please continue to use setup.sh for the time being.")
+        print("It offers a refreshed user experience and a few more features, but it could break your installation!\n")
+        print("For setup, repairs, and other tasks, please run setup.sh for anything you may need.")
         print("If you wish to test this out, run it with -u.")
         cleanup()
         quit()

@@ -105,3 +105,5 @@ def show_venv_activation_help():
         print(f"{venv_dir}\\Scripts\\activate.bat", style=constants.TEXT_STYLES["bold"])
     elif os.name == "posix":
         print(f"source {venv_dir}/bin/activate", style=constants.TEXT_STYLES["bold"])
+    print("Once activated, you'll see the virtual environment name next to your current working directory.")
+    print("To verify your virtual environment is activated, choose 'Check virtual environment activation status' in the 'Virtual environment options' submenu.")

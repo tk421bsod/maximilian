@@ -56,6 +56,7 @@ class SetupDatabaseClient:
 
     @staticmethod
     def _create_connection():
+        print("Connecting to database.")
         SetupDatabaseClient.conn = SetupDatabaseClient.db.db(user="maximilianbot", password=SetupDatabaseClient.pw, ip=SetupDatabaseClient.ip, database=SetupDatabaseClient.name)
 
     @staticmethod
