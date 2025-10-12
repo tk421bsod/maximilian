@@ -17,11 +17,10 @@ def set_bit(config : dict, name : str, write:bool=True):
     """Sets a bit at 'name' if it doesn't exist. Otherwise, keeps the value the same. Used for one-time things, e.g warnings on first startup. The write argument specifies whether to write the bit to persistent storage."""
     try:
         config[name]
-        config[name] = True
     except:
-        config[name] = False
+        config[name] = True
         if write:
-            common.run_command(f'echo \"{name}:1\" >> config')
+            common.write_to_config(name, 1)
     return config
 
 def preprocess_config(config : dict):
@@ -70,7 +69,6 @@ def show_2_0_first_run_message(config : dict):
         lines.append("The setup script has been rewritten in Python.")
         lines.append("You'll notice a completely new interface (powered by code from another project under development) and better functionality all around.")
         lines.append("It's also platform independent and comes with a few extra features!")
-        lines.append()
         lines.append("\nFor the full changelog for this release, see <gist link>.")
         lines.append("\nThanks for reading, and thank you for using Maximilian.")
         lines.append("\nWhen you're ready to continue with startup, press Enter.")

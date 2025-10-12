@@ -229,6 +229,7 @@ def get_latest_commit():
 
 def get_value(attr, loc, default=None):
     """Get the value from 'attr' stored at 'loc'. 'attr' must be a list or dict. 'loc' must be an index or a key. Returns 'default' if nothing's found"""
+    logging.getLogger("common").debug(f"Getting value from `{attr}` at location {loc}")
     try:
         return attr[loc]
     except KeyError:
@@ -262,6 +263,25 @@ def set_value(dict, key, value, replace=False):
             dict[key] = value
     except KeyError:
         dict[key] = value
+
+def convert_config(config_dict):
+    "Convert configuration data from a dict to a string to write."
+    config_string = ""
+    for k, v in config_dict.items():
+        config_string += f"{k}:{v}\n"
+    return config_string
+
+def write_config(config_dict, path="config"):
+    "Write configuration data from convert_config to a file at 'path'. Overwrites config file contents."
+    config = convert_config(config_dict)
+    with open(path, "w") as configfile:
+        configfile.write(config)
+
+def write_to_config(key, value):
+    """Save 'key':'value' to config on disk. Does not update the currently loaded config."""
+    current = load_config()
+    current[key] = value
+    write_config()
 
 if __name__ == "__main__":
     import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
