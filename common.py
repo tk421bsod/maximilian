@@ -229,7 +229,7 @@ def get_latest_commit():
 
 def get_value(attr, loc, default=None):
     """Get the value from 'attr' stored at 'loc'. 'attr' must be a list or dict. 'loc' must be an index or a key. Returns 'default' if nothing's found"""
-    logging.getLogger("common").debug(f"Getting value from `{attr}` at location {loc}")
+    logging.getLogger("common").debug(f"Getting value from `{attr if not 'token' in attr else '[config]'}` at location {loc}")
     try:
         return attr[loc]
     except KeyError:
