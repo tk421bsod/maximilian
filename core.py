@@ -207,45 +207,32 @@ class core(commands.Cog):
 
     @commands.is_owner()
     @utils.command(hidden=True)
-    async def reload(self, ctx, *targetextensions):
-        """Reload <targetextensions>"""
+    async def reload(self, ctx, *targets):
+        """Reload all modules specified in *targets. Attempt an update """
         await ctx.typing()
         try:
-            if "--nofetch" in targetextensions:
-                #couldn't I just use targetextensions.remove for this
-                targetextensions = [i for i in targetextensions if i != "--nofetch"]
+            if "--nofetch" in targets:
+                #couldn't I just use targets.remove for this
+                targets = [i for i in targets if i != "--nofetch"]
                 nofetch = True
             else:
                 nofetch = False
-            if len(targetextensions) == 1:
-                extensionsreloaded = "Successfully reloaded 1 extension."
-            elif len(targetextensions) == 0:
-                extensionsreloaded=f"Successfully reloaded all extensions."
-                targetextensions = list(self.bot.extensions)
+            if len(targets) == 1:
+                extensionsreloaded = "Successfully reloaded 1 module."
+            elif len(targets) == 0:
+                extensionsreloaded=f"Successfully reloaded all modules."
+                targets = list(self.bot.extensions)
             else:
-                extensionsreloaded = f"Successfully reloaded {str(len(targetextensions))} extensions."
-            if nofetch:
-                await ctx.send("Ok, I won't fetch the latest revision. Reloading extensions...")
-            else:
-                reloadmessage = await ctx.send("Fetching latest revision...")
-                ret = await self.bot.loop.run_in_executor(None, common.run_command, "git pull")
-                if ret['returncode']:
-                    await ctx.send(traceback.print_exc())
-                    await ctx.send("\U000026a0 Failed to get latest revision. Reloading local copies of extensions...")
-                    extensionsreloaded = f"Reloaded {'1 extension' if len(targetextensions) == 1 else ''}{'all extensions' if len(targetextensions) == 0 else ''}{f'{len(targetextensions)} extensions' if len(targetextensions) > 1 else ''}, but no changes were pulled."
-                else:
-                    if self.bot.settings.general.ready: #check if category's ready to prevent potential attributeerrors
-                        if self.bot.settings.general.debug.enabled(ctx.guild.id):
-                            await self.send_paginated("\n".join(ret['output']), ctx)
-                    await reloadmessage.edit(content=f"Reloading extensions...")
-            for each in targetextensions:
+                extensionsreloaded = f"Successfully reloaded {str(len(targets))} modules."
+            await ctx.send("Reloading modules...")
+            for each in targets:
                 await self.bot.reload_extension(each)
             self.bot.prefixes = self.bot.get_cog('prefixes')
             self.bot.responses = self.bot.get_cog('Custom Commands')
             self.bot.reactionrolesinst = self.bot.get_cog('reaction roles')
             embed = self.ThemedEmbed(title=f"\U00002705 {extensionsreloaded}")
         except:
-            embed = self.ThemedEmbed(title=f"\U0000274c Error while reloading extensions.")
+            embed = self.ThemedEmbed(title=f"\U0000274c Error while reloading modules.")
             embed.add_field(name="Error:", value=traceback.format_exc())
         await ctx.send(embed=embed)
 
