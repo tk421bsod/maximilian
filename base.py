@@ -309,13 +309,13 @@ class maximilian(commands.Bot):
         return intents
 
     async def setup_db(self):
+        logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
         #Initialize the database.
         self.db = await startup.initialize_db(self, self.config)
         #Then make sure all tables exist
         try:
             await self.db.ensure_tables()
         except aiomysql.OperationalError:
-            logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
             logger.debug(traceback.format_exc())
             logger.error("Unable to create one or more tables! Does `maximilianbot` not have the CREATE permission?")
         #And check the database version
