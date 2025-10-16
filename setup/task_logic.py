@@ -1,3 +1,4 @@
+import functools
 import sys
 import time
 
@@ -13,11 +14,8 @@ from setup import venv_utils
 from setup import ui
 
 def potentially_destructive(func):
-    @property
-    def __doc__():
-        shared_utils.get_root_logger().debug(f"Returning docstring for potentially_destructive wrapped func: '{func.__doc__}'")
-        return func.__doc__
 
+    @functools.wraps(func)
     def potentially_destructive_inner(*args, **kwargs):
         print(f"\nAre you sure that you want to do this?", style=constants.TEXT_STYLES["bold"])
         print("If you don't know what you are doing, this option may cause a loss of data or break your installation.")
@@ -26,8 +24,6 @@ def potentially_destructive(func):
         if ret["choice"]:
             func(*args, **kwargs)
     return potentially_destructive_inner
-
-    potentially_destructive_inner.__doc__ = __doc__
 
 def full_install():
     """Install everything. Recommended in most cases."""
