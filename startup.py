@@ -135,9 +135,9 @@ async def initialize_db(bot, config):
         await inst.connect()
     except OperationalError:
         logger.error("Couldn't connect to the database. Trying to start it...")
-        import setup
-        ret = setup.SetupTaskHandler.RUN_START_DATABASE_TASK()
-        if ret.status == setup.TaskExitStatus.FAILURE:
+        from setup import task_handler, task_models
+        ret = task_handler.RUN_START_DATABASE_TASK()
+        if ret.status == task_models.TaskExitStatus.FAILURE:
             sys.exit(76)
         logger.error("Trying to connect again.")
         try:
