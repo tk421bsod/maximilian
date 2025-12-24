@@ -1,0 +1,5 @@
+#This file contains information on database versions and associated changes with each version.
+#This file should not be modified unless you know what you're doing.
+#Format: Colon delimited. <version (incremental)> : <description> : <Commands to execute when applying version> : <Commands to execute if rolling back>
+1:Add column for rollbacks to versioning store, only needed for some 2.0 environments but added just in case.:ALTER TABLE version ADD rollback_commands TEXT:None
+#2:All necessary database changes for migrating from 1.x.:ALTER TABLE songs ADD raw_duration INTEGER unsigned:ALTER TABLE songs DROP COLUMN raw_duration 
