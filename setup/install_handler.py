@@ -23,7 +23,7 @@ class InstallHandler:
 
     def __init__(self, single_use=False):
         self.overwrite_config = False
-        self.overwrite_config_menu = ui.BooleanMenu("It looks like you already have configuration data saved.\nDo you want to overwrite it?")
+        self.overwrite_config_menu = ui.BooleanMenu("It looks like you already have configuration data saved.\nDo you want to overwrite it?\nYour configuration data will be replaced on disk once the setup process exits.")
         self.dbp = None
         self.owner_id = None
         self.token = None
@@ -47,7 +47,7 @@ class InstallHandler:
             self.overwrite_config = True
         if constants.OS_TYPE == "nt":
             print("Since you're on Windows, you'll need to install some software on your own.", style=constants.TEXT_STYLES["bold"])
-            print("Please install:\n*Python 3.9 or above, ensure it's on your PATH and that 'Install pip' is checked during installation\n*MySQL / MariaDB server\n*FFmpeg (must be on PATH, only for music features)")
+            print("Please install:\n*MySQL / MariaDB server\n*FFmpeg (must be on PATH, only for music features)")
             if not SetupState().remote:
                 print("Also, please complete the initial setup process for your database software, and start the database server.")
             print("Once you're finished, press Enter to continue with setup.")
@@ -70,14 +70,15 @@ class InstallHandler:
             print("\nYou chose to not overwrite configuration data.")
             print("Skipping the information gathering step.")
             return
+        SetupState().config = {}
         self.prep_initial_config()
         print("")
         print("There's a few things Setup needs from you.\n", style=constants.TEXT_STYLES["bold"])
-        self.token = self.get_token()
+        self.token = install_utils.get_token()
         self.set_config_value("token", self.token)
-        self.dbp = self.get_database_password()
+        self.dbp = install_utils.get_database_password()
         self.set_config_value("dbp", self.dbp)
-        self.owner_id = self.get_owner_id()
+        self.owner_id = install_utils.get_owner_id()
         self.set_config_value("owner_id", self.owner_id)
 
         print("Would you like to enable automatic updates?")
@@ -93,7 +94,7 @@ class InstallHandler:
         if constants.OS_TYPE == "posix":
             print("Updating package index...")
             print("You may be prompted to enter your password.")
-            ret = common.run_command("sudo apt-get update")
+            ret = co``mmon.run_command("sudo apt-get update")
             if ret["returncode"] == 127:
                 print("Your Linux distribution doesn't use the 'apt' package manager.")
                 print("You'll need to install the required packages manually to get started.")
@@ -110,9 +111,6 @@ class InstallHandler:
                 raise TaskFailure()
             return
         print("This is a Windows environment, not installing packages.")
-
-    def _check_venv_dir_writable(self, dir):
-        return os.access(dir, os.W_OK)
 
     def _acquire_target_venv_dir(self):
         """Get the directory the virtual environment should be installed to and ensure we can install to it. Returns None if a virtual environment should not be installed."""
@@ -167,9 +165,9 @@ class InstallHandler:
     
     def install_python_dependencies(self):
         print("Installing dependencies...")
-        ret = common.run_command(f"{sys.executable} -m pip install -r requirements.txt")
+        ret = common.run_command(f"{sys.executable} -m pip install -U -r requirements.txt")
         if ret['returncode']:
-            print("Looks like dependency installation failed. Here's output from the command that may help:")
+            print("Dependency installation failed. Here's output from the command that may help:")
             print(ret['output'])
             print("The installation process will continue, but Maximilian will not run until you run 'Install dependencies' from the main setup menu.")
         else:
@@ -209,4 +207,4 @@ class InstallHandler:
                 return continue_install_with()
 
     def initial_database_setup():
-        pass
+        common.run_command("sudo mysql")

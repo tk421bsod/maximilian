@@ -21,7 +21,7 @@ class SetupState:
         return SetupState._current_instance
 
     def __init__(self):
-        if hasattr(self, "_initialized"): #Do not perform initialization if we've already initialized
+        if hasattr(self, "_initialized"):
             return
 
         from setup import deferred_constants
@@ -51,7 +51,7 @@ class SetupState:
             return
         try:
             if lock_file_exists:
-                print("Setup exited unexpectedly.", style=constants.TEXT_STYLES["bold"])
+                print("The setup utility exited unexpectedly.", style=constants.TEXT_STYLES["bold"])
                 if temp_config_exists and not setup_state_exists:
                     print("Your configuration data from that session was lost.", style=constants.TEXT_STYLES["bold"])
                     print("You must finish the setup process to save your configuration data.")
@@ -59,7 +59,7 @@ class SetupState:
                 else:
                     print("No configuration data was lost.")
             elif temp_config_exists and not setup_state_exists:
-                print("You exited Setup before a task was finished.\nYour configuration data from that session was lost.", style=constants.TEXT_STYLES["bold"])
+                print("You exited the setup utility before a task was finished.\nYour configuration data from that session was lost.", style=constants.TEXT_STYLES["bold"])
                 print("You must finish the setup process to save your configuration data.")
                 os.unlink("config.tmp")
             root_logger.debug("Loading config.")
@@ -81,6 +81,9 @@ class SetupState:
     def destroy(self):
         logging.getLogger('setup').debug("Destroying SetupState!")
         SetupState._current_instance = None
+        if self.LOCK_FILE_HANDLER:
+            self.LOCK_FILE_HANDLER.close()
+            os.unlink("setup.lock")
 
     def was_config_changed(self):
         "Return whether config has changed during this session."

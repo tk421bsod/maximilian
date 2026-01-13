@@ -43,12 +43,14 @@ def full_install():
     if venv_created:
         installer.install_python_dependencies_venv_phase_1(task_handler.RUN_INSTALL_PHASE_2_TASK)
     else:
-        installer.install_python_dependencies()
         task_handler.RUN_INSTALL_PHASE_2_TASK()
 
 def full_install_phase_2():
     root_logger = get_root_logger()
+    installer = InstallHandler()
     root_logger.debug("Starting second phase of full install")
+    installer.install_python_dependencies()
+    
 
 def install_no_database():
     """Install Maximilian and its dependencies, but skip database setup. Use this option if you already have the database set up on another computer."""

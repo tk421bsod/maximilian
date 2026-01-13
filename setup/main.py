@@ -1,3 +1,5 @@
+print("Setup is starting...")
+
 from setup import task_logic
 
 from setup import constants
@@ -143,6 +145,9 @@ def cleanup():
         os.unlink("setup.lock")
         root_logger.debug("Removed lock file.")
     if SetupState().config_found and SetupState().config:
+        if SetupState().install_in_progress: #Discard config if we were in the middle of an install.
+            root_logger.debug("Installation exited unexpectedly! Not writing config.")
+            return
         if SetupState().was_config_changed():
             SetupState().write_config("config")
         else:
@@ -166,7 +171,7 @@ def _handle_restart(reason):
             root_logger.debug(f"continue_install_with must be callable!")
             return None
         if sys.exec_prefix == sys.base_exec_prefix:
-            print("Your virtual environment is not activated!")
+            print("Your virtual environment is not activated! You must activate it to continue.")
             task_handler.RUN_SHOW_VENV_ACTIVATION_HELP_TASK()
             SetupState().save_state(reason)
             raise CleanExit
@@ -190,7 +195,7 @@ def _check_for_restart():
         elif type(ret) == TaskResults: #_handle_restart ran a task!
             if not "-u" in sys.argv: #This flag keeps this setup script from being unintentionally used. Appending it to sys.argv forces Setup to run
                 sys.argv = sys.argv.append("-u")
-            SetupState().FORMATTING_ENABLED = True
+            SetupState().FORMATTING_ENABLED = True #There isn't a good way to save these flags across restarts yet. TODO: Add these to config?
             return True
 
 
@@ -217,3 +222,6 @@ def setup_main():
     root_logger.debug("Entering main loop")
     _setup_main_loop()
     root_logger.debug("Exiting main loop, setup may be terminating")
+
+if __name__ == "__main__":
+    print("Sorry, this script cannot be executed directly. Please run setup.py from the repository root directory.")
