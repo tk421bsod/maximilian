@@ -1,3 +1,6 @@
+#Frontend for the new pure Python setup utility.
+#Will eventually replace setup.sh.
+
 from setup import logging_utils
 logging_utils.initialize_logging()
 
