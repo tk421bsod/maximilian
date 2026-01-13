@@ -1,4 +1,3 @@
-#common.py: a shared library containing a bunch of useful stuff
 import asyncio
 import datetime
 import logging
@@ -272,7 +271,7 @@ def convert_config(config_dict):
     return config_string
 
 def write_config(config_dict, path="config"):
-    "Write configuration data from convert_config to a file at 'path'. Overwrites config file contents."
+    """Write configuration data from convert_config to a file at 'path'. Overwrites config file contents."""
     config = convert_config(config_dict)
     with open(path, "w") as configfile:
         configfile.write(config)
@@ -283,5 +282,8 @@ def write_to_config(key, value):
     current[key] = value
     write_config()
 
+def show_not_executable():
+    print(f"Sorry, {sys.argv[0]} cannot be run on its own.\nThis module provides functionality used by other modules and does not contain anything useful to an end user.\nMaximilian can be launched through main.py.")
+
 if __name__ == "__main__":
-    import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
+    show_not_executable()

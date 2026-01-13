@@ -1,5 +1,7 @@
 import sys
 
+from common import show_not_executable
+
 #Declarations and wrapper for constants used by the application.
 #Some values are determined on startup and only have sane defaults here.
 class GlobalConstants:
@@ -40,3 +42,9 @@ class GlobalConstants:
 
     PYTHON_MIN_MINOR_VERSION = 8
     PYTHON_MAX_APPROVED_MINOR_VERSION = 11
+
+    #List of modules that must be loaded for the bot to function
+    REQUIRED_MODULES = ["core", "errorhandling"]
+
+if __name__ == "__main__":
+    show_not_executable()

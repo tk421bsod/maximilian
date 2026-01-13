@@ -75,6 +75,15 @@ def _clean_exit():
     """Exit the updater cleanly (i.e without showing 'Updater interrupted.' after the exit)"""
     raise CleanExit
 
+def _handle_auto_updates_disabled():
+    print("Automatic updates aren't enabled. Would you like to check for updates? Y/N\n")
+    if input().strip().lower() == "y":
+        return #Condition-specific update check messages will show after this returns
+    else:
+        print("Ok, not checking for updates.")
+        time.sleep(0.5)
+        _clean_exit() #Exit the updater
+
 def _process_last_update_timestamp(config):
     """Obtain and convert the last update timestamp, then exit if conditions for an update check are not met."""
     #Get our last update timestamp.
@@ -101,18 +110,13 @@ def _process_last_update_timestamp(config):
     #Once we've processed the timestamp, check automatic update behavior.
     #Do we have automatic updates enabled? Default to True
     automatic_updates = common.get_value(config, 'automatic_updates', True)
-    #If we don't, ask if the user wants to check for updates.
-    if not automatic_updates:
-        print("Automatic updates aren't enabled. Would you like to check for updates? Y/N\n")
-        if input().strip().lower() == "y":
-            print("Ok, checking for updates...")
-        else:
-            print("Ok, not checking for updates.")
-            time.sleep(0.5)
-            _clean_exit()
-    elif elapsed == None:
+    if elapsed == None:
+        if not automatic_updates and not "--force-update" in sys.argv and not "--update" in sys.argv: #Ignore auto update preference if update was already requested.
+            _handle_auto_updates_disabled()
         print("Checking for updates now.")
     elif elapsed > 14:
+        if not automatic_updates:
+            _handle_auto_updates_disabled()
         print("It's been more than 14 days since the last update. Checking for updates now.")
     #Exit if it's been less than 14 days.
     else:
@@ -210,6 +214,5 @@ def update():
         return True
 
 if __name__ == "__main__":
-    print("It looks like you're trying to run the updater directly.")
-    print("Use 'python3 main.py --update'.")
-
+    print("Sorry, the updater cannot be run directly.")
+    print("Either use the setup utility or run main.py with --update.")

@@ -6,6 +6,7 @@ import discord
 from aiomysql import IntegrityError
 from discord.ext import commands
 
+from common import show_not_executable
 
 class Setting():
     """
@@ -488,4 +489,4 @@ class settings():
             return await ctx.send(self.bot.strings["CATEGORY_INVALID"])
 
 if __name__ == "__main__":
-    import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
+    show_not_executable()

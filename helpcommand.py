@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 import traceback
 
+from common import show_not_executable
+
 class HelpCommand(commands.HelpCommand):
 
     def get_ending_note(self):
@@ -121,4 +123,4 @@ class HelpCommand(commands.HelpCommand):
         await self.get_destination().send(embed=embed)
 
 if __name__ == "__main__":
-    import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
+    show_not_executable()

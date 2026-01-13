@@ -214,7 +214,6 @@ class maximilian(commands.Bot):
         logger = logging.getLogger(self.constants.ROOT_LOGGER_NAME)
         #strip file extension out of filename
         cleanname = file[:-3]
-        #ignore anything that isn't a python file
         #check if we're not loading this extension
         if cleanname in self.noload or f"cogs.{cleanname}" in self.noload:
             logger.info(f"Not loading module cogs.{cleanname}.")
@@ -251,17 +250,16 @@ class maximilian(commands.Bot):
             await self.load_extension("jishaku")
             self.logger.info("Loaded Jishaku!")
             if not self.config['jsk_used']:
-                logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's an invaluable tool for debugging and development, but can be quite dangerous in the wrong hands.")
-                logger.warning(f"If your account (or the account with the ID {self.owner_id}) gets compromised, the attacker will have direct access to your computer.")
-                logger.warning("Don't want to use Jishaku? Stop Maximilian now with CTRL-C and run main.py WITHOUT --enablejsk.")
-                logger.warning("If you keep using Jishaku, I recommend that you enable 2FA and/or run Maximilian in a VM.")
+                logger.warning("Hello! It looks like you've enabled Jishaku for the first time. It's an invaluable tool for debugging and development but can be quite dangerous in the wrong hands.")
+                logger.warning(f"If your Discord account (or the account with the ID {self.owner_id}) gets compromised, the attacker will have direct access to your computer through Jishaku.")
+                logger.warning("If you haven't already, consider enabling 2FA or other account security measures.")
                 logger.warning("Startup will continue in 10 seconds.")
                 time.sleep(10)  # block here so we don't do anything else (e.g login, cache filling) in the meantime
 
     async def load_required(self):
         try:
-            await self.load_extension("core")
-            await self.load_extension("errorhandling")
+            for module in self.constants.REQUIRED_MODULES:
+                await self.load_extension(module)
         except:
             logging.getLogger(self.constants.ROOT_LOGGER_NAME).critical("Failed to load required modules.")
             traceback.print_exc()
@@ -340,8 +338,8 @@ class maximilian(commands.Bot):
             logger.warning("Experimental concurrency features enabled.")
         #now that we're in an async context, we can show version information...
         logger.warning(f"Starting Maximilian v{self.constants.VERSION}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{self.PYTHON_MINOR_VERSION} and discord.py {discord.__version__}) ")
-        #initialize our translation layer...
-        self.language = await startup.get_language(self.config, exit = True)
+        #initialize the translation system...
+        self.language = await startup.get_language(self.config, exit=True)
         logger.info(f"Set language to {self.language}")
         self.strings = await startup.load_strings(self.language)
         #register our on_message event...
@@ -351,7 +349,7 @@ class maximilian(commands.Bot):
         self.set_database_name()
         #initialize the database...
         await self.setup_db()
-        #and initialize the settings api
+        #and initialize settings
         self.settings = settings.settings(self)
         #If we're actually logging in, schedule some tasks for after login starts...
         #TODO: Fix RuntimeErrors if exiting before Bot.start runs, e.g "Exception ignored in: <function Connection.__del__ at 0x7ddc7b348220>"
@@ -364,13 +362,8 @@ class maximilian(commands.Bot):
             #TODO: Eliminate potential for race conditions here:
             #Either load_extensions_async or init_general_settings could run before Bot.start runs,
             #which can cause a RuntimeError if an extension's cache fill method starts early.
-            #setup_hook may work for this, however it runs after login...
-            #extension load is time-consuming and
-            #any commands received during that window of time will fail
             asyncio.create_task(self.load_extensions_async())
-            logger.debug("load_extensions_async has been scheduled.")
             asyncio.create_task(self.init_general_settings()) 
-            logger.debug("init_general_settings has been scheduled.")
             print("Logging in...")
             await self.start(token)
         else:
@@ -380,4 +373,4 @@ class maximilian(commands.Bot):
         logger.warning("Please let tk421 know about this.")
 
 if __name__ == "__main__":
-    print("Sorry, this file cannot be run directly. Run main.py instead.")
+    common.show_not_executable()

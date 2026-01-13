@@ -1,6 +1,6 @@
 #core.py: deletion/confirmation handlers, event listeners, helpers, owner-only commands
 
-#note that this module is loaded during early startup. the 'core' class defined below is loaded in load_extensions_async.
+#this module is loaded during early startup. the 'core' class defined below is loaded and instantiated by load_extensions_async.
 
 import asyncio
 import logging
@@ -392,4 +392,4 @@ def requirements():
     return {"intents":("messages", "reactions", "message_content", "guilds", "members")}
 
 if __name__ == "__main__":
-    import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
+    common.show_not_executable()
