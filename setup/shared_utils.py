@@ -11,13 +11,13 @@ from setup.task_models import GitCommandFailed
 def get_root_logger():
     return logging.getLogger('setup')
 
-def task_partial_with_doc(func, *args):
-    """Evil functools.partial wrapper that applies the docstring of the first arg to the returned partial. muehehe"""
+def partial_with_doc(func, *args):
+    """Apply the docstring of the callable args[0] to functools.partial created using func."""
     partial = functools.partial(func, *args)
     if not callable(args[0]):
-        print("Task partial doesn't have callable as its first arg??")
+        print("partial_with_doc args must have a callable as the first element!")
         return partial
-    get_root_logger().debug(f"Setting docstring '{args[0].__doc__}' for func '{args[0].__name__}'")
+    get_root_logger().debug(f"Setting docstring '{args[0].__doc__}' for callable '{args[0].__name__}'")
     partial.__doc__ = args[0].__doc__
     return partial
 
@@ -51,4 +51,4 @@ def run_git_command(cmd):
 
 def check_for_git():
     """Check for an active Git repository in the current working directory. Use before tasks that perform Git operations."""
-    ret = run_git_command("git status")
+    run_git_command("git status")
