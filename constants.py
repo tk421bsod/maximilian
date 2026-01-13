@@ -40,7 +40,7 @@ class GlobalConstants:
     DPY_MIN_MAJOR_VERSION = 2
     DPY_MIN_MINOR_VERSION = 3
 
-    PYTHON_MIN_MINOR_VERSION = 8
+    PYTHON_MIN_MINOR_VERSION = 9
     PYTHON_MAX_APPROVED_MINOR_VERSION = 11
 
     #List of modules that must be loaded for the bot to function
