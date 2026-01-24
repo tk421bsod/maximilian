@@ -337,7 +337,7 @@ class maximilian(commands.Bot):
         if "--experimental-concurrency" in sys.argv:
             logger.warning("Experimental concurrency features enabled.")
         #now that we're in an async context, we can show version information...
-        logger.warning(f"Starting Maximilian v{self.constants.VERSION}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{self.PYTHON_MINOR_VERSION} and discord.py {discord.__version__}) ")
+        logger.warning(f"Starting Maximilian v{self.constants.VERSION}{f'-{self.commit}' if self.commit else ''}{' with Jishaku enabled ' if '--enablejsk' in sys.argv else ' '}(running on Python {sys.version_info.major}.{self.constants.PYTHON_MINOR_VERSION} and discord.py {discord.__version__}) ")
         #initialize the translation system...
         self.language = await startup.get_language(self.config, exit=True)
         logger.info(f"Set language to {self.language}")

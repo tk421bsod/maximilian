@@ -207,11 +207,8 @@ try:
         print("Updater interrupted. Maximilian will start in a moment.")
     time.sleep(1)
     outer_logger.debug("Preparing to start the event loop...")
-    #initialize stuff needed before we enter an async context
     bot = maximilian(config)
-    bot.IS_DEBUG = GlobalConstants.IS_DEBUG
-    bot.PYTHON_MINOR_VERSION = GlobalConstants.PYTHON_MINOR_VERSION
-    #hand things over to base.maximilian.run
+    #Hand things over to base.maximilian.run
     asyncio.run(bot.run())
 except KeyboardInterrupt:
     print("\nKeyboardInterrupt detected. Exiting.")
