@@ -23,18 +23,15 @@ if not GlobalConstants.TEXT_FORMATTING_ENABLED:
 
 #Are we being imported?
 if __name__ != "__main__":
-    print("It looks like you're trying to import main.py.")
-    print(f"{Text.BOLD}Please don't do that.{Text.NORMAL} Some code here relies on being ran directly through a command such as python3 main.py.")
-    print("Need to access some Maximilian API? Just import the right file. Read HOSTING.md for an overview.")
-    print("If you have a legitimate use case for this, I'd like to hear about it -- send me a DM at tk___421 on Discord.")
-    print("Maximilian will now exit.")
+    print("This file cannot be imported. This is due to the amount of module-level code here that would otherwise be executed on import.")
+    print("Use this source code as a reference if creating a custom launcher.")
     quit()
 
 #Are we using an out-of-date Python?
-if sys.version_info.major == 3 and GlobalConstants.PYTHON_MINOR_VERSION < 8:
-    print("Your Python installation seems to be quite old.")
-    print(f"{Text.BOLD}Maximilian cannot run on Python versions older than 3.8.{Text.NORMAL}")
-    print("You need to install a newer version to continue.")
+if sys.version_info.major == 3 and GlobalConstants.PYTHON_MINOR_VERSION < GlobalConstants.PYTHON_MIN_MINOR_VERSION:
+    print("Your Python installation is out of date.")
+    print(f"{Text.BOLD}Maximilian cannot run on Python versions older than 3.{GlobalConstants.PYTHON_MIN_MINOR_VERSION}.{Text.NORMAL}")
+    print("Install a newer version to continue.")
     quit()
 
 #Are we using a very new Python?
@@ -219,10 +216,10 @@ try:
 except KeyboardInterrupt:
     print("\nKeyboardInterrupt detected. Exiting.")
 except KeyError:
-    outer_logger.error("The configuration file is missing something. Try pulling changes and re-running setup.sh.")
+    outer_logger.error("The configuration file is missing something.")
     outer_logger.info(traceback.format_exc())
 except FileNotFoundError:
-    outer_logger.error("No configuration file found. Run setup.sh.")
+    outer_logger.error("No configuration file found.")
 except SystemExit: #raised on quit()
     print("Exiting.")
 except:
