@@ -140,11 +140,11 @@ else:
 
 def config_logging(args):
     """Sets logging level and file to write to"""
-    #mapping of argument to logging level and status message
-    levelmapping = {"-v":[logging.DEBUG, "Debug logging enabled."], "--debug":[logging.DEBUG, "Debug logging enabled."], "--verbose":[logging.DEBUG, "Debug logging enabled."], "-i":[logging.INFO, "Logging level set to INFO."], "--info":[logging.INFO, "Logging level set to INFO"], "-w":[logging.WARN, "Logging level set to WARN."], "--warn":[logging.WARN, "Logging level set to WARN."], "-e":[logging.ERROR, "Logging level set to ERROR."], "--error":[logging.ERROR, "Logging level set to ERROR."], "-q":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."], "--quiet":["disable", "Logging disabled. Tracebacks will still be shown in the console, along with a few status messages."]}
+    #Logging levels mapped to triggers (e.g -v for logging.DEBUG) and a message for display if enabled.
+    log_levels = {logging.DEBUG:{"args":{"-v", "--debug", "--verbose"}, "message":"Debug logging enabled."}, logging.INFO:{"args":{"-i", "--info"}, "message":"Logging level set to INFO."}, logging.WARN:{"args":{"-w", "--warn"}, "message":"Logging level set to WARN."}, logging.ERROR:{"args":{"-e", "--error"}, "message":"Logging level set to ERROR."}, "disable":{"args":{"-q", "--quiet"}, "message":"Logging disabled. You may still see some console output."}}
     try:
         _handlers = [RichHandler(rich_tracebacks=True)]
-    except NameError: #rich wasn't imported, use stdout instead
+    except NameError: #Use stdout if rich is not available
         _handlers = [logging.StreamHandler(sys.stdout)]
     if os.path.isdir('logs') and "--no-file" not in sys.argv:
         _handlers.append(logging.FileHandler(f"logs/maximilian-{datetime.date.today()}.log"))
@@ -152,27 +152,21 @@ def config_logging(args):
         print("main.py was invoked with --no-file. Not logging to a file.")
     else:
         print("The 'logs' directory doesn't exist! Not logging to a file.")
-    for key, value in levelmapping.items():
-        if key not in args:
-            pass
-        elif key != "-q" and key != "--quiet":
-            logging.basicConfig(level=value[0], handlers=_handlers)
-            print("\n"+value[1])
-            if value[0] == logging.DEBUG:
+    for level, level_data in log_levels.items():
+        if level_data['args'] & set(args): #Is there a trigger present in both argv and the level's triggers?
+            if level == "disable":
+                logging.disable()
+                print(level_data["message"])
+                return
+            logging.basicConfig(level=level, handlers=_handlers)
+            print(level_data["message"])
+            if level == logging.DEBUG:
                 print("This setting can result in very large log files.")
                 print("Debug logging is not recommended for continuous use.")
                 time.sleep(2)
             logging.getLogger(f"{GlobalConstants.ROOT_LOGGER_NAME}.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
             return
-        else:
-            logging.disable()
-            print(value[1])
-            return
-    try:
-        RichHandler()
-        logging.basicConfig(level=logging.WARN, handlers=_handlers, format="%(message)s", datefmt="[%X]")
-    except NameError: #rich not imported
-        logging.basicConfig(level=logging.WARN, handlers=_handlers)
+    logging.basicConfig(level=logging.WARN, handlers=_handlers)
     print("No logging level specified, falling back to WARN.")
     logging.getLogger(f"{GlobalConstants.ROOT_LOGGER_NAME}.config_logging").warning(f"Logging started at {datetime.datetime.now()}")
 
