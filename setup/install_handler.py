@@ -94,7 +94,7 @@ class InstallHandler:
         if constants.OS_TYPE == "posix":
             print("Updating package index...")
             print("You may be prompted to enter your password.")
-            ret = co``mmon.run_command("sudo apt-get update")
+            ret = common.run_command("sudo apt-get update")
             if ret["returncode"] == 127:
                 print("Your Linux distribution doesn't use the 'apt' package manager.")
                 print("You'll need to install the required packages manually to get started.")

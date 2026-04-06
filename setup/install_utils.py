@@ -3,7 +3,7 @@ import os
 
 from setup.state import SetupState
 
-def enter_install(handler : InstallHandler):
+def enter_install(handler):
     """Set SetupState.install_in_progress to 'handler'"""
     SetupState().install_in_progress = handler
 
