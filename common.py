@@ -1,5 +1,6 @@
-import asyncio
+import asyncio 
 import datetime
+from constants import GlobalConstants
 import logging
 import os
 import re
@@ -281,6 +282,17 @@ def write_to_config(key, value):
     current = load_config()
     current[key] = value
     write_config()
+
+def handle_nonfatal_error(config, error):
+    logger = logging.getLogger('common')
+    import traceback; logger.debug(traceback.format_exc())
+    if get_value(config, 'nonfatal_exit', False):
+        return logger.warning("Non-fatal error encountered, ignoring. Use the command-line argument '--nonfatal-exit' or '-n' to exit when encountering these types of errors.")
+    logger.warning("Exiting after non-fatal error - user requested")
+    raise error
+
+def get_root_logger():
+    return logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
 
 def show_not_executable():
     print(f"Sorry, {sys.argv[0]} cannot be run on its own.\nThis module provides functionality used by other modules and does not contain anything useful to an end user.\nMaximilian can be launched through main.py.")
