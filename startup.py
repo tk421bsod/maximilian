@@ -52,7 +52,6 @@ def show_2_0_first_run_message(config : dict):
         lines.append(f"Welcome to Maximilian 2.0.\nA lot has changed:\n{Text.NORMAL}")
         lines.append("Hybrid commands, performance improvements, API changes, new runtime options, a translation subsystem, an improved setup process, and so much more.")
         lines.append("For an overview of the current API, including breaking changes from the 1.x API, take a look at docs/API.md.")
-         
         lines.append("\nHybrid commands:")
         lines.append("'Hybrid commands' are commands that work both as standard prefix commands and slash commands.")
         lines.append(f"{Text.BOLD}TO ENABLE SLASH COMMAND FUNCTIONALITY, YOU MUST RUN `utils sync` AFTER LOGGING IN.{Text.NORMAL}")
@@ -101,12 +100,12 @@ def check_version():
 def _use_default_dbip(bot):
     """Use the default database IP address if one hasn't been provided yet."""
     if bot.dbip:
-        logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME).warning("IP address specified through config, not changing it.")
+        common.get_root_logger().warning("IP address specified through config, not changing it.")
         return
     bot.dbip = "localhost"
 
 def parse_arguments(bot, args):
-    logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
+    logger = common.get_root_logger()
     if len(args) > 1:
         if "--ip" in args:
             try:
@@ -129,7 +128,7 @@ def parse_arguments(bot, args):
         _use_default_dbip(bot)
 
 async def initialize_db(bot, config):
-    logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
+    logger = common.get_root_logger()
     inst = db.async_db("maximilianbot", config['dbp'], bot.dbip, bot.database, bot.tables)
     try:
         await inst.connect()
@@ -150,7 +149,7 @@ async def initialize_db(bot, config):
     return inst
 
 async def get_language(config, exit):
-    """Gets the language to use (as a string)"""
+    """Get the language to use as a string"""
     logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
     #try to get language from config
     language = common.get_value(config, 'language')
@@ -197,18 +196,17 @@ class StringDefaultDict(dict):
         return self[key]
 
 async def load_strings(language):
-    logger = logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
+    logger = common.get_root_logger()
     logger.debug('Loading strings from file...')
     strings = StringDefaultDict()
     try:
         with open(f'languages/{language}') as data:
-            logger.debug("Loading data...")
             strings.update(json.load(data))
-            logger.debug("Loaded data.")
+            logger.debug("Loaded strings.")
     except FileNotFoundError:
         raise RuntimeError(f"Couldn't find the file containing strings for language '{language}'!")
     except json.JSONDecodeError as e:
-        logger.critical(f"The file containing strings for language '{language}' is invalid. Try passing it through generate.py.")
+        logger.critical(f"The file containing strings for language '{language}' is invalid. You may need to pass it through generate.py.")
         logger.critical("Maximilian will now exit with some additional error info.")
         raise e
     errors_found = False
@@ -229,4 +227,4 @@ async def load_strings(language):
     return strings
 
 if __name__ == "__main__":
-    import sys; print(f"It looks like you're trying to run {sys.argv[0]} directly.\nThis module provides a set of APIs for other modules and doesn't do much on its own.\nLooking to run Maximilian? Just run main.py.")
+    common.show_not_executable()
