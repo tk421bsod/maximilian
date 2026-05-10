@@ -1,6 +1,7 @@
 import sys
 
-from common import show_not_executable
+def show_not_executable():
+    print(f"Sorry, {sys.argv[0]} cannot be run on its own.\nThis module provides functionality used by other modules and does not contain anything useful to an end user.\nMaximilian can be launched through main.py.")
 
 #Declarations and wrapper for constants used by the application.
 #Some values are determined on startup and only have sane defaults here.

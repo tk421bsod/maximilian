@@ -143,3 +143,6 @@ class _ThemedEmbed(discord.Embed):
             color = theme_color
         kwargs['color'] = color
         super().__init__(*args, **kwargs)
+
+if __name__ == "__main__":
+    common.show_not_executable()

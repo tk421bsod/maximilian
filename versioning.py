@@ -138,10 +138,13 @@ async def eval_db_version(db):
     current_db_version = await _get_current_db_version(db)
     action = _show_db_version_advice(current_db_version, version_nums[-1])
     if action == 0: #No action needed.
-        import time; time.sleep(1)
+        import time; time.sleep(2)
         return
     elif action == 1: #Database rollback needed.
         new_version = await _do_database_rollback(db, current_db_version, version_nums)
     elif action == 2: #Database update needed.
         new_version = await _do_database_update(db, current_db_version, version_nums, available_versions)
 
+if __name__ == "__main__":
+    from common import show_not_executable
+    show_not_executable()

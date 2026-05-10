@@ -1,6 +1,7 @@
 import asyncio 
 import datetime
 from constants import GlobalConstants
+from constants import show_not_executable as _show_not_executable
 import logging
 import os
 import re
@@ -295,7 +296,7 @@ def get_root_logger():
     return logging.getLogger(GlobalConstants.ROOT_LOGGER_NAME)
 
 def show_not_executable():
-    print(f"Sorry, {sys.argv[0]} cannot be run on its own.\nThis module provides functionality used by other modules and does not contain anything useful to an end user.\nMaximilian can be launched through main.py.")
+    _show_not_executable()
 
 if __name__ == "__main__":
     show_not_executable()
