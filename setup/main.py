@@ -34,9 +34,9 @@ def get_menu_help():
             print(f"{num+1}) {list(option.keys())[0]}", style=constants.TEXT_STYLES["bold"])
             task = list(option.values())[0]
             #Grab the docstring from the partial function. (shared_utils.partial_with_doc sets this)
-            doc = getattr(task, "__doc__", "No help text provided.")
+            doc = getattr(task, "__doc__", strings.DEFAULT_HELP)
             if not doc:
-                doc = "No help text provided."
+                doc = strings.DEFAULT_HELP
             print(f"    {doc}")
         elif option == "Main Menu":
             print(strings.MAIN_MENU_RETURN_HELP)
@@ -113,8 +113,7 @@ def _pre_setup():
     if response["choice"]:
         print("Text formatting enabled.", style=constants.TEXT_STYLES["bold"])
     else:
-        #This should not be limited to this scope. Linter is stupid
-        FORMATTING_ENABLED = False
+        SetupState().FORMATTING_ENABLED = False
         print("Text formatting disabled.")
     
     dbip = common.get_value(SetupState().config, "dbip")
@@ -205,9 +204,9 @@ def setup_main():
     ret = _check_for_restart()
     #Were we ran with the intention of testing this script?
     if not "-u" in sys.argv:
-        print("Hi!\nThis setup script is a re-implementation of the current setup script.\nIt's not at all ready for use yet.")
+        print("Hi!\nThis is a re-implementation of the current setup script.\nIt's not at all ready for use yet.")
         print("It offers a refreshed user experience and a few more features, but it could break your installation!\n")
-        print("For setup, repairs, and other tasks, please run setup.sh for anything you may need.")
+        print("For setup, repairs, and other tasks, please run setup.sh.")
         print("If you wish to test this out, run it with -u.")
         cleanup()
         quit()
@@ -221,7 +220,7 @@ def setup_main():
     root_logger = shared_utils.get_root_logger()
     root_logger.debug("Entering main loop")
     _setup_main_loop()
-    root_logger.debug("Exiting main loop, setup may be terminating")
+    root_logger.debug("Exiting main loop")
 
 if __name__ == "__main__":
     print("Sorry, this script cannot be executed directly. Please run setup.py from the repository root directory.")

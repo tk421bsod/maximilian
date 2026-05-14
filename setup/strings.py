@@ -7,6 +7,7 @@ DATABASE_MENU_PROMPT = "Choose a database action to perform, 'Help' for assistan
 REPAIR_MENU_PROMPT = "Choose an option, 'Help' for assistance, or 'Main Menu' to go back:"
 VENV_MENU_PROMPT = "Choose a virtual environment management option, 'Help' for assistance, or 'Main Menu' to go back:"
 
+DEFAULT_HELP = "No help text provided."
 SUBMENU_HELP_PREFIX = "    Submenu providing "
 SUBMENU_HELP = {"install":"options for installing Maximilian", "database":"options for database maintenance", "virtual":"virtual environment creation, deletion, and activation options",  "repair":"options for repairing issues with your installation"}
 MAIN_MENU_RETURN_HELP = "    Return to the main menu."
